@@ -1,0 +1,161 @@
+/* ============================================================
+   TEMA — troque só as variáveis abaixo para mudar a cara do app
+   ============================================================ */
+:root {
+  /* Marca (monocromático quente; cor só em detalhes) */
+  --color-primary: #111111;
+  --color-primary-hover: #333333;
+  --color-on-primary: #ffffff;
+  --color-danger: #9f2f2d;
+  --color-success: #346538;
+
+  /* Superfícies e texto */
+  --color-bg: #f7f6f3;
+  --color-surface: #ffffff;
+  --color-surface-2: #efeeea;
+  --color-text: #2f3437;
+  --color-heading: #111111;
+  --color-muted: #6b6a67;
+  --color-border: #eaeaea;
+  --color-border-strong: #d6d5d0; /* hover de borda, tracejado, barra de rolagem */
+  --color-placeholder: #767571;
+  --color-line: #111111; /* traço desenhado à mão */
+
+  /* Acentos pastel (tags, ícones, detalhes) */
+  --pastel-red: #fdebec;    --pastel-red-text: #9f2f2d;
+  --pastel-blue: #e1f3fe;   --pastel-blue-text: #1f6c9f;
+  --pastel-green: #edf3ec;  --pastel-green-text: #346538;
+  --pastel-yellow: #fbf3db; --pastel-yellow-text: #956400;
+
+  /* Tipografia (fontes carregadas no index.html) */
+  --font-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', 'Newsreader', Georgia, serif;
+  --font-mono: 'Geist Mono', 'SF Mono', ui-monospace, monospace;
+  --font-size: 15px;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.625rem;
+  --font-size-display: clamp(2.5rem, 5.5vw, 4rem);
+
+  /* Espaçamento, bordas, sombras */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.875rem;
+  --space-4: 1.25rem;
+  --space-5: 2rem;
+  --space-6: 3.5rem;
+  --space-section: clamp(4rem, 10vw, 7rem);
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.03);
+  --shadow-hover: 0 2px 8px rgb(0 0 0 / 0.04);
+  --container: 1040px;
+  --nav-height: 56px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition: 200ms var(--ease);
+}
+
+/* ============================================================
+   BASE — estilos globais e utilitários reutilizáveis
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--color-heading); text-underline-offset: 3px; }
+img { max-width: 100%; display: block; }
+h1, h2, h3 { color: var(--color-heading); line-height: 1.15; margin: 0 0 var(--space-3); font-weight: 600; letter-spacing: -0.01em; }
+h1 { font-size: var(--font-size-xl); }
+h2 { font-size: var(--font-size-lg); }
+::selection { background: var(--pastel-yellow); color: var(--color-heading); }
+html { scrollbar-color: var(--color-border-strong) transparent; caret-color: var(--color-heading); }
+
+.serif { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.005em; }
+.mono { font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: 0.02em; }
+
+.container { max-width: var(--container); margin: 0 auto; padding: var(--space-5) var(--space-4); }
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+}
+
+.stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.narrow { max-width: 440px; margin-inline: auto; }
+@media (max-width: 600px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+}
+.muted { color: var(--color-muted); }
+.small { font-size: var(--font-size-sm); }
+.center { text-align: center; }
+.two-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+
+/* Tag pastel: <span class="tag tag-blue">Novo</span> */
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.tag-red { background: var(--pastel-red); color: var(--pastel-red-text); }
+.tag-blue { background: var(--pastel-blue); color: var(--pastel-blue-text); }
+.tag-green { background: var(--pastel-green); color: var(--pastel-green-text); }
+.tag-yellow { background: var(--pastel-yellow); color: var(--pastel-yellow-text); }
+
+/* Campos de formulário (usados pelo BaseInput, chat, busca…) */
+input:not([type='file']):not([type='checkbox']), textarea, select {
+  font: inherit;
+  font-size: var(--font-size-sm);
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-heading);
+  transition: border-color var(--transition);
+}
+input::placeholder, textarea::placeholder { color: var(--color-placeholder); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--color-heading); }
+textarea { resize: vertical; }
+
+.alert {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  white-space: pre-line;
+  margin: 0;
+}
+.alert-error { background: var(--pastel-red); color: var(--pastel-red-text); }
+.alert-success { background: var(--pastel-green); color: var(--pastel-green-text); }
+
+.empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-muted);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+:focus-visible { outline: 2px solid var(--color-heading); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
