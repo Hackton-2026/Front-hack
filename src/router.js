@@ -3,7 +3,7 @@ import { useAuth } from './composables/useAuth'
 
 const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior: (to) => (to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 }),
+  scrollBehavior: () => ({ top: 0 }),
   routes: [
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', redirect: '/explorar' },
