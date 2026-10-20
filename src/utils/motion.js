@@ -6,12 +6,8 @@ gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin)
 // Anima pelo relógio real: se a aba travar ou ficar em segundo plano, o conteúdo aparece no tempo certo
 gsap.ticker.lagSmoothing(0)
 
-export { gsap, ScrollTrigger }
-export const EASE = 'expo.out'
+export { gsap }
 export const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
-
-// "Desenha" um traço SVG do início ao fim (DrawSVG já corrige a escala do SVG e o non-scaling-stroke)
-export const draw = (path, vars = {}) => gsap.fromTo(path, { drawSVG: '0%' }, { drawSVG: '100%', ...vars })
 
 /**
  * v-reveal            → o elemento aparece suave ao entrar na tela
@@ -26,7 +22,7 @@ export const vReveal = {
       opacity: 0,
       y: 16,
       duration: 1,
-      ease: EASE,
+      ease: 'expo.out',
       stagger: 0.08,
       delay: Number(value) || 0,
       scrollTrigger: modifiers.now ? undefined : { trigger: el, start: 'top 88%', once: true },
