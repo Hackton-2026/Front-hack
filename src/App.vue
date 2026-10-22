@@ -2,6 +2,7 @@
 import { watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNav from './components/AppNav.vue'
+import ChatBot from './components/ChatBot.vue'
 import { useAuth } from './composables/useAuth'
 
 const { user } = useAuth()
@@ -19,5 +20,6 @@ watch(user, (u) => {
     <main class="container">
       <RouterView />
     </main>
+    <ChatBot v-if="user" />
   </template>
 </template>
