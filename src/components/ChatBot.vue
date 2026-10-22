@@ -1,9 +1,11 @@
 <script setup>
 import { nextTick, ref } from 'vue'
 import { api } from '../services/api'
+import { useAuth } from '../composables/useAuth'
 import BaseButton from './BaseButton.vue'
 
 // Mini chatbot flutuante: manda o histórico para /api/ai/chat/ e mostra a resposta da IA
+const { loadMe } = useAuth()
 const open = ref(false)
 const messages = ref([]) // { role: 'user' | 'assistant', content }
 const text = ref('')
@@ -22,8 +24,13 @@ async function send() {
   loading.value = true
   scrollDown()
   try {
-    const { reply } = await api('/api/ai/chat/', { method: 'POST', body: { messages: messages.value } })
+    const { reply, changed } = await api('/api/ai/chat/', { method: 'POST', body: { messages: messages.value } })
     messages.value.push({ role: 'assistant', content: reply })
+    // A IA mudou algo: recarrega o usuário logado e avisa as telas de produtos
+    if (changed) {
+      loadMe()
+      window.dispatchEvent(new Event('products:changed'))
+    }
   } catch (e) {
     error.value = e.message
   } finally {
@@ -41,7 +48,7 @@ async function send() {
         <button class="close" aria-label="Fechar assistente" @click="open = false">×</button>
       </header>
       <div ref="list" class="messages" aria-live="polite">
-        <p v-if="!messages.length" class="muted small">Oi! Pergunte o que quiser.</p>
+        <p v-if="!messages.length" class="muted small">Oi! Pergunte o que quiser, procure produtos ou peça para editar seus produtos e seu perfil.</p>
         <p v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">{{ m.content }}</p>
         <p v-if="loading" class="msg assistant muted">Pensando…</p>
       </div>

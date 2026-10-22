@@ -46,5 +46,5 @@ function logout() {
 window.addEventListener('auth:logout', logout)
 
 export function useAuth() {
-  return { user, ready, init, login, loginWithGoogle, register, updateMe, logout }
+  return { user, ready, init, loadMe, login, loginWithGoogle, register, updateMe, logout }
 }
