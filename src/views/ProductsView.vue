@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ITEM } from '../config'
 import { api } from '../services/api'
@@ -23,7 +23,7 @@ const filtered = computed(() => {
   return products.value.filter((p) => `${p.name} ${p.description || ''}`.toLowerCase().includes(q))
 })
 
-watch(() => props.mine, async () => {
+async function load() {
   loading.value = true
   error.value = ''
   try {
@@ -33,7 +33,12 @@ watch(() => props.mine, async () => {
   } finally {
     loading.value = false
   }
-}, { immediate: true })
+}
+watch(() => props.mine, load, { immediate: true })
+
+// O assistente de IA avisa quando cria/edita produtos
+window.addEventListener('products:changed', load)
+onUnmounted(() => window.removeEventListener('products:changed', load))
 
 async function remove(p) {
   if (!confirm(`Excluir "${p.name}"?`)) return
