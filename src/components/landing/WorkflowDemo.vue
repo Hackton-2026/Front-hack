@@ -16,7 +16,7 @@ function advance(task) {
 
 <template>
   <div class="workflow">
-    <div class="workflow__top"><span class="workflow__mark">N<span>✳</span></span><span>Workspace do time <span class="workflow__slash">/</span> <strong>Lançamento da marca</strong></span><span class="workflow__dots" aria-hidden="true">•••</span></div>
+    <div class="workflow__top"><span class="workflow__mark">N</span><span>Workspace do time <span class="workflow__slash">/</span> <strong>Lançamento da marca</strong></span><span class="workflow__dots" aria-hidden="true">•••</span></div>
     <div class="workflow__head"><div><span class="workflow__eyebrow">DO PLANO À ENTREGA</span><h3>Uma ideia. Todo o time.</h3></div><span class="workflow__team" aria-label="Três pessoas no projeto"><i>CL</i><i>AM</i><i>JP</i></span></div>
     <div class="workflow__toolbar"><div class="workflow__tabs" role="group" aria-label="Visualização do projeto"><button type="button" :aria-pressed="view === 'board'" @click="view = 'board'">▥ Quadro</button><button type="button" :aria-pressed="view === 'list'" @click="view = 'list'">☷ Lista</button></div><span aria-live="polite">{{ completed }} de 3 entregas concluídas</span></div>
     <div v-if="view === 'board'" class="workflow__board">
@@ -35,7 +35,7 @@ function advance(task) {
 <style scoped>
 .workflow { border: 1px solid #45413e; border-radius: 12px; background: #121211; color: var(--lp-white); overflow: hidden; text-align: left; box-shadow: 0 24px 80px #0005; }
 .workflow__top { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid #ffffff12; font-size: 11px; color: #b8b5b1; }
-.workflow__top strong { font-weight: 500; color: #eeece9; }.workflow__mark { font: 800 20px var(--lp-display); color: #fff; }.workflow__mark > span { color: var(--lp-orange); font-size: 18px; }.workflow__slash { margin: 0 8px; color: #777; }.workflow__dots { margin-left: auto; letter-spacing: 3px; }
+.workflow__top strong { font-weight: 500; color: #eeece9; }.workflow__mark { font: 800 20px var(--lp-display); color: #fff; }.workflow__slash { margin: 0 8px; color: #777; }.workflow__dots { margin-left: auto; letter-spacing: 3px; }
 .workflow__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 24px 24px 20px; }.workflow__eyebrow { font: 10px var(--font-mono); color: var(--lp-orange-soft); letter-spacing: .1em; }.workflow h3 { margin: 8px 0 0; font: 500 clamp(18px, 2vw, 25px)/1.3 var(--lp-sans); color: #fff; letter-spacing: -.04em; }
 .workflow i { display: grid; flex-shrink: 0; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #41352b; color: #e6c7ad; font-size: 8px; font-style: normal; }.workflow__team { display: flex; }.workflow__team i { width: 29px; height: 29px; margin-left: -6px; border: 2px solid #121211; }.workflow__team i:nth-child(2) { background: #303b35; color: #c8d5c9; }.workflow__team i:nth-child(3) { background: #34373e; color: #ccd4df; }
 .workflow__toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 24px; padding-bottom: 14px; border-bottom: 1px solid #ffffff12; font-size: 10px; color: #a6a39f; }.workflow__tabs { display: flex; gap: 4px; }.workflow__tabs button { padding: 7px 12px; border: 0; border-radius: 5px; background: none; color: #aaa6a1; font: 11px var(--lp-sans); cursor: pointer; }.workflow__tabs button[aria-pressed='true'] { background: #ffffff12; color: #fff; }

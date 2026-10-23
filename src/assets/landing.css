@@ -14,3 +14,4 @@
 }
 html:has(.lp), html:has(.lp) body { background: #000; }
 .lp ::selection { background: var(--lp-orange); color: #000; }
+.lp .editorial-line-mask { padding-block: 0.08em; margin-block: -0.08em; }

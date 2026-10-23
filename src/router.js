@@ -11,7 +11,9 @@ const router = createRouter({
   routes: [
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
-    { path: '/blog/como-funciona', alias: ['/como-funciona', '/blog'], component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },
+    { path: '/blog', alias: '/news', component: () => import('./views/BlogView.vue'), meta: { bare: true } },
+    { path: '/blog/como-funciona', alias: '/como-funciona', component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },
+    { path: '/blog/:slug', component: () => import('./views/BlogArticleView.vue'), meta: { bare: true } },
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
     // Área logada do Novexo: meta.app = renderiza dentro da AppShell (App.vue); area marca o item do trilho
     { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Começar', icon: 'rocket' } },
