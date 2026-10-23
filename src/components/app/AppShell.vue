@@ -171,10 +171,11 @@ onUnmounted(() => {
       <NotesDock class="rail__dock" />
     </nav>
 
-    <aside ref="sidebar" class="side" :aria-hidden="collapsed" :inert="collapsed">
+    <!-- Ajustes têm o próprio menu: a barra "Trabalho" some (v-show guarda a largura do recolher) -->
+    <aside v-show="route.meta.area !== 'settings'" ref="sidebar" class="side" :aria-hidden="collapsed" :inert="collapsed">
       <div class="side__inner"><SideNav @collapse="toggleSidebar" /></div>
     </aside>
-    <button v-if="collapsed" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
+    <button v-if="collapsed && route.meta.area !== 'settings'" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
 
     <main class="main">
       <div class="crumb"><AppIcon :name="route.meta.icon || 'work'" :size="16" /> {{ title }}<slot name="crumb" /></div>

@@ -567,10 +567,18 @@ async function onImport(e) {
 </template>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 1rem; max-width: 68rem; padding: 1.25rem 1.5rem; }
+.page { box-sizing: border-box; display: flex; flex-direction: column; gap: 1rem; max-width: 68rem; height: 100%; padding: 1.25rem 1.5rem; }
 h1 { margin: 0; font: 650 1.375rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); }
-.layout { display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-@media (max-width: 760px) { .layout { grid-template-columns: minmax(0, 1fr); } .tabs__group { flex-direction: row; flex-wrap: wrap; } }
+.layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+/* categorias e conteúdo rolam cada um no seu espaço, a página fica parada */
+.tabs, .panel { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.tabs { padding-right: 0.25rem; scrollbar-width: thin; }
+@media (max-width: 760px) {
+  .page { height: auto; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .tabs, .panel { max-height: none; overflow: visible; }
+  .tabs__group { flex-direction: row; flex-wrap: wrap; }
+}
 .tabs { display: flex; flex-direction: column; gap: 0.75rem; }
 .tabs__group { display: flex; flex-direction: column; gap: 1px; }
 .tabs__label { padding: 0 0.6rem 0.2rem; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
