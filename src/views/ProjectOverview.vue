@@ -34,6 +34,8 @@ const LINKS = computed(() => [
   { icon: 'cycle', label: 'Ciclos', n: cycles.value.length, to: '/ciclos', hint: 'sprints com começo e fim', key: 'cycles' },
   { icon: 'module', label: 'Módulos', n: state.modules.filter((m) => m.project === pid.value).length, to: '/modulos', hint: 'partes do projeto', key: 'modules' },
   { icon: 'page', label: 'Páginas', n: state.pages.filter((x) => x.project === pid.value && !x.archived).length, to: '/paginas', hint: 'documentos e decisões', key: 'pages' },
+  { icon: 'chat', label: 'Chat', n: 'Converse', to: '/chat', hint: 'com o time e com a @novexo' },
+  { icon: 'user', label: 'Membros', n: p.value?.members?.length || 1, to: '/membros', hint: p.value?.my_permission === 'full' ? 'convide pessoas' : 'quem participa' },
 ].filter((l) => !l.key || state.prefs.features[l.key]))
 const updates = computed(() => feed.value.filter((a) => a.details.kind === 'update'))
 const stateOf = (id) => UPDATE_STATES.find((s) => s.id === id) || UPDATE_STATES[0]

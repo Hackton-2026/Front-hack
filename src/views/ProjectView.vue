@@ -83,6 +83,7 @@ onMounted(() => moveInk(false))
       </div>
       <div class="head__right">
         <RouterLink :to="`/projetos/${p.id}/membros`" class="people" :title="`${people.length} ${people.length === 1 ? 'pessoa' : 'pessoas'} no projeto`"><Avatars :ids="people" :size="26" /></RouterLink>
+        <GooeyButton variant="secondary" :to="`/projetos/${p.id}/chat`">Chat</GooeyButton>
         <GooeyButton v-if="p.my_permission === 'full'" variant="secondary" :to="`/projetos/${p.id}/membros`">Convidar</GooeyButton>
         <GooeyButton v-if="canEdit" variant="primary" @click="add">Novo item de trabalho</GooeyButton>
       </div>

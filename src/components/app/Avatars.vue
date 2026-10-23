@@ -13,7 +13,7 @@ const initials = (name) => name.split(' ').map((w) => w[0]).slice(0, 2).join('')
       <template v-else>{{ initials(member(id)?.name || '?') }}</template>
     </span>
     <span v-if="ids.length > 3" class="av more">+{{ ids.length - 3 }}</span>
-    <span v-if="!ids.length" class="av empty" title="Sem responsável" />
+    <span v-if="!ids.length" class="av none" title="Sem responsável" />
   </span>
 </template>
 
@@ -24,5 +24,5 @@ const initials = (name) => name.split(' ').map((w) => w[0]).slice(0, 2).join('')
 .av { overflow: hidden; }
 .av img { width: 100%; height: 100%; object-fit: cover; }
 .av.more { background: var(--surface-2); color: var(--muted); }
-.av.empty { border: 1.5px dashed var(--line-strong); background: none; }
+.av.none { border: 1.5px dashed var(--line-strong); background: none; } /* "none", não "empty": o tema global tem um .empty com padding grande */
 </style>

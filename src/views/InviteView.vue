@@ -13,7 +13,7 @@ const router = useRouter()
 const { user, logout } = useAuth()
 const { inviteInfo, acceptInvite, declineInvite } = useWorkspace()
 const ui = useUi()
-ui.crumb = 'Convite para projeto'
+ui.ui.crumb = 'Convite para projeto'
 
 const PERM = { view: 'ver', comment: 'comentar', edit: 'editar', full: 'acesso total' }
 const inv = ref(null)

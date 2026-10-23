@@ -7,6 +7,8 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import AppIcon from '../components/app/AppIcon.vue'
+import AiItems from '../components/app/AiItems.vue'
+import AiMarkdown from '../components/app/AiMarkdown.vue'
 
 const POLL_MS = 3000
 const props = defineProps({ id: { type: [String, Number], required: true } })
@@ -74,7 +76,7 @@ async function start() {
 watch(pid, start)
 onMounted(() => { start(); document.addEventListener('visibilitychange', poll) })
 onUnmounted(() => { generation++; clearInterval(timer); document.removeEventListener('visibilitychange', poll) })
-watch(p, (v) => (ui.crumb = v ? `${v.name} › Chat` : 'Chat'), { immediate: true })
+watch(p, (v) => (ui.ui.crumb = v ? `${v.name} › Chat` : 'Chat'), { immediate: true })
 
 async function send() {
   const body = text.value.trim()
@@ -146,7 +148,8 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
         </span>
         <div class="bubble">
           <header v-if="!sameAuthor(i)"><strong>{{ m.is_ai ? 'Novexo IA' : m.author?.name || 'Alguém que saiu' }}</strong><time :datetime="m.created_at">{{ time(m.created_at) }}</time></header>
-          <p><template v-for="(x, k) in parts(m.body)" :key="k"><strong v-if="x.bold">{{ x.t }}</strong><mark v-else-if="x.at" :class="{ nvx: x.t.toLowerCase().startsWith('@novexo') }">{{ x.t }}</mark><template v-else>{{ x.t }}</template></template></p>
+          <template v-if="m.is_ai"><AiMarkdown :text="m.body" /><AiItems :items="m.items || []" /></template>
+          <p v-else><template v-for="(x, k) in parts(m.body)" :key="k"><strong v-if="x.bold">{{ x.t }}</strong><mark v-else-if="x.at" :class="{ nvx: x.t.toLowerCase().startsWith('@novexo') }">{{ x.t }}</mark><template v-else>{{ x.t }}</template></template></p>
         </div>
       </article>
       <div v-for="a in pending" :key="a.token" class="confirm">

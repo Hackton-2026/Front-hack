@@ -9,10 +9,21 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useOnboarding } from '../composables/useOnboarding'
 import AppIcon from '../components/app/AppIcon.vue'
 import AsciiSharks from '../components/app/AsciiSharks.vue'
+import AiItems from '../components/app/AiItems.vue'
+import AiMarkdown from '../components/app/AiMarkdown.vue'
 
 const SUGGESTIONS = ['O que está atrasado e quem é o responsável?', 'Resuma minhas tarefas desta semana', 'Crie uma tarefa para revisar o contrato amanhã', 'Coloque minha próxima tarefa em andamento']
 const { user, loadMe } = useAuth()
-const { load } = useWorkspace()
+const { load, state, createDoc } = useWorkspace()
+// A wiki é pessoal e fica neste navegador: vai junto como contexto para a IA poder consultar (o servidor trata como dados)
+const wikiContext = () => state.docs.filter((d) => !d.archived).map((d) => ({ title: d.title, body: d.body }))
+// Páginas de wiki que a IA criou: quem cria de verdade é o front (a wiki mora aqui)
+function applyItems(items = []) {
+  for (const it of items) {
+    if (it.type === 'wiki' && !it.docId) it.docId = createDoc({ title: it.title, body: it.body || '' }).id
+  }
+  return items
+}
 const { complete } = useOnboarding()
 const messages = ref([])
 const pending = ref([])
@@ -41,8 +52,9 @@ async function send(content = text.value.trim()) {
   complete('ai')
   animateLast(); scroll()
   try {
-    const { reply, changed, pending: asked = [] } = await api('/api/ai/chat/', { method: 'POST', body: { messages: messages.value } })
-    messages.value.push({ role: 'assistant', content: reply })
+    const history = messages.value.map(({ role, content }) => ({ role, content }))
+    const { reply, changed, pending: asked = [], items = [] } = await api('/api/ai/chat/', { method: 'POST', body: { messages: history, wiki: wikiContext() } })
+    messages.value.push({ role: 'assistant', content: reply, items: applyItems(items) })
     pending.value = asked
     if (changed) refresh()
   } catch (e) {
@@ -60,8 +72,8 @@ async function decide(action, ok) {
     messages.value.push({ role: 'user', content: `Cancelei: ${action.summary}` })
   } else {
     try {
-      await api('/api/ai/confirm/', { method: 'POST', body: { token: action.token } })
-      messages.value.push({ role: 'assistant', content: `Feito: ${action.summary}` })
+      const res = await api('/api/ai/confirm/', { method: 'POST', body: { token: action.token } })
+      messages.value.push({ role: 'assistant', content: `Feito: ${action.summary}`, items: applyItems(res.items) })
       refresh()
     } catch (e) {
       error.value = describe(e)
@@ -78,7 +90,10 @@ async function decide(action, ok) {
 
     <div ref="list" class="msgs" aria-live="polite">
       <template v-if="messages.length">
-        <p v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">{{ m.content }}</p>
+        <template v-for="(m, i) in messages" :key="i">
+          <p v-if="m.role === 'user'" class="msg user">{{ m.content }}</p>
+          <div v-else class="msg assistant"><AiMarkdown :text="m.content" /><AiItems :items="m.items" /></div>
+        </template>
         <div v-for="p in pending" :key="p.token" class="confirm">
           <p>{{ p.summary }}?</p>
           <div class="confirm__actions">
@@ -175,4 +190,5 @@ async function decide(action, ok) {
 .error a { margin-left: 0.4rem; color: var(--ai-shark-soft); }
 :is(.sug, .send, .btn):focus-visible { outline: 2px solid var(--ai-shark-soft); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .typing span { animation: none; } }
+.msg.assistant { max-width: 88%; white-space: normal; }
 </style>

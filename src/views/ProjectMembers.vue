@@ -40,7 +40,7 @@ async function refresh() {
   }
 }
 watch(pid, () => { confirming.value = null; refresh() }, { immediate: true })
-watch(p, (v) => (ui.crumb = v ? `${v.name} › Membros` : 'Membros'), { immediate: true })
+watch(p, (v) => (ui.ui.crumb = v ? `${v.name} › Membros` : 'Membros'), { immediate: true })
 
 const valid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()))
 const inviteLink = (inv) => `${location.origin}/convite/${inv.token}`
