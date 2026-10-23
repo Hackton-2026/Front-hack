@@ -1,5 +1,11 @@
 // Conteúdo dos megamenus (mesma estrutura do nav do leonardo.ai: grupos com ícone + título + descrição, e um card em destaque)
 // Ícones: traço 24x24, desenhados com stroke="currentColor"
+// Cards em destaque: cartazes do Patronato Nacional del Turismo (1929-1936), acervo The Museum of Tourism via Google Arts & Culture
+import elche from '../../assets/landing/nav/elche.webp'
+import malaga from '../../assets/landing/nav/malaga.webp'
+import sardinero from '../../assets/landing/nav/sardinero.webp'
+import salamanca from '../../assets/landing/nav/salamanca.webp'
+
 export const ICONS = {
   tasks: 'M4 4h16v16H4z M8 12l3 3 5-6',
   board: 'M4 4h4v16H4z M10 4h4v10h-4z M16 4h4v7h-4z',
@@ -49,7 +55,7 @@ export const MENU = [
         { group: 'Destaques', links: ['Novexo IA', 'Modelos prontos', 'Painéis', 'Controle de tempo'], more: 'Ver todos os recursos' },
       ],
     ],
-    feature: { title: 'Novo no Novexo? Aprenda o básico.', cta: 'Começar', art: 'a' },
+    feature: { title: 'Novo no Novexo? Aprenda o básico.', cta: 'Começar', art: elche },
   },
   {
     id: 'solucoes',
@@ -66,7 +72,7 @@ export const MENU = [
         { icon: 'cap', title: 'Educação', desc: 'Turmas, trabalhos e cronogramas' },
       ] }],
     ],
-    feature: { title: 'Dá para usar o Novexo com clientes?', cta: 'Veja como', art: 'b' },
+    feature: { title: 'Dá para usar o Novexo com clientes?', cta: 'Veja como', art: malaga },
   },
   {
     id: 'empresas',
@@ -77,7 +83,7 @@ export const MENU = [
         { icon: 'terminal', title: 'API e integrações', desc: 'Construa fluxos sob medida' },
       ] }],
     ],
-    feature: { title: 'Como um time de 40 pessoas cortou 30% das reuniões', cta: 'Ler o case', art: 'c' },
+    feature: { title: 'Como um time de 40 pessoas cortou 30% das reuniões', cta: 'Ler o case', art: sardinero },
   },
   {
     id: 'aprender',
@@ -89,7 +95,7 @@ export const MENU = [
         { icon: 'play', title: 'Webinars', desc: 'Sessões ao vivo e gravadas.' },
       ] }],
     ],
-    feature: { title: 'Como escrever tarefas que se explicam sozinhas', cta: 'Saiba mais', art: 'd' },
+    feature: { title: 'Como escrever tarefas que se explicam sozinhas', cta: 'Saiba mais', art: salamanca },
   },
   { id: 'planos', label: 'Preços', href: '#planos' },
   { id: 'contato', label: 'Contato', href: '#contato' },
