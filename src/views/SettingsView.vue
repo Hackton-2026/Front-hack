@@ -2,6 +2,7 @@
 // Ajustes no molde das settings do Plane e do ClickUp. Preferências pessoais ficam no navegador;
 // o resto é do workspace e vai para a API (/api/workspace/ settings, membros, times, itens, horas, webhooks e tokens).
 import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { parseCsv, toCsv } from '../utils/csv'
 import { api } from '../services/api'
@@ -96,7 +97,9 @@ const LISTS = {
 
 const { user, updateMe, logout } = useAuth()
 const { state, PRIORITIES, STATUSES, project, member, saveWorkspace, updateProject, archiveProject, createTask, updateTask, clearLocal, load } = useWorkspace()
-const tab = ref('profile')
+const route = useRoute()
+const tab = ref(route.query.tab || 'profile') // o menu da conta abre direto em Perfil ou Preferências
+watch(() => route.query.tab, (t) => { if (t) tab.value = t })
 const panel = ref(null)
 const status = ref('')
 const confirm2 = ref('') // ação perigosa esperando o segundo clique

@@ -21,6 +21,7 @@ export const ICON = {
   check: 'M5 12.5l4.5 4.5L19 7.5',
   arrow: 'M7 17L17 7 M8 7h9v9',
   doc: 'M6 3h9l4 4v14H6z M14 3v5h5',
+  logout: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3 M10 17l-5-5 5-5 M5 12h11',
   user: 'M12 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8 M4 21c0-4 4-6 8-6s8 2 8 6',
   chat: 'M4 5h16v11H9l-5 4z',
   keyboard: 'M3 6h18v12H3z M7 10h.01 M11 10h.01 M15 10h.01 M7 14h10',
