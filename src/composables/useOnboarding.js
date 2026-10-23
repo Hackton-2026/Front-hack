@@ -5,7 +5,7 @@ import { computed, ref, watch } from 'vue'
 export const STEPS = [
   { id: 'project', title: 'Criar um projeto', hint: 'Um espaço para as tarefas de uma área ou cliente.' },
   { id: 'task', title: 'Criar uma tarefa', hint: 'Dê um título, um responsável e um prazo.' },
-  { id: 'invite', title: 'Convidar o time', hint: 'Quem entra já vê as tarefas atribuídas a si.' },
+  { id: 'invite', title: 'Convidar alguém para um projeto', hint: 'Quem entra vê só aquele projeto: tarefas, páginas e chat.' },
   { id: 'doc', title: 'Escrever um documento', hint: 'Specs e atas ao lado das tarefas.' },
   { id: 'ai', title: 'Conversar com a Novexo IA', hint: 'Peça um resumo do que está atrasado.' },
   { id: 'integration', title: 'Conectar uma integração', hint: 'GitHub, Notion, Discord e outras.' },

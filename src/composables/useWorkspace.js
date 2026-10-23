@@ -41,13 +41,13 @@ const localDefaults = () => ({
     pinned: [],
     features: { cycles: true, modules: true, views: true, pages: true },
     // Wiki (como no Plane): coleções de páginas e etiquetas das páginas
-    wiki: { collections: [{ id: 'geral', name: 'Geral' }], labels: [] },
+    wiki: { collections: [{ id: 'geral', name: 'Minhas páginas' }], labels: [] },
     stars: [],
     open: { workspace: true, projects: true, try: true },
     // Home: links rápidos e o que a pessoa abriu por último (kind:id)
     quicklinks: [
       { id: 'q1', title: 'Guia de início', url: '/comecar', at: new Date().toISOString() },
-      { id: 'q2', title: 'Wiki do time', url: '/wiki', at: new Date().toISOString() },
+      { id: 'q2', title: 'Sua wiki', url: '/wiki', at: new Date().toISOString() },
       { id: 'q3', title: 'Planos do Novexo', url: '/#planos', at: new Date().toISOString() },
     ],
     recents: [],
@@ -94,7 +94,9 @@ const state = reactive({
   workspaceName: '',
   slug: '',
   settings: {}, // seções de Workspace.settings (general, governance, products, identity, schedule, integrations)
-  members: [],
+  members: [], // do workspace (que é pessoal: normalmente só você)
+  people: [], // todo mundo dos seus projetos (os seus e os compartilhados com você): nomes, cores e fotos
+  invites: [], // convites para projetos que você recebeu e ainda não respondeu
   projects: [],
   tasks: [...local.drafts], // rascunhos locais + tarefas da API
   activity: [],
@@ -137,12 +139,12 @@ async function load() {
   try {
     // o workspace vem antes: no primeiro acesso é essa chamada que cria ele (as outras em paralelo disputariam a criação)
     const ws = await api('/api/workspace/')
-    const [projects, tasks, activity, inbox, cycles, modules, pages, views] = await Promise.all(
-      ['projects', 'tasks', 'activity', 'inbox', 'cycles', 'modules', 'pages', 'views'].map((r) => api(`/api/${r}/`)),
+    const [projects, tasks, activity, inbox, cycles, modules, pages, views, invites] = await Promise.all(
+      ['projects', 'tasks', 'activity', 'inbox', 'cycles', 'modules', 'pages', 'views', 'invites'].map((r) => api(`/api/${r}/`)),
     )
     Object.assign(state, {
-      me: ws.me, isAdmin: ws.is_admin, workspaceName: ws.name, slug: ws.slug, settings: ws.settings || {}, members: ws.members, projects, activity: activity.map(fromActivity), inbox,
-      cycles, modules, pages, views, loaded: true,
+      me: ws.me, isAdmin: ws.is_admin, workspaceName: ws.name, slug: ws.slug, settings: ws.settings || {}, members: ws.members, people: ws.people || [],
+      projects, activity: activity.map(fromActivity), inbox, cycles, modules, pages, views, invites, loaded: true,
     })
     state.tasks = [...state.tasks.filter((t) => t.draft), ...tasks.map(fromApi)]
   } catch (e) {
@@ -158,9 +160,10 @@ function refreshFeed() {
   clearTimeout(refreshTimer)
   refreshTimer = setTimeout(async () => {
     try {
-      const [activity, inbox] = await Promise.all([api('/api/activity/'), api('/api/inbox/')])
+      const [activity, inbox, invites] = await Promise.all([api('/api/activity/'), api('/api/inbox/'), api('/api/invites/')])
       state.activity = activity.map(fromActivity)
       state.inbox = inbox
+      state.invites = invites
     } catch { /* tenta de novo na próxima mudança */ }
   }, 300)
 }
@@ -170,7 +173,12 @@ const queues = new Map() // fila de PATCHes por tarefa
 
 export function useWorkspace() {
   const project = (id) => state.projects.find((p) => p.id === id)
-  const member = (id) => state.members.find((m) => m.id === id)
+  const member = (id) => state.people.find((m) => m.id === id) || state.members.find((m) => m.id === id)
+  // quem participa do projeto (pode ser responsável). Sem projeto: todo mundo dos seus projetos
+  const peopleOf = (projectId) => {
+    const ids = project(projectId)?.members
+    return ids ? ids.map(member).filter(Boolean) : state.people
+  }
   const status = (id) => STATUSES.find((s) => s.id === id) || STATUSES[0]
   const priority = (id) => PRIORITIES.find((p) => p.id === id)
   const code = (task) => task.code || (task.draft ? 'Rascunho' : '…')
@@ -178,7 +186,7 @@ export function useWorkspace() {
   const mine = computed(() => state.tasks.filter((t) => !t.draft && t.assignees.includes(state.me)))
   const drafts = computed(() => state.tasks.filter((t) => t.draft))
   const isOverdue = (t) => t.due && t.status !== 'done' && t.due < day(0)
-  const unread = computed(() => state.inbox.filter((n) => !n.read).length)
+  const unread = computed(() => state.inbox.filter((n) => !n.read).length + state.invites.length) // convites pendentes também contam
 
   // Cria na hora com id temporário; quando a API responde, a mesma tarefa ganha o id e o código reais
   function createTask(fields) {
@@ -416,6 +424,38 @@ export function useWorkspace() {
     const list = tasksOf(projectId)
     return list.length ? list.filter((t) => t.status === 'done').length / list.length : 0
   }
+  // ---- pessoas do projeto e convites (o workspace é seu; convites são para projetos)
+  const projectMembers = (pid) => api(`/api/projects/${pid}/members/`)
+  const inviteToProject = (pid, email, permission) => api(`/api/projects/${pid}/invitations/`, { method: 'POST', body: { email, permission } })
+  const cancelInvite = (pid, inviteId) => api(`/api/projects/${pid}/invitations/${inviteId}/`, { method: 'DELETE' })
+  const setProjectPermission = (pid, userId, permission) => api(`/api/projects/${pid}/members/${userId}/`, { method: 'PATCH', body: { permission } })
+  async function removeProjectMember(pid, userId) {
+    await api(`/api/projects/${pid}/members/${userId}/`, { method: 'DELETE' })
+    if (userId === state.me) {
+      // saiu do projeto: ele e as tarefas dele somem daqui
+      state.projects = state.projects.filter((p) => p.id !== pid)
+      state.tasks = state.tasks.filter((t) => t.draft || t.projectId !== pid)
+    } else {
+      const p = project(pid)
+      if (p?.members) p.members = p.members.filter((id) => id !== userId)
+    }
+  }
+  const inviteInfo = (token) => api(`/api/invites/${encodeURIComponent(token)}/`)
+  async function acceptInvite(token) {
+    const res = await api(`/api/invites/${encodeURIComponent(token)}/accept/`, { method: 'POST' })
+    state.invites = state.invites.filter((i) => i.token !== token)
+    state.loaded = false
+    await load() // o projeto novo, as tarefas dele e as pessoas entram de uma vez
+    return res
+  }
+  async function declineInvite(token) {
+    await api(`/api/invites/${encodeURIComponent(token)}/decline/`, { method: 'POST' })
+    state.invites = state.invites.filter((i) => i.token !== token)
+  }
+  // ---- chat do projeto
+  const projectMessages = (pid, after) => api(`/api/projects/${pid}/messages/${after ? `?after=${after}` : ''}`)
+  const sendProjectMessage = (pid, body) => api(`/api/projects/${pid}/messages/`, { method: 'POST', body: { body } })
+
   function clearLocal() {
     state.tasks = state.tasks.filter((t) => !t.draft)
     state.docs = localDefaults().docs
@@ -425,7 +465,9 @@ export function useWorkspace() {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
     load, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, addComment, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
-    starred, toggleStar, doneRatio, touchRecent,
+    starred, toggleStar, doneRatio, touchRecent, peopleOf,
+    projectMembers, inviteToProject, cancelInvite, setProjectPermission, removeProjectMember, inviteInfo, acceptInvite, declineInvite,
+    projectMessages, sendProjectMessage,
     today: () => day(0), day,
   }
 }

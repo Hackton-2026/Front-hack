@@ -12,7 +12,7 @@ import ProgressRing from '../components/app/ProgressRing.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const router = useRouter()
-const { state, project, today, day, doneRatio, createItem, updateItem, removeItem, starred, toggleStar, member } = useWorkspace()
+const { state, project, today, day, doneRatio, createItem, updateItem, removeItem, starred, toggleStar, member, peopleOf } = useWorkspace()
 const { ui } = useUi()
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
@@ -137,7 +137,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
       </div>
       <div class="row2">
         <label class="f"><span>Situação</span><select v-model="form.state"><option v-for="s in MODULE_STATES" :key="s.id" :value="s.id">{{ s.name }}</option></select></label>
-        <label class="f"><span>Líder</span><select v-model="form.lead"><option :value="null">Sem líder</option><option v-for="x in state.members" :key="x.id" :value="x.id">{{ x.name }}</option></select></label>
+        <label class="f"><span>Líder</span><select v-model="form.lead"><option :value="null">Sem líder</option><option v-for="x in peopleOf(pid)" :key="x.id" :value="x.id">{{ x.name }}</option></select></label>
       </div>
       <p v-if="err" class="err" role="alert">{{ err }}</p>
       <template #footer>

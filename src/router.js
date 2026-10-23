@@ -26,6 +26,10 @@ const router = createRouter({
     { path: '/projetos/:id/visoes/:view', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Visão', icon: 'layers' } },
     { path: '/projetos/:id/paginas', component: () => import('./views/PagesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Páginas', icon: 'page' } },
     { path: '/projetos/:id/paginas/:page', component: () => import('./views/PageEditor.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Página', icon: 'page' } },
+    // Pessoas do projeto: convites e chat (com a Novexo IA via @novexo)
+    { path: '/projetos/:id/membros', component: () => import('./views/ProjectMembers.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Membros', icon: 'user' } },
+    { path: '/projetos/:id/chat', component: () => import('./views/ProjectChat.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Chat', icon: 'chat' } },
+    { path: '/convite/:token', component: () => import('./views/InviteView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Convite', icon: 'user' } },
     // "Mais" do workspace
     { path: '/visoes', component: () => import('./views/ViewsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Visões', icon: 'layers' } },
     { path: '/ciclos', component: () => import('./views/CyclesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Ciclos ativos', icon: 'cycle' } },

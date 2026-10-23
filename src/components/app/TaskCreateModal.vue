@@ -8,7 +8,7 @@ import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import GooeyButton from '../GooeyButton.vue'
 
-const { state, STATUSES, PRIORITIES, createTask, code } = useWorkspace()
+const { state, STATUSES, PRIORITIES, createTask, code, peopleOf } = useWorkspace()
 const { complete } = useOnboarding()
 const { ui, closeNew, openTask } = useUi()
 const form = reactive({})
@@ -30,6 +30,12 @@ watch(() => ui.creating, async (defaults) => {
   if (!prefersReducedMotion()) gsap.fromTo(box.value, { scale: 0.96, y: 10, autoAlpha: 0 }, { scale: 1, y: 0, autoAlpha: 1, duration: 0.3, ease: 'power3.out' })
 })
 
+// trocou de projeto: tira quem não participa do projeto novo (o servidor recusaria a tarefa)
+watch(() => form.projectId, (pid) => {
+  if (!pid || !form.assignees) return
+  const allowed = new Set(peopleOf(pid).map((m) => m.id))
+  form.assignees = form.assignees.filter((id) => allowed.has(id))
+})
 function toggleMember(id) {
   form.assignees = form.assignees.includes(id) ? form.assignees.filter((a) => a !== id) : [...form.assignees, id]
 }
@@ -74,7 +80,7 @@ function save(draft) {
       </div>
       <fieldset class="people">
         <legend>Responsáveis</legend>
-        <button v-for="m in state.members" :key="m.id" type="button" class="chip" :class="{ 'is-on': form.assignees.includes(m.id) }" :aria-pressed="form.assignees.includes(m.id)" @click="toggleMember(m.id)">
+        <button v-for="m in peopleOf(form.projectId)" :key="m.id" type="button" class="chip" :class="{ 'is-on': form.assignees.includes(m.id) }" :aria-pressed="form.assignees.includes(m.id)" @click="toggleMember(m.id)">
           <span class="dot" :style="{ background: m.color }" />{{ m.name }}
         </button>
       </fieldset>

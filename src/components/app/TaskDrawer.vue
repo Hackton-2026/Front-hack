@@ -9,7 +9,7 @@ import AppIcon from './AppIcon.vue'
 import Avatars from './Avatars.vue'
 import StatusBadge from './StatusBadge.vue'
 
-const { state, STATUSES, PRIORITIES, code, member, status, createTask, updateTask, removeTask, taskActivity, taskComments, addComment } = useWorkspace()
+const { state, STATUSES, PRIORITIES, code, member, status, createTask, updateTask, removeTask, taskActivity, taskComments, addComment, peopleOf } = useWorkspace()
 const { ui, closeTask, openTask, toast } = useUi()
 const task = computed(() => state.tasks.find((t) => t.id === ui.taskId))
 const saved = computed(() => typeof task.value?.id === 'number')
@@ -134,6 +134,11 @@ async function copyCode() {
     toast('Código copiado.')
   } catch { toast('Não deu para copiar.') }
 }
+// mudou de projeto: só ficam como responsáveis as pessoas que participam do projeto novo
+function moveTo(projectId) {
+  const allowed = new Set(peopleOf(projectId).map((m) => m.id))
+  set({ projectId, assignees: task.value.assignees.filter((id) => !projectId || allowed.has(id)) })
+}
 function publish() { if (task.value.projectId) set({ draft: false }) }
 function destroy() {
   if (!confirmDelete.value) { confirmDelete.value = true; return }
@@ -195,7 +200,7 @@ function destroy() {
               <span>{{ task.assignees.length === 1 ? member(task.assignees[0])?.name.split(' ')[0] : task.assignees.length ? `${task.assignees.length} pessoas` : 'Responsáveis' }}</span>
             </button>
             <div v-if="people" class="menu" role="menu">
-              <button v-for="m in state.members" :key="m.id" type="button" role="menuitemcheckbox" :aria-checked="task.assignees.includes(m.id)" @click="toggleMember(m.id)">
+              <button v-for="m in peopleOf(task.projectId)" :key="m.id" type="button" role="menuitemcheckbox" :aria-checked="task.assignees.includes(m.id)" @click="toggleMember(m.id)">
                 <span class="dot" :style="{ background: m.color }" />{{ m.name }}<AppIcon v-if="task.assignees.includes(m.id)" name="check" :size="13" class="tick" />
               </button>
             </div>
@@ -255,7 +260,7 @@ function destroy() {
           <button type="button" class="fold" :aria-expanded="open.structure" @click="open.structure = !open.structure">Estrutura do projeto <AppIcon name="chevron" :size="12" /></button>
           <dl v-if="open.structure" class="props">
             <dt><AppIcon name="folder" :size="15" />Projeto</dt>
-            <dd><select :value="task.projectId || ''" aria-label="Projeto" @change="set({ projectId: Number($event.target.value) || null })"><option value="">Sem projeto</option><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select></dd>
+            <dd><select :value="task.projectId || ''" aria-label="Projeto" @change="moveTo(Number($event.target.value) || null)"><option value="">Sem projeto</option><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select></dd>
             <template v-if="task.projectId">
               <dt><AppIcon name="cycle" :size="15" />Ciclo</dt>
               <dd><select :value="task.cycle || ''" aria-label="Ciclo" @change="set({ cycle: Number($event.target.value) || null })"><option value="">Sem ciclo</option><option v-for="c in state.cycles.filter((c) => c.project === task.projectId)" :key="c.id" :value="c.id">{{ c.name }}</option></select></dd>

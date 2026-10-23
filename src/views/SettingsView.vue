@@ -12,7 +12,7 @@ import SettingsList from '../components/app/SettingsList.vue'
 
 const GROUPS = [
   { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações']] },
-  { label: 'Administração', tabs: [['general', 'Geral'], ['members', 'Membros'], ['billing', 'Planos e cobrança'], ['import', 'Importar'], ['export', 'Exportar'], ['worklogs', 'Registros de horas'], ['identity', 'Identidade'], ['governance', 'Governança'], ['schedule', 'Cronograma de trabalho']] },
+  { label: 'Administração', tabs: [['general', 'Geral'], ['members', 'Pessoas'], ['billing', 'Planos e cobrança'], ['import', 'Importar'], ['export', 'Exportar'], ['worklogs', 'Registros de horas'], ['identity', 'Identidade'], ['governance', 'Governança'], ['schedule', 'Cronograma de trabalho']] },
   { label: 'Produtos', tabs: [['wiki', 'Wiki'], ['ai', 'Novexo IA']] },
   { label: 'Recursos', tabs: [['projects', 'Projetos'], ['teams', 'Times'], ['initiatives', 'Iniciativas'], ['customers', 'Clientes'], ['templates', 'Modelos'], ['tags', 'Etiquetas'], ['integrations', 'Integrações'], ['releases', 'Lançamentos']] },
   { label: 'Desenvolvedores', tabs: [['webhooks', 'Webhooks'], ['tokens', 'Tokens de API']] },
@@ -80,11 +80,6 @@ const LISTS = {
     { key: 'date', label: 'Dia', type: 'date' },
     { key: 'note', label: 'Nota' },
   ] },
-  invitations: { path: '/api/invitations/', noun: 'convite', admin: true, editable: false, fields: [
-    { key: 'email', label: 'E-mail', type: 'email', required: true },
-    { key: 'role', label: 'Papel', type: 'select', required: true, options: opts(ROLES) },
-    { key: 'expires_at', label: 'Vale até', type: 'readonly' },
-  ] },
   webhooks: { path: '/api/webhooks/', noun: 'webhook', admin: true, fields: [
     { key: 'url', label: 'URL', type: 'url', required: true },
     { key: 'events', label: 'Eventos', type: 'multi', options: opts([['task', 'Tarefas'], ['project', 'Projetos'], ['comment', 'Comentários'], ['member', 'Membros']]) },
@@ -99,7 +94,7 @@ const LISTS = {
 }
 
 const { user, updateMe, logout } = useAuth()
-const { state, PRIORITIES, STATUSES, project, member, saveWorkspace, setMemberRole, removeMember, updateProject, archiveProject, createTask, updateTask, clearLocal, load } = useWorkspace()
+const { state, PRIORITIES, STATUSES, project, member, saveWorkspace, updateProject, archiveProject, createTask, updateTask, clearLocal, load } = useWorkspace()
 const tab = ref('profile')
 const panel = ref(null)
 const status = ref('')
@@ -131,13 +126,10 @@ const schedule = section('schedule', { days: [1, 2, 3, 4, 5], start: '09:00', en
 const setSetting = (name, key, value) => saveWorkspace({ settings: { [name]: { [key]: value } } })
 const SECTION_TOGGLES = {
   governance: [
-    ['membersInvite', 'Membros podem convidar', 'Se desligado, só administradores convidam.'],
-    ['guestsSeeAll', 'Convidados veem todos os projetos', 'Se desligado, só os projetos em que foram adicionados.'],
     ['publicPages', 'Permitir páginas públicas', 'Páginas da wiki e dos projetos com link aberto.'],
   ],
   identity: [
     ['googleOnly', 'Exigir login com Google', 'Desliga o login com senha para este workspace.'],
-    ['autoJoin', 'Entrada automática pelo domínio', 'Quem tem e-mail de um domínio verificado entra como membro.'],
   ],
 }
 
@@ -371,21 +363,23 @@ async function onImport(e) {
         </template>
 
         <template v-else-if="tab === 'members'">
+          <!-- O workspace é pessoal: pessoas entram em PROJETOS, por convite, na página "Membros" de cada projeto -->
+          <p class="hint">Seu workspace é só seu: notas, wiki e rascunhos ficam com você. Para trabalhar junto, convide pessoas para um <strong>projeto</strong>; elas veem só aquele projeto.</p>
           <ul class="rows">
-            <li v-for="m in state.members" :key="m.id">
-              <span class="av" :style="{ background: m.color }">{{ m.name.slice(0, 2).toUpperCase() }}</span>
-              <span class="grow">{{ m.name }}<small v-if="m.id === state.me" class="muted"> · você</small></span>
-              <select v-if="isAdmin && m.role !== 'owner'" :value="m.role" :aria-label="`Papel de ${m.name}`" @change="setMemberRole(m, $event.target.value)">
-                <option v-for="[id, label] in ROLES" :key="id" :value="id">{{ label }}</option>
-              </select>
-              <small v-else class="muted">{{ ROLE_NAMES[m.role] }}</small>
-              <button v-if="isAdmin && m.role !== 'owner'" type="button" class="link rm" @click="twice(`m${m.id}`, () => removeMember(m))">{{ confirm2 === `m${m.id}` ? 'Confirmar' : 'Remover' }}</button>
+            <li v-for="m in state.people" :key="m.id">
+              <span class="av" :style="{ background: m.color }"><img v-if="m.avatar" :src="m.avatar" alt="" class="av-img" /><template v-else>{{ m.name.slice(0, 2).toUpperCase() }}</template></span>
+              <span class="grow">{{ m.name }}<small v-if="m.id === state.me" class="muted"> · você</small>
+                <small class="muted block">{{ state.projects.filter((p) => p.members?.includes(m.id)).map((p) => p.name).join(', ') || 'Nenhum projeto em comum' }}</small>
+              </span>
             </li>
           </ul>
-          <template v-if="isAdmin">
-            <h3>Convites pendentes</h3>
-            <SettingsList v-bind="LISTS.invitations" />
-          </template>
+          <h3>Membros por projeto</h3>
+          <ul class="rows">
+            <li v-for="p in state.projects" :key="p.id">
+              <span class="grow">{{ p.name }}<small class="muted"> · {{ p.members?.length || 1 }} {{ (p.members?.length || 1) === 1 ? 'pessoa' : 'pessoas' }}<template v-if="p.shared"> · de {{ p.owner_name }}</template></small></span>
+              <RouterLink :to="`/projetos/${p.id}/membros`" class="link">{{ p.my_permission === 'full' ? 'Convidar e gerenciar' : 'Ver membros' }}</RouterLink>
+            </li>
+          </ul>
         </template>
 
         <template v-else-if="tab === 'billing'">
@@ -641,4 +635,6 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .danger:hover { background: rgb(255 91 77 / 0.1); }
 .status { margin: 0; font-size: 12.5px; color: var(--accent-soft); }
 :is(.tabs button, .link, .switch, .danger, .swatch, .days button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+.av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.block { display: block; }
 </style>

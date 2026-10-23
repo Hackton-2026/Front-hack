@@ -1,14 +1,36 @@
 <script setup>
 // Caixa de entrada: o histórico do workspace com marcação de lido (a "Inbox" do ClickUp e do Plane)
 import { computed, nextTick, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 
 const props = defineProps({ open: Boolean })
 const emit = defineEmits(['close'])
-const { state, unread, markRead, markAllRead } = useWorkspace()
-const { openTask } = useUi()
+const { state, unread, markRead, markAllRead, acceptInvite, declineInvite } = useWorkspace()
+const { openTask, toast } = useUi()
+const router = useRouter()
+const PERM = { view: 'ver', comment: 'comentar', edit: 'editar', full: 'acesso total' }
+const answering = ref(null)
+// convites para projetos que chegaram para você
+async function answer(inv, ok) {
+  answering.value = inv.token
+  try {
+    if (ok) {
+      const res = await acceptInvite(inv.token)
+      toast(`Você entrou no projeto ${res.project_name}.`)
+      emit('close')
+      router.push(`/projetos/${res.project}/visao-geral`)
+    } else {
+      await declineInvite(inv.token)
+    }
+  } catch (e) {
+    toast(e.message)
+  } finally {
+    answering.value = null
+  }
+}
 const tab = ref('all')
 const box = ref(null)
 const items = computed(() => state.inbox.filter((n) => tab.value === 'all' || !n.read))
@@ -44,6 +66,15 @@ watch(() => props.open, async (v) => {
       <button type="button" role="tab" :aria-selected="tab === 'all'" @click="tab = 'all'">Tudo</button>
       <button type="button" role="tab" :aria-selected="tab === 'unread'" @click="tab = 'unread'">Não lidas <span v-if="unread">{{ unread }}</span></button>
     </div>
+    <ul v-if="state.invites.length" class="invites" aria-label="Convites para projetos">
+      <li v-for="inv in state.invites" :key="inv.token" class="invite">
+        <span class="text"><strong>{{ inv.invited_by || 'Alguém' }}</strong> convidou você para <strong>{{ inv.project_name }}</strong> ({{ PERM[inv.permission] }})</span>
+        <span class="btns">
+          <button type="button" class="accept" :disabled="answering === inv.token" @click="answer(inv, true)">Aceitar</button>
+          <button type="button" class="decline" :disabled="answering === inv.token" @click="answer(inv, false)">Recusar</button>
+        </span>
+      </li>
+    </ul>
     <ul>
       <li v-for="a in items" :key="a.id">
         <button type="button" class="item" :class="{ unread: !a.read }" @click="go(a)">
@@ -73,4 +104,12 @@ ul { margin: 0; padding: 0.35rem; overflow-y: auto; list-style: none; }
 time { flex-shrink: 0; font-size: 11.5px; color: var(--muted); }
 .empty { padding: 1.25rem; text-align: center; font-size: 13px; color: var(--muted); }
 :is(.link, .tabs button, .item):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+.invites { border-bottom: 1px solid var(--line); }
+.invite { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.6rem 0.75rem; }
+.invite .text { font-size: 13px; line-height: 1.45; }
+.invite strong { color: var(--text); }
+.btns { display: flex; gap: 0.4rem; }
+.btns button { height: 26px; padding: 0 0.7rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2); font-size: 12.5px; cursor: pointer; }
+.btns .accept { border-color: var(--accent); background: var(--accent); color: #140700; }
+.btns button:disabled { opacity: 0.6; cursor: default; }
 </style>
