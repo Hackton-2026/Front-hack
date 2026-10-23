@@ -15,10 +15,15 @@ const form = reactive({})
 const error = ref('')
 const box = ref(null)
 const titleInput = ref(null)
+const asDraft = ref(false) // aberto pelos Rascunhos: "Criar rascunho / Descartar / Salvar em rascunhos"
+const more = ref(false) // "Criar mais": depois de salvar, limpa o título e deixa o modal aberto
 
 watch(() => ui.creating, async (defaults) => {
   if (!defaults) return
-  Object.assign(form, { title: '', projectId: state.projects[0]?.id || '', status: 'todo', priority: state.prefs.defaultPriority, assignees: state.prefs.assignMe ? [state.me] : [], due: '', description: '', cycle: null, modules: [] }, defaults)
+  asDraft.value = !!defaults.asDraft
+  more.value = false
+  Object.assign(form, { title: '', projectId: asDraft.value ? '' : state.projects[0]?.id || '', status: 'todo', priority: state.prefs.defaultPriority, assignees: state.prefs.assignMe ? [state.me] : [], due: '', description: '', cycle: null, modules: [] }, defaults)
+  delete form.asDraft
   error.value = ''
   await nextTick()
   titleInput.value?.focus()
@@ -30,8 +35,13 @@ function toggleMember(id) {
 }
 function save(draft) {
   if (!form.title.trim()) { error.value = 'Dê um título para a tarefa.'; titleInput.value?.focus(); return }
-  const task = createTask({ ...form, title: form.title.trim(), due: form.due || null, projectId: draft ? null : form.projectId || null, draft: draft || !form.projectId })
+  const task = createTask({ ...form, title: form.title.trim(), due: form.due || null, projectId: form.projectId || null, draft: draft || !form.projectId })
   if (!task.draft) complete('task')
+  if (asDraft.value && more.value) {
+    Object.assign(form, { title: '', description: '' })
+    titleInput.value?.focus()
+    return code(task)
+  }
   closeNew()
   if (!task.draft) openTask(task)
   return code(task)
@@ -40,9 +50,9 @@ function save(draft) {
 
 <template>
   <div v-if="ui.creating" class="veil" @click.self="closeNew" @keydown.esc="closeNew">
-    <form ref="box" class="modal" role="dialog" aria-modal="true" aria-labelledby="new-title" novalidate @submit.prevent="save(false)">
+    <form ref="box" class="modal" role="dialog" aria-modal="true" aria-labelledby="new-title" novalidate @submit.prevent="save(asDraft)">
       <header>
-        <h2 id="new-title">Nova tarefa</h2>
+        <h2 id="new-title">{{ asDraft ? 'Criar rascunho' : 'Nova tarefa' }}</h2>
         <button type="button" class="x" aria-label="Fechar" @click="closeNew"><AppIcon name="close" :size="16" /></button>
       </header>
       <input ref="titleInput" v-model="form.title" class="title" placeholder="Título da tarefa" aria-label="Título" :aria-invalid="!!error" />
@@ -50,7 +60,7 @@ function save(draft) {
       <div class="row">
         <label>Projeto
           <select v-model="form.projectId">
-            <option value="">Sem projeto (rascunho)</option>
+            <option value="">{{ asDraft ? 'Sem projeto' : 'Sem projeto (rascunho)' }}</option>
             <option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
         </label>
@@ -70,8 +80,10 @@ function save(draft) {
       </fieldset>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <footer>
-        <button type="button" class="ghost" @click="save(true)">Salvar como rascunho</button>
-        <GooeyButton type="submit" variant="primary">Criar tarefa</GooeyButton>
+        <label v-if="asDraft" class="more"><input v-model="more" type="checkbox" role="switch" />Criar mais</label>
+        <button v-if="asDraft" type="button" class="ghost" @click="closeNew">Descartar</button>
+        <button v-else type="button" class="ghost" @click="save(true)">Salvar como rascunho</button>
+        <GooeyButton type="submit" variant="primary">{{ asDraft ? 'Salvar em rascunhos' : 'Criar tarefa' }}</GooeyButton>
       </footer>
     </form>
   </div>
@@ -98,6 +110,8 @@ textarea:focus, select:focus, .row input:focus { border-color: var(--accent); }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
 .error { margin: 0; font-size: 13px; color: #ffb48a; }
 footer { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; padding-top: 0.25rem; }
+.more { display: inline-flex; align-items: center; gap: 0.45rem; margin-right: auto; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.more input { accent-color: var(--accent); }
 .ghost { padding: 0.45rem 0.8rem; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .ghost:hover { background: var(--surface-2); color: var(--text); }
 :is(.x, .chip, .ghost):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
