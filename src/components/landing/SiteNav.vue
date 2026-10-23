@@ -100,7 +100,8 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
             <a v-if="g.more" href="#topo" class="mm__more" @click="active = null">{{ g.more }} <span aria-hidden="true">→</span></a>
           </div>
         </div>
-        <a href="#topo" class="mm__feature" :class="`art-${item.feature.art}`" @click="active = null">
+        <a href="#topo" class="mm__feature" @click="active = null">
+          <img :src="item.feature.art" alt="" class="mm__art" loading="lazy" />
           <span class="mm__feature-title">{{ item.feature.title }}</span>
           <span class="mm__feature-cta">{{ item.feature.cta }}</span>
         </a>
@@ -293,13 +294,12 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
   color: var(--lp-white);
   text-decoration: none;
 }
-.mm__feature::before { content: ''; position: absolute; inset: 0; z-index: -1; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-.mm__feature:hover::before { transform: scale(1.06); }
-.art-a::before { background: radial-gradient(circle at 70% 25%, var(--lp-orange-soft) 0 18%, transparent 19%), linear-gradient(160deg, var(--lp-orange) 0%, #7a3008 70%, #1a0d05 100%); }
-.art-b::before { background: repeating-linear-gradient(-55deg, #1b1b1b 0 26px, var(--lp-orange) 26px 44px), #111; }
-.art-c::before { background: radial-gradient(ellipse at 30% 30%, var(--lp-grey-light) 0 22%, transparent 23%), radial-gradient(ellipse at 75% 60%, var(--lp-orange) 0 26%, transparent 27%), linear-gradient(180deg, var(--lp-grey) 0%, #2d2f31 100%); }
-.art-d::before { background: conic-gradient(from 210deg at 50% 40%, var(--lp-orange-soft), var(--lp-orange), #391705, var(--lp-orange-soft)); }
-.mm__feature::after { content: ''; position: absolute; inset: 40% 0 0; z-index: -1; background: linear-gradient(transparent, rgb(0 0 0 / 0.65)); }
+.mm__art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transform: scale(1.45); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.mm__feature:hover .mm__art { transform: scale(1.52); }
+.mm__feature::after { content: ''; position: absolute; inset: 40% 0 0; z-index: -1; background: linear-gradient(transparent, rgb(0 0 0 / 0.9)); }
+/* Passar o mouse num item apaga um pouco os outros, para destacar o que está sob o cursor */
+.mm__item, .mm__plain, .mm__feature { transition: opacity 0.25s; }
+.mm__panel:has(:is(.mm__item, .mm__plain, .mm__feature):is(:hover, :focus-visible)) :is(.mm__item, .mm__plain, .mm__feature):not(:hover, :focus-visible) { opacity: 0.35; }
 .mm__feature-title { font: 600 1.125rem/1.2 var(--lp-sans); }
 .mm__feature-cta {
   align-self: flex-start;
