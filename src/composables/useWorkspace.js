@@ -343,9 +343,10 @@ export function useWorkspace() {
       return false
     }
   }
-  async function archiveProject(p) {
+  // hard: exclui de vez (tarefas, ciclos, páginas e chat juntos); sem ele, só arquiva
+  async function archiveProject(p, hard = false) {
     try {
-      await api(`/api/projects/${p.id}/`, { method: 'DELETE' })
+      await api(`/api/projects/${p.id}/${hard ? '?hard=1' : ''}`, { method: 'DELETE' })
       state.projects.splice(state.projects.indexOf(p), 1)
       for (const k of ['cycles', 'modules', 'pages', 'views']) state[k] = state[k].filter((x) => x.project !== p.id)
       state.tasks = state.tasks.filter((t) => t.projectId !== p.id)
