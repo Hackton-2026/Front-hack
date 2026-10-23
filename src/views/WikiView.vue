@@ -1,5 +1,7 @@
 <script setup>
-// Wiki no molde da do Plane: coleções, subpáginas, privadas, favoritas e arquivadas, etiquetas,
+// Wiki pessoal (o workspace é seu): coleções, subpáginas, favoritas e arquivadas, etiquetas,
+// para escrever com o time existem as Páginas de cada projeto, que quem participa do projeto vê.
+// (Antes havia páginas "privadas" x "do time"; agora toda página é sua e fica numa coleção.)
 // editor em Markdown com visualização, sumário, histórico de versões e ações da página.
 // shortcut: as páginas ainda ficam neste navegador (state.docs); passar para a API quando a Wiki tiver endpoint
 import { computed, nextTick, ref, watch } from 'vue'
@@ -12,7 +14,7 @@ import { useOnboarding } from '../composables/useOnboarding'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 
-const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, access: 'shared', archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
+const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
 const ICONS = ['', '📄', '📌', '✅', '🚀', '💡', '📚', '🧭', '🛠️', '📈', '🗓️', '🔒', '🎯', '🧪', '👋']
 const TOOLBAR = [
   ['H1', '# ', ''], ['H2', '## ', ''], ['B', '**', '**'], ['I', '*', '*'], ['S', '~~', '~~'],
@@ -28,8 +30,11 @@ const { complete } = useOnboarding()
 const { toast } = useUi()
 
 // Páginas e ajustes antigos ganham os campos novos
-state.prefs.wiki ||= { collections: [{ id: 'geral', name: 'Geral' }], labels: [] }
+state.prefs.wiki ||= { collections: [{ id: 'geral', name: 'Minhas páginas' }], labels: [] }
 const wiki = state.prefs.wiki
+if (!wiki.collections.length) wiki.collections.push({ id: 'geral', name: 'Minhas páginas' })
+const geral = wiki.collections.find((c) => c.id === 'geral')
+if (geral?.name === 'Geral') geral.name = 'Minhas páginas'
 for (const d of state.docs) for (const [k, v] of Object.entries(DOC_DEFAULTS)) if (!(k in d)) d[k] = structuredClone(v)
 
 const activeId = ref(route.query.doc || null)
@@ -60,8 +65,9 @@ function tree(list, parentId = null, depth = 0) {
 }
 const live = computed(() => state.docs.filter((d) => !d.archived))
 const sections = computed(() => [
-  ...wiki.collections.map((c) => ({ key: c.id, name: c.name, collection: c, rows: tree(live.value.filter((d) => d.access === 'shared' && d.collectionId === c.id)) })),
-  { key: 'private', name: 'Privadas', rows: tree(live.value.filter((d) => d.access === 'private')) },
+  // página de coleção apagada (ou antiga, sem coleção) cai na primeira coleção, para nunca sumir da lista
+  ...wiki.collections.map((c, i) => ({ key: c.id, name: c.name, collection: c,
+    rows: tree(live.value.filter((d) => d.collectionId === c.id || (i === 0 && !wiki.collections.some((x) => x.id === d.collectionId)))) })),
   { key: 'archived', name: 'Arquivadas', rows: state.docs.filter((d) => d.archived && matches(d)).map((d) => ({ d, depth: 0 })) },
 ])
 const favorites = computed(() => live.value.filter((d) => d.favorite))
@@ -99,7 +105,7 @@ async function create(fields = {}) {
   await open(d.id)
   editor.value?.querySelector('.title')?.select()
 }
-const createIn = (section) => create(section.key === 'private' ? { access: 'private' } : { collectionId: section.key })
+const createIn = (section) => create({ collectionId: section.key })
 
 // ---- salvar e versões (uma foto a cada 2 min de edição, até 20)
 let timer
@@ -191,11 +197,8 @@ function remove() {
   open(null)
 }
 function move(collectionId) {
-  for (const d of [doc.value, ...descendants(doc.value.id)]) Object.assign(d, { collectionId, access: 'shared' })
+  for (const d of [doc.value, ...descendants(doc.value.id)]) d.collectionId = collectionId
   doc.value.parentId = null
-}
-function setAccess(access) {
-  for (const d of [doc.value, ...descendants(doc.value.id)]) d.access = access
 }
 async function copyLink() {
   try {
@@ -254,7 +257,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
             <AppIcon v-if="d.locked" name="lock" :size="11" class="muted" />
           </button>
         </div>
-        <p v-if="!s.rows.length" class="muted">{{ s.key === 'archived' ? 'Nada arquivado.' : s.key === 'private' ? 'Nenhuma página privada.' : 'Nenhuma página.' }}</p>
+        <p v-if="!s.rows.length" class="muted">{{ s.key === 'archived' ? 'Nada arquivado.' : 'Nenhuma página.' }}</p>
       </template>
       <button type="button" class="add-col" @click="addCollection"><AppIcon name="plus" :size="13" /> Nova coleção</button>
     </aside>
@@ -264,7 +267,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
       <article ref="editor" class="editor">
         <header class="bar">
           <nav class="crumbs" aria-label="Caminho">
-            <span>{{ doc.access === 'private' ? 'Privadas' : wiki.collections.find((c) => c.id === doc.collectionId)?.name || 'Geral' }}</span>
+            <span>{{ wiki.collections.find((c) => c.id === doc.collectionId)?.name || wiki.collections[0]?.name }}</span>
             <template v-for="p in crumbs" :key="p.id"><span>/</span><button type="button" class="link" @click="open(p.id)">{{ p.title || 'Sem título' }}</button></template>
           </nav>
           <div class="bar__right">
@@ -277,12 +280,11 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
             <details class="menu">
               <summary class="icon" aria-label="Ações da página" title="Ações da página"><AppIcon name="more" :size="15" /></summary>
               <div class="menu__box">
-                <button type="button" @click="create({ parentId: doc.id, collectionId: doc.collectionId, access: doc.access })"><AppIcon name="plus" :size="14" /> Nova subpágina</button>
+                <button type="button" @click="create({ parentId: doc.id, collectionId: doc.collectionId })"><AppIcon name="plus" :size="14" /> Nova subpágina</button>
                 <button type="button" @click="duplicate"><AppIcon name="doc" :size="14" /> Duplicar</button>
                 <button type="button" @click="toggle('locked'); mode = doc.locked ? 'view' : mode"><AppIcon name="lock" :size="14" /> {{ doc.locked ? 'Desbloquear' : 'Bloquear edição' }}</button>
                 <button type="button" @click="toggle('fullWidth')"><AppIcon name="layers" :size="14" /> {{ doc.fullWidth ? 'Largura normal' : 'Largura total' }}</button>
-                <button type="button" @click="setAccess(doc.access === 'private' ? 'shared' : 'private')"><AppIcon name="globe" :size="14" /> {{ doc.access === 'private' ? 'Compartilhar com o time' : 'Tornar privada' }}</button>
-                <label v-if="doc.access === 'shared'" class="menu__select">Coleção
+                <label class="menu__select">Coleção
                   <select :value="doc.collectionId" @change="move($event.target.value)"><option v-for="c in wiki.collections" :key="c.id" :value="c.id">{{ c.name }}</option></select>
                 </label>
                 <button type="button" @click="copyLink"><AppIcon name="pin" :size="14" /> Copiar link</button>
@@ -349,7 +351,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
     <!-- ================= início da wiki ================= -->
     <div v-else class="home-page">
       <h1>{{ hello }}</h1>
-      <p class="muted">A base de conhecimento do time: specs, atas, decisões e processos, perto do trabalho.</p>
+      <p class="muted">Sua base de conhecimento pessoal: ideias, anotações, specs e decisões. Para escrever junto com o time, use as Páginas de um projeto.</p>
       <div class="home-actions">
         <button type="button" class="new" @click="create()"><AppIcon name="plus" :size="14" /> Nova página</button>
         <RouterLink to="/notas" class="link">Suas notas rápidas</RouterLink>
@@ -456,6 +458,10 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .md :deep(pre) { padding: 0.8rem 1rem; border-radius: 8px; background: var(--surface-2); overflow-x: auto; }
 .md :deep(pre code) { padding: 0; background: none; }
 .md :deep(blockquote) { margin: 0.6em 0; padding-left: 0.9rem; border-left: 3px solid var(--accent); color: var(--muted); }
+.md :deep(.md-table) { margin: 0.6rem 0; overflow-x: auto; }
+.md :deep(table) { width: 100%; border-collapse: collapse; font-size: 13px; }
+.md :deep(th), .md :deep(td) { padding: 0.4rem 0.6rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.md :deep(th) { background: var(--surface-2); font-weight: 600; color: var(--text); }
 .md :deep(hr) { border: 0; border-top: 1px solid var(--line); margin: 1.2em 0; }
 .md :deep(a) { color: var(--accent-soft); }
 .md :deep(.md-check) { padding-left: 0.2rem; list-style: none; }

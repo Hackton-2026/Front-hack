@@ -11,7 +11,7 @@ import AppModal from '../components/app/AppModal.vue'
 
 const props = defineProps({ id: { type: String, default: '' } })
 const router = useRouter()
-const { state, project, STATUSES, PRIORITIES, createItem, updateItem, removeItem, starred, toggleStar, member } = useWorkspace()
+const { state, project, STATUSES, PRIORITIES, createItem, updateItem, removeItem, starred, toggleStar, member, peopleOf } = useWorkspace()
 const { ui } = useUi()
 const pid = computed(() => Number(props.id) || null)
 const p = computed(() => pid.value && project(pid.value))
@@ -108,7 +108,7 @@ onMounted(animate)
       <label v-if="!pid && editing === 'new'" class="f"><span>Projeto</span><select v-model="form.project"><option v-for="x in state.projects" :key="x.id" :value="x.id">{{ x.name }}</option></select></label>
       <div class="f"><span>Status</span><div class="chips"><button v-for="s in STATUSES" :key="s.id" type="button" class="chip" :class="{ 'is-on': form.status.includes(s.id) }" :aria-pressed="form.status.includes(s.id)" @click="toggle('status', s.id)">{{ s.name }}</button></div></div>
       <div class="f"><span>Prioridade</span><div class="chips"><button v-for="s in PRIORITIES" :key="s.id" type="button" class="chip" :class="{ 'is-on': form.priority.includes(s.id) }" :aria-pressed="form.priority.includes(s.id)" @click="toggle('priority', s.id)">{{ s.name }}</button></div></div>
-      <div class="f"><span>Responsáveis</span><div class="chips"><button v-for="m in state.members" :key="m.id" type="button" class="chip" :class="{ 'is-on': form.assignees.includes(m.id) }" :aria-pressed="form.assignees.includes(m.id)" @click="toggle('assignees', m.id)">{{ m.name }}</button></div></div>
+      <div class="f"><span>Responsáveis</span><div class="chips"><button v-for="m in peopleOf(form.project || pid)" :key="m.id" type="button" class="chip" :class="{ 'is-on': form.assignees.includes(m.id) }" :aria-pressed="form.assignees.includes(m.id)" @click="toggle('assignees', m.id)">{{ m.name }}</button></div></div>
       <div v-if="tags.length" class="f"><span>Etiquetas</span><div class="chips"><button v-for="t in tags" :key="t" type="button" class="chip" :class="{ 'is-on': form.tags.includes(t) }" :aria-pressed="form.tags.includes(t)" @click="toggle('tags', t)">#{{ t }}</button></div></div>
       <label class="check"><input v-model="form.is_private" type="checkbox" /> Privada (só eu vejo)</label>
       <p v-if="err" class="err" role="alert">{{ err }}</p>

@@ -31,6 +31,8 @@ const SUB = [
   { key: 'modules', icon: 'module', label: 'Módulos', path: '/modulos' },
   { key: 'views', icon: 'layers', label: 'Visões', path: '/visoes' },
   { key: 'pages', icon: 'page', label: 'Páginas', path: '/paginas' },
+  { key: null, icon: 'chat', label: 'Chat', path: '/chat' },
+  { key: null, icon: 'user', label: 'Membros', path: '/membros' },
 ]
 const TRY = [
   { icon: 'github', label: 'Conectar ao GitHub', to: '/comecar' },
@@ -191,13 +193,16 @@ onUnmounted(() => {
             <button type="button" class="side__link proj__btn" :aria-expanded="openProjects.has(p.id)" @click="toggleProject(p)">
               <span v-if="p.icon" class="emoji" aria-hidden="true">{{ p.icon }}</span><span v-else class="dot" :style="{ background: p.color }" />
               <span class="proj__name">{{ p.name }}</span>
+              <span v-if="p.shared" class="shared" :title="`Compartilhado por ${p.owner_name}`"><AppIcon name="user" :size="12" /></span>
               <AppIcon name="chevron" :size="13" class="chev proj__chev" />
             </button>
             <button type="button" class="pmenu-btn" :aria-label="`Opções de ${p.name}`" :aria-expanded="menuFor === p.id" @click="menuFor = menuFor === p.id ? null : p.id"><AppIcon name="more" :size="15" /></button>
             <div v-if="menuFor === p.id" class="pmenu" role="menu">
               <RouterLink role="menuitem" :to="`${base(p)}/visao-geral`" @click="menuFor = null"><AppIcon name="overview" :size="15" />Abrir visão geral</RouterLink>
               <button type="button" role="menuitem" @click="copyLink(p)"><AppIcon name="arrow" :size="15" />Copiar link</button>
-              <button v-if="state.isAdmin" type="button" role="menuitem" @click="archive(p)"><AppIcon name="archive" :size="15" />Arquivar</button>
+              <RouterLink v-if="p.my_permission === 'full'" role="menuitem" :to="`${base(p)}/membros`" @click="menuFor = null"><AppIcon name="user" :size="15" />Convidar pessoas</RouterLink>
+              <button v-if="state.isAdmin && !p.shared" type="button" role="menuitem" @click="archive(p)"><AppIcon name="archive" :size="15" />Arquivar</button>
+              <RouterLink v-if="p.shared" role="menuitem" :to="`${base(p)}/membros`" @click="menuFor = null"><AppIcon name="close" :size="15" />Sair do projeto</RouterLink>
             </div>
           </div>
           <Transition :css="false" @enter="onEnter" @leave="onLeave">
@@ -281,6 +286,7 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .side__link.router-link-active:not(.proj__btn), .side__link.is-active { background: var(--surface-2); }
 .side__link.router-link-active:not(.sub__link)::before, .side__link.is-active::before { content: ''; position: absolute; left: 0; top: 25%; bottom: 25%; width: 2px; border-radius: 2px; background: var(--accent); }
 .side__link :deep(.app-icon) { color: var(--muted); }
+.shared { display: inline-grid; place-items: center; margin-left: 0.15rem; color: var(--muted); }
 .side__link.is-active :deep(.app-icon) { color: var(--accent-soft); }
 .proj { position: relative; }
 .proj__row { position: relative; display: flex; align-items: center; }

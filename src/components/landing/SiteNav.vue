@@ -3,8 +3,11 @@
 // camada "glossy" com blur que aparece quando o conteúdo passa por baixo, botões gooey e menu hambúrguer no mobile
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import GooeyButton from '../GooeyButton.vue'
+import UserAvatar from '../UserAvatar.vue'
+import { useAuth } from '../../composables/useAuth'
 import { MENU, ICONS } from './navData'
 
+const { user } = useAuth() // logado: troca "Entrar" por Workspace + foto
 const active = ref(null)
 const scrolled = ref(false)
 const mobileOpen = ref(false)
@@ -59,7 +62,11 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 
       <div class="nav__actions">
         <GooeyButton variant="secondary" href="#topo">Tutorial</GooeyButton>
-        <GooeyButton variant="primary" to="/login">Entrar</GooeyButton>
+        <template v-if="user">
+          <GooeyButton variant="primary" to="/inicio">Workspace</GooeyButton>
+          <RouterLink to="/ajustes" class="nav__me" :title="user.first_name || user.username" aria-label="Sua conta"><UserAvatar :user="user" :size="36" /></RouterLink>
+        </template>
+        <GooeyButton v-else variant="primary" to="/login">Entrar</GooeyButton>
       </div>
 
       <button
@@ -134,7 +141,8 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
       </div>
       <div class="mob__actions">
         <GooeyButton variant="secondary" size="lg" href="#topo" @click="mobileOpen = false">Tutorial</GooeyButton>
-        <GooeyButton variant="primary" size="lg" to="/login">Entrar</GooeyButton>
+        <GooeyButton v-if="user" variant="primary" size="lg" to="/inicio">Workspace</GooeyButton>
+        <GooeyButton v-else variant="primary" size="lg" to="/login">Entrar</GooeyButton>
       </div>
     </div>
   </header>
@@ -210,6 +218,11 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 .nav__chev.is-open { transform: rotate(180deg); }
 
 .nav__actions { display: none; align-items: center; gap: 0.75rem; }
+/* foto do usuário logado: anel fino que acende no hover */
+.nav__me { display: grid; border-radius: 50%; box-shadow: 0 0 0 2px rgb(255 255 255 / 0.18); transition: box-shadow 0.25s, transform 0.25s; }
+.nav__me:hover { box-shadow: 0 0 0 2px var(--lp-orange-soft); transform: scale(1.05); }
+.nav__me:focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 3px; }
+.nav__me :deep(.avatar) { background: linear-gradient(135deg, var(--lp-orange-soft), var(--lp-orange)); color: #000; font: 700 0.8rem/1 var(--lp-display); }
 @media (min-width: 640px) { .nav__actions { display: flex; } }
 @media (max-width: 1099px) { .nav__actions { margin-left: auto; margin-right: 0.75rem; } }
 

@@ -13,7 +13,7 @@ const root = ref(null)
 const tasks = computed(() => state.tasks.filter((t) => !t.draft && (!pid.value || t.projectId === Number(pid.value))))
 const byStatus = computed(() => STATUSES.map((s) => ({ ...s, n: tasks.value.filter((t) => t.status === s.id).length })))
 const byPriority = computed(() => [...PRIORITIES, { id: '', name: 'Sem prioridade', color: '#5d5851' }].map((p) => ({ ...p, n: tasks.value.filter((t) => (t.priority || '') === p.id).length })))
-const byPerson = computed(() => state.members.map((m) => {
+const byPerson = computed(() => state.people.map((m) => {
   const mine = tasks.value.filter((t) => t.assignees.includes(m.id))
   return { ...m, open: mine.filter((t) => t.status !== 'done').length, done: mine.filter((t) => t.status === 'done').length }
 }).filter((m) => m.open + m.done).sort((a, b) => b.open + b.done - (a.open + a.done)))

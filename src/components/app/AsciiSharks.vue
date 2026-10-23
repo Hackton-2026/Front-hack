@@ -27,7 +27,7 @@ const canvas = ref(null)
 let engine
 onMounted(() => {
   engine = new OceanEngine(canvas.value, SHARKS)
-  // shortcut: sobrescreve métodos internos (resize, toLocal, paintBackground, step, depositWake, diffuse) do commit fixado no package.json;
+  // shortcut: sobrescreve métodos internos (resize, toLocal, paintBackground, render, step, depositWake, diffuse) do commit fixado no package.json;
   // ao atualizar a biblioteca, conferir se esses nomes ainda existem
   const { renderer, world } = engine
   engine.resize = function () {
@@ -43,14 +43,22 @@ onMounted(() => {
     const p = toLocal(e)
     return { ...p, x: p.x * SCALE, y: p.y * SCALE }
   }
+  // Fundo transparente (a cor vem da página, sem passar pelo filtro laranja), só com a grade
   renderer.paintBackground = function () {
     const g = this.bg.getContext('2d')
+    g.setTransform(1, 0, 0, 1, 0, 0)
+    g.clearRect(0, 0, this.bg.width, this.bg.height)
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
-    g.fillStyle = '#000'
-    g.fillRect(0, 0, this.width, this.height)
     g.globalAlpha = GRID_ALPHA
     paintGrid(g, this.width, this.height, this.cw, this.ch, this.dpr)
     g.globalAlpha = 1
+  }
+  // A biblioteca apaga o quadro anterior pintando o fundo preto por cima; transparente, é preciso limpar antes
+  const render = renderer.render.bind(renderer)
+  renderer.render = (w, dt) => {
+    renderer.ctx.setTransform(1, 0, 0, 1, 0, 0)
+    renderer.ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
+    render(w, dt)
   }
   // O mundo é SCALE vezes maior, então tudo andaria SCALE vezes mais devagar na tela enquanto a cauda bate
   // no ritmo normal (fica "balançando" no lugar). O tempo roda SCALE vezes mais rápido e a batida

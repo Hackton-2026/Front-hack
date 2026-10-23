@@ -106,7 +106,8 @@ const scope = computed(() => {
 })
 const scoped = computed(() => (scope.value ? tasksOf(pid.value).filter(scope.value.match) : []))
 const tasks = computed(() => scoped.value.filter((t) => (!onlyMine.value || t.assignees.includes(state.me)) && (!q.value || t.title.toLowerCase().includes(q.value.toLowerCase()))))
-const people = computed(() => [...new Set(scoped.value.flatMap((t) => t.assignees))])
+const people = computed(() => p.value?.members || []) // quem participa do projeto
+const canEdit = computed(() => ['edit', 'full'].includes(p.value?.my_permission))
 const pct = computed(() => (scope.value?.kind ? doneRatio(scoped.value) : progress(pid.value)))
 const add = () => newTask({ projectId: p.value.id, ...scope.value.defaults })
 
@@ -141,8 +142,10 @@ onMounted(() => moveInk(false))
         <span class="pct">{{ Math.round(pct * 100) }}% concluído · {{ scoped.length }} {{ scoped.length === 1 ? 'item' : 'itens' }}</span>
       </div>
       <div class="head__right">
-        <Avatars :ids="people" :size="26" />
-        <GooeyButton variant="primary" @click="add">Novo item de trabalho</GooeyButton>
+        <RouterLink :to="`/projetos/${p.id}/membros`" class="people" :title="`${people.length} ${people.length === 1 ? 'pessoa' : 'pessoas'} no projeto`"><Avatars :ids="people" :size="26" /></RouterLink>
+        <GooeyButton variant="secondary" :to="`/projetos/${p.id}/chat`">Chat</GooeyButton>
+        <GooeyButton v-if="p.my_permission === 'full'" variant="secondary" :to="`/projetos/${p.id}/membros`">Convidar</GooeyButton>
+        <GooeyButton v-if="canEdit" variant="primary" @click="add">Novo item de trabalho</GooeyButton>
       </div>
     </header>
     <div class="pbar" aria-hidden="true"><span :style="{ transform: `scaleX(${pct})` }" /></div>
@@ -222,6 +225,8 @@ onMounted(() => moveInk(false))
 h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); }
 .pct { font-size: 12.5px; color: var(--muted); }
 .head__right { display: flex; align-items: center; gap: 0.75rem; }
+.people { display: inline-flex; border-radius: 999px; }
+.people:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .pbar { height: 3px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .pbar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-soft)); transform-origin: left; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; border-bottom: 1px solid var(--line); }

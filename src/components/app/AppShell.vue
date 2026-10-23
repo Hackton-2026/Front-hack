@@ -18,6 +18,7 @@ import SideNav from './SideNav.vue'
 import '../../assets/app-pages.css'
 
 const route = useRoute()
+const noSide = computed(() => ['settings', 'ai'].includes(route.meta.area))
 const { user } = useAuth()
 const { count, total } = useOnboarding()
 const { state, unread, load, touchRecent } = useWorkspace()
@@ -168,14 +169,15 @@ onUnmounted(() => {
       </RouterLink>
       <span class="rail__sep" />
       <RouterLink to="/ajustes" class="rail__item" :class="{ 'is-active': route.meta.area === 'settings' }"><span class="rail__icon"><AppIcon name="settings" :size="19" /></span>Ajustes</RouterLink>
+      <RouterLink to="/" class="rail__item rail__item--site" title="Voltar para o site do Novexo"><span class="rail__icon"><AppIcon name="globe" :size="19" /></span>Site</RouterLink>
       <NotesDock class="rail__dock" />
     </nav>
 
-    <!-- Ajustes têm o próprio menu: a barra "Trabalho" some (v-show guarda a largura do recolher) -->
-    <aside v-show="route.meta.area !== 'settings'" ref="sidebar" class="side" :aria-hidden="collapsed" :inert="collapsed">
+    <!-- Ajustes têm o próprio menu e a IA ocupa a tela toda: a barra "Trabalho" some (v-show guarda a largura do recolher) -->
+    <aside v-show="!noSide" ref="sidebar" class="side" :aria-hidden="collapsed" :inert="collapsed">
       <div class="side__inner"><SideNav @collapse="toggleSidebar" /></div>
     </aside>
-    <button v-if="collapsed && route.meta.area !== 'settings'" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
+    <button v-if="collapsed && !noSide" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
 
     <main class="main">
       <div class="crumb"><AppIcon :name="route.meta.icon || 'work'" :size="16" /> {{ title }}<slot name="crumb" /></div>
@@ -239,7 +241,8 @@ onUnmounted(() => {
 kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radius: 4px; font: 500 11px/1.3 'Geist Mono', monospace; color: var(--muted); }
 
 /* ---- topo ---- */
-.top { grid-area: top; display: flex; align-items: center; gap: 1rem; padding: 0 0.75rem 0 1rem; }
+/* camada própria acima do conteúdo: sem isso uma página posicionada (ex.: Novexo IA) cobre os painéis de atalhos e caixa de entrada */
+.top { grid-area: top; position: relative; z-index: 70; display: flex; align-items: center; gap: 1rem; padding: 0 0.75rem 0 1rem; }
 .ws { display: flex; align-items: center; gap: 0.6rem; padding: 0.3rem 0.5rem; border-radius: 6px; color: var(--text); text-decoration: none; transition: background 0.2s var(--ease); }
 .ws:hover { background: var(--surface-2); }
 .ws__badge { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 5px; background: var(--accent); font: 700 11px/1 'Lexend', system-ui, sans-serif; color: #000; }
@@ -273,6 +276,9 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .rail__item:hover .rail__icon { background: var(--surface-2); color: var(--text); }
 .rail__item.is-active { color: var(--text); }
 .rail__item.is-active .rail__icon { background: var(--surface-2); color: var(--accent-soft); }
+/* Volta para a landing: fica sempre cinza (é uma saída, não uma área) */
+.rail__item--site .rail__icon { border: 1px solid var(--line); }
+.rail__item--site:hover .rail__icon { border-color: var(--line-strong); color: var(--text); }
 .rail__sep { width: 24px; height: 1px; margin: 0.4rem 0; background: var(--line); }
 .rail__dock { margin-top: auto; }
 
