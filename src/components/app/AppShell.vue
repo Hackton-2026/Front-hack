@@ -321,8 +321,6 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .rail__item.is-active { color: var(--text); }
 .rail__item.is-active .rail__icon { background: var(--surface-2); color: var(--accent-soft); }
 /* Volta para a landing: fica sempre cinza (é uma saída, não uma área) */
-.rail__item--site .rail__icon { border: 1px solid var(--line); }
-.rail__item--site:hover .rail__icon { border-color: var(--line-strong); color: var(--text); }
 .rail__sep { width: 24px; height: 1px; margin: 0.4rem 0; background: var(--line); }
 .rail__dock { margin-top: auto; }
 

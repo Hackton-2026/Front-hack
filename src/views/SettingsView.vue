@@ -5,7 +5,8 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { parseCsv, toCsv } from '../utils/csv'
-import { api } from '../services/api'
+import { api, toFormData } from '../services/api'
+import { compressImage } from '../utils/image'
 import { disablePush, enablePush, pushConfigured, pushSupported, savedToken } from '../services/push'
 import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -148,6 +149,23 @@ async function saveProfile() {
     status.value = 'Perfil salvo.'
   } catch (e) {
     status.value = e.message
+  }
+}
+// ---- foto de perfil: salva na hora e aparece nos avatares do app inteiro (quem entra pelo Google já vem com a foto de lá)
+const photoInput = ref(null)
+const photoBusy = ref(false)
+const initials = computed(() => (user.value?.first_name || user.value?.username || '?').slice(0, 2).toUpperCase())
+async function setPhoto(file) {
+  if (file && !file.type.startsWith('image/')) { status.value = 'Escolha um arquivo de imagem (JPG, PNG ou WebP).'; return }
+  photoBusy.value = true
+  try {
+    await updateMe(toFormData({ avatar: file ? await compressImage(file, 512) : null }))
+    load() // os avatares de projetos, chat e tarefas vêm do workspace
+    status.value = file ? 'Foto atualizada.' : 'Foto removida.'
+  } catch (e) {
+    status.value = e.message
+  } finally {
+    photoBusy.value = false
   }
 }
 
@@ -302,6 +320,18 @@ async function onImport(e) {
         <!-- ================= Minha conta ================= -->
         <template v-if="tab === 'profile'">
           <form class="form" @submit.prevent="saveProfile">
+            <div v-if="user" class="photo">
+              <span class="photo__av" :class="{ busy: photoBusy }"><img v-if="user.avatar" :src="user.avatar" alt="Sua foto de perfil" /><template v-else>{{ initials }}</template></span>
+              <div class="photo__txt">
+                <strong>Foto de perfil</strong>
+                <small>Aparece nas tarefas, no chat e para quem participa dos seus projetos. JPG, PNG ou WebP.</small>
+                <span class="photo__btns">
+                  <button type="button" class="pg-btn" :disabled="photoBusy" @click="photoInput.click()">{{ user.avatar ? 'Trocar foto' : 'Enviar foto' }}</button>
+                  <button v-if="user.avatar" type="button" class="link" :disabled="photoBusy" @click="setPhoto(null)">Remover</button>
+                </span>
+              </div>
+              <input ref="photoInput" type="file" accept="image/*" hidden @change="setPhoto($event.target.files[0]); $event.target.value = ''" />
+            </div>
             <div class="cols">
               <label>Nome <input v-model="profile.first_name" autocomplete="given-name" /></label>
               <label>E-mail <input v-model="profile.email" type="email" autocomplete="email" /></label>
@@ -682,4 +712,11 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 :is(.tabs button, .link, .switch, .danger, .swatch, .days button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .block { display: block; }
+.photo { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.photo__av { display: grid; place-items: center; flex-shrink: 0; width: 64px; height: 64px; overflow: hidden; border-radius: 50%; background: var(--surface-2); font: 600 20px/1 'Geist', system-ui, sans-serif; color: var(--text); transition: opacity 0.2s ease; }
+.photo__av.busy { opacity: 0.5; }
+.photo__av img { width: 100%; height: 100%; object-fit: cover; }
+.photo__txt { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.photo__txt small { font-size: 12.5px; color: var(--muted); }
+.photo__btns { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; }
 </style>
