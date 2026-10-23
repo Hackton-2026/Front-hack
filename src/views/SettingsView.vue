@@ -11,6 +11,7 @@ import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import GooeyButton from '../components/GooeyButton.vue'
 import SettingsList from '../components/app/SettingsList.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const GROUPS = [
   { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações']] },
@@ -331,16 +332,16 @@ async function onImport(e) {
           </div>
           <div class="form cols">
             <label>Início da semana
-              <select v-model.number="state.prefs.weekStart"><option :value="0">Domingo</option><option :value="1">Segunda-feira</option></select>
+              <AppSelect v-model="state.prefs.weekStart" :options="[{ value: 0, label: 'Domingo' }, { value: 1, label: 'Segunda-feira' }]" block />
             </label>
             <label>Densidade das listas
-              <select v-model="state.prefs.density"><option value="comfortable">Confortável</option><option value="compact">Compacta</option></select>
+              <AppSelect v-model="state.prefs.density" :options="[{ value: 'comfortable', label: 'Confortável' }, { value: 'compact', label: 'Compacta' }]" block />
             </label>
             <label>Visão padrão dos projetos
-              <select v-model="state.prefs.defaultView"><option v-for="[id, label] in VIEWS" :key="id" :value="id">{{ label }}</option></select>
+              <AppSelect v-model="state.prefs.defaultView" :options="VIEWS.map(([value, label]) => ({ value, label }))" block />
             </label>
             <label>Prioridade padrão da nova tarefa
-              <select v-model="state.prefs.defaultPriority"><option value="">Sem prioridade</option><option v-for="p in PRIORITIES" :key="p.id" :value="p.id">{{ p.name }}</option></select>
+              <AppSelect v-model="state.prefs.defaultPriority" :options="[{ value: '', label: 'Sem prioridade' }, ...PRIORITIES.map((p) => ({ value: p.id, label: p.name }))]" block />
             </label>
           </div>
           <ul class="toggles">
@@ -395,14 +396,10 @@ async function onImport(e) {
               <span class="prefix-input"><span>{{ origin }}/</span><input v-model="slugInput" :disabled="!isAdmin" @change="saveWorkspace({ slug: slugInput }).then((ok) => ok || (slugInput = state.slug))" /></span>
             </label>
             <label>Tamanho da empresa
-              <select :value="general.size" :disabled="!isAdmin" @change="setSetting('general', 'size', $event.target.value)">
-                <option value="">Escolher</option><option v-for="s in ['Só eu', '2-10', '11-50', '51-200', '201-500', '500+']" :key="s" :value="s">{{ s }}</option>
-              </select>
+              <AppSelect :model-value="general.size" :options="[{ value: '', label: 'Escolher' }, 'Só eu', '2-10', '11-50', '51-200', '201-500', '500+']" :disabled="!isAdmin" block @change="(v) => setSetting('general', 'size', v)" />
             </label>
             <label>Fuso horário
-              <select :value="general.timezone" :disabled="!isAdmin" @change="setSetting('general', 'timezone', $event.target.value)">
-                <option v-for="z in ['America/Sao_Paulo', 'America/Manaus', 'America/Fortaleza', 'America/Noronha', 'America/Rio_Branco', 'UTC', 'Europe/Lisbon']" :key="z" :value="z">{{ z }}</option>
-              </select>
+              <AppSelect :model-value="general.timezone" :options="['America/Sao_Paulo', 'America/Manaus', 'America/Fortaleza', 'America/Noronha', 'America/Rio_Branco', 'UTC', 'Europe/Lisbon']" :disabled="!isAdmin" block @change="(v) => setSetting('general', 'timezone', v)" />
             </label>
           </div>
         </template>
@@ -446,7 +443,7 @@ async function onImport(e) {
           <p class="hint">Importe tarefas de uma planilha CSV (do Novexo, Excel, Google Planilhas, Jira, Trello…). A primeira linha precisa ter os nomes das colunas: <strong>Título</strong> e, se quiser, Status, Prioridade, Prazo e Etiquetas.</p>
           <div class="form cols">
             <label>Projeto de destino
-              <select v-model="importProject"><option value="">{{ state.projects[0]?.name || 'Nenhum projeto' }}</option><option v-for="p in state.projects.slice(1)" :key="p.id" :value="p.id">{{ p.name }}</option></select>
+              <AppSelect v-model="importProject" :options="[{ value: '', label: state.projects[0]?.name || 'Nenhum projeto' }, ...state.projects.slice(1).map((p) => ({ value: p.id, label: p.name }))]" block />
             </label>
           </div>
           <label v-if="canWrite" class="link file">Escolher arquivo CSV<input type="file" accept=".csv,text/csv" @change="onImport" /></label>
@@ -484,10 +481,10 @@ async function onImport(e) {
           <template v-if="tab === 'governance'">
             <div class="form cols">
               <label>Quem cria projetos
-                <select :value="governance.createProjects" :disabled="!isAdmin" @change="setSetting('governance', 'createProjects', $event.target.value)"><option value="admin">Só administradores</option><option value="member">Administradores e membros</option></select>
+                <AppSelect :model-value="governance.createProjects" :options="[{ value: 'admin', label: 'Só administradores' }, { value: 'member', label: 'Administradores e membros' }]" :disabled="!isAdmin" block @change="(v) => setSetting('governance', 'createProjects', v)" />
               </label>
               <label>Quem apaga tarefas
-                <select :value="governance.deleteTasks" :disabled="!isAdmin" @change="setSetting('governance', 'deleteTasks', $event.target.value)"><option value="admin">Só administradores</option><option value="member">Quem criou a tarefa e administradores</option></select>
+                <AppSelect :model-value="governance.deleteTasks" :options="[{ value: 'admin', label: 'Só administradores' }, { value: 'member', label: 'Quem criou a tarefa e administradores' }]" :disabled="!isAdmin" block @change="(v) => setSetting('governance', 'deleteTasks', v)" />
               </label>
             </div>
           </template>
@@ -554,7 +551,7 @@ async function onImport(e) {
           <template v-else>
             <div class="form cols">
               <label>Projeto
-                <select :value="proj.id" @change="projectId = state.projects.find((p) => String(p.id) === $event.target.value)?.id; confirm2 = ''"><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select>
+                <AppSelect :model-value="proj.id" :options="state.projects.map((p) => ({ value: p.id, label: p.name }))" block @change="(v) => { projectId = v; confirm2 = '' }" />
               </label>
               <label>Nome <input :key="proj.id" :value="proj.name" @change="updateProject(proj, { name: $event.target.value.trim() || proj.name })" /></label>
               <label>Identificador <input :key="`p${proj.id}`" :value="proj.prefix" maxlength="8" @change="updateProject(proj, { prefix: $event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })" /></label>
@@ -630,9 +627,9 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .form { display: flex; flex-direction: column; gap: 0.7rem; max-width: 26rem; }
 .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.7rem 1rem; max-width: none; }
 .form label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 12px; font-weight: 500; color: var(--muted); }
-:is(.form input, .form select, .row input, .rows input, .rows select) { height: 32px; padding: 0 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
-:is(.form input, .form select, .row input, .rows input, .rows select):focus { border-color: var(--accent); }
-:is(input, select, button):disabled { opacity: 0.55; cursor: not-allowed; }
+:is(.form input, .row input, .rows input) { height: 32px; padding: 0 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
+:is(.form input, .row input, .rows input):focus { border-color: var(--accent); }
+:is(input, button):disabled { opacity: 0.55; cursor: not-allowed; }
 .prefix-input { display: flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); }
 .prefix-input span { padding-left: 0.6rem; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
 .form .prefix-input input { flex: 1; min-width: 0; border: 0; padding-left: 0.1rem; }

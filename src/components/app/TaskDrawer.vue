@@ -7,13 +7,14 @@ import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import Avatars from './Avatars.vue'
+import AppSelect from './AppSelect.vue'
 import StatusBadge from './StatusBadge.vue'
 import MdEditor from './MdEditor.vue'
 import ReactionBar from './ReactionBar.vue'
 import { api } from '../../services/api'
 import { render, slug } from '../../utils/markdown'
 
-const { state, STATUSES, PRIORITIES, code, member, status, createTask, updateTask, removeTask, taskActivity, taskComments, peopleOf } = useWorkspace()
+const { state, STATUSES, PRIORITIES, code, member, status, createTask, updateTask, removeTask, taskActivity, taskComments, peopleOf, rolesOf } = useWorkspace()
 const { ui, closeTask, openTask, toast } = useUi()
 const task = computed(() => state.tasks.find((t) => t.id === ui.taskId))
 const saved = computed(() => typeof task.value?.id === 'number')
@@ -196,6 +197,26 @@ function toggleMember(id) {
   const a = task.value.assignees
   set({ assignees: a.includes(id) ? a.filter((x) => x !== id) : [...a, id] })
 }
+// atribuir por cargo: marca todo mundo do cargo; se já estavam todos, tira todos
+const roles = computed(() => (task.value?.projectId ? rolesOf(task.value.projectId) : []))
+const roleOn = (r) => r.ids.every((id) => task.value.assignees.includes(id))
+function toggleRole(r) {
+  const a = task.value.assignees
+  set({ assignees: roleOn(r) ? a.filter((id) => !r.ids.includes(id)) : [...new Set([...a, ...r.ids])] })
+}
+const titleOf = (id) => state.projects.find((p) => p.id === task.value?.projectId)?.titles?.[id]
+
+// opções dos dropdowns
+const statusOptions = computed(() => STATUSES.map((s) => ({ value: s.id, label: s.name, color: s.color })))
+const priorityOptions = computed(() => [{ value: '', label: 'Sem prioridade', color: 'var(--line-strong)' }, ...PRIORITIES.map((p) => ({ value: p.id, label: p.name, color: p.color }))])
+const relKindOptions = computed(() => (adding.value === 'dep'
+  ? [{ value: 'blocks', label: 'Esta bloqueia…' }, { value: 'blocked_by', label: 'Esta é bloqueada por…' }]
+  : [{ value: 'relates', label: 'Relacionada a…' }, { value: 'duplicate', label: 'Duplicada de…' }]))
+const relTaskOptions = computed(() => relationOptions.value.map((t) => ({ value: t.id, label: `${code(t)} · ${t.title}` })))
+const pageOptions = computed(() => state.pages.filter((p) => p.project === task.value?.projectId).map((pg) => ({ value: pg.id, label: pg.title || 'Sem título' })))
+const parentSelectOptions = computed(() => [{ value: null, label: 'Sem pai' }, ...parentOptions.value.map((t) => ({ value: t.id, label: `${code(t)} · ${t.title}` }))])
+const projectOptions = computed(() => [{ value: null, label: 'Sem projeto' }, ...state.projects.map((p) => ({ value: p.id, label: p.name, color: p.color }))])
+const cycleOptions = computed(() => [{ value: null, label: 'Sem ciclo' }, ...state.cycles.filter((c) => c.project === task.value?.projectId).map((c) => ({ value: c.id, label: c.name }))])
 function addItem() {
   if (!newItem.value.trim()) return
   set({ checklist: [...task.value.checklist, { id: Math.random().toString(36).slice(2, 8), title: newItem.value.trim(), done: false }] })
@@ -334,22 +355,23 @@ function destroy() {
 
         <!-- a linha de propriedades do Plane: estado, prioridade, responsáveis, início e prazo -->
         <div class="bar sec">
-          <label class="cell" title="Status">
-            <StatusBadge :status="task.status" compact />
-            <select :value="task.status" aria-label="Status" @change="setStatus($event.target.value); $event.target.value = task.status"><option v-for="s in STATUSES" :key="s.id" :value="s.id">{{ s.name }}</option></select>
-          </label>
-          <label class="cell" title="Prioridade">
-            <span class="prio" :style="{ background: PRIORITIES.find((p) => p.id === task.priority)?.color || 'var(--line-strong)' }" />
-            <select :value="task.priority" aria-label="Prioridade" @change="set({ priority: $event.target.value })"><option value="">Sem prioridade</option><option v-for="p in PRIORITIES" :key="p.id" :value="p.id">{{ p.name }}</option></select>
-          </label>
+          <div class="cell" title="Status"><AppSelect ghost block size="sm" :model-value="task.status" :options="statusOptions" aria-label="Status" @change="setStatus" /></div>
+          <div class="cell" title="Prioridade"><AppSelect ghost block size="sm" :model-value="task.priority" :options="priorityOptions" aria-label="Prioridade" @change="(v) => set({ priority: v })" /></div>
           <div class="cell menu-wrap">
             <button type="button" class="cell__btn" :aria-expanded="people" @click="people = !people">
               <Avatars v-if="task.assignees.length" :ids="task.assignees" :size="20" /><AppIcon v-else name="user" :size="15" />
               <span>{{ task.assignees.length === 1 ? member(task.assignees[0])?.name.split(' ')[0] : task.assignees.length ? `${task.assignees.length} pessoas` : 'Responsáveis' }}</span>
             </button>
             <div v-if="people" class="menu" role="menu">
+              <template v-if="roles.length">
+                <span class="menu__label">Por cargo</span>
+                <button v-for="r in roles" :key="r.title" type="button" role="menuitemcheckbox" :aria-checked="roleOn(r)" @click="toggleRole(r)">
+                  <AppIcon name="user" :size="13" />{{ r.title }}<small class="menu__n">{{ r.ids.length }}</small><AppIcon v-if="roleOn(r)" name="check" :size="13" class="tick" />
+                </button>
+                <span class="menu__label">Pessoas</span>
+              </template>
               <button v-for="m in peopleOf(task.projectId)" :key="m.id" type="button" role="menuitemcheckbox" :aria-checked="task.assignees.includes(m.id)" @click="toggleMember(m.id)">
-                <span class="dot" :style="{ background: m.color }" />{{ m.name }}<AppIcon v-if="task.assignees.includes(m.id)" name="check" :size="13" class="tick" />
+                <span class="dot" :style="{ background: m.color }" /><span class="menu__who">{{ m.name }}<small v-if="titleOf(m.id)">{{ titleOf(m.id) }}</small></span><AppIcon v-if="task.assignees.includes(m.id)" name="check" :size="13" class="tick" />
               </button>
             </div>
           </div>
@@ -375,12 +397,9 @@ function destroy() {
           <button type="button" :aria-pressed="adding === 'page'" @click="openAdd('page')"><AppIcon name="page" :size="13" />Página</button>
         </div>
         <form v-if="adding === 'dep' || adding === 'rel'" class="inline sec" @submit.prevent="addRelation">
-          <select v-model="rel.kind" aria-label="Tipo">
-            <template v-if="adding === 'dep'"><option value="blocks">Esta bloqueia…</option><option value="blocked_by">Esta é bloqueada por…</option></template>
-            <template v-else><option value="relates">Relacionada a…</option><option value="duplicate">Duplicada de…</option></template>
-          </select>
-          <select v-model="rel.task" aria-label="Tarefa" required><option value="" disabled>Escolher tarefa</option><option v-for="t in relationOptions" :key="t.id" :value="t.id">{{ code(t) }} · {{ t.title }}</option></select>
-          <button type="submit" class="done-btn">Adicionar</button>
+          <AppSelect v-model="rel.kind" :options="relKindOptions" aria-label="Tipo" />
+          <AppSelect v-model="rel.task" class="grow" :options="relTaskOptions" placeholder="Escolher tarefa" aria-label="Tarefa" />
+          <button type="submit" class="done-btn" :disabled="!rel.task">Adicionar</button>
         </form>
         <form v-if="adding === 'link'" class="inline sec" @submit.prevent="addLink">
           <input v-model="link.url" type="text" placeholder="https://…" aria-label="Endereço do link" required />
@@ -388,7 +407,7 @@ function destroy() {
           <button type="submit" class="done-btn">Adicionar</button>
         </form>
         <div v-if="adding === 'page'" class="inline sec">
-          <select aria-label="Página" @change="linkPage($event.target.value)"><option value="">Escolher página do projeto</option><option v-for="pg in state.pages.filter((p) => p.project === task.projectId)" :key="pg.id" :value="pg.id">{{ pg.title || 'Sem título' }}</option></select>
+          <AppSelect v-if="pageOptions.length" class="grow" :model-value="null" :options="pageOptions" placeholder="Escolher página do projeto" aria-label="Página" @change="linkPage" />
           <span v-if="!state.pages.some((p) => p.project === task.projectId)" class="none">Este projeto ainda não tem páginas.</span>
         </div>
 
@@ -449,10 +468,7 @@ function destroy() {
           <dl v-if="open.details" class="props">
             <dt><AppIcon name="parent" :size="15" />Pai</dt>
             <dd>
-              <select v-if="saved" :value="task.parent || ''" aria-label="Tarefa pai" @change="set({ parent: Number($event.target.value) || null })">
-                <option value="">Adicionar pai</option>
-                <option v-for="t in parentOptions" :key="t.id" :value="t.id">{{ code(t) }} · {{ t.title }}</option>
-              </select>
+              <AppSelect v-if="saved" ghost size="sm" :model-value="task.parent || null" :options="parentSelectOptions" placeholder="Adicionar pai" aria-label="Tarefa pai" @change="(v) => set({ parent: v })" />
               <span v-else class="none">Publique para escolher</span>
             </dd>
             <dt><AppIcon name="tag" :size="15" />Etiquetas</dt>
@@ -464,10 +480,10 @@ function destroy() {
           <button type="button" class="fold" :aria-expanded="open.structure" @click="open.structure = !open.structure">Estrutura do projeto <AppIcon name="chevron" :size="12" /></button>
           <dl v-if="open.structure" class="props">
             <dt><AppIcon name="folder" :size="15" />Projeto</dt>
-            <dd><select :value="task.projectId || ''" aria-label="Projeto" @change="moveTo(Number($event.target.value) || null)"><option value="">Sem projeto</option><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select></dd>
+            <dd><AppSelect ghost size="sm" :model-value="task.projectId || null" :options="projectOptions" aria-label="Projeto" @change="moveTo" /></dd>
             <template v-if="task.projectId">
               <dt><AppIcon name="cycle" :size="15" />Ciclo</dt>
-              <dd><select :value="task.cycle || ''" aria-label="Ciclo" @change="set({ cycle: Number($event.target.value) || null })"><option value="">Sem ciclo</option><option v-for="c in state.cycles.filter((c) => c.project === task.projectId)" :key="c.id" :value="c.id">{{ c.name }}</option></select></dd>
+              <dd><AppSelect ghost size="sm" :model-value="task.cycle || null" :options="cycleOptions" aria-label="Ciclo" @change="(v) => set({ cycle: v })" /></dd>
               <dt><AppIcon name="module" :size="15" />Módulos</dt>
               <dd class="chips">
                 <button v-for="m in state.modules.filter((m) => m.project === task.projectId)" :key="m.id" type="button" class="chip" :class="{ 'is-on': task.modules.includes(m.id) }" :aria-pressed="task.modules.includes(m.id)" @click="set({ modules: task.modules.includes(m.id) ? task.modules.filter((x) => x !== m.id) : [...task.modules, m.id] })"><AppIcon name="module" :size="12" />{{ m.name }}</button>
@@ -547,7 +563,7 @@ function destroy() {
 .menu-wrap { position: relative; }
 .menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 5; display: flex; flex-direction: column; min-width: 13rem; max-height: 18rem; padding: 0.3rem; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.45); }
 .bar .menu { left: 0; right: auto; }
-.menu button { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; text-align: left; color: var(--text); cursor: pointer; }
+.menu button { display: flex; flex-shrink: 0; align-items: center; gap: 0.5rem; white-space: nowrap; padding: 0.45rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; text-align: left; color: var(--text); cursor: pointer; }
 .menu button:hover { background: var(--surface-2); }
 .menu .danger { color: #ff8a80; }
 .menu .tick { margin-left: auto; color: var(--accent-soft); }
@@ -555,23 +571,25 @@ function destroy() {
 .parent-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.6rem; padding: 0; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .parent-link:hover { color: var(--accent-soft); }
 .title { display: block; width: 100%; margin-top: 0.5rem; padding: 0; border: 0; background: none; font: 600 1.375rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); resize: none; field-sizing: content; outline: none; }
-.bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); border-block: 1px solid var(--line); }
+.bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); border-block: 1px solid var(--line); position: relative; z-index: 6; } /* acima das seções seguintes (a animação de entrada cria camadas), senão elas cobrem o menu de responsáveis */
 .cell { display: flex; align-items: center; gap: 0.3rem; min-width: 0; padding: 0.35rem 0.5rem; color: var(--muted); }
 .cell + .cell { border-left: 1px solid var(--line); }
-.cell select, .cell input { flex: 1; min-width: 0; padding: 0 0.2rem; }
+.cell input { flex: 1; min-width: 0; padding: 0 0.2rem; }
 .cell__btn { display: flex; flex: 1; align-items: center; gap: 0.4rem; min-width: 0; height: 30px; padding: 0 0.2rem; border: 0; border-radius: 6px; background: none; font-size: 13px; color: var(--text); cursor: pointer; }
 .cell__btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell__btn:hover { background: var(--surface-2); }
-.prio { width: 9px; height: 9px; flex-shrink: 0; border-radius: 2px; }
 .props { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 0.45rem 0.75rem; align-items: center; margin: 0 0 1rem; }
 dt { display: flex; align-items: center; gap: 0.5rem; font-size: 13px; color: var(--muted); }
 dd { display: flex; align-items: center; gap: 0.4rem; margin: 0; min-width: 0; }
-select, input[type='date'], .desc, .add input, .tag-input, .comment textarea { border: 1px solid transparent; border-radius: 6px; background: none; font: inherit; color: var(--text); outline: none; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
-select, input[type='date'] { height: 30px; padding: 0 0.4rem; font-size: 13px; }
-dd select { max-width: 100%; }
-select:hover, input[type='date']:hover, .desc:hover { background: var(--surface-2); }
-select:focus, input[type='date']:focus, .desc:focus, .add input:focus, .tag-input:focus, .comment textarea:focus { border-color: var(--accent); }
-select option { background: var(--surface); }
+input[type='date'], .desc, .add input, .tag-input, .comment textarea { border: 1px solid transparent; border-radius: 6px; background: none; font: inherit; color: var(--text); outline: none; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
+input[type='date'] { height: 30px; padding: 0 0.4rem; font-size: 13px; }
+input[type='date']:hover, .desc:hover { background: var(--surface-2); }
+input[type='date']:focus, .desc:focus, .add input:focus, .tag-input:focus, .comment textarea:focus { border-color: var(--accent); }
+.menu__label { padding: 0.45rem 0.55rem 0.2rem; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); }
+.menu__n { margin-left: 0.15rem; font-size: 11.5px; color: var(--muted); }
+.menu__who { display: flex; flex-direction: column; min-width: 0; }
+.menu__who small { font-size: 11.5px; color: var(--muted); }
+.inline :deep(.grow) { flex: 1; min-width: 9rem; } /* a classe vai para o botão do AppSelect, fora do escopo deste componente */
 .chips { flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12px; cursor: pointer; }
 .chip.is-on { border-color: var(--accent); background: rgb(229 101 21 / 0.14); }
@@ -650,7 +668,7 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .attach input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .attach:focus-within { outline: 2px solid var(--accent-soft); }
 .inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.inline select, .inline input { flex: 1; min-width: 9rem; height: 32px; padding: 0 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13px; color: var(--text); }
+.inline input { flex: 1; min-width: 9rem; height: 32px; padding: 0 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13px; color: var(--text); }
 .rel { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; font-size: 13px; }
 .rel__kind { min-width: 7.5rem; font-size: 12px; color: var(--muted); }
 .rel__item { display: inline-flex; align-items: center; gap: 0.2rem; max-width: 100%; padding: 0.15rem 0.2rem 0.15rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; }

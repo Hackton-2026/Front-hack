@@ -6,6 +6,7 @@ import { gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
+import ProjectIcon from '../components/app/ProjectIcon.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
 
 const { state, progress, tasksOf, isOverdue, today, day, project, code, doneRatio, member } = useWorkspace()
@@ -83,7 +84,7 @@ onMounted(() => {
         <p v-if="!state.projects.length" class="pg-muted">Nenhum projeto ainda.</p>
         <ul class="plist">
           <li v-for="p in state.projects" :key="p.id">
-            <RouterLink :to="`/projetos/${p.id}/visao-geral`"><span v-if="p.icon">{{ p.icon }}</span><i v-else class="sq" :style="{ background: p.color }" />{{ p.name }}</RouterLink>
+            <RouterLink :to="`/projetos/${p.id}/visao-geral`"><ProjectIcon :icon="p.icon" :color="p.color" :size="15" />{{ p.name }}</RouterLink>
             <span class="pg-muted">{{ tasksOf(p.id).filter((t) => t.status === 'done').length }}/{{ tasksOf(p.id).length }}</span>
             <span class="pbar"><span :data-v="progress(p.id)" :style="{ transform: `scaleX(${progress(p.id)})` }" /></span>
           </li>

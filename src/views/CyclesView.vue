@@ -8,6 +8,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppModal from '../components/app/AppModal.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
 
 const props = defineProps({ id: { type: String, default: '' } })
@@ -250,7 +251,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
 
     <AppModal :open="!!editing" :title="editing === 'new' ? 'Novo ciclo' : 'Editar ciclo'" @close="editing = null" @submit="save">
       <label class="f"><span>Nome</span><input v-model="form.name" placeholder="Ex.: Sprint 3: pagamentos" maxlength="120" /></label>
-      <label v-if="!pid && editing === 'new'" class="f"><span>Projeto</span><select v-model="form.project"><option v-for="x in state.projects" :key="x.id" :value="x.id">{{ x.name }}</option></select></label>
+      <label v-if="!pid && editing === 'new'" class="f"><span>Projeto</span><AppSelect v-model="form.project" :options="state.projects.map((x) => ({ value: x.id, label: x.name }))" block /></label>
       <label class="f"><span>Descrição</span><textarea v-model="form.description" rows="2" placeholder="Objetivo do ciclo (opcional)" /></label>
       <div class="row2">
         <label class="f"><span>Começa</span><input v-model="form.start_date" type="date" required /></label>

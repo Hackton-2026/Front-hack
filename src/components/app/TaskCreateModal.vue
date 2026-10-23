@@ -1,14 +1,15 @@
 <script setup>
 // Modal "Nova tarefa" (o "New work item" do Plane / "Create task" do ClickUp). Sem projeto vira rascunho.
-import { nextTick, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useOnboarding } from '../../composables/useOnboarding'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
+import AppSelect from './AppSelect.vue'
 import GooeyButton from '../GooeyButton.vue'
 
-const { state, STATUSES, PRIORITIES, createTask, code, peopleOf } = useWorkspace()
+const { state, STATUSES, PRIORITIES, createTask, code, peopleOf, rolesOf } = useWorkspace()
 const { complete } = useOnboarding()
 const { ui, closeNew, openTask } = useUi()
 const form = reactive({})
@@ -39,6 +40,15 @@ watch(() => form.projectId, (pid) => {
 function toggleMember(id) {
   form.assignees = form.assignees.includes(id) ? form.assignees.filter((a) => a !== id) : [...form.assignees, id]
 }
+// atribuir por cargo: marca todo mundo do cargo; se já estavam todos, tira todos
+const roles = computed(() => (form.projectId ? rolesOf(form.projectId) : []))
+const roleOn = (r) => r.ids.every((id) => form.assignees?.includes(id))
+function toggleRole(r) {
+  form.assignees = roleOn(r) ? form.assignees.filter((id) => !r.ids.includes(id)) : [...new Set([...form.assignees, ...r.ids])]
+}
+const projectOptions = computed(() => [{ value: '', label: asDraft.value ? 'Sem projeto' : 'Sem projeto (rascunho)' }, ...state.projects.map((p) => ({ value: p.id, label: p.name, color: p.color }))])
+const statusOptions = STATUSES.map((s) => ({ value: s.id, label: s.name, color: s.color }))
+const priorityOptions = [{ value: '', label: 'Sem prioridade' }, ...PRIORITIES.map((p) => ({ value: p.id, label: p.name, color: p.color }))]
 function save(draft) {
   if (!form.title.trim()) { error.value = 'Dê um título para a tarefa.'; titleInput.value?.focus(); return }
   const task = createTask({ ...form, title: form.title.trim(), due: form.due || null, projectId: form.projectId || null, draft: draft || !form.projectId })
@@ -64,22 +74,17 @@ function save(draft) {
       <input ref="titleInput" v-model="form.title" class="title" placeholder="Título da tarefa" aria-label="Título" :aria-invalid="!!error" />
       <textarea v-model="form.description" rows="3" placeholder="Descrição (opcional)" aria-label="Descrição" />
       <div class="row">
-        <label>Projeto
-          <select v-model="form.projectId">
-            <option value="">{{ asDraft ? 'Sem projeto' : 'Sem projeto (rascunho)' }}</option>
-            <option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
-        </label>
-        <label>Status
-          <select v-model="form.status"><option v-for="s in STATUSES" :key="s.id" :value="s.id">{{ s.name }}</option></select>
-        </label>
-        <label>Prioridade
-          <select v-model="form.priority"><option value="">Sem prioridade</option><option v-for="p in PRIORITIES" :key="p.id" :value="p.id">{{ p.name }}</option></select>
-        </label>
+        <div class="field"><span>Projeto</span><AppSelect v-model="form.projectId" block :options="projectOptions" aria-label="Projeto" /></div>
+        <div class="field"><span>Status</span><AppSelect v-model="form.status" block :options="statusOptions" aria-label="Status" /></div>
+        <div class="field"><span>Prioridade</span><AppSelect v-model="form.priority" block :options="priorityOptions" aria-label="Prioridade" /></div>
         <label>Prazo <input v-model="form.due" type="date" /></label>
       </div>
       <fieldset class="people">
         <legend>Responsáveis</legend>
+        <button v-for="r in roles" :key="`cargo-${r.title}`" type="button" class="chip role" :class="{ 'is-on': roleOn(r) }" :aria-pressed="roleOn(r)" :title="`Todos com o cargo ${r.title}`" @click="toggleRole(r)">
+          <AppIcon name="user" :size="12" />{{ r.title }} <small>{{ r.ids.length }}</small>
+        </button>
+        <span v-if="roles.length" class="sep" aria-hidden="true" />
         <button v-for="m in peopleOf(form.projectId)" :key="m.id" type="button" class="chip" :class="{ 'is-on': form.assignees.includes(m.id) }" :aria-pressed="form.assignees.includes(m.id)" @click="toggleMember(m.id)">
           <span class="dot" :style="{ background: m.color }" />{{ m.name }}
         </button>
@@ -103,12 +108,15 @@ h2 { margin: 0; font: 600 1rem/1.2 'Geist', system-ui, sans-serif; color: var(--
 .x { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .x:hover { background: var(--surface-2); color: var(--text); }
 .title { padding: 0; border: 0; background: none; font: 600 1.25rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); outline: none; }
-textarea, select, .row input { width: 100%; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; }
+textarea, .row input { width: 100%; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; }
 textarea { padding: 0.6rem 0.7rem; resize: vertical; }
-select, .row input { height: 34px; padding: 0 0.5rem; }
-textarea:focus, select:focus, .row input:focus { border-color: var(--accent); }
+.row input { height: 34px; padding: 0 0.5rem; }
+textarea:focus, .row input:focus { border-color: var(--accent); }
 .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.6rem; }
-.row label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 12px; font-weight: 500; color: var(--muted); }
+.row label, .field { display: flex; flex-direction: column; gap: 0.3rem; font-size: 12px; font-weight: 500; color: var(--muted); }
+.field :deep(.sel) { height: 34px; background: var(--bg); }
+.chip.role small { color: var(--muted); }
+.sep { width: 1px; align-self: stretch; margin: 0 0.2rem; background: var(--line-strong); }
 .people { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; border: 0; }
 .people legend { margin-bottom: 0.4rem; padding: 0; font-size: 12px; font-weight: 500; color: var(--muted); }
 .chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 999px; background: none; font-size: 12.5px; cursor: pointer; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }

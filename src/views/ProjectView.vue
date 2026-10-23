@@ -8,6 +8,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import { useOnboarding } from '../composables/useOnboarding'
 import AppIcon from '../components/app/AppIcon.vue'
+import ProjectIcon from '../components/app/ProjectIcon.vue'
 import Avatars from '../components/app/Avatars.vue'
 import TaskListView from '../components/app/TaskListView.vue'
 import TaskBoard from '../components/app/TaskBoard.vue'
@@ -134,7 +135,7 @@ onMounted(() => moveInk(false))
   <div v-if="p && scope" class="proj">
     <header class="head">
       <div class="head__title">
-        <span v-if="p.icon" class="emoji" aria-hidden="true">{{ p.icon }}</span><span v-else class="sq" :style="{ background: p.color }" />
+        <ProjectIcon :icon="p.icon" :color="p.color" :size="22" class="emoji" />
         <div>
           <RouterLink v-if="scope.kind" :to="`/projetos/${p.id}/${scope.back}`" class="back">{{ scope.kind }} · {{ p.name }}</RouterLink>
           <h1>{{ scope.kind ? scope.name : p.name }}</h1>
@@ -144,7 +145,7 @@ onMounted(() => moveInk(false))
       <div class="head__right">
         <RouterLink :to="`/projetos/${p.id}/membros`" class="people" :title="`${people.length} ${people.length === 1 ? 'pessoa' : 'pessoas'} no projeto`"><Avatars :ids="people" :size="26" /></RouterLink>
         <button type="button" class="chat-btn" :class="{ 'is-on': ui.chat === p.id }" :aria-pressed="ui.chat === p.id" aria-label="Chat do projeto" title="Chat do projeto" @click="ui.chat === p.id ? closeChat() : openChat(p.id)"><AppIcon name="chat" :size="17" /></button>
-        <GooeyButton variant="secondary" :to="`/projetos/${p.id}/membros`">Participantes</GooeyButton>
+        <RouterLink :to="`/projetos/${p.id}/membros`" class="head-btn"><AppIcon name="user" :size="15" />Participantes</RouterLink>
         <GooeyButton v-if="canEdit" variant="primary" @click="add">Novo item de trabalho</GooeyButton>
       </div>
     </header>
@@ -229,6 +230,9 @@ h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spac
 .people:focus-visible, .chat-btn:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .chat-btn { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line-strong); border-radius: 8px; background: none; color: var(--muted); cursor: pointer; transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease); }
 .chat-btn:hover, .chat-btn.is-on { border-color: var(--text); color: var(--text); }
+.head-btn { display: inline-flex; align-items: center; gap: 0.45rem; height: 36px; padding: 0 0.85rem; border: 1px solid var(--line-strong); border-radius: 8px; color: var(--text); font-size: 13.5px; font-weight: 500; text-decoration: none; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
+.head-btn:hover { border-color: var(--text); background: var(--surface-2); }
+.head-btn:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .chat-btn.is-on { background: var(--surface-2); }
 .pbar { height: 3px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .pbar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-soft)); transform-origin: left; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }

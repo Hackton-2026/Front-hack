@@ -5,6 +5,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '../../services/api'
 import { useWorkspace } from '../../composables/useWorkspace'
+import AppSelect from './AppSelect.vue'
 
 const props = defineProps({
   path: { type: String, required: true }, // ex.: /api/items/
@@ -24,6 +25,7 @@ const editing = ref(null) // id da linha em edição; null = criando
 const revealed = ref('') // token recém-criado: aparece uma única vez
 const form = reactive({})
 const inputs = computed(() => props.fields.filter((f) => !['secret', 'readonly'].includes(f.type)))
+const taskOptions = computed(() => state.tasks.filter((x) => !x.draft).map((t) => ({ value: t.id, label: `${t.code ? `${t.code} · ` : ''}${t.title}` })))
 
 const get = (row, f) => (f.data ? row.data?.[f.key] : row[f.key])
 function blank() {
@@ -85,6 +87,9 @@ function body() {
   return out
 }
 async function submit() {
+  // o AppSelect não tem `required` nativo
+  const missing = inputs.value.find((f) => f.required && ['select', 'task'].includes(f.type) && form[f.key] === '')
+  if (missing) return (error.value = `Escolha ${missing.label.toLowerCase()}.`)
   error.value = ''
   try {
     if (editing.value) {
@@ -127,14 +132,8 @@ defineExpose({ rows })
       <label v-for="f in inputs" :key="f.key" :class="{ wide: ['textarea', 'members', 'multi'].includes(f.type) }">
         {{ f.label }}
         <textarea v-if="f.type === 'textarea'" v-model="form[f.key]" rows="2" :required="f.required" />
-        <select v-else-if="f.type === 'select'" v-model="form[f.key]" :required="f.required">
-          <option value="" disabled>Escolher</option>
-          <option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option>
-        </select>
-        <select v-else-if="f.type === 'task'" v-model="form[f.key]" :required="f.required">
-          <option value="" disabled>Escolher tarefa</option>
-          <option v-for="t in state.tasks.filter((x) => !x.draft)" :key="t.id" :value="t.id">{{ t.code ? `${t.code} · ` : '' }}{{ t.title }}</option>
-        </select>
+        <AppSelect v-else-if="f.type === 'select'" v-model="form[f.key]" :options="f.options" placeholder="Escolher" block />
+        <AppSelect v-else-if="f.type === 'task'" v-model="form[f.key]" :options="taskOptions" placeholder="Escolher tarefa" block />
         <span v-else-if="f.type === 'members' || f.type === 'multi'" class="sl__chips">
           <button v-for="o in f.type === 'members' ? state.members.map((m) => ({ value: m.id, label: m.name })) : f.options" :key="o.value" type="button" :aria-pressed="form[f.key].includes(o.value)" @click="toggleIn(form[f.key], o.value)">{{ o.label }}</button>
         </span>
@@ -175,8 +174,8 @@ defineExpose({ rows })
 .sl__form { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.6rem 0.8rem; align-items: end; padding: 0.75rem; border: 1px solid var(--line); border-radius: 8px; }
 .sl__form label { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; font-size: 12px; font-weight: 500; color: var(--muted); }
 .sl__form label.wide { grid-column: 1 / -1; }
-.sl__form :is(input:not(.sl__check), select, textarea) { min-height: 32px; padding: 0.35rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
-.sl__form :is(input, select, textarea):focus { border-color: var(--accent); }
+.sl__form :is(input:not(.sl__check), textarea) { min-height: 32px; padding: 0.35rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
+.sl__form :is(input, textarea):focus { border-color: var(--accent); }
 .sl__check { width: 16px; height: 16px; accent-color: var(--accent); }
 .sl__chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .sl__chips button { padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }

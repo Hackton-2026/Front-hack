@@ -11,6 +11,7 @@ import AppIcon from './AppIcon.vue'
 import StatusBadge from './StatusBadge.vue'
 import PriorityFlag from './PriorityFlag.vue'
 import Avatars from './Avatars.vue'
+import AppSelect from './AppSelect.vue'
 
 gsap.registerPlugin(Flip)
 
@@ -43,6 +44,7 @@ const lanes = computed(() => {
   if (cfg.group === 'project') return state.projects.map((p) => ({ id: p.id, label: p.name, color: p.color, has: (t) => t.projectId === p.id, patch: { projectId: p.id } }))
   return [{ id: 'all', label: '', has: () => true }]
 })
+const groupOptions = computed(() => [{ value: '', label: 'Nada' }, { value: 'priority', label: 'Prioridade' }, { value: 'assignee', label: 'Responsável' }, ...(props.projectId ? [] : [{ value: 'project', label: 'Projeto' }])])
 const shownLanes = computed(() => lanes.value.filter((l) => !cfg.group || props.tasks.some(l.has)))
 const inLane = (c, l) => c.tasks.filter(l.has)
 
@@ -53,12 +55,16 @@ const cycleName = (t) => t.cycle && state.cycles.find((c) => c.id === t.cycle)?.
 const prio = (id) => PRIORITIES.find((p) => p.id === id)
 const late = (c) => c.tasks.filter(isOverdue).length
 
-// Muda os dados e anima as posições antigas → novas de todos os cards
+// Muda os dados e anima as posições antigas → novas de todos os cards.
+// Sem "absolute": os cards continuam no fluxo (com absolute, a resposta do servidor no meio da animação deixava
+// cards soltos e as colunas encolhiam). Uma animação nova termina a anterior antes de começar.
+let flip
 async function withFlip(change) {
+  flip?.progress(1)
   const st = reduced ? null : Flip.getState(root.value.querySelectorAll('.card'))
   change()
   await nextTick()
-  if (st) Flip.from(st, { targets: root.value.querySelectorAll('.card'), duration: 0.45, ease: 'power3.out', absolute: true, onEnter: (els) => gsap.from(els, { scale: 0.9, autoAlpha: 0, duration: 0.35 }) })
+  if (st) flip = Flip.from(st, { targets: root.value.querySelectorAll('.card'), duration: 0.45, ease: 'power3.out', onEnter: (els) => gsap.from(els, { scale: 0.9, autoAlpha: 0, duration: 0.35 }) })
 }
 
 function onDragStart(e, task) {
@@ -106,9 +112,7 @@ onMounted(() => {
   <div ref="root" class="kb">
     <div class="kb__bar">
       <label class="opt"><AppIcon name="layers" :size="13" />Agrupar por
-        <select v-model="cfg.group" class="pg-select">
-          <option value="">Nada</option><option value="priority">Prioridade</option><option value="assignee">Responsável</option><option v-if="!projectId" value="project">Projeto</option>
-        </select>
+        <AppSelect v-model="cfg.group" :options="groupOptions" size="sm" aria-label="Agrupar por" />
       </label>
       <div class="rel">
         <button type="button" class="pg-btn" :aria-expanded="menu === 'fields'" @click.stop="menu = menu === 'fields' ? '' : 'fields'"><AppIcon name="settings" :size="13" />Campos</button>
@@ -224,7 +228,7 @@ onMounted(() => {
 .lane__head { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font: 600 13px/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .lane__head i { width: 9px; height: 9px; border-radius: 3px; }
 .board { display: grid; gap: 0.85rem; align-items: start; }
-.col { position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-height: 10rem; padding: 0.6rem; border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 7%, var(--surface)), var(--surface) 7rem); transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
+.col { position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-height: 10rem; padding: 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
 .col.is-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .col.is-full { box-shadow: inset 0 0 0 1px rgb(255 91 77 / 0.45); }
 .col.is-collapsed { padding: 0; }

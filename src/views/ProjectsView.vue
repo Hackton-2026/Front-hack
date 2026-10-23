@@ -7,7 +7,10 @@ import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useOnboarding } from '../composables/useOnboarding'
 import AppIcon from '../components/app/AppIcon.vue'
+import ProjectIcon from '../components/app/ProjectIcon.vue'
+import { iconClass } from '../components/app/projectIcons'
 import Avatars from '../components/app/Avatars.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 
 const COLORS = ['#e56515', '#fba45c', '#919599', '#f2c46d', '#cdcdcb', '#7fc47a']
@@ -69,8 +72,8 @@ onMounted(animate)
       <h1>Projetos <span class="count">{{ state.projects.length }}</span></h1>
       <div class="pg-bar__right">
         <label class="pg-search"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar projeto" aria-label="Buscar projeto" /></label>
-        <select v-model="filter" class="pg-select" aria-label="Filtrar projetos"><option value="all">Todos</option><option value="mine">Onde eu participo</option><option value="late">Com atraso</option></select>
-        <select v-model="sort" class="pg-select" aria-label="Ordenar projetos"><option value="star">Favoritos primeiro</option><option value="progress">Mais avançados</option><option value="late">Mais atrasados</option><option value="name">Nome</option></select>
+        <AppSelect v-model="filter" :options="[{ value: 'all', label: 'Todos' }, { value: 'mine', label: 'Onde eu participo' }, { value: 'late', label: 'Com atraso' }]" size="sm" aria-label="Filtrar projetos" />
+        <AppSelect v-model="sort" :options="[{ value: 'star', label: 'Favoritos primeiro' }, { value: 'progress', label: 'Mais avançados' }, { value: 'late', label: 'Mais atrasados' }, { value: 'name', label: 'Nome' }]" size="sm" aria-label="Ordenar projetos" />
         <div class="pg-seg" role="group" aria-label="Visualização">
           <button type="button" :aria-pressed="view === 'cards'" aria-label="Cartões" title="Cartões" @click="view = 'cards'"><AppIcon name="grid" :size="14" /></button>
           <button type="button" :aria-pressed="view === 'table'" aria-label="Tabela" title="Tabela" @click="view = 'table'"><AppIcon name="list" :size="14" /></button>
@@ -81,7 +84,7 @@ onMounted(animate)
     <div v-if="view === 'cards'" class="grid">
       <article v-for="r in rows" :key="r.p.id" class="card" :style="{ '--c': r.p.color }">
         <header class="card__top">
-          <span class="badge">{{ r.p.icon || r.p.name.slice(0, 1) }}</span>
+          <span class="badge"><ProjectIcon v-if="iconClass(r.p.icon)" :icon="r.p.icon" :size="15" /><template v-else>{{ r.p.name.slice(0, 1) }}</template></span>
           <RouterLink :to="`/projetos/${r.p.id}`" class="name">{{ r.p.name }}</RouterLink>
           <button type="button" class="pg-icon star" :class="{ on: starred('project', r.p.id) }" :aria-pressed="starred('project', r.p.id)" :aria-label="starred('project', r.p.id) ? 'Tirar dos favoritos' : 'Favoritar'" @click="toggleStar('project', r.p.id)"><AppIcon name="star" :size="14" /></button>
         </header>
@@ -138,8 +141,8 @@ onMounted(animate)
 h1 { display: flex; align-items: center; gap: 0.5rem; }
 .count { padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--surface-2); font-size: 12px; font-weight: 500; color: var(--muted); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; padding: 0 1.25rem; }
-.card { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: inset 0 3px color-mix(in srgb, var(--c) 70%, transparent); transition: border-color 0.2s var(--ease), translate 0.25s var(--ease); }
-.card:not(.new):hover { border-color: color-mix(in srgb, var(--c) 55%, var(--line)); translate: 0 -2px; }
+.card { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); transition: border-color 0.2s var(--ease), translate 0.25s var(--ease); }
+.card:not(.new):hover { border-color: var(--line-strong); translate: 0 -2px; }
 .card__top { display: flex; align-items: center; gap: 0.6rem; }
 .badge { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: color-mix(in srgb, var(--c) 22%, transparent); font-weight: 600; color: var(--c); }
 .name { flex: 1; min-width: 0; overflow: hidden; font-size: 15px; font-weight: 600; color: var(--text); text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }

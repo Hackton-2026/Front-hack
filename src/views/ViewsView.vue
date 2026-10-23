@@ -8,6 +8,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppModal from '../components/app/AppModal.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 import { LAYOUTS, layout } from '../components/app/views/layouts'
 
 const props = defineProps({ id: { type: String, default: '' } })
@@ -21,6 +22,7 @@ const sort = ref('updated')
 const root = ref(null)
 const cards = ref(true)
 const projFilter = ref('')
+const projectOptions = computed(() => state.projects.map((x) => ({ value: x.id, label: x.name })))
 // visões prontas: um clique cria no projeto aberto (ou no primeiro) e já abre
 const PRESETS = [
   { name: 'Minhas abertas', type: 'list', config: () => ({ assignees: [state.me], status: ['todo', 'doing', 'review'] }), hint: 'Atribuídas a mim e ainda não concluídas' },
@@ -101,8 +103,8 @@ onMounted(animate)
       <strong>{{ pid ? `${list.length} ${list.length === 1 ? 'visão' : 'visões'}` : 'Visões de todos os projetos' }}</strong>
       <div class="pg-bar__right">
         <label class="pg-search"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar visões" aria-label="Buscar visões" /></label>
-        <select v-if="!pid" v-model="projFilter" class="pg-select" aria-label="Projeto"><option value="">Todos os projetos</option><option v-for="x in state.projects" :key="x.id" :value="x.id">{{ x.name }}</option></select>
-        <select v-model="sort" class="pg-select" aria-label="Ordenar"><option value="updated">Atualizadas</option><option value="name">Nome</option></select>
+        <AppSelect v-if="!pid" v-model="projFilter" :options="[{ value: '', label: 'Todos os projetos' }, ...projectOptions]" size="sm" aria-label="Projeto" />
+        <AppSelect v-model="sort" :options="[{ value: 'updated', label: 'Atualizadas' }, { value: 'name', label: 'Nome' }]" size="sm" aria-label="Ordenar" />
         <div class="pg-seg" role="group" aria-label="Visualização">
           <button type="button" :aria-pressed="cards" aria-label="Cartões" title="Cartões" @click="cards = true"><AppIcon name="grid" :size="14" /></button>
           <button type="button" :aria-pressed="!cards" aria-label="Lista" title="Lista" @click="cards = false"><AppIcon name="list" :size="14" /></button>
@@ -161,8 +163,8 @@ onMounted(animate)
     </section>
     <AppModal :open="!!editing" :title="editing === 'new' ? 'Nova visão' : 'Editar visão'" @close="editing = null" @submit="save">
       <label class="f"><span>Nome</span><input v-model="form.name" placeholder="Ex.: Urgentes do time" maxlength="80" /></label>
-      <label class="f"><span>Layout</span><select v-model="form.type"><option v-for="l in LAYOUTS.filter((x) => !x.soon)" :key="l.type" :value="l.type">{{ l.label }}</option></select></label>
-      <label v-if="!pid && editing === 'new'" class="f"><span>Projeto</span><select v-model="form.project"><option v-for="x in state.projects" :key="x.id" :value="x.id">{{ x.name }}</option></select></label>
+      <label class="f"><span>Layout</span><AppSelect v-model="form.type" :options="LAYOUTS.filter((x) => !x.soon).map((l) => ({ value: l.type, label: l.label }))" block /></label>
+      <label v-if="!pid && editing === 'new'" class="f"><span>Projeto</span><AppSelect v-model="form.project" :options="projectOptions" block /></label>
       <div class="f"><span>Status</span><div class="chips"><button v-for="s in STATUSES" :key="s.id" type="button" class="chip" :class="{ 'is-on': form.status.includes(s.id) }" :aria-pressed="form.status.includes(s.id)" @click="toggle('status', s.id)">{{ s.name }}</button></div></div>
       <div class="f"><span>Prioridade</span><div class="chips"><button v-for="s in PRIORITIES" :key="s.id" type="button" class="chip" :class="{ 'is-on': form.priority.includes(s.id) }" :aria-pressed="form.priority.includes(s.id)" @click="toggle('priority', s.id)">{{ s.name }}</button></div></div>
       <div class="f"><span>Responsáveis</span><div class="chips"><button v-for="m in peopleOf(form.project || pid)" :key="m.id" type="button" class="chip" :class="{ 'is-on': form.assignees.includes(m.id) }" :aria-pressed="form.assignees.includes(m.id)" @click="toggle('assignees', m.id)">{{ m.name }}</button></div></div>

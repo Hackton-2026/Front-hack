@@ -8,6 +8,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import PriorityFlag from '../components/app/PriorityFlag.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const { state, drafts, project, createTask, updateTask, removeTask, day, PRIORITIES } = useWorkspace()
 const { openTask, toast } = useUi()
@@ -19,6 +20,7 @@ const newest = ref(true)
 const selected = reactive(new Set())
 const target = reactive({})
 const bulkProject = ref('')
+const projectOptions = computed(() => state.projects.map((p) => ({ value: p.id, label: p.name })))
 
 const ageDays = (d) => Math.floor((Date.now() - new Date(d.createdAt)) / 864e5)
 const list = computed(() => drafts.value
@@ -92,7 +94,7 @@ watch(q, async () => { await nextTick(); staggerIn(root.value?.querySelectorAll(
 
     <div v-if="selected.size" class="bulk" role="toolbar" aria-label="Ações nos selecionados">
       <strong>{{ selected.size }} selecionado(s)</strong>
-      <select v-model="bulkProject" class="pg-select" aria-label="Projeto para publicar"><option value="">Projeto sugerido de cada um</option><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select>
+      <AppSelect v-model="bulkProject" :options="[{ value: '', label: 'Projeto sugerido de cada um' }, ...projectOptions]" size="sm" aria-label="Projeto para publicar" />
       <button type="button" class="pg-btn primary" @click="publishSelected">Publicar</button>
       <button type="button" class="pg-btn" @click="removeSelected"><AppIcon name="trash" :size="14" />Apagar</button>
       <button type="button" class="pg-btn" @click="selected.clear()">Cancelar</button>
@@ -118,10 +120,10 @@ watch(q, async () => { await nextTick(); staggerIn(root.value?.querySelectorAll(
         <PriorityFlag v-if="d.priority" :priority="d.priority" />
         <span v-if="d.due" class="pg-pill"><AppIcon name="calendar" :size="12" />{{ fmt(d.due) }}</span>
         <span class="age pg-muted" :class="{ stale: ageDays(d) > 7 }">{{ ageDays(d) < 1 ? 'hoje' : `há ${ageDays(d)} d` }}</span>
-        <select v-model="target[d.id]" class="pg-select" :aria-label="`Projeto para ${d.title}`">
-          <option :value="undefined">{{ project(destination(d))?.name ? `${project(destination(d)).name}${!d.projectId && suggest(d) ? ' (sugerido)' : ''}` : 'Escolher projeto' }}</option>
-          <option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-        </select>
+        <AppSelect
+          v-model="target[d.id]" size="sm" :aria-label="`Projeto para ${d.title}`"
+          :options="[{ value: null, label: project(destination(d))?.name ? `${project(destination(d)).name}${!d.projectId && suggest(d) ? ' (sugerido)' : ''}` : 'Escolher projeto' }, ...projectOptions]"
+        />
         <button type="button" class="pg-btn" @click="publish(d, $event.currentTarget)">Publicar</button>
         <button type="button" class="pg-icon" :aria-label="`Apagar ${d.title}`" @click="removeTask(d)"><AppIcon name="trash" :size="15" /></button>
       </div>

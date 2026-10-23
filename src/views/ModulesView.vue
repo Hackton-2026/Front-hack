@@ -9,6 +9,7 @@ import AppIcon from '../components/app/AppIcon.vue'
 import AppModal from '../components/app/AppModal.vue'
 import Avatars from '../components/app/Avatars.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const router = useRouter()
@@ -23,6 +24,7 @@ const menu = ref(null)
 const root = ref(null)
 
 const tasksOf = (m) => state.tasks.filter((t) => t.modules?.includes(m.id) && !t.draft)
+const stateOptions = MODULE_STATES.map((s) => ({ value: s.id, label: s.name, color: s.color }))
 const stateOf = (id) => MODULE_STATES.find((s) => s.id === id) || MODULE_STATES[0]
 const fmt = (d) => new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 const range = (m) => (m.start_date && m.due_date ? `${fmt(m.start_date)} – ${fmt(m.due_date)}` : m.due_date ? `até ${fmt(m.due_date)}` : 'Sem datas')
@@ -75,9 +77,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
           <button type="button" :aria-pressed="layout === 'list'" aria-label="Lista" @click="layout = 'list'"><AppIcon name="list" :size="15" /></button>
           <button type="button" :aria-pressed="layout === 'grid'" aria-label="Galeria" @click="layout = 'grid'"><AppIcon name="grid" :size="15" /></button>
         </div>
-        <select v-model="sort" class="pg-select" aria-label="Ordenar">
-          <option value="name">Nome</option><option value="progress">Progresso</option><option value="due">Data final</option><option value="created">Mais novos</option>
-        </select>
+        <AppSelect v-model="sort" :options="[{ value: 'name', label: 'Nome' }, { value: 'progress', label: 'Progresso' }, { value: 'due', label: 'Data final' }, { value: 'created', label: 'Mais novos' }]" size="sm" aria-label="Ordenar" />
         <button type="button" class="pg-btn primary" @click="openForm()"><AppIcon name="plus" :size="14" />Adicionar módulo</button>
       </div>
     </div>
@@ -95,9 +95,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
         <a class="pg-row__main" href="#" @click.prevent="open(m)"><span>{{ m.name }}</span></a>
         <div class="pg-row__side">
           <span class="pg-pill pg-hide-sm">{{ range(m) }}</span>
-          <select class="pg-pill" :value="m.state" aria-label="Situação do módulo" :style="{ color: stateOf(m.state).color }" @change="updateItem('module', m, { state: $event.target.value })">
-            <option v-for="s in MODULE_STATES" :key="s.id" :value="s.id">{{ s.name }}</option>
-          </select>
+          <AppSelect :model-value="m.state" :options="stateOptions" size="sm" aria-label="Situação do módulo" @change="(v) => updateItem('module', m, { state: v })" />
           <span :title="m.lead ? `Líder: ${member(m.lead)?.name}` : 'Sem líder'" class="lead"><Avatars v-if="m.lead" :ids="[m.lead]" :size="24" /><AppIcon v-else name="user" :size="16" /></span>
           <button type="button" class="pg-icon" :class="{ 'is-on': starred('module', m.id) }" :aria-pressed="starred('module', m.id)" :aria-label="starred('module', m.id) ? 'Tirar estrela' : 'Dar estrela'" @click="toggleStar('module', m.id)"><AppIcon name="star" :size="15" /></button>
           <div class="menu-wrap">
@@ -136,8 +134,8 @@ onUnmounted(() => removeEventListener('click', onDoc))
         <label class="f"><span>Data final</span><input v-model="form.due_date" type="date" /></label>
       </div>
       <div class="row2">
-        <label class="f"><span>Situação</span><select v-model="form.state"><option v-for="s in MODULE_STATES" :key="s.id" :value="s.id">{{ s.name }}</option></select></label>
-        <label class="f"><span>Líder</span><select v-model="form.lead"><option :value="null">Sem líder</option><option v-for="x in peopleOf(pid)" :key="x.id" :value="x.id">{{ x.name }}</option></select></label>
+        <label class="f"><span>Situação</span><AppSelect v-model="form.state" :options="stateOptions" block /></label>
+        <label class="f"><span>Líder</span><AppSelect v-model="form.lead" :options="[{ value: null, label: 'Sem líder' }, ...peopleOf(pid).map((x) => ({ value: x.id, label: x.name }))]" block /></label>
       </div>
       <p v-if="err" class="err" role="alert">{{ err }}</p>
       <template #footer>

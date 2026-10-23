@@ -5,6 +5,7 @@ import { api, wsUrl } from '../services/api'
 import { useAuth } from '../composables/useAuth'
 import UserAvatar from '../components/UserAvatar.vue'
 import BaseButton from '../components/BaseButton.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const props = defineProps({ id: String })
 const { user } = useAuth()
@@ -85,10 +86,7 @@ function send() {
 <template>
   <div class="chat card">
     <aside class="sidebar">
-      <select class="new" @change="startWith($event.target.value); $event.target.value = ''">
-        <option value="">+ Nova conversa…</option>
-        <option v-for="u in others" :key="u.id" :value="u.id">{{ u.first_name || u.username }} (@{{ u.username }})</option>
-      </select>
+      <AppSelect :model-value="null" :options="others.map((u) => ({ value: u.id, label: `${u.first_name || u.username} (@${u.username})` }))" placeholder="+ Nova conversa…" aria-label="Nova conversa" block @change="startWith" />
       <RouterLink v-for="c in conversations" :key="c.id" :to="`/chat/${c.id}`" class="conv" :class="{ active: String(c.id) === id }">
         <UserAvatar :user="byUsername[otherIn(c)] || { username: otherIn(c) }" :size="26" />
         <span>{{ otherIn(c) }}</span>
@@ -130,7 +128,7 @@ function send() {
   font-size: var(--font-size-sm);
 }
 .sidebar { border-right: 1px solid var(--color-border); padding: var(--space-2); display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
-.new { width: 100%; margin-bottom: var(--space-2); }
+.sidebar :deep(.sel) { flex-shrink: 0; margin-bottom: var(--space-2); }
 .conv { display: flex; align-items: center; gap: var(--space-2); padding: 6px var(--space-2); border-radius: var(--radius-sm); color: var(--color-text); text-decoration: none; }
 .conv:hover { background: var(--color-surface-2); }
 .conv.active { background: var(--color-surface-2); color: var(--color-heading); font-weight: 500; }

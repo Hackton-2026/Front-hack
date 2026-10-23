@@ -6,6 +6,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import AppIcon from '../components/app/AppIcon.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const { state, STATUSES, PRIORITIES, member, day } = useWorkspace()
 const pid = ref('')
@@ -99,10 +100,7 @@ onMounted(() => {
         <div class="pg-seg" role="group" aria-label="Período">
           <button v-for="n in [7, 14, 30]" :key="n" type="button" :aria-pressed="span === n" @click="span = n">{{ n }} dias</button>
         </div>
-        <select v-model="pid" class="pg-select" aria-label="Projeto">
-          <option value="">Todos os projetos</option>
-          <option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-        </select>
+        <AppSelect v-model="pid" :options="[{ value: '', label: 'Todos os projetos' }, ...state.projects.map((p) => ({ value: p.id, label: p.name }))]" size="sm" aria-label="Projeto" />
       </div>
     </div>
     <div class="kpis">
