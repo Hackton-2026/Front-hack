@@ -9,7 +9,7 @@ import { useUi } from '../../composables/useUi'
 const props = defineProps({ open: Boolean })
 const emit = defineEmits(['close'])
 const { state, unread, markRead, markAllRead, acceptInvite, declineInvite } = useWorkspace()
-const { openTask, toast } = useUi()
+const { openTask, openChat, toast } = useUi()
 const router = useRouter()
 const PERM = { view: 'ver', comment: 'comentar', edit: 'editar', full: 'acesso total' }
 const answering = ref(null)
@@ -43,6 +43,7 @@ const ago = (iso) => {
 }
 function go(n) {
   markRead(n)
+  if (n.kind === 'chat_mention' && n.project) { openChat(n.project); emit('close'); return }
   const task = state.tasks.find((t) => t.id === n.task)
   if (task) { openTask(task); emit('close') }
 }
@@ -82,7 +83,7 @@ watch(() => props.open, async (v) => {
           <time>{{ ago(a.at) }}</time>
         </button>
       </li>
-      <li v-if="!items.length" class="empty">{{ tab === 'all' ? 'Nada por aqui ainda. Quando alguém te atribuir uma tarefa ou mudar o status de uma que você segue, aparece aqui.' : 'Tudo lido. Bom trabalho!' }}</li>
+      <li v-if="!items.length" class="empty">{{ tab === 'all' ? 'Nada por aqui ainda. Quando alguém te atribuir uma tarefa, te mencionar no chat ou mudar o status de uma que você segue, aparece aqui.' : 'Tudo lido. Bom trabalho!' }}</li>
     </ul>
   </div>
 </template>

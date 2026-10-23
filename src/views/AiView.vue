@@ -11,6 +11,7 @@ import AppIcon from '../components/app/AppIcon.vue'
 import AsciiSharks from '../components/app/AsciiSharks.vue'
 import AiItems from '../components/app/AiItems.vue'
 import AiMarkdown from '../components/app/AiMarkdown.vue'
+import AiQuestions from '../components/app/AiQuestions.vue'
 
 const SUGGESTIONS = ['O que está atrasado e quem é o responsável?', 'Resuma minhas tarefas desta semana', 'Crie uma tarefa para revisar o contrato amanhã', 'Coloque minha próxima tarefa em andamento']
 const { user, loadMe } = useAuth()
@@ -27,6 +28,8 @@ function applyItems(items = []) {
 const { complete } = useOnboarding()
 const messages = ref([])
 const pending = ref([])
+const form = ref(null) // formulário da IA (abaixo da resposta dela); as respostas viram a próxima mensagem
+let asked = 0 // muda a cada formulário: ele começa limpo
 const text = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -48,14 +51,17 @@ async function send(content = text.value.trim()) {
   text.value = ''
   error.value = ''
   pending.value = []
+  form.value = null
   loading.value = true
   complete('ai')
   animateLast(); scroll()
   try {
-    const history = messages.value.map(({ role, content }) => ({ role, content }))
-    const { reply, changed, pending: asked = [], items = [] } = await api('/api/ai/chat/', { method: 'POST', body: { messages: history, wiki: wikiContext() } })
+    const history = messages.value.filter((m) => m.content?.trim()).map(({ role, content }) => ({ role, content }))
+    const { reply, changed, pending: toConfirm = [], items = [], form: toAsk = null } = await api('/api/ai/chat/', { method: 'POST', body: { messages: history, wiki: wikiContext() } })
     messages.value.push({ role: 'assistant', content: reply, items: applyItems(items) })
-    pending.value = asked
+    pending.value = toConfirm
+    form.value = toAsk
+    asked++
     if (changed) refresh()
   } catch (e) {
     error.value = describe(e)
@@ -101,6 +107,7 @@ async function decide(action, ok) {
             <button type="button" class="btn" @click="decide(p, false)">Cancelar</button>
           </div>
         </div>
+        <AiQuestions v-if="form" :key="asked" class="asks" :form="form" :disabled="loading" @answer="send" />
         <p v-if="loading" class="msg assistant typing" aria-label="A IA está escrevendo"><span /><span /><span /></p>
       </template>
     </div>
@@ -149,7 +156,8 @@ async function decide(action, ok) {
 .has-chat .veil { background: linear-gradient(transparent 0%, color-mix(in srgb, var(--ai-bg) 70%, transparent) 40%, color-mix(in srgb, var(--ai-bg) 70%, transparent) 70%, var(--ai-bg) 100%); }
 
 .msgs, .dock { position: relative; z-index: 1; width: 100%; max-width: 46rem; margin: 0 auto; padding: 0 1.5rem; }
-.msgs { flex: 0 0 0; display: flex; flex-direction: column; gap: 0.6rem; overflow-y: auto; }
+.msgs { flex: 0 0 0; display: flex; flex-direction: column; gap: 0.6rem; overflow-y: auto; scrollbar-width: none; }
+.msgs::-webkit-scrollbar { display: none; } /* rola com a roda/dedo, sem a barra */
 .has-chat .msgs { flex: 1; padding-top: 2rem; padding-bottom: 1rem; }
 .dock { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1.25rem; padding-bottom: 1.25rem; }
 .has-chat .dock { flex: 0 0 auto; }
@@ -191,4 +199,5 @@ async function decide(action, ok) {
 :is(.sug, .send, .btn):focus-visible { outline: 2px solid var(--ai-shark-soft); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .typing span { animation: none; } }
 .msg.assistant { max-width: 88%; white-space: normal; }
+.asks { align-self: flex-start; width: min(100%, 36rem); }
 </style>
