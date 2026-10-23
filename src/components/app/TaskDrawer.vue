@@ -187,7 +187,7 @@ function destroy() {
 .props { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 0.55rem 0.75rem; align-items: center; margin: 0; }
 dt { font-size: 12.5px; color: var(--muted); }
 dd { display: flex; align-items: center; gap: 0.4rem; margin: 0; min-width: 0; }
-select, input[type='date'], .desc, .add input, .tag-input { border: 1px solid transparent; border-radius: 6px; background: none; font: inherit; color: var(--text); outline: none; color-scheme: dark; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
+select, input[type='date'], .desc, .add input, .tag-input { border: 1px solid transparent; border-radius: 6px; background: none; font: inherit; color: var(--text); outline: none; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
 select, input[type='date'] { height: 30px; padding: 0 0.4rem; }
 select:hover, input[type='date']:hover, .desc:hover { background: var(--surface-2); }
 select:focus, input[type='date']:focus, .desc:focus, .add input:focus, .tag-input:focus { border-color: var(--accent); }

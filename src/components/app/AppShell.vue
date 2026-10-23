@@ -1,7 +1,7 @@
 <script setup>
 // Casca da área logada (estrutura do app do Plane): trilho de ícones, barra lateral recolhível, topo com busca,
 // progresso do "Começar", caixa de entrada e ajuda. Fica montada entre as rotas; só o conteúdo troca.
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
@@ -21,6 +21,15 @@ const route = useRoute()
 const { user } = useAuth()
 const { count, total } = useOnboarding()
 const { state, unread, load, touchRecent } = useWorkspace()
+
+// Aparência "Auto" segue o sistema
+const lightQuery = matchMedia('(prefers-color-scheme: light)')
+const systemLight = ref(lightQuery.matches)
+const onScheme = (e) => (systemLight.value = e.matches)
+lightQuery.addEventListener('change', onScheme)
+onUnmounted(() => lightQuery.removeEventListener('change', onScheme))
+const light = computed(() => state.prefs.theme === 'light' || (state.prefs.theme === 'auto' && systemLight.value))
+watchEffect(() => (document.documentElement.dataset.calm = state.prefs.calm ? 'on' : ''))
 const { ui, newTask } = useUi()
 const name = computed(() => user.value?.first_name || user.value?.username || 'Visitante')
 const initials = computed(() => name.value.slice(0, 2).toUpperCase())
@@ -31,6 +40,8 @@ const RAIL = [
   { icon: 'wiki', label: 'Wiki', to: '/wiki', area: 'wiki' },
   { icon: 'ai', label: 'IA', to: '/ia', area: 'ai' },
 ]
+// Wiki e IA somem do trilho quando desligadas em Ajustes > Produtos
+const rail = computed(() => RAIL.filter((r) => state.settings.products?.[r.area] !== false))
 
 const root = ref(null)
 const sidebar = ref(null)
@@ -58,6 +69,7 @@ function toggleSidebar() {
 // Atalhos globais: Ctrl K busca, N nova tarefa (fora de campos de texto), Esc fecha os painéis
 function onKey(e) {
   const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable
+  if (!state.prefs.shortcuts && e.key !== 'Escape') return
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); ui.palette = !ui.palette }
   else if (!typing && e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && !ui.creating) { e.preventDefault(); newTask() }
   else if (e.key === 'Escape') { inboxOpen.value = false; helpOpen.value = false }
@@ -106,7 +118,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="app" :class="{ 'is-collapsed': collapsed, 'is-compact': state.prefs.density === 'compact' }">
+  <div
+    ref="root"
+    class="app"
+    :class="{ 'is-collapsed': collapsed, 'is-compact': state.prefs.density === 'compact', 'is-light': light, 'is-contrast': state.prefs.contrast, 'is-calm': state.prefs.calm, 'no-ids': !state.prefs.showIds, 'no-hand': !state.prefs.handCursor }"
+    :style="{ '--accent': state.prefs.accent }"
+  >
     <header class="top">
       <RouterLink to="/inicio" class="ws">
         <span class="ws__badge">NV</span>
@@ -146,7 +163,7 @@ onUnmounted(() => {
     </header>
 
     <nav class="rail" aria-label="Áreas">
-      <RouterLink v-for="r in RAIL" :key="r.label" :to="r.to" class="rail__item" :class="{ 'is-active': route.meta.area === r.area }">
+      <RouterLink v-for="r in rail" :key="r.label" :to="r.to" class="rail__item" :class="{ 'is-active': route.meta.area === r.area }">
         <span class="rail__icon"><AppIcon :name="r.icon" :size="19" /></span>{{ r.label }}
       </RouterLink>
       <span class="rail__sep" />
@@ -154,10 +171,11 @@ onUnmounted(() => {
       <NotesDock class="rail__dock" />
     </nav>
 
-    <aside ref="sidebar" class="side" :aria-hidden="collapsed" :inert="collapsed">
+    <!-- Ajustes têm o próprio menu: a barra "Trabalho" some (v-show guarda a largura do recolher) -->
+    <aside v-show="route.meta.area !== 'settings'" ref="sidebar" class="side" :aria-hidden="collapsed" :inert="collapsed">
       <div class="side__inner"><SideNav @collapse="toggleSidebar" /></div>
     </aside>
-    <button v-if="collapsed" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
+    <button v-if="collapsed && route.meta.area !== 'settings'" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
 
     <main class="main">
       <div class="crumb"><AppIcon :name="route.meta.icon || 'work'" :size="16" /> {{ title }}<slot name="crumb" /></div>
@@ -201,6 +219,22 @@ onUnmounted(() => {
   overflow: hidden;
 }
 :global(html:has(.app)), :global(html:has(.app) body) { background: #0f0e0d; }
+.app { color-scheme: dark; }
+.app.is-light {
+  --bg: #f7f5f2;
+  --surface: #ffffff;
+  --surface-2: #efebe6;
+  --line: #e4ded6;
+  --line-strong: #d2cac0;
+  --text: #1c1a17;
+  --muted: #6b655d;
+  --accent-soft: #b9500f;
+  color-scheme: light;
+}
+.app.is-contrast { --muted: var(--text); --line: var(--line-strong); }
+.app.is-calm :deep(*) { transition: none !important; animation: none !important; }
+.app.no-ids :deep(:is(.code, .row__code, .card__code)) { display: none; }
+.app.no-hand :deep(:is(button, a, [role='switch'], select)) { cursor: default; }
 .app :deep(button) { font: inherit; color: inherit; }
 kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radius: 4px; font: 500 11px/1.3 'Geist Mono', monospace; color: var(--muted); }
 
