@@ -18,7 +18,7 @@ const titleInput = ref(null)
 
 watch(() => ui.creating, async (defaults) => {
   if (!defaults) return
-  Object.assign(form, { title: '', projectId: state.projects[0]?.id || '', status: 'todo', priority: '', assignees: ['me'], due: '', description: '' }, defaults)
+  Object.assign(form, { title: '', projectId: state.projects[0]?.id || '', status: 'todo', priority: '', assignees: [state.me], due: '', description: '' }, defaults)
   error.value = ''
   await nextTick()
   titleInput.value?.focus()

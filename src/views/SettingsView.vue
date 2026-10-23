@@ -20,7 +20,7 @@ const NOTIFY = [
   { id: 'digest', label: 'Resumo da semana por e-mail' },
 ]
 const { user, updateMe, logout } = useAuth()
-const { state, reset } = useWorkspace()
+const { state, clearLocal, load, renameWorkspace } = useWorkspace()
 const tab = ref('profile')
 const panel = ref(null)
 const profile = reactive({ first_name: user.value?.first_name || '', email: user.value?.email || '' })
@@ -44,9 +44,9 @@ async function saveProfile() {
 }
 function doReset() {
   if (!confirmReset.value) { confirmReset.value = true; return }
-  reset()
+  clearLocal()
   confirmReset.value = false
-  status.value = 'Dados de exemplo restaurados.'
+  status.value = 'Rascunhos e documentos deste navegador foram limpos.'
 }
 </script>
 
@@ -76,11 +76,11 @@ function doReset() {
         <template v-else-if="tab === 'workspace'">
           <h2>Workspace</h2>
           <div class="form">
-            <label>Nome do workspace <input v-model="state.workspaceName" /></label>
+            <label>Nome do workspace <input :value="state.workspaceName" :disabled="!state.isAdmin" @change="renameWorkspace($event.target.value)" /></label>
           </div>
           <h3>Membros</h3>
           <ul class="members">
-            <li v-for="m in state.members" :key="m.id"><span class="av" :style="{ background: m.color }">{{ m.name.slice(0, 2).toUpperCase() }}</span>{{ m.name }}<small>{{ m.id === 'me' ? 'Dono' : 'Membro' }}</small></li>
+            <li v-for="m in state.members" :key="m.id"><span class="av" :style="{ background: m.color }">{{ m.name.slice(0, 2).toUpperCase() }}</span>{{ m.name }}<small>{{ m.id === state.me ? 'Você · ' : '' }}{{ { owner: 'Dono', admin: 'Admin', member: 'Membro', limited: 'Limitado', guest: 'Convidado' }[m.role] }}</small></li>
           </ul>
           <RouterLink to="/comecar" class="link">Convidar pessoas</RouterLink>
         </template>
@@ -110,8 +110,11 @@ function doReset() {
 
         <template v-else>
           <h2>Dados</h2>
-          <p class="hint">Por enquanto os dados do workspace ficam salvos neste navegador. Restaurar apaga o que você criou e volta para os exemplos.</p>
-          <button type="button" class="danger" @click="doReset">{{ confirmReset ? 'Clique de novo para confirmar' : 'Restaurar dados de exemplo' }}</button>
+          <p class="hint">Projetos, tarefas, checklist e atividade ficam salvos no servidor. Rascunhos, documentos da wiki, notas e preferências ficam só neste navegador.</p>
+          <div class="actions">
+            <button type="button" class="link" @click="load().then(() => (status = 'Dados recarregados do servidor.'))">Recarregar do servidor</button>
+            <button type="button" class="danger" @click="doReset">{{ confirmReset ? 'Clique de novo para confirmar' : 'Limpar rascunhos e documentos locais' }}</button>
+          </div>
         </template>
         <p v-if="status" class="status" role="status">{{ status }}</p>
       </section>

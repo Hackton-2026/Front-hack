@@ -7,11 +7,11 @@ import { useUi } from '../../composables/useUi'
 
 const props = defineProps({ open: Boolean })
 const emit = defineEmits(['close'])
-const { state, unread } = useWorkspace()
+const { state, unread, markRead, markAllRead } = useWorkspace()
 const { openTask } = useUi()
 const tab = ref('all')
 const box = ref(null)
-const items = computed(() => state.activity.filter((a) => tab.value === 'all' || !a.read).slice(0, 30))
+const items = computed(() => state.inbox.filter((n) => tab.value === 'all' || !n.read))
 const ago = (iso) => {
   const min = Math.round((Date.now() - new Date(iso)) / 60000)
   if (min < 1) return 'agora'
@@ -19,12 +19,12 @@ const ago = (iso) => {
   if (min < 1440) return `${Math.round(min / 60)} h`
   return `${Math.round(min / 1440)} d`
 }
-function go(a) {
-  a.read = true
-  const task = state.tasks.find((t) => t.id === a.taskId)
+function go(n) {
+  markRead(n)
+  const task = state.tasks.find((t) => t.id === n.task)
   if (task) { openTask(task); emit('close') }
 }
-const readAll = () => state.activity.forEach((a) => (a.read = true))
+const readAll = markAllRead
 
 watch(() => props.open, async (v) => {
   if (!v || prefersReducedMotion()) return
@@ -51,7 +51,7 @@ watch(() => props.open, async (v) => {
           <time>{{ ago(a.at) }}</time>
         </button>
       </li>
-      <li v-if="!items.length" class="empty">{{ tab === 'all' ? 'Nada por aqui ainda. Crie ou mova uma tarefa e o histórico aparece aqui.' : 'Tudo lido. Bom trabalho!' }}</li>
+      <li v-if="!items.length" class="empty">{{ tab === 'all' ? 'Nada por aqui ainda. Quando alguém te atribuir uma tarefa ou mudar o status de uma que você segue, aparece aqui.' : 'Tudo lido. Bom trabalho!' }}</li>
     </ul>
   </div>
 </template>

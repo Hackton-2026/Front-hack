@@ -3,7 +3,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
-import { useWorkspace, ME } from '../composables/useWorkspace'
+import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import { useOnboarding } from '../composables/useOnboarding'
 import AppIcon from '../components/app/AppIcon.vue'
@@ -21,17 +21,18 @@ const VIEWS = [
 const props = defineProps({ id: { type: String, required: true } })
 const route = useRoute()
 const router = useRouter()
-const { project, tasksOf, progress } = useWorkspace()
+const { state, project, tasksOf, progress } = useWorkspace()
 const { ui, newTask } = useUi()
 const { complete } = useOnboarding()
-const p = computed(() => project(props.id))
+const pid = computed(() => Number(props.id)) // a rota traz texto; os ids da API são números
+const p = computed(() => project(pid.value))
 const view = computed(() => VIEWS.find((v) => v.id === route.query.v)?.id || 'list')
 const onlyMine = ref(false)
 const q = ref('')
 const tabs = ref(null)
 
-const tasks = computed(() => tasksOf(props.id).filter((t) => (!onlyMine.value || t.assignees.includes(ME)) && (!q.value || t.title.toLowerCase().includes(q.value.toLowerCase()))))
-const people = computed(() => [...new Set(tasksOf(props.id).flatMap((t) => t.assignees))])
+const tasks = computed(() => tasksOf(pid.value).filter((t) => (!onlyMine.value || t.assignees.includes(state.me)) && (!q.value || t.title.toLowerCase().includes(q.value.toLowerCase()))))
+const people = computed(() => [...new Set(tasksOf(pid.value).flatMap((t) => t.assignees))])
 
 watch(p, (v) => (ui.crumb = v ? v.name : 'Projeto não encontrado'), { immediate: true })
 function setView(id) {

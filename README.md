@@ -20,3 +20,7 @@ npm run dev            # http://localhost:5173 (repassa /api e /media para o Dja
 - `src/components/`: componentes reutilizáveis; `GooeyButton` é o botão universal do site
 - `src/components/landing/`: seções da landing (`SiteNav`, `HeroParallax`, `PricingPlans`, `ContactCta`, `SiteFooter`)
 - `src/assets/landing/`: imagens da landing (camadas do parallax e foto do rodapé)
+- `src/components/app/` e `src/views/`: área logada (casca, projetos em Lista/Quadro/Calendário, painel da tarefa, Ctrl K…)
+- `src/composables/useWorkspace.js`: dados da área logada. Projetos, tarefas, checklist, membros, atividade e caixa de entrada vêm da API do Back-hack (`/api/...`, branch `dev`); rascunhos, wiki e preferências ficam no navegador
+
+A área logada exige login e o Back-hack rodando em `:8000`.

@@ -19,7 +19,7 @@ const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
 const { count, total, complete } = useOnboarding()
-const { state, unread, createProject } = useWorkspace()
+const { state, unread, createProject, load } = useWorkspace()
 const { ui, newTask } = useUi()
 const name = computed(() => user.value?.first_name || user.value?.username || 'Visitante')
 const initials = computed(() => name.value.slice(0, 2).toUpperCase())
@@ -67,12 +67,13 @@ async function startProject() {
   await nextTick()
   root.value.querySelector('.new-project input')?.focus()
 }
-function saveProject() {
+async function saveProject() {
   const n = projectName.value.trim()
   addingProject.value = false
   projectName.value = ''
   if (!n) return
-  const p = createProject(n, ['#e56515', '#fba45c', '#919599', '#f2c46d'][state.projects.length % 4])
+  const p = await createProject(n, ['#e56515', '#fba45c', '#919599', '#f2c46d'][state.projects.length % 4])
+  if (!p) return
   complete('project')
   router.push(`/projetos/${p.id}`)
 }
@@ -102,6 +103,7 @@ watch(() => route.path, async () => {
 
 let ctx
 onMounted(() => {
+  load()
   addEventListener('keydown', onKey)
   addEventListener('click', onClick)
   if (reduced) return
@@ -197,9 +199,17 @@ onUnmounted(() => {
 
     <main class="main">
       <div class="crumb"><AppIcon :name="route.meta.icon || 'work'" :size="16" /> {{ title }}<slot name="crumb" /></div>
-      <div class="main__scroll"><slot /></div>
+      <div v-if="!state.loaded" class="loading" role="status">
+        <template v-if="state.error">
+          <p>Não foi possível carregar o workspace: {{ state.error }}</p>
+          <button type="button" class="retry" @click="load">Tentar de novo</button>
+        </template>
+        <template v-else><span class="spin" aria-hidden="true" />Carregando seu workspace…</template>
+      </div>
+      <div v-else class="main__scroll"><slot /></div>
     </main>
 
+    <Transition name="toast"><p v-if="ui.message" class="toast" role="alert">{{ ui.message }}</p></Transition>
     <TaskDrawer />
     <TaskCreateModal />
     <CommandPalette />
@@ -298,6 +308,14 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .crumb { display: flex; align-items: center; gap: 0.5rem; min-height: 48px; padding: 0 1.5rem; border-bottom: 1px solid var(--line); font-weight: 500; }
 .app.is-collapsed .crumb { padding-left: 3.25rem; }
 .main__scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.loading { flex: 1; display: grid; place-content: center; justify-items: center; gap: 0.75rem; color: var(--muted); text-align: center; }
+.loading p { margin: 0; }
+.spin { display: inline-block; width: 22px; height: 22px; border: 2px solid var(--line-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { rotate: 360deg; } }
+.retry { padding: 0.45rem 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: rgb(229 101 21 / 0.12); cursor: pointer; }
+.toast { position: fixed; left: 50%; bottom: 1.25rem; z-index: 90; max-width: min(30rem, calc(100vw - 2rem)); margin: 0; padding: 0.7rem 1rem; border: 1px solid rgb(229 101 21 / 0.5); border-radius: 10px; background: #2a1408; color: #ffd2b3; box-shadow: 0 12px 30px rgb(0 0 0 / 0.4); translate: -50% 0; }
+.toast-enter-active, .toast-leave-active { transition: opacity 0.25s var(--ease), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(10px); }
 
 @media (max-width: 860px) {
   .app { grid-template: 'top top' 48px 'rail main' 1fr / 64px 1fr; }

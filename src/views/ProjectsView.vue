@@ -17,9 +17,10 @@ const color = ref(COLORS[0])
 const error = ref('')
 const root = ref(null)
 
-function create() {
+async function create() {
   if (!name.value.trim()) { error.value = 'Dê um nome ao projeto.'; return }
-  const p = createProject(name.value.trim(), color.value)
+  const p = await createProject(name.value.trim(), color.value)
+  if (!p) return
   complete('project')
   router.push(`/projetos/${p.id}`)
 }

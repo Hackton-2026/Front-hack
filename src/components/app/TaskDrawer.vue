@@ -7,7 +7,7 @@ import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import StatusBadge from './StatusBadge.vue'
 
-const { state, STATUSES, PRIORITIES, code, updateTask, removeTask, member } = useWorkspace()
+const { state, STATUSES, PRIORITIES, code, updateTask, removeTask, taskActivity } = useWorkspace()
 const { ui, closeTask } = useUi()
 const task = computed(() => state.tasks.find((t) => t.id === ui.taskId))
 const panel = ref(null)
@@ -16,12 +16,23 @@ const newTag = ref('')
 const confirmDelete = ref(false)
 const reduced = prefersReducedMotion()
 
-const activity = computed(() => state.activity.filter((a) => a.taskId === ui.taskId).slice(0, 12))
+// Histórico da tarefa vem da API (os signals do backend registram cada mudança)
+const activity = ref([])
+const needNote = ref(false)
+const note = ref('')
+async function loadActivity() {
+  const id = task.value?.id
+  if (typeof id !== 'number') { activity.value = []; return }
+  try { activity.value = (await taskActivity(id)).slice(0, 15) } catch { /* mantém o que tinha */ }
+}
+watch(() => [ui.taskId, task.value?.updatedAt], loadActivity)
 const doneItems = computed(() => task.value?.checklist.filter((i) => i.done).length || 0)
 const when = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 watch(() => ui.taskId, async (id, old) => {
   confirmDelete.value = false
+  needNote.value = false
+  note.value = ''
   if (!id || old || reduced) return
   await nextTick()
   gsap.fromTo(panel.value, { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 0.35, ease: 'power3.out' })
@@ -33,7 +44,16 @@ function close() {
 }
 
 const set = (fields) => updateTask(task.value, fields)
-function toggleDone() { set({ status: task.value.status === 'done' ? 'todo' : 'done' }) }
+// Quem não é admin precisa da nota de conclusão (regra da ShyDevs, validada no backend)
+function toggleDone() {
+  if (task.value.status === 'done') return set({ status: 'todo' })
+  if (!state.isAdmin) { needNote.value = true; return }
+  set({ status: 'done' })
+}
+async function finishWithNote() {
+  if (!note.value.trim()) return
+  if ((await set({ status: 'done', note: note.value.trim() })) === true) { needNote.value = false; note.value = '' }
+}
 function toggleMember(id) {
   const a = task.value.assignees
   set({ assignees: a.includes(id) ? a.filter((x) => x !== id) : [...a, id] })
@@ -45,9 +65,8 @@ function addItem() {
 }
 function toggleItem(item, el) {
   item.done = !item.done
+  // marcar uma etapa com a tarefa pendente já inicia a tarefa: a regra é do backend e o status volta na resposta
   set({ checklist: [...task.value.checklist] })
-  // marcar uma etapa com a tarefa pendente já inicia a tarefa (regra da ShyDevs)
-  if (item.done && task.value.status === 'todo') set({ status: 'doing' })
   if (item.done && !reduced) gsap.fromTo(el, { scale: 0.7 }, { scale: 1, duration: 0.4, ease: 'back.out(2.4)' })
 }
 const removeItem = (item) => set({ checklist: task.value.checklist.filter((i) => i !== item) })
@@ -79,6 +98,11 @@ function destroy() {
         </div>
       </header>
 
+      <form v-if="needNote" class="note" @submit.prevent="finishWithNote">
+        <label for="done-note">Como foi concluída? <span>Obrigatório para membros.</span></label>
+        <textarea id="done-note" v-model="note" rows="2" placeholder="Ex.: PR #12 aprovado e publicado" />
+        <div><button type="button" class="ghost" @click="needNote = false">Cancelar</button><button type="submit" class="done-btn is-done" :disabled="!note.trim()">Concluir tarefa</button></div>
+      </form>
       <div class="body">
         <textarea class="title sec" :value="task.title" rows="1" aria-label="Título" @change="set({ title: $event.target.value.trim() || task.title })" />
 
@@ -90,7 +114,7 @@ function destroy() {
           <dt>Prazo</dt>
           <dd><input type="date" :value="task.due || ''" aria-label="Prazo" @change="set({ due: $event.target.value || null })" /></dd>
           <dt>Projeto</dt>
-          <dd><select :value="task.projectId || ''" aria-label="Projeto" @change="set({ projectId: $event.target.value || null })"><option value="">Sem projeto</option><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select></dd>
+          <dd><select :value="task.projectId || ''" aria-label="Projeto" @change="set({ projectId: Number($event.target.value) || null })"><option value="">Sem projeto</option><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select></dd>
           <dt>Responsáveis</dt>
           <dd class="chips">
             <button v-for="m in state.members" :key="m.id" type="button" class="chip" :class="{ 'is-on': task.assignees.includes(m.id) }" :aria-pressed="task.assignees.includes(m.id)" @click="toggleMember(m.id)">
@@ -132,7 +156,7 @@ function destroy() {
 
         <button type="button" class="delete sec" @click="destroy">{{ confirmDelete ? 'Clique de novo para apagar de vez' : 'Apagar tarefa' }}</button>
       </div>
-      <footer class="foot">Criada por {{ member('me')?.name }} · atualizada {{ when(task.updatedAt) }}</footer>
+      <footer class="foot">{{ task.completionNote ? `Nota de conclusão: ${task.completionNote} · ` : '' }}atualizada {{ when(task.updatedAt) }}</footer>
     </aside>
   </div>
 </template>
@@ -187,6 +211,14 @@ h3 span { font-weight: 400; color: var(--muted); }
 .log .muted { color: var(--muted); }
 .delete { align-self: flex-start; padding: 0.4rem 0.7rem; border: 1px solid rgb(255 91 77 / 0.35); border-radius: 6px; background: none; font-size: 12.5px; color: #ff8a80; cursor: pointer; }
 .delete:hover { background: rgb(255 91 77 / 0.1); }
+.note { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--line); background: rgb(229 101 21 / 0.08); }
+.note label { font-size: 13px; font-weight: 500; }
+.note label span { font-weight: 400; color: var(--muted); }
+.note textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; resize: vertical; }
+.note textarea:focus { border-color: var(--accent); }
+.note div { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.ghost { padding: 0 0.7rem; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.ghost:hover { background: var(--surface-2); color: var(--text); }
 .foot { padding: 0.6rem 1.25rem; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
 :is(.done-btn, .icon, .chip, .box, .rm, .delete, .ntag button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>
