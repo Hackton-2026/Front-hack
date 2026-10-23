@@ -38,8 +38,8 @@ async function refreshAccess() {
  * Em 401 tenta renovar o token uma vez; se não der, desloga.
  * Erros viram `throw new Error(mensagem legível)` com `.data` e `.status`.
  */
-export async function api(path, { method = 'GET', body, auth = true } = {}, retry = true) {
-  const headers = {}
+export async function api(path, { method = 'GET', body, auth = true, headers: extra = {} } = {}, retry = true) {
+  const headers = { ...extra } // ex.: Idempotency-Key do checkout
   if (auth && tokens.access) headers.Authorization = `Bearer ${tokens.access}`
   const isForm = body instanceof FormData
   if (body && !isForm) headers['Content-Type'] = 'application/json'
@@ -52,7 +52,7 @@ export async function api(path, { method = 'GET', body, auth = true } = {}, retr
   }
 
   if (res.status === 401 && auth && retry && tokens.refresh) {
-    if (await refreshAccess()) return api(path, { method, body, auth }, false)
+    if (await refreshAccess()) return api(path, { method, body, auth, headers: extra }, false)
     tokens.clear()
     window.dispatchEvent(new Event('auth:logout'))
   }
