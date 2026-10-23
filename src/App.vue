@@ -2,6 +2,7 @@
 import { watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNav from './components/AppNav.vue'
+import AppShell from './components/app/AppShell.vue'
 import ChatBot from './components/ChatBot.vue'
 import { useAuth } from './composables/useAuth'
 
@@ -15,6 +16,8 @@ watch(user, (u) => {
 
 <template>
   <RouterView v-if="$route.meta.bare" />
+  <!-- Área logada do Novexo: a casca fica montada e só o conteúdo troca entre as rotas -->
+  <AppShell v-else-if="$route.meta.app"><RouterView /></AppShell>
   <template v-else>
     <AppNav />
     <main class="container">

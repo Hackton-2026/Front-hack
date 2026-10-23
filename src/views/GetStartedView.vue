@@ -3,7 +3,6 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { useAuth } from '../composables/useAuth'
-import AppShell from '../components/app/AppShell.vue'
 import AppIcon from '../components/app/AppIcon.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import OnboardingChecklist from '../components/app/OnboardingChecklist.vue'
@@ -45,41 +44,39 @@ onUnmounted(() => ctx?.revert())
 </script>
 
 <template>
-  <AppShell title="Começar" icon="rocket">
-    <div ref="root" class="page">
-      <header class="hello">
-        <h1>
-          <span v-for="(w, i) in `Olá${firstName ? ', ' + firstName : ''}, boas-vindas ao Novexo!`.split(' ')" :key="i" class="hello__word">{{ w }}</span>
-        </h1>
-        <p class="hello__sub">Aqui está tudo o que você precisa para começar a organizar o trabalho do time.</p>
-      </header>
+  <div ref="root" class="page">
+    <header class="hello">
+      <h1>
+        <span v-for="(w, i) in `Olá${firstName ? ', ' + firstName : ''}, boas-vindas ao Novexo!`.split(' ')" :key="i" class="hello__word">{{ w }}</span>
+      </h1>
+      <p class="hello__sub">Aqui está tudo o que você precisa para começar a organizar o trabalho do time.</p>
+    </header>
 
-      <section class="trial" aria-labelledby="trial-title">
-        <span class="trial__icon"><AppIcon name="rocket" :size="18" /></span>
-        <h2 id="trial-title">Seu teste de 14 dias do Business está ativo! <span class="badge">Termina em 13 dias</span></h2>
-        <p>Use metas, painéis, controle de tempo e a Novexo IA. Adicione um cartão para continuar depois do teste, ou volte para o Grátis quando quiser.</p>
-        <div class="trial__btns">
-          <GooeyButton variant="primary" to="/#planos">Assinar agora</GooeyButton>
-          <GooeyButton variant="secondary" to="/#planos">Ver recursos do Business</GooeyButton>
-        </div>
-      </section>
+    <section class="trial" aria-labelledby="trial-title">
+      <span class="trial__icon"><AppIcon name="rocket" :size="18" /></span>
+      <h2 id="trial-title">Seu teste de 14 dias do Business está ativo! <span class="badge">Termina em 13 dias</span></h2>
+      <p>Use metas, painéis, controle de tempo e a Novexo IA. Adicione um cartão para continuar depois do teste, ou volte para o Grátis quando quiser.</p>
+      <div class="trial__btns">
+        <GooeyButton variant="primary" to="/#planos">Assinar agora</GooeyButton>
+        <GooeyButton variant="secondary" to="/#planos">Ver recursos do Business</GooeyButton>
+      </div>
+    </section>
 
-      <OnboardingChecklist class="reveal" />
-      <TeamInvite class="reveal" />
-      <IntegrationsCard class="reveal" />
+    <OnboardingChecklist class="reveal" />
+    <TeamInvite class="reveal" />
+    <IntegrationsCard class="reveal" />
 
-      <section class="compare reveal" aria-labelledby="compare-title">
-        <h2 id="compare-title">Por que times trocam para o Novexo</h2>
-        <p class="sub">Compare com as ferramentas que você usa hoje e veja a diferença.</p>
-        <div class="card">
-          <a v-for="c in COMPARE" :key="c.slug" href="#" class="compare__chip" @click.prevent>
-            <img :src="`https://cdn.simpleicons.org/${c.slug}`" alt="" width="15" height="15" loading="lazy" />
-            Comparar com o {{ c.name }}
-          </a>
-        </div>
-      </section>
-    </div>
-  </AppShell>
+    <section class="compare reveal" aria-labelledby="compare-title">
+      <h2 id="compare-title">Por que times trocam para o Novexo</h2>
+      <p class="sub">Compare com as ferramentas que você usa hoje e veja a diferença.</p>
+      <div class="card">
+        <a v-for="c in COMPARE" :key="c.slug" href="#" class="compare__chip" @click.prevent>
+          <img :src="`https://cdn.simpleicons.org/${c.slug}`" alt="" width="15" height="15" loading="lazy" />
+          Comparar com o {{ c.name }}
+        </a>
+      </div>
+    </section>
+  </div>
 </template>
 
 <style scoped>
