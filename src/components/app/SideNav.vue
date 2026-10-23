@@ -84,12 +84,13 @@ function togglePin(key) {
 // Abrir/fechar seções e projetos: altura até o conteúdo e os itens descendo em cascata
 function onEnter(el, done) {
   if (reduced) return done()
-  gsap.fromTo(el, { height: 0, autoAlpha: 0 }, { height: 'auto', autoAlpha: 1, duration: 0.3, ease: 'power3.out', onComplete: done })
+  // overflow só durante a animação: parado, ele cortaria o menu ⋯ dos projetos
+  gsap.fromTo(el, { height: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', autoAlpha: 1, duration: 0.3, ease: 'power3.out', clearProps: 'overflow', onComplete: done })
   gsap.from(el.children, { x: -6, autoAlpha: 0, duration: 0.25, stagger: 0.03, ease: 'power2.out', delay: 0.05 })
 }
 function onLeave(el, done) {
   if (reduced) return done()
-  gsap.to(el, { height: 0, autoAlpha: 0, duration: 0.22, ease: 'power2.in', onComplete: done })
+  gsap.to(el, { height: 0, autoAlpha: 0, overflow: 'hidden', duration: 0.22, ease: 'power2.in', onComplete: done })
 }
 // Painel "Mais" desliza da borda da barra lateral
 function onMoreEnter(el, done) {
@@ -279,7 +280,7 @@ onUnmounted(() => {
 .new-btn:hover { border-color: var(--accent); }
 kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radius: 4px; font: 500 11px/1.3 'Geist Mono', monospace; color: var(--muted); }
 .side__group { display: flex; flex-direction: column; gap: 1px; }
-.sect, .sub { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+.sect, .sub { display: flex; flex-direction: column; gap: 1px; }
 .side__label { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0.25rem 0.5rem; border: 0; border-radius: 6px; background: none; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; text-align: left; }
 button.side__label:hover, .label-btn:hover { color: var(--text); }
 .label-btn { display: flex; align-items: center; justify-content: space-between; flex: 1; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
