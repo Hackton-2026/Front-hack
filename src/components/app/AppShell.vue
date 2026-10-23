@@ -20,7 +20,7 @@ import '../../assets/app-pages.css'
 const route = useRoute()
 const { user } = useAuth()
 const { count, total } = useOnboarding()
-const { state, unread, load } = useWorkspace()
+const { state, unread, load, touchRecent } = useWorkspace()
 const { ui, newTask } = useUi()
 const name = computed(() => user.value?.first_name || user.value?.username || 'Visitante')
 const initials = computed(() => name.value.slice(0, 2).toUpperCase())
@@ -77,6 +77,13 @@ watch(() => route.path, async () => {
   if (page) gsap.fromTo(page, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }) // só opacidade: a página nova pode focar um campo
   root.value.querySelector('.main__scroll').scrollTop = 0
 })
+
+// guarda o que foi aberto para os "Recentes" da Home
+watch(() => ui.taskId, (id) => typeof id === 'number' && touchRecent('task', id))
+watch(() => route.path, (path) => {
+  const m = path.match(/^\/projetos\/(\d+)(?:\/paginas\/(\d+))?/)
+  if (m) touchRecent(m[2] ? 'page' : 'project', Number(m[2] || m[1]))
+}, { immediate: true })
 
 let ctx
 onMounted(() => {

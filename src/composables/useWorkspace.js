@@ -40,6 +40,13 @@ const localDefaults = () => ({
     features: { cycles: true, modules: true, views: true, pages: true },
     stars: [],
     open: { workspace: true, projects: true, try: true },
+    // Home: links rápidos e o que a pessoa abriu por último (kind:id)
+    quicklinks: [
+      { id: 'q1', title: 'Guia de início', url: '/comecar', at: new Date().toISOString() },
+      { id: 'q2', title: 'Wiki do time', url: '/wiki', at: new Date().toISOString() },
+      { id: 'q3', title: 'Planos do Novexo', url: '/#planos', at: new Date().toISOString() },
+    ],
+    recents: [],
   },
 })
 export const MODULE_STATES = [
@@ -346,6 +353,11 @@ export function useWorkspace() {
     const key = `${kind}:${id}`
     state.prefs.stars = starred(kind, id) ? state.prefs.stars.filter((s) => s !== key) : [...state.prefs.stars, key]
   }
+  // recentes da Home: o último aberto vai para o topo (máx. 20)
+  function touchRecent(kind, id) {
+    const key = `${kind}:${id}`
+    state.prefs.recents = [{ key, at: new Date().toISOString() }, ...state.prefs.recents.filter((r) => r.key !== key)].slice(0, 20)
+  }
   // progresso de um grupo de tarefas (ciclo, módulo)
   const doneRatio = (list) => (list.length ? list.filter((t) => t.status === 'done').length / list.length : 0)
 
@@ -384,7 +396,7 @@ export function useWorkspace() {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
     load, createTask, updateTask, removeTask, createProject, renameWorkspace, markRead, markAllRead, taskActivity, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
-    starred, toggleStar, doneRatio,
+    starred, toggleStar, doneRatio, touchRecent,
     today: () => day(0), day,
   }
 }
