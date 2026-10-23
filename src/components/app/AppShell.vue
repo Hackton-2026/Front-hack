@@ -33,6 +33,8 @@ lightQuery.addEventListener('change', onScheme)
 onUnmounted(() => lightQuery.removeEventListener('change', onScheme))
 const light = computed(() => state.prefs.theme === 'light' || (state.prefs.theme === 'auto' && systemLight.value))
 watchEffect(() => (document.documentElement.dataset.calm = state.prefs.calm ? 'on' : ''))
+// link copiado da tarefa (?task=ID) abre o painel dela
+watch(() => [route.query.task, state.loaded], ([id]) => { if (id && state.tasks.some((t) => t.id === Number(id))) ui.taskId = Number(id) }, { immediate: true })
 const { ui, newTask } = useUi()
 const name = computed(() => user.value?.first_name || user.value?.username || 'Visitante')
 const initials = computed(() => name.value.slice(0, 2).toUpperCase())

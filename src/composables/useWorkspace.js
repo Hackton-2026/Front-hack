@@ -129,7 +129,7 @@ function toApi(fields) {
   }
   return body
 }
-const fromActivity = (a) => ({ id: a.id, taskId: a.task, text: a.text, at: a.at, details: a.details || {} })
+const fromActivity = (a) => ({ id: a.id, taskId: a.task, actor: a.actor, type: a.event_type, text: a.text, at: a.at, details: a.details || {} })
 const KINDS = { cycle: 'cycles', module: 'modules', page: 'pages', view: 'views' }
 
 async function load() {
@@ -413,7 +413,6 @@ export function useWorkspace() {
   }
   const taskActivity = async (id) => (await api(`/api/activity/?task=${id}`)).map(fromActivity)
   const taskComments = (id) => api(`/api/tasks/${id}/comments/`)
-  const addComment = (id, body) => api(`/api/tasks/${id}/comments/`, { method: 'POST', body: { body } })
   function createDoc(fields = {}) {
     const now = new Date().toISOString()
     const d = reactive({ id: `doc-${Date.now().toString(36)}`, title: 'Sem título', body: '', createdAt: now, updatedAt: now, ...fields })
@@ -463,7 +462,7 @@ export function useWorkspace() {
 
   return {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
-    load, refreshFeed, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, addComment, createDoc, progress, clearLocal,
+    load, refreshFeed, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
     starred, toggleStar, doneRatio, touchRecent, peopleOf,
     projectMembers, inviteToProject, cancelInvite, setProjectPermission, removeProjectMember, inviteInfo, acceptInvite, declineInvite,
