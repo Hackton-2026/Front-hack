@@ -463,7 +463,7 @@ export function useWorkspace() {
 
   return {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
-    load, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, addComment, createDoc, progress, clearLocal,
+    load, refreshFeed, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, addComment, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
     starred, toggleStar, doneRatio, touchRecent, peopleOf,
     projectMembers, inviteToProject, cancelInvite, setProjectPermission, removeProjectMember, inviteInfo, acceptInvite, declineInvite,

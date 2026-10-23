@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import { useUi } from './composables/useUi'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -29,7 +30,14 @@ const router = createRouter({
     { path: '/projetos/:id/paginas/:page', component: () => import('./views/PageEditor.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Página', icon: 'page' } },
     // Pessoas do projeto: convites e chat (com a Novexo IA via @novexo)
     { path: '/projetos/:id/membros', component: () => import('./views/ProjectMembers.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Membros', icon: 'user' } },
-    { path: '/projetos/:id/chat', component: () => import('./views/ProjectChat.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Chat', icon: 'chat' } },
+    // o chat do projeto é um painel ao lado: o link só abre o painel (e fica na página onde a pessoa estava)
+    {
+      path: '/projetos/:id/chat',
+      redirect: (to) => {
+        useUi().openChat(to.params.id)
+        return `/projetos/${to.params.id}`
+      },
+    },
     { path: '/convite/:token', component: () => import('./views/InviteView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Convite', icon: 'user' } },
     // "Mais" do workspace
     { path: '/visoes', component: () => import('./views/ViewsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Visões', icon: 'layers' } },

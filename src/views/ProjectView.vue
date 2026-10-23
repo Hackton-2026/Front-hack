@@ -37,7 +37,7 @@ const props = defineProps({ id: { type: String, required: true }, cycle: { type:
 const route = useRoute()
 const router = useRouter()
 const { state, project, tasksOf, progress, doneRatio, createItem, updateItem, removeItem } = useWorkspace()
-const { ui, newTask } = useUi()
+const { ui, newTask, openChat, closeChat } = useUi()
 const { complete } = useOnboarding()
 const pid = computed(() => Number(props.id)) // a rota traz texto; os ids da API são números
 const p = computed(() => project(pid.value))
@@ -143,8 +143,8 @@ onMounted(() => moveInk(false))
       </div>
       <div class="head__right">
         <RouterLink :to="`/projetos/${p.id}/membros`" class="people" :title="`${people.length} ${people.length === 1 ? 'pessoa' : 'pessoas'} no projeto`"><Avatars :ids="people" :size="26" /></RouterLink>
-        <GooeyButton variant="secondary" :to="`/projetos/${p.id}/chat`">Chat</GooeyButton>
-        <GooeyButton v-if="p.my_permission === 'full'" variant="secondary" :to="`/projetos/${p.id}/membros`">Convidar</GooeyButton>
+        <button type="button" class="chat-btn" :class="{ 'is-on': ui.chat === p.id }" :aria-pressed="ui.chat === p.id" aria-label="Chat do projeto" title="Chat do projeto" @click="ui.chat === p.id ? closeChat() : openChat(p.id)"><AppIcon name="chat" :size="17" /></button>
+        <GooeyButton variant="secondary" :to="`/projetos/${p.id}/membros`">Participantes</GooeyButton>
         <GooeyButton v-if="canEdit" variant="primary" @click="add">Novo item de trabalho</GooeyButton>
       </div>
     </header>
@@ -226,7 +226,10 @@ h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spac
 .pct { font-size: 12.5px; color: var(--muted); }
 .head__right { display: flex; align-items: center; gap: 0.75rem; }
 .people { display: inline-flex; border-radius: 999px; }
-.people:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+.people:focus-visible, .chat-btn:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+.chat-btn { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line-strong); border-radius: 8px; background: none; color: var(--muted); cursor: pointer; transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease); }
+.chat-btn:hover, .chat-btn.is-on { border-color: var(--text); color: var(--text); }
+.chat-btn.is-on { background: var(--surface-2); }
 .pbar { height: 3px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .pbar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-soft)); transform-origin: left; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; border-bottom: 1px solid var(--line); }

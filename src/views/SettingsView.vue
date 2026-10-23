@@ -5,6 +5,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { parseCsv, toCsv } from '../utils/csv'
 import { api } from '../services/api'
+import { disablePush, enablePush, pushConfigured, pushSupported, savedToken } from '../services/push'
 import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import GooeyButton from '../components/GooeyButton.vue'
@@ -107,6 +108,7 @@ watch(tab, async (t) => {
   status.value = ''
   confirm2.value = ''
   if (t === 'billing' && !billing.value) loadBilling()
+  if (t === 'notify') loadDevices()
   await nextTick()
   if (!prefersReducedMotion()) gsap.fromTo(panel.value, { y: 6, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.25, ease: 'power2.out' })
 })
@@ -149,6 +151,29 @@ async function saveProfile() {
 const permission = ref(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
 const enableBrowser = async () => (permission.value = await Notification.requestPermission())
 const testBrowser = () => new Notification('Novexo', { body: 'Notificação de teste: está tudo certo por aqui.' })
+
+// ---- Celular (push pelo Firebase): cada aparelho ativa o seu; os avisos da caixa de entrada chegam mesmo com o site fechado
+const push = reactive({ on: !!savedToken(), server: null, devices: [], busy: false, msg: '' })
+async function loadDevices() {
+  try { Object.assign(push, (({ enabled, devices }) => ({ server: enabled, devices }))(await api('/api/devices/'))) } catch { /* fica sem a lista */ }
+}
+async function pushAction(fn, done) {
+  push.busy = true
+  push.msg = ''
+  try {
+    await fn()
+    push.msg = done
+    await loadDevices()
+  } catch (e) {
+    push.msg = e.message
+  } finally {
+    push.busy = false
+    push.on = !!savedToken()
+  }
+}
+const turnPushOn = () => pushAction(enablePush, 'Ativado neste aparelho.')
+const turnPushOff = () => pushAction(disablePush, 'Desativado neste aparelho.')
+const testPush = () => pushAction(() => api('/api/devices/test/', { method: 'POST' }), 'Teste enviado. Deve chegar em alguns segundos.')
 
 // ---- Geral
 const slugInput = ref('')
@@ -332,6 +357,23 @@ async function onImport(e) {
               <button v-if="permission === 'default'" type="button" class="link" @click="enableBrowser">Habilitar</button>
               <button v-if="permission === 'granted'" type="button" class="link" @click="testBrowser">Enviar teste</button>
             </template>
+          </div>
+          <div class="bar push">
+            <strong>Celular e computador (push)</strong>
+            <span v-if="!pushSupported" class="hint">Este navegador não recebe push. No iPhone, adicione o Novexo à Tela de Início e abra por lá.</span>
+            <span v-else-if="!pushConfigured || push.server === false" class="hint">Não configurado: falta {{ !pushConfigured ? 'VITE_FIREBASE_* no .env do front' : 'FIREBASE_CREDENTIALS no .env do backend' }}.</span>
+            <template v-else>
+              <span class="hint">{{ push.on ? 'Ativado neste aparelho.' : 'Receba menções, tarefas atribuídas e prazos mesmo com o site fechado.' }}</span>
+              <button v-if="!push.on" type="button" class="link" :disabled="push.busy" @click="turnPushOn">Ativar neste aparelho</button>
+              <template v-else>
+                <button type="button" class="link" :disabled="push.busy" @click="testPush">Enviar teste</button>
+                <button type="button" class="link" :disabled="push.busy" @click="turnPushOff">Desativar</button>
+              </template>
+            </template>
+            <p v-if="push.msg" class="hint push__msg" role="status">{{ push.msg }}</p>
+            <ul v-if="push.devices.length" class="rows push__devices" aria-label="Aparelhos com push">
+              <li v-for="d in push.devices" :key="d.id">{{ d.platform || 'Aparelho' }}<span class="hint">desde {{ new Date(d.created_at).toLocaleDateString('pt-BR') }}</span></li>
+            </ul>
           </div>
           <h3>Avisar quando</h3>
           <ul class="toggles">
@@ -614,6 +656,9 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .switch[aria-checked='true'] { background: var(--accent); }
 .switch[aria-checked='true'] span { translate: 14px 0; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 0.55rem 0.75rem; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+.bar.push { margin-top: 0.6rem; }
+.push__msg, .push__devices { flex-basis: 100%; }
+.push__devices li { justify-content: space-between; }
 .rows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .rows li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 13px; }
 .rows li + li { border-top: 1px solid var(--line); }

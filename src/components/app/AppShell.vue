@@ -13,6 +13,8 @@ import NotesDock from './NotesDock.vue'
 import CommandPalette from './CommandPalette.vue'
 import TaskCreateModal from './TaskCreateModal.vue'
 import TaskDrawer from './TaskDrawer.vue'
+import ProjectChat from '../../views/ProjectChat.vue'
+import { onForegroundPush } from '../../services/push'
 import InboxPanel from './InboxPanel.vue'
 import SideNav from './SideNav.vue'
 import '../../assets/app-pages.css'
@@ -21,7 +23,7 @@ const route = useRoute()
 const noSide = computed(() => ['settings', 'ai'].includes(route.meta.area))
 const { user } = useAuth()
 const { count, total } = useOnboarding()
-const { state, unread, load, touchRecent } = useWorkspace()
+const { state, unread, load, refreshFeed, touchRecent } = useWorkspace()
 
 // Aparência "Auto" segue o sistema
 const lightQuery = matchMedia('(prefers-color-scheme: light)')
@@ -101,8 +103,12 @@ watch(() => route.path, (path) => {
 }, { immediate: true })
 
 let ctx
+// menções e avisos de outras pessoas chegam sem recarregar a página
+const inboxTimer = setInterval(() => !document.hidden && state.loaded && refreshFeed(), 30000)
 onMounted(() => {
   load()
+  // push chegou com o site aberto: vira aviso rápido e a caixa de entrada atualiza
+  onForegroundPush((data) => { useUi().toast(data.body ? `${data.title}: ${data.body}` : data.title); refreshFeed() })
   addEventListener('keydown', onKey)
   addEventListener('click', onClick)
   if (reduced) return
@@ -114,6 +120,7 @@ onMounted(() => {
   }, root.value)
 })
 onUnmounted(() => {
+  clearInterval(inboxTimer)
   ctx?.revert()
   removeEventListener('keydown', onKey)
   removeEventListener('click', onClick)
@@ -194,6 +201,7 @@ onUnmounted(() => {
     </main>
 
     <Transition name="toast"><p v-if="ui.message" class="toast" role="alert">{{ ui.message }}</p></Transition>
+    <ProjectChat v-if="ui.chat && state.loaded" :id="ui.chat" />
     <TaskDrawer />
     <TaskCreateModal />
     <CommandPalette />
