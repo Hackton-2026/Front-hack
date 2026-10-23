@@ -9,6 +9,20 @@ gsap.ticker.lagSmoothing(0)
 export { gsap }
 export const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
 
+// Mesma entrada de letras na página inicial, no blog e no Como funciona.
+export function revealTitleCharacters(targets) {
+  return gsap.from(targets, {
+    y: 10,
+    opacity: 0,
+    filter: 'blur(10px)',
+    duration: 1,
+    ease: 'expo.out',
+    stagger: 0.045,
+    delay: 0.15,
+    clearProps: 'transform,opacity,filter',
+  })
+}
+
 /**
  * v-reveal            → o elemento aparece suave ao entrar na tela
  * v-reveal.stagger    → os filhos aparecem em cascata

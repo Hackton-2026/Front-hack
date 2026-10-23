@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import FlaticonIcon from '../FlaticonIcon.vue'
 
 const view = ref('board')
 const tasks = ref([
@@ -16,23 +17,25 @@ function advance(task) {
 
 <template>
   <div class="workflow">
-    <div class="workflow__top"><span class="workflow__mark">N</span><span>Workspace do time <span class="workflow__slash">/</span> <strong>Lançamento da marca</strong></span><span class="workflow__dots" aria-hidden="true">•••</span></div>
+    <div class="workflow__top"><span class="workflow__mark">N</span><span>Workspace do time <span class="workflow__slash">/</span> <strong>Lançamento da marca</strong></span><span class="workflow__dots" aria-hidden="true"><FlaticonIcon name="menu-dots" :size="16" /></span></div>
     <div class="workflow__head"><div><span class="workflow__eyebrow">DO PLANO À ENTREGA</span><h3>Uma ideia. Todo o time.</h3></div><span class="workflow__team" aria-label="Três pessoas no projeto"><i>CL</i><i>AM</i><i>JP</i></span></div>
-    <div class="workflow__toolbar"><div class="workflow__tabs" role="group" aria-label="Visualização do projeto"><button type="button" :aria-pressed="view === 'board'" @click="view = 'board'">▥ Quadro</button><button type="button" :aria-pressed="view === 'list'" @click="view = 'list'">☷ Lista</button></div><span aria-live="polite">{{ completed }} de 3 entregas concluídas</span></div>
+    <div class="workflow__toolbar"><div class="workflow__tabs" role="group" aria-label="Visualização do projeto"><button type="button" :aria-pressed="view === 'board'" @click="view = 'board'"><FlaticonIcon name="layout-fluid" :size="12" /> Quadro</button><button type="button" :aria-pressed="view === 'list'" @click="view = 'list'"><FlaticonIcon name="list" :size="12" /> Lista</button></div><span aria-live="polite">{{ completed }} de 3 entregas concluídas</span></div>
     <div v-if="view === 'board'" class="workflow__board">
       <div v-for="column in columns" :key="column.id" class="workflow__column">
         <div class="workflow__label"><span :class="['workflow__dot', column.id]" />{{ column.title }}<span>{{ tasks.filter(task => task.status === column.id).length }}</span></div>
-        <button v-for="task in tasks.filter(task => task.status === column.id)" :key="task.id" type="button" class="workflow__task" :aria-label="`${task.title}. ${column.title}. Clique para avançar o status.`" @click="advance(task)"><span class="workflow__tag">{{ task.tag }}</span><strong>{{ task.title }}</strong><span class="workflow__task-bottom"><span>{{ task.status === 'done' ? '✓ Concluído' : 'Avançar →' }}</span><i>{{ task.owner }}</i></span></button>
+        <button v-for="task in tasks.filter(task => task.status === column.id)" :key="task.id" type="button" class="workflow__task" :aria-label="`${task.title}. ${column.title}. Clique para avançar o status.`" @click="advance(task)"><span class="workflow__tag">{{ task.tag }}</span><strong>{{ task.title }}</strong><span class="workflow__task-bottom"><span><FlaticonIcon :name="task.status === 'done' ? 'check' : 'arrow-small-right'" :size="10" /> {{ task.status === 'done' ? 'Concluído' : 'Avançar' }}</span><i>{{ task.owner }}</i></span></button>
       </div>
     </div>
     <div v-else class="workflow__list">
-      <button v-for="task in tasks" :key="task.id" type="button" :aria-label="`${task.title}. ${columns.find(column => column.id === task.status).title}. Clique para avançar o status.`" @click="advance(task)"><span :class="['workflow__check', { done: task.status === 'done' }]">{{ task.status === 'done' ? '✓' : '→' }}</span><strong>{{ task.title }}</strong><span>{{ columns.find(column => column.id === task.status).title }}</span><i>{{ task.owner }}</i></button>
+      <button v-for="task in tasks" :key="task.id" type="button" :aria-label="`${task.title}. ${columns.find(column => column.id === task.status).title}. Clique para avançar o status.`" @click="advance(task)"><span :class="['workflow__check', { done: task.status === 'done' }]"><FlaticonIcon :name="task.status === 'done' ? 'check' : 'arrow-small-right'" :size="12" /></span><strong>{{ task.title }}</strong><span>{{ columns.find(column => column.id === task.status).title }}</span><i>{{ task.owner }}</i></button>
     </div>
-    <div class="workflow__bottom"><span><span class="workflow__live" /> Demonstração interativa</span><span>Clique em uma tarefa para mudar o status ↗</span></div>
+    <div class="workflow__bottom"><span><span class="workflow__live" /> Demonstração interativa</span><span>Clique em uma tarefa para mudar o status <FlaticonIcon name="arrow-up-right" :size="10" /></span></div>
   </div>
 </template>
 
 <style scoped>
+.workflow__tabs button { display: inline-flex; align-items: center; gap: 6px; }
+.workflow__task-bottom > span, .workflow__bottom > span { display: inline-flex; align-items: center; gap: 4px; }
 .workflow { border: 1px solid #45413e; border-radius: 12px; background: #121211; color: var(--lp-white); overflow: hidden; text-align: left; box-shadow: 0 24px 80px #0005; }
 .workflow__top { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid #ffffff12; font-size: 11px; color: #b8b5b1; }
 .workflow__top strong { font-weight: 500; color: #eeece9; }.workflow__mark { font: 800 20px var(--lp-display); color: #fff; }.workflow__slash { margin: 0 8px; color: #777; }.workflow__dots { margin-left: auto; letter-spacing: 3px; }

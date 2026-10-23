@@ -3,6 +3,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import GooeyButton from '../GooeyButton.vue'
+import FlaticonIcon from '../FlaticonIcon.vue'
 import footerPhoto from '../../assets/landing/footer-sunset.webp'
 
 defineProps({ blendFromBlack: Boolean })
@@ -56,7 +57,7 @@ onUnmounted(() => ctx?.revert())
         <label for="foot-email" class="sr-only">E-mail de trabalho</label>
         <input id="foot-email" v-model="email" type="email" placeholder="E-mail de trabalho" autocomplete="email" :disabled="joined" :aria-invalid="!!emailError" aria-describedby="foot-email-msg" />
         <GooeyButton variant="secondary" size="lg" type="submit" :disabled="joined" class="foot__submit">
-          {{ joined ? 'Você está na lista' : 'Garantir acesso' }} <span aria-hidden="true">{{ joined ? '✓' : '+' }}</span>
+          {{ joined ? 'Você está na lista' : 'Garantir acesso' }} <FlaticonIcon :name="joined ? 'check' : 'plus'" :size="16" />
         </GooeyButton>
       </form>
       <p id="foot-email-msg" class="foot__msg" aria-live="polite">{{ emailError || (joined ? 'Pronto! Avisaremos você por e-mail.' : '') }}</p>
@@ -71,6 +72,7 @@ onUnmounted(() => ctx?.revert())
         </nav>
       </div>
       <p class="foot__copy">© 2026 Novexo. Todos os direitos reservados.</p>
+      <p class="foot__credits">Ícones por <a href="https://www.flaticon.com/uicons" target="_blank" rel="noopener noreferrer">Flaticon</a></p>
     </div>
   </footer>
 </template>
@@ -154,4 +156,7 @@ onUnmounted(() => ctx?.revert())
 .foot__col a { font: 400 0.9375rem/1.3 var(--lp-sans); color: rgb(248 248 248 / 0.85); text-decoration: none; transition: color 0.2s; }
 .foot__col a:hover { color: var(--lp-orange-soft); }
 .foot__copy { margin: 0; padding-top: 1.5rem; border-top: 1px solid rgb(255 255 255 / 0.2); font: 400 0.8125rem/1 var(--lp-sans); color: rgb(248 248 248 / 0.8); }
+.foot__credits { margin: -0.5rem 0 0; font: 400 10px/1.5 var(--lp-sans); color: rgb(248 248 248 / 0.6); }
+.foot__credits a { color: inherit; text-decoration-color: rgb(248 248 248 / 0.3); }
+.foot__credits a:hover { color: var(--lp-orange-soft); }
 </style>

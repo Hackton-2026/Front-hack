@@ -3,7 +3,7 @@
 // Parallax: cada camada sobe numa velocidade (céu/fundo 0.08, montanha de trás 0.22, da frente 0.42) enquanto o
 // hero está preso na tela; o texto desce e some atrás do cume.
 import { ref, onMounted, onUnmounted } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { gsap, prefersReducedMotion, revealTitleCharacters } from '../../utils/motion'
 import GooeyButton from '../GooeyButton.vue'
 import hillFar from '../../assets/landing/hero-fundo.webp'
 import hillBack from '../../assets/landing/hero-tras.webp'
@@ -38,8 +38,8 @@ onMounted(() => {
   addEventListener('resize', onScroll)
   ctx = gsap.context(() => {
     // cada letra sobe 10px saindo de blur(10px); depois texto, botão e notas descem de -30px
-    gsap.from('.hero__char', { y: 10, opacity: 0, filter: 'blur(10px)', duration: 1, ease: 'expo.out', stagger: 0.045, delay: 0.15 })
-    gsap.from('.hero__lead, .hero__cta, .hero__notes', { y: -30, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.08, delay: 1.6 })
+    revealTitleCharacters('.hero__char')
+    gsap.from('.hero__lead, .hero__cta', { y: -30, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.08, delay: 1.6 })
   }, hero.value)
 })
 onUnmounted(() => {
@@ -66,11 +66,6 @@ onUnmounted(() => {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z" /></svg>
           Começar grátis
         </GooeyButton>
-        <ul class="hero__notes">
-          <li>Grátis para sempre</li>
-          <li>Sem cartão de crédito</li>
-          <li>Web, iOS e Android</li>
-        </ul>
       </div>
       <div class="hero__hill back" data-speed="0.22" aria-hidden="true"><img :src="hillBack" alt="" /></div>
       <div class="hero__hill front" data-speed="0.42" aria-hidden="true"><img :src="hillFront" alt="" /></div>
@@ -111,5 +106,4 @@ onUnmounted(() => {
 .hero__char { display: inline-block; will-change: transform, filter, opacity; }
 .hero__lead { max-width: 38rem; margin: 0 0 2.25rem; font: 400 clamp(1.05rem, 1.6vw, 1.25rem)/1.4 var(--lp-hero); letter-spacing: -0.01em; color: #fff; text-wrap: balance; }
 .hero__cta svg { width: 18px; height: 18px; fill: currentColor; }
-.hero__notes { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; margin: 1.75rem 0 0; padding: 0; list-style: none; font: 400 0.8125rem/1 var(--lp-hero); color: rgb(255 255 255 / 0.7); }
 </style>

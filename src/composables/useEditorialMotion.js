@@ -2,7 +2,7 @@ import { nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
 import { Flip } from 'gsap/Flip'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { gsap, prefersReducedMotion, revealTitleCharacters } from '../utils/motion'
 
 // Este módulo só é carregado pelas páginas editoriais.
 gsap.registerPlugin(SplitText, Flip)
@@ -42,18 +42,22 @@ export function useEditorialMotion(root, { page, items } = {}) {
 
     if (title) {
       SplitText.create(title, {
-        type: 'lines', mask: 'lines', linesClass: 'editorial-line',
+        type: 'words,chars', wordsClass: 'editorial-word', charsClass: 'editorial-char',
         autoSplit: true, aria: 'auto',
         onSplit(split) {
-          return gsap.timeline({ defaults: { ease: 'power4.out' } })
-            .from(split.lines, { yPercent: 105, autoAlpha: 0, duration: 1.05, stagger: 0.11 }, 0.08)
+          return revealTitleCharacters(split.chars)
         },
       })
     }
 
     const intro = gsap.timeline({ defaults: { duration: 0.7, ease: 'power3.out', clearProps: 'transform,opacity,visibility' } })
-    intro.from(select(isBlog ? '.news-heading__top' : '.breadcrumbs, .article-head__meta'), { y: 12, autoAlpha: 0, stagger: 0.06 }, 0)
-      .from(select(isBlog ? '.news-heading__row > p' : '.article-head__lead, .article-head__byline'), { y: 18, autoAlpha: 0, stagger: 0.1 }, 0.25)
+    if (!isBlog) intro.from(select('.breadcrumbs'), { y: 12, autoAlpha: 0 }, 0)
+    const introContent = isBlog ? [] : select('.article-head__lead, .article-head__byline')
+    if (introContent.length) {
+      intro.from(introContent, {
+        y: -30, autoAlpha: 0, duration: 0.8, ease: 'expo.out', stagger: 0.08,
+      }, 1.6)
+    }
 
     const cover = select(isBlog ? '.news-feature' : '.article-cover')[0]
     if (cover) {
@@ -81,6 +85,9 @@ export function useEditorialMotion(root, { page, items } = {}) {
       reveal(select('.reading-sidebar__sticky > *'), sidebar, { x: -12, y: 0, stagger: 0.08 })
       select('.article-section').forEach(section => {
         reveal([...section.children], section, { y: 20, stagger: 0.065 })
+      })
+      select('.flaticon--framed').forEach(icon => {
+        reveal([icon], icon.parentElement, { y: 8, scale: 0.94, duration: 0.7, stagger: 0 })
       })
       const explore = select('.explore-section')[0]
       reveal(select('.explore-section__head, .explore-card'), explore, { y: 28, stagger: 0.12 })
@@ -116,17 +123,20 @@ export function useEditorialMotion(root, { page, items } = {}) {
       previousState = null
       const fresh = cards.filter(card => !revealedCards.has(card))
       if (!fresh.length) return
-      gsap.set(fresh, { autoAlpha: 0, y: 28 })
-      context.add('revealCards', batch => {
-        batch.forEach(card => revealedCards.add(card))
-        gsap.to(batch, {
-          autoAlpha: 1, y: 0, duration: 0.75, stagger: 0.07, ease: 'power3.out',
-          overwrite: 'auto', clearProps: 'transform,opacity,visibility',
+      const columns = matchMedia('(min-width: 1051px)').matches ? 3 : matchMedia('(min-width: 561px)').matches ? 2 : 1
+      gsap.set(fresh, { autoAlpha: 0, y: 18 })
+      fresh.forEach((card, index) => {
+        const offset = (index % columns) * 0.065
+        const entrance = gsap.timeline({
+          defaults: { ease: 'power2.out', clearProps: 'transform,opacity,visibility' },
+          scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+          onStart: () => revealedCards.add(card),
         })
-      })
-      ScrollTrigger.batch(fresh, {
-        start: 'top 94%', interval: 0.07, batchMax: 3,
-        once: true, onEnter: context.revealCards,
+        entrance.to(card, { autoAlpha: 1, y: 0, duration: 0.85 }, offset)
+          .fromTo(card.querySelector('.blog-card__cover'), { scale: 1.025 }, { scale: 1, duration: 1.05 }, offset)
+          .fromTo(card.querySelectorAll('h3, p, time'),
+            { autoAlpha: 0, y: 8 },
+            { autoAlpha: 1, y: 0, duration: 0.65, stagger: 0.065 }, offset + 0.12)
       })
     }, root.value)
   }

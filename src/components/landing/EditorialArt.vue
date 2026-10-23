@@ -1,4 +1,6 @@
 <script setup>
+import FlaticonIcon from '../FlaticonIcon.vue'
+
 defineProps({
   kind: { type: String, default: 'orbit' },
   lines: { type: Array, default: () => [] },
@@ -11,13 +13,13 @@ defineProps({
     <div class="art-masthead"><span>NOVEXO </span><span>{{ label }}</span></div>
 
     <div v-if="kind === 'orbit'" class="orbit-shapes"><span /><span /><span /></div>
-    <div v-else-if="kind === 'calendar'" class="calendar-shape"><div><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span></div><div><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span></div><i>Um passo de cada vez ↗</i><div><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span></div></div>
-    <div v-else-if="kind === 'tasks'" class="task-shapes"><span><i>✓</i> Definir o próximo passo</span><span><i>✓</i> Dar contexto à entrega</span><span><i>○</i> Fazer acontecer <b>↗</b></span></div>
+    <div v-else-if="kind === 'calendar'" class="calendar-shape"><div><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span></div><div><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span></div><i>Um passo de cada vez <FlaticonIcon name="arrow-up-right" /></i><div><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span></div></div>
+    <div v-else-if="kind === 'tasks'" class="task-shapes"><span><i><FlaticonIcon name="check" /></i> Definir o próximo passo</span><span><i><FlaticonIcon name="check" /></i> Dar contexto à entrega</span><span><i><FlaticonIcon name="circle" /></i> Fazer acontecer <b><FlaticonIcon name="arrow-up-right" /></b></span></div>
     <div v-else-if="kind === 'team'" class="team-shapes"><span>C</span><span>A</span><span>J</span><i /><b>Juntos, na mesma direção.</b></div>
     <div v-else-if="kind === 'board'" class="board-shapes"><div><small>A FAZER <b>02</b></small><span /><span /></div><div><small>EM ANDAMENTO <b>01</b></small><span /></div><div><small>CONCLUÍDO <b>02</b></small><span /><span /></div></div>
-    <div v-else-if="kind === 'wiki'" class="wiki-shapes"><span /><div><small>WIKI DO TIME</small><strong>Uma boa ideia<br>merece contexto.</strong><i /><i /><i /><b>↗</b></div></div>
+    <div v-else-if="kind === 'wiki'" class="wiki-shapes"><span /><div><small>WIKI DO TIME</small><strong>Uma boa ideia<br>merece contexto.</strong><i /><i /><i /><b><FlaticonIcon name="arrow-up-right" /></b></div></div>
     <div v-else-if="kind === 'focus'" class="focus-shapes"><span /><span /><span /><b>01</b></div>
-    <div v-else-if="kind === 'notes'" class="notes-shapes"><span>e se a gente<br><em>tentasse?</em><b>↗</b></span><span>próximo passo:<br><em>começar.</em></span></div>
+    <div v-else-if="kind === 'notes'" class="notes-shapes"><span>e se a gente<br><em>tentasse?</em><b><FlaticonIcon name="arrow-up-right" /></b></span><span>próximo passo:<br><em>começar.</em></span></div>
 
     <div class="art-caption"><span v-for="line in lines" :key="line">{{ line }}</span></div>
   </div>

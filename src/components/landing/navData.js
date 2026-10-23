@@ -89,7 +89,7 @@ export const MENU = [
         { icon: 'play', title: 'Webinars', desc: 'Sessões ao vivo e gravadas.' },
       ] }],
     ],
-    feature: { title: 'Menos ruído. Mais trabalho feito.', cta: 'Conheça o Novexo', art: 'd', to: '/blog/como-funciona' },
+    feature: { title: 'Como funciona o Novexo', cta: 'Veja o passo a passo', art: 'd', to: '/blog/como-funciona' },
   },
   { id: 'planos', label: 'Preços', href: '/#planos' },
   { id: 'contato', label: 'Contato', href: '/#contato' },
