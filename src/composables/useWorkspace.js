@@ -129,7 +129,7 @@ function toApi(fields) {
   }
   return body
 }
-const fromActivity = (a) => ({ id: a.id, taskId: a.task, text: a.text, at: a.at, details: a.details || {} })
+const fromActivity = (a) => ({ id: a.id, taskId: a.task, actor: a.actor, type: a.event_type, text: a.text, at: a.at, details: a.details || {} })
 const KINDS = { cycle: 'cycles', module: 'modules', page: 'pages', view: 'views' }
 
 async function load() {

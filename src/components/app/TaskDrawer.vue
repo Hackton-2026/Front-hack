@@ -1,6 +1,6 @@
 <script setup>
 // Painel da tarefa (o "peek" do item de trabalho do Plane): propriedades em linha, subitens, detalhes,
-// estrutura do projeto e a aba de atividade/comentários. Tudo editável na hora.
+// estrutura do projeto, votos, inscrição, reações, relações, links/anexos e as abas de atividade/comentários. Tudo editável na hora.
 import { computed, nextTick, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
@@ -8,8 +8,12 @@ import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import Avatars from './Avatars.vue'
 import StatusBadge from './StatusBadge.vue'
+import MdEditor from './MdEditor.vue'
+import ReactionBar from './ReactionBar.vue'
+import { api } from '../../services/api'
+import { render, slug } from '../../utils/markdown'
 
-const { state, STATUSES, PRIORITIES, code, member, status, createTask, updateTask, removeTask, taskActivity, taskComments, addComment, peopleOf } = useWorkspace()
+const { state, STATUSES, PRIORITIES, code, member, status, createTask, updateTask, removeTask, taskActivity, taskComments, peopleOf } = useWorkspace()
 const { ui, closeTask, openTask, toast } = useUi()
 const task = computed(() => state.tasks.find((t) => t.id === ui.taskId))
 const saved = computed(() => typeof task.value?.id === 'number')
@@ -33,19 +37,94 @@ const comment = ref('')
 const sending = ref(false)
 const needNote = ref(false)
 const note = ref('')
+const EMPTY_PANEL = () => ({ upvotes: [], downvotes: [], watchers: [], reactions: [], relations: [], attachments: [], last_editor: null, last_edited_at: null })
+const panelData = ref(EMPTY_PANEL())
 async function loadFeed() {
-  if (!saved.value) { activity.value = []; comments.value = []; return }
+  if (!saved.value) { activity.value = []; comments.value = []; panelData.value = EMPTY_PANEL(); return }
   const id = task.value.id
   try {
-    const [a, c] = await Promise.all([taskActivity(id), taskComments(id)])
-    if (task.value?.id === id) { activity.value = a; comments.value = c }
+    const [a, c, p] = await Promise.all([taskActivity(id), taskComments(id), api(`/api/tasks/${id}/panel/`)])
+    if (task.value?.id === id) { activity.value = a; comments.value = c; panelData.value = p }
   } catch { /* mantém o que tinha */ }
 }
 watch(() => [ui.taskId, task.value?.updatedAt], loadFeed)
+
+// abas como no Plane: Tudo, Atividade, Comentários, Atualizações, Transição (mudanças de estado) e Histórico (campos alterados)
+const TABS = [['all', 'Tudo'], ['activity', 'Atividade'], ['comments', 'Comentários'], ['updates', 'Atualizações'], ['transition', 'Transição'], ['history', 'Histórico']]
+const UPDATE_STATES = [['on_track', 'No prazo', '#7fc47a'], ['at_risk', 'Em risco', '#f2c46d'], ['off_track', 'Atrasada', '#ff5b4d']]
+const newest = ref(false)
+const showActivity = (a) => ({ all: true, activity: true, transition: ['status', 'task_completed'].includes(a.type), history: !['comment', 'task_created'].includes(a.type) }[tab.value])
+const showComment = (c) => ({ all: true, comments: !c.is_update, updates: c.is_update }[tab.value])
 const feed = computed(() => [
-  ...(tab.value === 'comments' ? [] : activity.value.map((a) => ({ key: `a${a.id}`, at: a.at, text: a.text }))),
-  ...(tab.value === 'activity' ? [] : comments.value.map((c) => ({ key: `c${c.id}`, at: c.created_at, author: c.author, body: c.body }))),
-].sort((x, y) => x.at.localeCompare(y.at)))
+  ...activity.value.filter(showActivity).map((a) => ({ key: `a${a.id}`, at: a.at, text: a.text, actor: a.actor, details: tab.value === 'history' ? a.details : null })),
+  ...comments.value.filter(showComment).map((c) => ({ key: `c${c.id}`, at: c.created_at, comment: c })),
+].sort((x, y) => (newest.value ? -1 : 1) * x.at.localeCompare(y.at)))
+
+// votos, inscrição, reações, relações e anexos: cada ação devolve o painel atualizado
+async function act(path, body, method = 'POST') {
+  try {
+    panelData.value = await api(`/api/tasks/${task.value.id}/${path}`, { method, body })
+    return true
+  } catch (e) {
+    toast(e.message || 'Não foi possível salvar.')
+    return false
+  }
+}
+const myVote = computed(() => (panelData.value.upvotes.includes(state.me) ? 1 : panelData.value.downvotes.includes(state.me) ? -1 : 0))
+const vote = (v) => act('vote/', { value: myVote.value === v ? 0 : v })
+const watching = computed(() => panelData.value.watchers.includes(state.me))
+const names = (ids) => ids.map((id) => member(id)?.name || '?').join(', ') || 'Ninguém ainda'
+const RELATIONS = { blocks: 'Bloqueia', blocked_by: 'Bloqueada por', relates: 'Relacionada a', duplicate: 'Duplicada de' }
+const relationGroups = computed(() => {
+  const groups = {}
+  for (const r of panelData.value.relations) {
+    const key = r.kind === 'blocks' && r.direction === 'in' ? 'blocked_by' : r.kind
+    ;(groups[key] ||= []).push({ ...r, other: state.tasks.find((t) => t.id === r.task) })
+  }
+  return Object.entries(groups)
+})
+const adding = ref('') // sub | dep | rel | link | page
+const rel = ref({ kind: 'blocks', task: '' })
+const link = ref({ url: '', name: '' })
+const relationOptions = computed(() => state.tasks.filter((t) => !t.draft && typeof t.id === 'number' && t.id !== task.value.id))
+function openAdd(kind) {
+  adding.value = adding.value === kind ? '' : kind
+  rel.value = { kind: kind === 'dep' ? 'blocks' : 'relates', task: '' }
+  link.value = { url: '', name: '' }
+  addingSub.value = kind === 'sub'
+}
+async function addRelation() {
+  if (rel.value.task && (await act('relations/', { kind: rel.value.kind, task: Number(rel.value.task) }))) adding.value = ''
+}
+async function addLink() {
+  const url = /^https?:\/\//.test(link.value.url) ? link.value.url : `https://${link.value.url}`
+  if (link.value.url.trim() && (await act('attachments/', { url, name: link.value.name.trim() }))) adding.value = ''
+}
+async function linkPage(id) {
+  const pg = state.pages.find((p) => p.id === Number(id))
+  if (pg && (await act('attachments/', { url: `${location.origin}/projetos/${pg.project}/paginas/${pg.id}`, name: `Página: ${pg.title || 'Sem título'}` }))) adding.value = ''
+}
+async function uploadFile(file) {
+  const fd = new FormData()
+  fd.append('file', file)
+  if (!(await act('attachments/', fd))) return null
+  return panelData.value.attachments[0] // a mais nova vem primeiro
+}
+async function onAttach(e) {
+  const file = e.target.files[0]
+  e.target.value = ''
+  if (file && (await uploadFile(file))) toast('Arquivo anexado.')
+}
+const size = (b) => (b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : b > 1024 ? `${Math.round(b / 1024)} KB` : b ? `${b} B` : '')
+const ICON_OF = { image: 'image', video: 'image', link: 'link', file: 'doc' }
+
+// título com contador e indicador de salvamento, como no Plane
+const saving = ref('')
+const titleLen = ref(0)
+watch(() => task.value?.title, (t) => (titleLen.value = t?.length || 0), { immediate: true })
+const desc = ref('')
+watch(() => [ui.taskId, task.value?.description], () => (desc.value = task.value?.description || ''), { immediate: true })
+const saveDesc = () => desc.value !== task.value.description && set({ description: desc.value })
 
 const subitems = computed(() => state.tasks.filter((t) => t.parent === task.value?.id && !t.draft))
 const parent = computed(() => state.tasks.find((t) => t.id === task.value?.parent))
@@ -78,7 +157,12 @@ function close() {
   gsap.to(panel.value, { x: 40, autoAlpha: 0, duration: 0.2, ease: 'power2.in', onComplete: closeTask })
 }
 
-const set = (fields) => updateTask(task.value, fields)
+async function set(fields) {
+  saving.value = 'Salvando…'
+  const ok = await updateTask(task.value, fields)
+  saving.value = ok === false ? '' : 'Salvo'
+  return ok
+}
 // Quem não é admin precisa da nota de conclusão (regra da ShyDevs, validada no backend)
 function setStatus(id) {
   if (id === 'done' && !state.isAdmin && !task.value.draft) { needNote.value = true; return }
@@ -115,18 +199,51 @@ function addSub() {
   createTask({ title: newSub.value.trim(), projectId: task.value.projectId, parent: task.value.id, assignees: [state.me] })
   newSub.value = ''
 }
+const updateState = ref('on_track')
+const editingId = ref(null)
+const editBody = ref('')
 async function sendComment() {
   if (!comment.value.trim() || sending.value) return
   sending.value = true
   try {
-    comments.value.push(await addComment(task.value.id, comment.value.trim()))
+    const isUpdate = tab.value === 'updates'
+    comments.value.push(await api(`/api/tasks/${task.value.id}/comments/`, { method: 'POST', body: { body: comment.value.trim(), is_update: isUpdate, update_state: isUpdate ? updateState.value : '' } }))
     comment.value = ''
-    tab.value = tab.value === 'activity' ? 'all' : tab.value
+    tab.value = ['activity', 'transition', 'history'].includes(tab.value) ? 'all' : tab.value
   } catch (e) {
     toast(e.message || 'Não foi possível comentar.')
   } finally {
     sending.value = false
   }
+}
+async function commentAction(c, path, body, method = 'POST') {
+  try {
+    const r = await api(`/api/tasks/${task.value.id}/comments/${c.id}/${path}`, { method, body })
+    if (method === 'DELETE') comments.value = comments.value.filter((x) => x !== c)
+    else Object.assign(c, r)
+    return true
+  } catch (e) {
+    toast(e.message || 'Não foi possível salvar.')
+    return false
+  }
+}
+async function saveEdit(c) {
+  if (editBody.value.trim() && (await commentAction(c, '', { body: editBody.value.trim() }, 'PATCH'))) editingId.value = null
+}
+async function copy(text, done) {
+  try {
+    await navigator.clipboard.writeText(text)
+    toast(done)
+  } catch { toast('Não deu para copiar.') }
+}
+const copyBranch = () => copy(`${code(task.value).toLowerCase()}-${slug(task.value.title).slice(0, 50)}`, 'Nome da branch copiado.')
+const copyLink = () => copy(`${location.origin}${location.pathname}?task=${task.value.id}`, 'Link da tarefa copiado.')
+function duplicate() {
+  const t = task.value
+  menu.value = false
+  const copyOf = createTask({ title: `${t.title} (cópia)`.slice(0, 200), projectId: t.projectId, description: t.description, priority: t.priority, due: t.due, start: t.start, tags: [...t.tags], assignees: [...t.assignees], checklist: t.checklist.map((i) => ({ title: i.title, done: false })) })
+  openTask(copyOf)
+  toast('Tarefa duplicada.')
 }
 async function copyCode() {
   try {
@@ -161,10 +278,20 @@ function destroy() {
             <AppIcon name="check" :size="15" />{{ task.status === 'done' ? 'Concluída' : 'Marcar como concluída' }}
           </button>
           <button v-else type="button" class="done-btn" :disabled="!task.projectId" :title="task.projectId ? '' : 'Escolha um projeto para publicar'" @click="publish">Publicar</button>
-          <button v-if="saved" type="button" class="icon" aria-label="Copiar código da tarefa" @click="copyCode"><AppIcon name="link" :size="16" /></button>
+          <template v-if="saved">
+            <span class="votes" role="group" aria-label="Votos">
+              <button type="button" class="vote" :aria-pressed="myVote === 1" :title="`A favor: ${names(panelData.upvotes)}`" aria-label="Votar a favor" @click="vote(1)">▲ {{ panelData.upvotes.length }}</button>
+              <button type="button" class="vote" :aria-pressed="myVote === -1" :title="`Contra: ${names(panelData.downvotes)}`" aria-label="Votar contra" @click="vote(-1)">▼ {{ panelData.downvotes.length }}</button>
+            </span>
+            <button type="button" class="sub-btn" :aria-pressed="watching" :title="`Inscritos: ${names(panelData.watchers)}`" @click="act('subscribe/', { on: !watching })"><AppIcon name="user" :size="13" />{{ watching ? 'Inscrito' : 'Inscrever-se' }}<span>{{ panelData.watchers.length }}</span></button>
+            <button type="button" class="icon" title="Copiar nome da branch" aria-label="Copiar nome da branch" @click="copyBranch"><AppIcon name="github" :size="15" /></button>
+            <button type="button" class="icon" title="Copiar link" aria-label="Copiar link da tarefa" @click="copyLink"><AppIcon name="link" :size="16" /></button>
+          </template>
           <div class="menu-wrap">
             <button type="button" class="icon" :aria-expanded="menu" aria-label="Mais opções" @click="menu = !menu; confirmDelete = false"><AppIcon name="more" :size="16" /></button>
             <div v-if="menu" class="menu" role="menu">
+              <button v-if="saved" type="button" role="menuitem" @click="duplicate"><AppIcon name="doc" :size="14" />Duplicar</button>
+              <button v-if="saved" type="button" role="menuitem" @click="copyCode(); menu = false"><AppIcon name="pin" :size="14" />Copiar código</button>
               <button type="button" role="menuitem" class="danger" @click="destroy"><AppIcon name="trash" :size="14" />{{ confirmDelete ? 'Clique de novo para apagar' : 'Apagar tarefa' }}</button>
             </div>
           </div>
@@ -181,7 +308,9 @@ function destroy() {
         <div class="sec">
           <span class="code">{{ code(task) }}</span>
           <button v-if="parent" type="button" class="parent-link" @click="openTask(parent)"><AppIcon name="parent" :size="13" />{{ code(parent) }} · {{ parent.title }}</button>
-          <textarea class="title" :value="task.title" rows="1" aria-label="Título" @change="set({ title: $event.target.value.trim() || task.title })" />
+          <span v-if="saving" class="saving">{{ saving }}</span>
+          <textarea class="title" :value="task.title" rows="1" maxlength="200" aria-label="Título" @input="titleLen = $event.target.value.length" @change="set({ title: $event.target.value.trim() || task.title })" />
+          <span class="count" :class="{ full: titleLen >= 200 }">{{ titleLen }}/200</span>
         </div>
 
         <!-- a linha de propriedades do Plane: estado, prioridade, responsáveis, início e prazo -->
@@ -209,7 +338,63 @@ function destroy() {
           <label class="cell" title="Prazo"><AppIcon name="calendar" :size="15" /><input type="date" :value="task.due || ''" :min="task.start || undefined" aria-label="Prazo" @change="set({ due: $event.target.value || null })" /></label>
         </div>
 
-        <textarea class="desc sec" :value="task.description" rows="4" placeholder="Adicione detalhes, links ou critérios de pronto…" aria-label="Descrição" @change="set({ description: $event.target.value })" />
+        <div class="sec">
+          <MdEditor :key="task.id" v-model="desc" view collapsible :rows="5" placeholder="Adicione detalhes, links ou critérios de pronto…" :upload="saved ? uploadFile : null" @commit="saveDesc" />
+          <div v-if="saved" class="under">
+            <ReactionBar :reactions="panelData.reactions" @toggle="(e) => act('react/', { emoji: e })" />
+            <small v-if="panelData.last_edited_at">Editada por {{ member(panelData.last_editor)?.name || 'alguém' }} {{ ago(panelData.last_edited_at) }}</small>
+          </div>
+        </div>
+
+        <!-- ações do Plane: subitem, dependência, relação, link, anexo e página -->
+        <div v-if="saved" class="actions sec" role="toolbar" aria-label="Ações">
+          <button type="button" :aria-pressed="adding === 'sub'" @click="openAdd('sub')"><AppIcon name="plus" :size="13" />Subitem</button>
+          <button type="button" :aria-pressed="adding === 'dep'" @click="openAdd('dep')"><AppIcon name="layers" :size="13" />Dependência</button>
+          <button type="button" :aria-pressed="adding === 'rel'" @click="openAdd('rel')"><AppIcon name="module" :size="13" />Relação</button>
+          <button type="button" :aria-pressed="adding === 'link'" @click="openAdd('link')"><AppIcon name="link" :size="13" />Link</button>
+          <label class="attach"><AppIcon name="archive" :size="13" />Anexar<input type="file" @change="onAttach" /></label>
+          <button type="button" :aria-pressed="adding === 'page'" @click="openAdd('page')"><AppIcon name="page" :size="13" />Página</button>
+        </div>
+        <form v-if="adding === 'dep' || adding === 'rel'" class="inline sec" @submit.prevent="addRelation">
+          <select v-model="rel.kind" aria-label="Tipo">
+            <template v-if="adding === 'dep'"><option value="blocks">Esta bloqueia…</option><option value="blocked_by">Esta é bloqueada por…</option></template>
+            <template v-else><option value="relates">Relacionada a…</option><option value="duplicate">Duplicada de…</option></template>
+          </select>
+          <select v-model="rel.task" aria-label="Tarefa" required><option value="" disabled>Escolher tarefa</option><option v-for="t in relationOptions" :key="t.id" :value="t.id">{{ code(t) }} · {{ t.title }}</option></select>
+          <button type="submit" class="done-btn">Adicionar</button>
+        </form>
+        <form v-if="adding === 'link'" class="inline sec" @submit.prevent="addLink">
+          <input v-model="link.url" type="text" placeholder="https://…" aria-label="Endereço do link" required />
+          <input v-model="link.name" type="text" placeholder="Nome (opcional)" aria-label="Nome do link" />
+          <button type="submit" class="done-btn">Adicionar</button>
+        </form>
+        <div v-if="adding === 'page'" class="inline sec">
+          <select aria-label="Página" @change="linkPage($event.target.value)"><option value="">Escolher página do projeto</option><option v-for="pg in state.pages.filter((p) => p.project === task.projectId)" :key="pg.id" :value="pg.id">{{ pg.title || 'Sem título' }}</option></select>
+          <span v-if="!state.pages.some((p) => p.project === task.projectId)" class="none">Este projeto ainda não tem páginas.</span>
+        </div>
+
+        <section v-if="relationGroups.length" class="sec">
+          <h3>Relações</h3>
+          <div v-for="[kind, items] in relationGroups" :key="kind" class="rel">
+            <span class="rel__kind">{{ RELATIONS[kind] }}</span>
+            <span v-for="r in items" :key="r.id" class="rel__item">
+              <button type="button" class="subs__title" @click="r.other && openTask(r.other)">{{ r.other ? `${code(r.other)} · ${r.other.title}` : `#${r.task}` }}</button>
+              <button type="button" class="x" :aria-label="`Remover relação com ${r.other?.title || r.task}`" @click="act(`relations/${r.id}/`, undefined, 'DELETE')">×</button>
+            </span>
+          </div>
+        </section>
+        <section v-if="panelData.attachments.length" class="sec">
+          <h3>Links e anexos <span>{{ panelData.attachments.length }}</span></h3>
+          <ul class="files">
+            <li v-for="a in panelData.attachments" :key="a.id">
+              <img v-if="a.kind === 'image'" :src="a.url" alt="" class="thumb" />
+              <AppIcon v-else :name="ICON_OF[a.kind] || 'doc'" :size="15" />
+              <a :href="a.url" target="_blank" rel="noopener">{{ a.name || a.url }}</a>
+              <small>{{ size(a.size) }}</small>
+              <button type="button" class="x" :aria-label="`Remover ${a.name}`" @click="act(`attachments/${a.id}/`, undefined, 'DELETE')">×</button>
+            </li>
+          </ul>
+        </section>
 
         <section v-if="saved" class="sec">
           <h3>Subitens <span>{{ subitems.filter((s) => s.status === 'done').length }}/{{ subitems.length }}</span>
@@ -281,19 +466,43 @@ function destroy() {
 
         <section v-if="saved" class="sec">
           <div class="tabs" role="tablist">
-            <button v-for="t in [['all', 'Tudo'], ['activity', 'Atividade'], ['comments', 'Comentários']]" :key="t[0]" type="button" role="tab" :aria-selected="tab === t[0]" @click="tab = t[0]">{{ t[1] }}</button>
+            <button v-for="t in TABS" :key="t[0]" type="button" role="tab" :aria-selected="tab === t[0]" @click="tab = t[0]">{{ t[1] }}</button>
+            <button type="button" class="sort" :title="newest ? 'Mais recentes primeiro' : 'Mais antigos primeiro'" @click="newest = !newest">{{ newest ? '↓ Recentes' : '↑ Antigos' }}</button>
           </div>
-          <form v-if="tab !== 'activity'" class="comment" @submit.prevent="sendComment">
-            <textarea v-model="comment" rows="2" placeholder="Escreva um comentário (use @usuario para mencionar)" aria-label="Comentário" @keydown.ctrl.enter="sendComment" />
-            <button type="submit" class="done-btn" :disabled="!comment.trim() || sending">Comentar</button>
+          <form v-if="['all', 'comments', 'updates'].includes(tab)" class="comment" @submit.prevent="sendComment">
+            <div v-if="tab === 'updates'" class="states" role="radiogroup" aria-label="Situação">
+              <label v-for="[id, label, color] in UPDATE_STATES" :key="id" :style="{ '--c': color }"><input v-model="updateState" type="radio" name="update-state" :value="id" />{{ label }}</label>
+            </div>
+            <MdEditor v-model="comment" :rows="2" :upload="uploadFile" :placeholder="tab === 'updates' ? 'Como está a tarefa? Conte o que avançou e o que falta.' : 'Escreva um comentário (Ctrl+Enter envia)'" @commit="(how) => how === 'submit' && sendComment()" />
+            <button type="submit" class="done-btn" :disabled="!comment.trim() || sending">{{ tab === 'updates' ? 'Publicar atualização' : 'Comentar' }}</button>
           </form>
           <ol class="log">
-            <li v-for="f in feed" :key="f.key" :class="{ 'is-comment': f.body }">
-              <template v-if="f.body"><strong>{{ member(f.author)?.name || 'Alguém' }}</strong><p>{{ f.body }}</p></template>
-              <span v-else>{{ f.text }}</span>
-              <time>{{ ago(f.at) }}</time>
+            <li v-for="f in feed" :key="f.key" :class="{ 'is-comment': f.comment }">
+              <template v-if="f.comment">
+                <div class="c-head">
+                  <strong>{{ member(f.comment.author)?.name || 'Alguém' }}</strong>
+                  <span v-if="f.comment.is_update" class="upd" :style="{ '--c': UPDATE_STATES.find((s) => s[0] === f.comment.update_state)?.[2] }">{{ UPDATE_STATES.find((s) => s[0] === f.comment.update_state)?.[1] || 'Atualização' }}</span>
+                  <time>{{ ago(f.at) }}{{ f.comment.edited_at ? ' · editado' : '' }}</time>
+                  <span v-if="f.comment.author === state.me" class="c-actions">
+                    <button type="button" @click="editingId = f.comment.id; editBody = f.comment.body">Editar</button>
+                    <button type="button" @click="commentAction(f.comment, '', undefined, 'DELETE')">Apagar</button>
+                  </span>
+                </div>
+                <form v-if="editingId === f.comment.id" class="c-edit" @submit.prevent="saveEdit(f.comment)">
+                  <MdEditor v-model="editBody" :rows="2" :upload="uploadFile" @commit="(how) => how === 'submit' && saveEdit(f.comment)" />
+                  <div><button type="button" class="ghost" @click="editingId = null">Cancelar</button><button type="submit" class="done-btn">Salvar</button></div>
+                </form>
+                <!-- eslint-disable-next-line vue/no-v-html -- render() escapa o texto antes de montar o HTML -->
+                <div v-else class="c-body" v-html="render(f.comment.body)" />
+                <ReactionBar :reactions="f.comment.reactions || []" @toggle="(e) => commentAction(f.comment, 'react/', { emoji: e })" />
+              </template>
+              <template v-else>
+                <span><strong v-if="f.actor">{{ member(f.actor)?.name || 'Alguém' }}</strong> {{ f.text }}</span>
+                <small v-if="f.details && Object.keys(f.details).length" class="det">{{ Object.entries(f.details).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' · ') }}</small>
+                <time>{{ ago(f.at) }}</time>
+              </template>
             </li>
-            <li v-if="!feed.length" class="muted">{{ tab === 'comments' ? 'Nenhum comentário ainda.' : 'Sem atividade ainda.' }}</li>
+            <li v-if="!feed.length" class="muted">{{ { comments: 'Nenhum comentário ainda.', updates: 'Nenhuma atualização ainda.', transition: 'O estado ainda não mudou.', history: 'Nenhuma alteração registrada.' }[tab] || 'Sem atividade ainda.' }}</li>
           </ol>
         </section>
         <p v-else class="none sec">Rascunhos são só seus: publique a tarefa para ter subitens, comentários e histórico.</p>
@@ -404,5 +613,57 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .note div { display: flex; justify-content: flex-end; gap: 0.5rem; }
 .ghost { padding: 0 0.7rem; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .ghost:hover { background: var(--surface-2); color: var(--text); }
+.votes { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; }
+.vote { height: 28px; padding: 0 0.5rem; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
+.vote + .vote { border-left: 1px solid var(--line); }
+.vote[aria-pressed='true'] { color: var(--accent-soft); }
+.sub-btn { display: inline-flex; align-items: center; gap: 0.35rem; height: 30px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--text); cursor: pointer; }
+.sub-btn span { color: var(--muted); }
+.sub-btn[aria-pressed='true'] { border-color: var(--accent); }
+.saving { margin-left: 0.6rem; font-size: 11.5px; color: var(--accent-soft); }
+.count { display: block; text-align: right; font-size: 11px; color: var(--muted); }
+.count.full { color: #ff8a80; }
+.under { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.6rem; }
+.under small { font-size: 11.5px; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.35rem; border: 1px solid var(--line); border-radius: 8px; }
+.actions button, .attach { position: relative; display: inline-flex; align-items: center; gap: 0.3rem; height: 28px; padding: 0 0.55rem; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.actions button:hover, .actions button[aria-pressed='true'], .attach:hover { background: var(--surface-2); color: var(--text); }
+.attach input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.attach:focus-within { outline: 2px solid var(--accent-soft); }
+.inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.inline select, .inline input { flex: 1; min-width: 9rem; height: 32px; padding: 0 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13px; color: var(--text); }
+.rel { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; font-size: 13px; }
+.rel__kind { min-width: 7.5rem; font-size: 12px; color: var(--muted); }
+.rel__item { display: inline-flex; align-items: center; gap: 0.2rem; max-width: 100%; padding: 0.15rem 0.2rem 0.15rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; }
+.x { padding: 0 0.3rem; border: 0; background: none; color: var(--muted); cursor: pointer; }
+.x:hover { color: #ff8a80; }
+.files { display: flex; flex-direction: column; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; list-style: none; }
+.files li { display: flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.6rem; font-size: 13px; color: var(--muted); }
+.files li + li { border-top: 1px solid var(--line); }
+.files a { flex: 1; min-width: 0; overflow: hidden; color: var(--text); text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.files a:hover { color: var(--accent-soft); }
+.files small { font-size: 11.5px; }
+.thumb { width: 28px; height: 28px; border-radius: 4px; object-fit: cover; }
+.tabs { flex-wrap: wrap; align-items: center; }
+.sort { margin-left: auto; padding: 0.25rem 0.5rem; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.states label { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.55rem; border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); border-radius: 999px; font-size: 12px; cursor: pointer; }
+.states label:has(input:checked) { background: color-mix(in srgb, var(--c) 22%, transparent); }
+.states input { position: absolute; opacity: 0; }
+.c-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.c-head time { font-size: 11.5px; color: var(--muted); }
+.upd { padding: 0.05rem 0.45rem; border-radius: 999px; background: color-mix(in srgb, var(--c, var(--accent)) 22%, transparent); font-size: 11px; }
+.c-actions { display: flex; gap: 0.3rem; margin-left: auto; }
+.c-actions button { padding: 0; border: 0; background: none; font-size: 11.5px; color: var(--muted); cursor: pointer; }
+.c-actions button:hover { color: var(--text); }
+.c-body { font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.c-body :deep(p) { margin: 0.2em 0; }
+.c-body :deep(img) { max-width: 100%; border-radius: 6px; }
+.c-body :deep(a) { color: var(--accent-soft); }
+.c-body :deep(code) { padding: 0.1em 0.3em; border-radius: 4px; background: var(--surface-2); }
+.c-body :deep(blockquote) { margin: 0.3em 0; padding-left: 0.7rem; border-left: 3px solid var(--accent); color: var(--muted); }
+.c-edit div { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.4rem; }
+.det { font-size: 11.5px; color: var(--muted); }
+:is(.vote, .sub-btn, .actions button, .x, .sort, .c-actions button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 :is(.done-btn, .icon, .chip, .box, .rm, .ntag button, .mini, .fold, .tabs button, .menu button, .cell__btn, .subs__title, .parent-link):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>
