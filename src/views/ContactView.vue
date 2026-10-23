@@ -57,7 +57,7 @@ const questions = [
   { question: 'Por onde começo a usar o Novexo?', answer: 'Comece criando sua conta. Depois, crie um projeto, adicione as primeiras tarefas e defina seus prazos. O guia Como funciona mostra esse caminho passo a passo.', link: '/blog/como-funciona', label: 'Ver como funciona' },
   { question: 'Posso usar o Novexo com meu time?', answer: 'Sim. Você pode organizar projetos em um espaço de trabalho e convidar as pessoas do seu time. Se quiser conversar sobre o uso na sua empresa, escolha “Para sua empresa” no formulário acima.' },
   { question: 'O que devo incluir em um pedido de suporte?', answer: 'Conte o que você estava tentando fazer e o que aconteceu. Informe também o navegador ou dispositivo que está usando. Esses detalhes ajudam a entender o problema. Não inclua senhas na mensagem.' },
-  { question: 'Onde encontro os planos e preços?', answer: 'Os planos estão na página inicial. Lá você pode comparar os recursos e escolher uma opção para o seu momento.', link: '/#planos', label: 'Conhecer os planos' },
+  { question: 'Onde encontro os planos e preços?', answer: 'Na página de preços você pode comparar os recursos, conhecer cada plano e escolher uma opção para o seu momento.', link: '/precos', label: 'Conhecer os planos' },
 ]
 
 let previousTitle
@@ -197,8 +197,14 @@ onUnmounted(() => { document.title = previousTitle })
 .contact-field :is(input, textarea, select) { display: block; width: 100%; min-height: 45px; padding: 12px 13px; border: 1px solid #ffffff26; border-radius: 7px; background: #ffffff03; color: #f2ece6; caret-color: var(--lp-orange-soft); font: 400 12px/1.5 var(--lp-sans); transition: border-color .2s, background .2s; }
 .contact-field :is(input, textarea)::placeholder { color: #8f8880; opacity: 1; }
 .contact-field :is(input, textarea, select):focus-visible { outline: none; border-color: #fba45c99; background: #ffffff06; box-shadow: 0 0 0 2px #fba45c12; }
+.contact-field :is(input, textarea, select) { color-scheme: dark; }
+.contact-field :is(input, textarea):is(:autofill, :-webkit-autofill) { -webkit-text-fill-color: #f2ece6; caret-color: var(--lp-orange-soft); box-shadow: inset 0 0 0 1000px #17120e; }
+.contact-field :is(input, textarea):is(:autofill, :-webkit-autofill):focus { border-color: #fba45c99; box-shadow: inset 0 0 0 1000px #17120e, 0 0 0 2px #fba45c12; }
 .contact-field textarea { min-height: 132px; resize: vertical; max-height: 360px; }
 .contact-field select { appearance: none; padding-right: 32px; color-scheme: dark; }
+.contact-field select option { background: #17120e; color: #f2ece6; }
+.contact-field select option:disabled { color: #8f8880; }
+.contact-field select option:checked { background: #3b2414; color: var(--lp-orange-soft); }
 .contact-select { position: relative; }
 .contact-select > .flaticon { position: absolute; right: 11px; top: 14px; pointer-events: none; color: #aaa095; }
 .contact-submit { display: flex; flex-direction: column; align-items: flex-start; gap: 13px; margin-top: 25px; }

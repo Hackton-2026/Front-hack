@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import { CUSTOM_PLAN_PATH, canEnterCustomPlan } from './utils/customPlanEntry'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -11,6 +12,8 @@ const router = createRouter({
   routes: [
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
+    { path: '/precos', alias: '/pricing', component: () => import('./views/PricingView.vue'), meta: { bare: true } },
+    { path: CUSTOM_PLAN_PATH, component: () => import('./views/CustomPlanView.vue'), meta: { bare: true }, beforeEnter: () => canEnterCustomPlan() || { path: '/precos', hash: '#enterprise', replace: true } },
     { path: '/contato', alias: '/contact-us', component: () => import('./views/ContactView.vue'), meta: { bare: true } },
     { path: '/blog', alias: '/news', component: () => import('./views/BlogView.vue'), meta: { bare: true } },
     { path: '/blog/como-funciona', alias: '/como-funciona', component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },

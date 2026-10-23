@@ -192,7 +192,7 @@ onUnmounted(() => {
             <input v-model="projectName" placeholder="Nome do projeto" aria-label="Nome do novo projeto" @blur="saveProject" @keydown.esc="addingProject = false" />
           </form>
         </div>
-        <RouterLink to="/#planos" class="trial">Teste do Business: 13 dias</RouterLink>
+        <RouterLink to="/precos" class="trial">Teste do Business: 13 dias</RouterLink>
       </div>
     </aside>
     <button v-if="collapsed" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
