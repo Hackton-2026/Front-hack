@@ -40,6 +40,8 @@ const localDefaults = () => ({
     nav: { drafts: true, mine: true, notes: true },
     pinned: [],
     features: { cycles: true, modules: true, views: true, pages: true },
+    // Wiki (como no Plane): coleções de páginas e etiquetas das páginas
+    wiki: { collections: [{ id: 'geral', name: 'Geral' }], labels: [] },
     stars: [],
     open: { workspace: true, projects: true, try: true },
     // Home: links rápidos e o que a pessoa abriu por último (kind:id)
@@ -402,8 +404,9 @@ export function useWorkspace() {
     try { await api('/api/inbox/read-all/', { method: 'POST' }) } catch { /* fica lida só aqui */ }
   }
   const taskActivity = async (id) => (await api(`/api/activity/?task=${id}`)).map(fromActivity)
-  function createDoc() {
-    const d = { id: `doc-${Date.now().toString(36)}`, title: 'Sem título', body: '', updatedAt: new Date().toISOString() }
+  function createDoc(fields = {}) {
+    const now = new Date().toISOString()
+    const d = reactive({ id: `doc-${Date.now().toString(36)}`, title: 'Sem título', body: '', createdAt: now, updatedAt: now, ...fields })
     state.docs.unshift(d)
     return d
   }
