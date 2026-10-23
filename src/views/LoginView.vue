@@ -29,7 +29,7 @@ async function run(action) {
   loading.value = true
   try {
     await action()
-    router.push(route.query.next || '/explorar')
+    router.push(route.query.next || '/comecar')
   } catch (e) {
     // erros de campo do DRF ({password: [...]}) sem o nome técnico do campo na frente
     const fields = e.data && !e.data.detail && typeof e.data === 'object' ? Object.values(e.data).flat() : null

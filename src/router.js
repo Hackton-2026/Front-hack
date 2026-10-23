@@ -8,6 +8,8 @@ const router = createRouter({
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
+    // Área logada do Novexo (tem a própria casca, por isso bare)
+    { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { bare: true } },
     { path: '/explorar', component: () => import('./views/ProductsView.vue') },
     { path: '/meus', component: () => import('./views/ProductsView.vue'), props: { mine: true }, meta: { auth: true } },
     { path: '/novo', component: () => import('./views/ProductFormView.vue'), meta: { auth: true } },
@@ -23,7 +25,7 @@ router.beforeEach(async (to) => {
   const { user, ready, init } = useAuth()
   if (!ready.value) await init()
   if (to.meta.auth && !user.value) return { path: '/login', query: { next: to.fullPath } }
-  if (to.meta.guest && user.value) return '/explorar'
+  if (to.meta.guest && user.value) return '/comecar'
 })
 
 export default router
