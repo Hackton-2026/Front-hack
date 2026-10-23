@@ -28,6 +28,11 @@ const newSub = ref('')
 const addingSub = ref(false)
 const confirmDelete = ref(false)
 const reduced = prefersReducedMotion()
+// ---- animações (GSAP); nada anima com "reduzir movimento" ou o Modo de desempenho
+const motion = () => !prefersReducedMotion()
+const pop = (el) => motion() && el && gsap.fromTo(el, { scale: 0.82 }, { scale: 1, duration: 0.4, ease: 'back.out(3)' })
+const enter = (els, opts = {}) => motion() && els?.length && gsap.fromTo(els, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.3, stagger: 0.035, ease: 'power2.out', clearProps: 'transform', ...opts })
+const q = (sel) => panel.value?.querySelectorAll(sel)
 
 // Histórico e comentários vêm da API (os signals do backend registram cada mudança)
 const activity = ref([])
@@ -71,7 +76,7 @@ async function act(path, body, method = 'POST') {
   }
 }
 const myVote = computed(() => (panelData.value.upvotes.includes(state.me) ? 1 : panelData.value.downvotes.includes(state.me) ? -1 : 0))
-const vote = (v) => act('vote/', { value: myVote.value === v ? 0 : v })
+const vote = async (v, el) => { await act('vote/', { value: myVote.value === v ? 0 : v }); pop(el) }
 const watching = computed(() => panelData.value.watchers.includes(state.me))
 const names = (ids) => ids.map((id) => member(id)?.name || '?').join(', ') || 'Ninguém ainda'
 const RELATIONS = { blocks: 'Bloqueia', blocked_by: 'Bloqueada por', relates: 'Relacionada a', duplicate: 'Duplicada de' }
@@ -122,6 +127,20 @@ const ICON_OF = { image: 'image', video: 'image', link: 'link', file: 'doc' }
 const saving = ref('')
 const titleLen = ref(0)
 watch(() => task.value?.title, (t) => (titleLen.value = t?.length || 0), { immediate: true })
+watch([tab, newest], async () => { await nextTick(); enter(q('.log li')) })
+watch(adding, async (v) => {
+  await nextTick()
+  if (v && motion()) gsap.from(q('.inline, form.add'), { height: 0, autoAlpha: 0, duration: 0.3, ease: 'power2.out', clearProps: 'height' })
+})
+// entra só o que é novo (relação, anexo, comentário); a primeira carga já vem com a abertura do painel
+watch(() => [panelData.value.relations.length, panelData.value.attachments.length, comments.value.length], async (now, before) => {
+  if (!before || now.every((n, i) => n <= before[i])) return
+  await nextTick()
+  if (now[0] > before[0]) enter([...(q('.rel__item') || [])].slice(-1))
+  if (now[1] > before[1]) enter([...(q('.files li') || [])].slice(0, 1))
+  if (now[2] > before[2]) enter(newest.value ? [...(q('.log li') || [])].slice(0, 1) : [...(q('.log li') || [])].slice(-1))
+})
+watch(saving, async (v) => { await nextTick(); if (v === 'Salvo' && motion()) gsap.fromTo(q('.saving'), { autoAlpha: 0, x: -6 }, { autoAlpha: 1, x: 0, duration: 0.3 }) })
 const desc = ref('')
 watch(() => [ui.taskId, task.value?.description], () => (desc.value = task.value?.description || ''), { immediate: true })
 const saveDesc = () => desc.value !== task.value.description && set({ description: desc.value })
@@ -280,10 +299,10 @@ function destroy() {
           <button v-else type="button" class="done-btn" :disabled="!task.projectId" :title="task.projectId ? '' : 'Escolha um projeto para publicar'" @click="publish">Publicar</button>
           <template v-if="saved">
             <span class="votes" role="group" aria-label="Votos">
-              <button type="button" class="vote" :aria-pressed="myVote === 1" :title="`A favor: ${names(panelData.upvotes)}`" aria-label="Votar a favor" @click="vote(1)">▲ {{ panelData.upvotes.length }}</button>
-              <button type="button" class="vote" :aria-pressed="myVote === -1" :title="`Contra: ${names(panelData.downvotes)}`" aria-label="Votar contra" @click="vote(-1)">▼ {{ panelData.downvotes.length }}</button>
+              <button type="button" class="vote" :aria-pressed="myVote === 1" :title="`A favor: ${names(panelData.upvotes)}`" aria-label="Votar a favor" @click="vote(1, $event.currentTarget)">▲ {{ panelData.upvotes.length }}</button>
+              <button type="button" class="vote" :aria-pressed="myVote === -1" :title="`Contra: ${names(panelData.downvotes)}`" aria-label="Votar contra" @click="vote(-1, $event.currentTarget)">▼ {{ panelData.downvotes.length }}</button>
             </span>
-            <button type="button" class="sub-btn" :aria-pressed="watching" :title="`Inscritos: ${names(panelData.watchers)}`" @click="act('subscribe/', { on: !watching })"><AppIcon name="user" :size="13" />{{ watching ? 'Inscrito' : 'Inscrever-se' }}<span>{{ panelData.watchers.length }}</span></button>
+            <button type="button" class="sub-btn" :aria-pressed="watching" :title="`Inscritos: ${names(panelData.watchers)}`" @click="act('subscribe/', { on: !watching }).then(() => pop($event.currentTarget))"><AppIcon name="user" :size="13" />{{ watching ? 'Inscrito' : 'Inscrever-se' }}<span>{{ panelData.watchers.length }}</span></button>
             <button type="button" class="icon" title="Copiar nome da branch" aria-label="Copiar nome da branch" @click="copyBranch"><AppIcon name="github" :size="15" /></button>
             <button type="button" class="icon" title="Copiar link" aria-label="Copiar link da tarefa" @click="copyLink"><AppIcon name="link" :size="16" /></button>
           </template>
@@ -514,8 +533,8 @@ function destroy() {
 <style scoped>
 .veil { position: fixed; inset: 0; z-index: 70; display: flex; justify-content: flex-end; background: rgb(0 0 0 / 0.4); }
 .veil.is-wide { justify-content: center; align-items: center; padding: 2rem 1rem; }
-.drawer { display: flex; flex-direction: column; width: min(100%, 38rem); height: 100%; border-left: 1px solid var(--line-strong); background: var(--surface); box-shadow: -20px 0 50px rgb(0 0 0 / 0.4); }
-.is-wide .drawer { width: min(100%, 60rem); height: min(100%, 52rem); border: 1px solid var(--line-strong); border-radius: 12px; }
+.drawer { display: flex; flex-direction: column; width: min(92vw, 58rem); height: 100%; border-left: 1px solid var(--line-strong); background: var(--surface); box-shadow: -20px 0 50px rgb(0 0 0 / 0.4); }
+.is-wide .drawer { width: min(100%, 76rem); height: min(100%, 52rem); border: 1px solid var(--line-strong); border-radius: 12px; }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; height: 52px; padding: 0 0.75rem; border-bottom: 1px solid var(--line); }
 .head__group { display: flex; align-items: center; gap: 0.35rem; }
 .code { font: 500 12px/1 'Geist Mono', monospace; color: var(--muted); }

@@ -1,6 +1,7 @@
 <script setup>
 // Reações com emoji (tarefa e comentários): clicar liga/desliga a sua
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
+import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 
 defineProps({ reactions: { type: Array, default: () => [] } })
@@ -9,14 +10,21 @@ const EMOJIS = ['👍', '👎', '❤️', '🎉', '😄', '🚀', '👀', '🔥'
 const { state, member } = useWorkspace()
 const picking = ref(false)
 const names = (users) => users.map((id) => member(id)?.name || '?').join(', ')
-const pick = (e) => { emit('toggle', e); picking.value = false }
+const root = ref(null)
+const pop = (el) => !prefersReducedMotion() && el && gsap.fromTo(el, { scale: 0.7 }, { scale: 1, duration: 0.45, ease: 'back.out(3.2)' })
+const pick = (e) => { emit('toggle', e); picking.value = false; nextTick(() => setTimeout(() => pop([...(root.value?.querySelectorAll('.r') || [])].find((b) => b.textContent.startsWith(e))), 250)) }
+async function openPicker() {
+  picking.value = !picking.value
+  await nextTick()
+  if (picking.value && !prefersReducedMotion()) gsap.from(root.value.querySelectorAll('.pick button'), { scale: 0.4, autoAlpha: 0, duration: 0.25, stagger: 0.015, ease: 'back.out(2.5)' })
+}
 </script>
 
 <template>
-  <div class="reactions">
-    <button v-for="r in reactions" :key="r.emoji" type="button" class="r" :aria-pressed="r.users.includes(state.me)" :title="names(r.users)" @click="emit('toggle', r.emoji)">{{ r.emoji }} {{ r.users.length }}</button>
+  <div ref="root" class="reactions">
+    <button v-for="r in reactions" :key="r.emoji" type="button" class="r" :aria-pressed="r.users.includes(state.me)" :title="names(r.users)" @click="emit('toggle', r.emoji); pop($event.currentTarget)">{{ r.emoji }} {{ r.users.length }}</button>
     <span class="add">
-      <button type="button" class="r plus" aria-label="Adicionar reação" title="Adicionar reação" :aria-expanded="picking" @click="picking = !picking">☺+</button>
+      <button type="button" class="r plus" aria-label="Adicionar reação" title="Adicionar reação" :aria-expanded="picking" @click="openPicker">☺+</button>
       <span v-if="picking" class="pick" role="menu"><button v-for="e in EMOJIS" :key="e" type="button" role="menuitem" @click="pick(e)">{{ e }}</button></span>
     </span>
   </div>

@@ -1,7 +1,8 @@
 <script setup>
 // Editor de texto da tarefa e dos comentários (como o do Plane, em Markdown): barra de formatação, Editar/Visualizar,
 // imagem e anexo enviados para a tarefa, checklist clicável e "Mostrar tudo" em texto longo.
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { render, toggleCheck } from '../../utils/markdown'
 
 const props = defineProps({
@@ -24,6 +25,17 @@ const expanded = ref(false)
 const busy = ref(false)
 const long = computed(() => props.collapsible && props.modelValue.length > 600)
 const html = computed(() => render(props.modelValue))
+const root = ref(null)
+// troca Editar/Visualizar e abrir o "Mostrar tudo" com uma transição curta
+watch(mode, async () => {
+  await nextTick()
+  if (!prefersReducedMotion()) gsap.fromTo(root.value?.querySelector('textarea, .md-ed__view'), { autoAlpha: 0, y: 4 }, { autoAlpha: 1, y: 0, duration: 0.25, ease: 'power2.out' })
+})
+watch(expanded, async (open) => {
+  await nextTick()
+  const el = root.value?.querySelector('.md-ed__view')
+  if (el && !prefersReducedMotion()) gsap.from(el, { height: open ? '14rem' : el.scrollHeight, duration: 0.4, ease: 'power3.out', clearProps: 'height' })
+})
 
 function put(text) {
   emit('update:modelValue', text)
@@ -57,7 +69,7 @@ defineExpose({ edit: () => { mode.value = 'edit'; nextTick(() => area.value?.foc
 </script>
 
 <template>
-  <div class="md-ed" :class="{ 'is-view': mode === 'view' }">
+  <div ref="root" class="md-ed" :class="{ 'is-view': mode === 'view' }">
     <div class="md-ed__bar" role="toolbar" aria-label="Formatação">
       <template v-if="mode === 'edit'">
         <button v-for="t in TOOLS" :key="t[1]" type="button" :title="t[1]" :aria-label="t[1]" @mousedown.prevent @click="format(t)">{{ t[0] }}</button>
