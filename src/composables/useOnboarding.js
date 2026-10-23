@@ -8,7 +8,7 @@ export const STEPS = [
   { id: 'invite', title: 'Convidar o time', hint: 'Quem entra já vê as tarefas atribuídas a si.' },
   { id: 'doc', title: 'Escrever um documento', hint: 'Specs e atas ao lado das tarefas.' },
   { id: 'ai', title: 'Conversar com a Novexo IA', hint: 'Peça um resumo do que está atrasado.' },
-  { id: 'integration', title: 'Conectar uma integração', hint: 'GitHub, Slack, Discord e outras.' },
+  { id: 'integration', title: 'Conectar uma integração', hint: 'GitHub, Notion, Discord e outras.' },
   { id: 'view', title: 'Criar uma visualização', hint: 'Lista, quadro ou calendário com seus filtros.' },
   { id: 'sticky', title: 'Criar uma nota', hint: 'Anote uma ideia rápida no botão de notas.' },
 ]
