@@ -12,7 +12,7 @@ import Avatars from './Avatars.vue'
 
 gsap.registerPlugin(Flip)
 
-const props = defineProps({ tasks: { type: Array, required: true }, projectId: { type: String, default: null } })
+const props = defineProps({ tasks: { type: Array, required: true }, projectId: { type: [String, Number], default: null }, defaults: { type: Object, default: () => ({}) } })
 const { STATUSES, code, isOverdue, updateTask, createTask, today } = useWorkspace()
 const { openTask } = useUi()
 const root = ref(null)
@@ -56,7 +56,7 @@ function moveBy(task, dir) {
 function add(status) {
   const title = (adding[status] || '').trim()
   if (!title) return
-  withFlip(() => createTask({ title, status, projectId: props.projectId }))
+  withFlip(() => createTask({ title, status, projectId: props.projectId, ...props.defaults }))
   adding[status] = ''
 }
 

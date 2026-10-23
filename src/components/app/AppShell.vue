@@ -2,7 +2,7 @@
 // Casca da área logada (estrutura do app do Plane): trilho de ícones, barra lateral recolhível, topo com busca,
 // progresso do "Começar", caixa de entrada e ajuda. Fica montada entre as rotas; só o conteúdo troca.
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
 import { useOnboarding } from '../../composables/useOnboarding'
@@ -14,12 +14,13 @@ import CommandPalette from './CommandPalette.vue'
 import TaskCreateModal from './TaskCreateModal.vue'
 import TaskDrawer from './TaskDrawer.vue'
 import InboxPanel from './InboxPanel.vue'
+import SideNav from './SideNav.vue'
+import '../../assets/app-pages.css'
 
 const route = useRoute()
-const router = useRouter()
 const { user } = useAuth()
-const { count, total, complete } = useOnboarding()
-const { state, unread, createProject, load } = useWorkspace()
+const { count, total } = useOnboarding()
+const { state, unread, load } = useWorkspace()
 const { ui, newTask } = useUi()
 const name = computed(() => user.value?.first_name || user.value?.username || 'Visitante')
 const initials = computed(() => name.value.slice(0, 2).toUpperCase())
@@ -30,20 +31,12 @@ const RAIL = [
   { icon: 'wiki', label: 'Wiki', to: '/wiki', area: 'wiki' },
   { icon: 'ai', label: 'IA', to: '/ia', area: 'ai' },
 ]
-const NAV = [
-  { icon: 'home', label: 'Início', to: '/inicio' },
-  { icon: 'draft', label: 'Rascunhos', to: '/rascunhos' },
-  { icon: 'mine', label: 'Seu trabalho', to: '/meu-trabalho' },
-  { icon: 'note', label: 'Notas', to: '/notas' },
-]
 
 const root = ref(null)
 const sidebar = ref(null)
 const collapsed = ref(false)
 const inboxOpen = ref(false)
 const helpOpen = ref(false)
-const addingProject = ref(false)
-const projectName = ref('')
 const reduced = prefersReducedMotion()
 
 function toggleSidebar() {
@@ -60,22 +53,6 @@ function toggleSidebar() {
       .to(sidebar.value, { width: 248, duration: 0.35, ease: 'power3.inOut' })
       .fromTo(items, { autoAlpha: 0, x: -8 }, { autoAlpha: 1, x: 0, duration: 0.3, stagger: 0.025, ease: 'power2.out' }, '-=0.15')
   }
-}
-
-async function startProject() {
-  addingProject.value = true
-  await nextTick()
-  root.value.querySelector('.new-project input')?.focus()
-}
-async function saveProject() {
-  const n = projectName.value.trim()
-  addingProject.value = false
-  projectName.value = ''
-  if (!n) return
-  const p = await createProject(n, ['#e56515', '#fba45c', '#919599', '#f2c46d'][state.projects.length % 4])
-  if (!p) return
-  complete('project')
-  router.push(`/projetos/${p.id}`)
 }
 
 // Atalhos globais: Ctrl K busca, N nova tarefa (fora de campos de texto), Esc fecha os painéis
@@ -97,7 +74,7 @@ watch(() => route.path, async () => {
   if (reduced) return
   await nextTick()
   const page = root.value?.querySelector('.main__scroll > *')
-  if (page) gsap.fromTo(page, { y: 10, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4, ease: 'power2.out' })
+  if (page) gsap.fromTo(page, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }) // só opacidade: a página nova pode focar um campo
   root.value.querySelector('.main__scroll').scrollTop = 0
 })
 
@@ -171,29 +148,7 @@ onUnmounted(() => {
     </nav>
 
     <aside ref="sidebar" class="side" :aria-hidden="collapsed" :inert="collapsed">
-      <div class="side__inner">
-        <div class="side__head">
-          <strong>Trabalho</strong>
-          <button type="button" class="icon-btn sm" aria-label="Recolher barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
-        </div>
-        <button type="button" class="new-btn" @click="newTask()"><AppIcon name="plus" :size="16" /> Nova tarefa <kbd>N</kbd></button>
-        <nav class="side__group" aria-label="Seu trabalho">
-          <RouterLink v-for="n in NAV" :key="n.label" :to="n.to" class="side__link"><AppIcon :name="n.icon" :size="17" />{{ n.label }}</RouterLink>
-        </nav>
-        <div class="side__group">
-          <span class="side__label">Workspace</span>
-          <RouterLink to="/projetos" class="side__link" exact-active-class="router-link-active"><AppIcon name="folder" :size="17" />Projetos</RouterLink>
-          <RouterLink to="/comecar" class="side__link"><AppIcon name="rocket" :size="17" />Começar</RouterLink>
-        </div>
-        <div class="side__group">
-          <span class="side__label">Projetos <button type="button" class="add-p" aria-label="Novo projeto" @click="startProject"><AppIcon name="plus" :size="14" /></button></span>
-          <RouterLink v-for="p in state.projects" :key="p.id" :to="`/projetos/${p.id}`" class="side__link"><span class="dot" :style="{ background: p.color }" />{{ p.name }}</RouterLink>
-          <form v-if="addingProject" class="new-project" @submit.prevent="saveProject">
-            <input v-model="projectName" placeholder="Nome do projeto" aria-label="Nome do novo projeto" @blur="saveProject" @keydown.esc="addingProject = false" />
-          </form>
-        </div>
-        <RouterLink to="/#planos" class="trial">Teste do Business: 13 dias</RouterLink>
-      </div>
+      <div class="side__inner"><SideNav @collapse="toggleSidebar" /></div>
     </aside>
     <button v-if="collapsed" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
 
@@ -268,7 +223,7 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .help kbd { margin-right: 0.2rem; }
 .help a { color: var(--accent-soft); text-decoration: none; }
 .avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-soft), var(--accent)); font: 700 11px/1 'Lexend', system-ui, sans-serif; color: #000; text-decoration: none; }
-:is(.ws, .icon-btn, .rail__item, .side__link, .new-btn, .progress-btn, .trial, .expand, .search, .avatar, .add-p):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+:is(.ws, .icon-btn, .rail__item, .progress-btn, .expand, .search, .avatar):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 
 /* ---- trilho ---- */
 .rail { grid-area: rail; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 0 0.75rem; }
@@ -284,23 +239,6 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .side { grid-area: side; width: 248px; overflow: hidden; border: 1px solid var(--line); border-width: 1px 1px 0 1px; border-radius: 10px 0 0 0; background: var(--surface); }
 .app.is-collapsed .side { border-color: transparent; }
 .side__inner { display: flex; flex-direction: column; gap: 1rem; width: 248px; height: 100%; padding: 0.75rem; overflow-y: auto; }
-.side__head { display: flex; align-items: center; justify-content: space-between; padding: 0.15rem 0.25rem; font-size: 1rem; }
-.new-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.75rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2); font-weight: 500; cursor: pointer; transition: border-color 0.2s var(--ease); }
-.new-btn kbd { margin-left: auto; }
-.new-btn:hover { border-color: var(--accent); }
-.side__group { display: flex; flex-direction: column; gap: 1px; }
-.side__label { display: flex; align-items: center; justify-content: space-between; padding: 0.25rem 0.5rem; font-size: 12px; font-weight: 500; color: var(--muted); }
-.add-p { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--muted); cursor: pointer; }
-.add-p:hover { background: var(--surface-2); color: var(--text); }
-.side__link { position: relative; display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: 6px; color: var(--text); text-decoration: none; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transition: background 0.2s var(--ease); }
-.side__link:hover { background: var(--surface-2); }
-.side__link.router-link-active { background: var(--surface-2); }
-.side__link.router-link-active::before { content: ''; position: absolute; left: 0; top: 25%; bottom: 25%; width: 2px; border-radius: 2px; background: var(--accent); }
-.side__link :deep(.app-icon) { color: var(--muted); }
-.dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 2px; }
-.new-project input { width: 100%; height: 30px; margin-top: 2px; padding: 0 0.5rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; }
-.trial { margin-top: auto; align-self: flex-start; padding: 0.35rem 0.65rem; border-radius: 6px; background: var(--surface-2); font-size: 12.5px; font-weight: 500; color: var(--text); text-decoration: none; }
-.trial:hover { color: var(--accent-soft); }
 .expand { position: fixed; left: 72px; top: 58px; z-index: 5; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--muted); cursor: pointer; }
 
 /* ---- conteúdo ---- */

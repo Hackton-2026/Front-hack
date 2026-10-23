@@ -32,12 +32,42 @@ const localDefaults = () => ({
   docs: [
     { id: 'doc-1', title: 'Como o time trabalha', body: 'Toda tarefa tem um responsável e um prazo.\nO que está em revisão é aprovado em até um dia útil.', updatedAt: new Date().toISOString(), example: true },
   ],
-  prefs: { weekStart: 0, theme: 'dark', density: 'comfortable', notify: { assigned: true, mention: true, due: true, digest: false } },
+  prefs: {
+    weekStart: 0, theme: 'dark', density: 'comfortable', notify: { assigned: true, mention: true, due: true, digest: false },
+    // barra lateral (pessoal, como no Plane): o que aparece, o que está fixado do "Mais" e o que tem estrela
+    nav: { drafts: true, mine: true, notes: true },
+    pinned: [],
+    features: { cycles: true, modules: true, views: true, pages: true },
+    stars: [],
+    open: { workspace: true, projects: true, try: true },
+  },
 })
+export const MODULE_STATES = [
+  { id: 'backlog', name: 'Backlog', color: '#919599' },
+  { id: 'planned', name: 'Planejado', color: '#cdcdcb' },
+  { id: 'in_progress', name: 'Em andamento', color: '#fba45c' },
+  { id: 'paused', name: 'Pausado', color: '#f2c46d' },
+  { id: 'completed', name: 'Concluído', color: '#e56515' },
+  { id: 'cancelled', name: 'Cancelado', color: '#6f6a63' },
+]
+export const UPDATE_STATES = [
+  { id: 'on_track', name: 'No prazo', color: '#7fc47a' },
+  { id: 'at_risk', name: 'Em risco', color: '#f2c46d' },
+  { id: 'off_track', name: 'Atrasado', color: '#ff5b4d' },
+]
+// capas da visão geral do projeto (gradientes na paleta do Novexo)
+export const COVERS = [
+  'radial-gradient(120% 140% at 15% 20%, #e56515 0%, #5a1d05 45%, #0f0e0d 100%)',
+  'linear-gradient(120deg, #fba45c 0%, #e56515 40%, #2a1408 100%)',
+  'radial-gradient(90% 120% at 80% 30%, #f2c46d 0%, #e56515 35%, #181614 100%)',
+  'linear-gradient(160deg, #3d3934 0%, #919599 50%, #181614 100%)',
+  'conic-gradient(from 210deg at 30% 60%, #e56515, #fba45c, #cdcdcb, #0f0e0d, #e56515)',
+  'linear-gradient(90deg, #0f0e0d 0%, #5a1d05 40%, #fba45c 100%)',
+]
 function readLocal() {
   try {
     const data = JSON.parse(localStorage.getItem(LOCAL_KEY))
-    if (data) return { ...localDefaults(), ...data }
+    if (data) return { ...localDefaults(), ...data, prefs: { ...localDefaults().prefs, ...data.prefs } }
   } catch { /* nada salvo */ }
   return localDefaults()
 }
@@ -55,6 +85,10 @@ const state = reactive({
   tasks: [...local.drafts], // rascunhos locais + tarefas da API
   activity: [],
   inbox: [],
+  cycles: [],
+  modules: [],
+  pages: [],
+  views: [],
   docs: local.docs,
   prefs: local.prefs,
 })
@@ -68,18 +102,19 @@ watch(() => [state.tasks.filter((t) => t.draft), state.docs, state.prefs], ([dra
 const fromApi = (t) => ({
   id: t.id, number: t.number, code: t.code, projectId: t.project, title: t.title, description: t.description, status: t.status,
   priority: t.priority, assignees: t.assignees, due: t.due, tags: t.tags, checklist: t.checklist, completionNote: t.completion_note,
-  createdAt: t.created_at, updatedAt: t.updated_at, draft: false,
+  cycle: t.cycle, modules: t.modules, completedAt: t.completed_at, createdAt: t.created_at, updatedAt: t.updated_at, draft: false,
 })
 function toApi(fields) {
   const body = {}
   for (const [k, v] of Object.entries(fields)) {
     if (k === 'projectId') body.project = v
     else if (k === 'checklist') body.checklist = v.map((i) => (typeof i.id === 'number' ? i : { title: i.title, done: i.done }))
-    else if (['title', 'description', 'status', 'priority', 'assignees', 'due', 'tags', 'note'].includes(k)) body[k] = v
+    else if (['title', 'description', 'status', 'priority', 'assignees', 'due', 'tags', 'note', 'cycle', 'modules'].includes(k)) body[k] = v
   }
   return body
 }
-const fromActivity = (a) => ({ id: a.id, taskId: a.task, text: a.text, at: a.at })
+const fromActivity = (a) => ({ id: a.id, taskId: a.task, text: a.text, at: a.at, details: a.details || {} })
+const KINDS = { cycle: 'cycles', module: 'modules', page: 'pages', view: 'views' }
 
 async function load() {
   if (state.loading) return
@@ -88,8 +123,13 @@ async function load() {
   try {
     // o workspace vem antes: no primeiro acesso é essa chamada que cria ele (as outras em paralelo disputariam a criação)
     const ws = await api('/api/workspace/')
-    const [projects, tasks, activity, inbox] = await Promise.all([api('/api/projects/'), api('/api/tasks/'), api('/api/activity/'), api('/api/inbox/')])
-    Object.assign(state, { me: ws.me, isAdmin: ws.is_admin, workspaceName: ws.name, members: ws.members, projects, activity: activity.map(fromActivity), inbox, loaded: true })
+    const [projects, tasks, activity, inbox, cycles, modules, pages, views] = await Promise.all(
+      ['projects', 'tasks', 'activity', 'inbox', 'cycles', 'modules', 'pages', 'views'].map((r) => api(`/api/${r}/`)),
+    )
+    Object.assign(state, {
+      me: ws.me, isAdmin: ws.is_admin, workspaceName: ws.name, members: ws.members, projects, activity: activity.map(fromActivity), inbox,
+      cycles, modules, pages, views, loaded: true,
+    })
     state.tasks = [...state.tasks.filter((t) => t.draft), ...tasks.map(fromApi)]
   } catch (e) {
     state.error = e.message
@@ -129,7 +169,7 @@ export function useWorkspace() {
   // Cria na hora com id temporário; quando a API responde, a mesma tarefa ganha o id e o código reais
   function createTask(fields) {
     const task = reactive({
-      id: uid(), number: null, code: '', projectId: null, title: '', status: 'todo', priority: '', assignees: [state.me], due: null, tags: [],
+      id: uid(), number: null, code: '', projectId: null, title: '', status: 'todo', priority: '', assignees: [state.me], due: null, tags: [], cycle: null, modules: [],
       description: '', checklist: [], draft: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), ...fields,
     })
     if (!task.projectId) task.draft = true
@@ -200,6 +240,115 @@ export function useWorkspace() {
       return null
     }
   }
+  // Projeto: edição otimista (nome, descrição, ícone, capa); volta atrás se o servidor recusar
+  async function updateProject(p, fields) {
+    const before = Object.fromEntries(Object.keys(fields).map((k) => [k, p[k]]))
+    Object.assign(p, fields)
+    try {
+      Object.assign(p, await api(`/api/projects/${p.id}/`, { method: 'PATCH', body: fields }))
+      refreshFeed()
+      return true
+    } catch (e) {
+      Object.assign(p, before)
+      fail(e)
+      return false
+    }
+  }
+  async function postUpdate(p, body) {
+    try {
+      const a = fromActivity(await api(`/api/projects/${p.id}/updates/`, { method: 'POST', body }))
+      state.activity.unshift(a)
+      return a
+    } catch (e) {
+      fail(e)
+      return null
+    }
+  }
+  const projectActivity = async (id) => (await api(`/api/activity/?project=${id}`)).map(fromActivity)
+
+  // Ciclos, módulos, páginas e visões: mesma receita (cria, edita otimista, apaga)
+  async function createItem(kind, body) {
+    try {
+      const item = await api(`/api/${KINDS[kind]}/`, { method: 'POST', body })
+      state[KINDS[kind]].push(item)
+      return state[KINDS[kind]].at(-1)
+    } catch (e) {
+      fail(e)
+      return null
+    }
+  }
+  async function updateItem(kind, item, fields) {
+    const before = Object.fromEntries(Object.keys(fields).map((k) => [k, structuredClone(toRaw(item[k]) ?? null)]))
+    Object.assign(item, fields)
+    try {
+      Object.assign(item, await api(`/api/${KINDS[kind]}/${item.id}/`, { method: 'PATCH', body: fields }))
+      return true
+    } catch (e) {
+      Object.assign(item, before)
+      fail(e)
+      return false
+    }
+  }
+  async function removeItem(kind, item) {
+    const list = state[KINDS[kind]]
+    const i = list.indexOf(item)
+    list.splice(i, 1)
+    try {
+      await api(`/api/${KINDS[kind]}/${item.id}/`, { method: 'DELETE' })
+      // o servidor tira a tarefa do ciclo / módulo apagado; aqui também
+      if (kind === 'cycle') state.tasks.forEach((t) => t.cycle === item.id && (t.cycle = null))
+      if (kind === 'module') state.tasks.forEach((t) => t.modules?.includes(item.id) && (t.modules = t.modules.filter((m) => m !== item.id)))
+    } catch (e) {
+      list.splice(i, 0, item)
+      fail(e)
+    }
+  }
+  // Arquivados e lixeira
+  const archivedProjects = () => api('/api/projects/?archived=1')
+  const trashedTasks = async () => (await api('/api/tasks/?trash=1')).map(fromApi)
+  async function restoreProject(p) {
+    try {
+      state.projects.push(await api(`/api/projects/${p.id}/`, { method: 'PATCH', body: { archived: false } }))
+      const [tasks, cycles, modules, pages, views] = await Promise.all(['tasks', 'cycles', 'modules', 'pages', 'views'].map((r) => api(`/api/${r}/?project=${p.id}`)))
+      state.tasks.push(...tasks.map(fromApi))
+      Object.entries({ cycles, modules, pages, views }).forEach(([k, v]) => state[k].push(...v))
+      return true
+    } catch (e) {
+      fail(e)
+      return false
+    }
+  }
+  async function archiveProject(p) {
+    try {
+      await api(`/api/projects/${p.id}/`, { method: 'DELETE' })
+      state.projects.splice(state.projects.indexOf(p), 1)
+      for (const k of ['cycles', 'modules', 'pages', 'views']) state[k] = state[k].filter((x) => x.project !== p.id)
+      state.tasks = state.tasks.filter((t) => t.projectId !== p.id)
+      return true
+    } catch (e) {
+      fail(e)
+      return false
+    }
+  }
+  async function restoreTask(t) {
+    try {
+      state.tasks.push(fromApi(await api(`/api/tasks/${t.id}/restore/`, { method: 'POST' })))
+      refreshFeed()
+      return true
+    } catch (e) {
+      fail(e)
+      return false
+    }
+  }
+  // estrela pessoal (fica no navegador): kind:id
+  const starred = (kind, id) => state.prefs.stars.includes(`${kind}:${id}`)
+  function toggleStar(kind, id) {
+    const key = `${kind}:${id}`
+    state.prefs.stars = starred(kind, id) ? state.prefs.stars.filter((s) => s !== key) : [...state.prefs.stars, key]
+  }
+  // progresso de um grupo de tarefas (ciclo, módulo)
+  const doneRatio = (list) => (list.length ? list.filter((t) => t.status === 'done').length / list.length : 0)
+
   async function renameWorkspace(name) {
     try {
       const ws = await api('/api/workspace/', { method: 'PATCH', body: { name } })
@@ -234,6 +383,8 @@ export function useWorkspace() {
   return {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
     load, createTask, updateTask, removeTask, createProject, renameWorkspace, markRead, markAllRead, taskActivity, createDoc, progress, clearLocal,
+    updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
+    starred, toggleStar, doneRatio,
     today: () => day(0), day,
   }
 }

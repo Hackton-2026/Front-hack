@@ -8,7 +8,7 @@ import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import StatusBadge from './StatusBadge.vue'
 
-const props = defineProps({ tasks: { type: Array, required: true }, projectId: { type: String, default: null } })
+const props = defineProps({ tasks: { type: Array, required: true }, projectId: { type: [String, Number], default: null }, defaults: { type: Object, default: () => ({}) } })
 const { state, status, updateTask, today } = useWorkspace()
 const { openTask, newTask } = useUi()
 const cursor = ref(new Date(`${today()}T12:00`))
@@ -88,7 +88,7 @@ function drop(day) {
           @dragover.prevent="over = d.key"
           @dragleave.self="over = null"
           @drop.prevent="drop(d.key)"
-          @click.self="newTask({ due: d.key, projectId: projectId || state.projects[0]?.id })"
+          @click.self="newTask({ due: d.key, projectId: projectId || state.projects[0]?.id, ...defaults })"
         >
           <span class="day__n">{{ d.n }}</span>
           <button

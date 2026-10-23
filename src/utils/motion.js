@@ -33,3 +33,9 @@ export const vReveal = {
     el._reveal?.kill()
   },
 }
+
+// Lista entrando em cascata (linhas de ciclos, módulos, páginas…)
+export function staggerIn(targets, opts = {}) {
+  if (prefersReducedMotion() || !targets?.length) return
+  gsap.fromTo(targets, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4, stagger: 0.035, ease: 'power2.out', clearProps: 'transform,opacity,visibility', ...opts })
+}

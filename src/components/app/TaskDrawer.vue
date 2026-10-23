@@ -115,6 +115,15 @@ function destroy() {
           <dd><input type="date" :value="task.due || ''" aria-label="Prazo" @change="set({ due: $event.target.value || null })" /></dd>
           <dt>Projeto</dt>
           <dd><select :value="task.projectId || ''" aria-label="Projeto" @change="set({ projectId: Number($event.target.value) || null })"><option value="">Sem projeto</option><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select></dd>
+          <template v-if="task.projectId">
+            <dt>Ciclo</dt>
+            <dd><select :value="task.cycle || ''" aria-label="Ciclo" @change="set({ cycle: Number($event.target.value) || null })"><option value="">Sem ciclo</option><option v-for="c in state.cycles.filter((c) => c.project === task.projectId)" :key="c.id" :value="c.id">{{ c.name }}</option></select></dd>
+            <dt>Módulos</dt>
+            <dd class="chips">
+              <button v-for="m in state.modules.filter((m) => m.project === task.projectId)" :key="m.id" type="button" class="chip" :class="{ 'is-on': task.modules.includes(m.id) }" :aria-pressed="task.modules.includes(m.id)" @click="set({ modules: task.modules.includes(m.id) ? task.modules.filter((x) => x !== m.id) : [...task.modules, m.id] })">{{ m.name }}</button>
+              <span v-if="!state.modules.some((m) => m.project === task.projectId)" class="none">Nenhum módulo neste projeto</span>
+            </dd>
+          </template>
           <dt>Responsáveis</dt>
           <dd class="chips">
             <button v-for="m in state.members" :key="m.id" type="button" class="chip" :class="{ 'is-on': task.assignees.includes(m.id) }" :aria-pressed="task.assignees.includes(m.id)" @click="toggleMember(m.id)">

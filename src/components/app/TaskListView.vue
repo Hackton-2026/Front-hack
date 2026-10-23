@@ -10,7 +10,7 @@ import StatusBadge from './StatusBadge.vue'
 import PriorityFlag from './PriorityFlag.vue'
 import Avatars from './Avatars.vue'
 
-const props = defineProps({ tasks: { type: Array, required: true }, projectId: { type: String, default: null }, showProject: Boolean })
+const props = defineProps({ tasks: { type: Array, required: true }, projectId: { type: [String, Number], default: null }, defaults: { type: Object, default: () => ({}) }, showProject: Boolean })
 const { STATUSES, code, project, isOverdue, createTask, updateTask, today } = useWorkspace()
 const { openTask } = useUi()
 const { complete } = useOnboarding()
@@ -28,7 +28,7 @@ function toggleGroup(g, el) {
 async function quickAdd(status) {
   const title = (adding[status] || '').trim()
   if (!title) return
-  createTask({ title, status, projectId: props.projectId })
+  createTask({ title, status, projectId: props.projectId, ...props.defaults })
   complete('task')
   adding[status] = ''
   await nextTick()
