@@ -115,7 +115,7 @@ watch(() => [state.tasks.filter((t) => t.draft), state.docs, state.prefs], ([dra
 // ---- tradução entre o formato da API e o do front
 const fromApi = (t) => ({
   id: t.id, number: t.number, code: t.code, projectId: t.project, title: t.title, description: t.description, status: t.status,
-  priority: t.priority, assignees: t.assignees, due: t.due, tags: t.tags, checklist: t.checklist, completionNote: t.completion_note,
+  priority: t.priority, assignees: t.assignees, due: t.due, start: t.start, parent: t.parent, creator: t.creator, tags: t.tags, checklist: t.checklist, completionNote: t.completion_note,
   cycle: t.cycle, modules: t.modules, completedAt: t.completed_at, createdAt: t.created_at, updatedAt: t.updated_at, draft: false,
 })
 function toApi(fields) {
@@ -123,7 +123,7 @@ function toApi(fields) {
   for (const [k, v] of Object.entries(fields)) {
     if (k === 'projectId') body.project = v
     else if (k === 'checklist') body.checklist = v.map((i) => (typeof i.id === 'number' ? i : { title: i.title, done: i.done }))
-    else if (['title', 'description', 'status', 'priority', 'assignees', 'due', 'tags', 'note', 'cycle', 'modules'].includes(k)) body[k] = v
+    else if (['title', 'description', 'status', 'priority', 'assignees', 'due', 'start', 'parent', 'tags', 'note', 'cycle', 'modules'].includes(k)) body[k] = v
   }
   return body
 }
@@ -183,7 +183,7 @@ export function useWorkspace() {
   // Cria na hora com id temporário; quando a API responde, a mesma tarefa ganha o id e o código reais
   function createTask(fields) {
     const task = reactive({
-      id: uid(), number: null, code: '', projectId: null, title: '', status: 'todo', priority: '', assignees: [state.me], due: null, tags: [], cycle: null, modules: [],
+      id: uid(), number: null, code: '', projectId: null, title: '', status: 'todo', priority: '', assignees: [state.me], due: null, start: null, parent: null, creator: state.me, tags: [], cycle: null, modules: [],
       description: '', checklist: [], draft: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), ...fields,
     })
     if (!task.projectId) task.draft = true
@@ -404,6 +404,8 @@ export function useWorkspace() {
     try { await api('/api/inbox/read-all/', { method: 'POST' }) } catch { /* fica lida só aqui */ }
   }
   const taskActivity = async (id) => (await api(`/api/activity/?task=${id}`)).map(fromActivity)
+  const taskComments = (id) => api(`/api/tasks/${id}/comments/`)
+  const addComment = (id, body) => api(`/api/tasks/${id}/comments/`, { method: 'POST', body: { body } })
   function createDoc(fields = {}) {
     const now = new Date().toISOString()
     const d = reactive({ id: `doc-${Date.now().toString(36)}`, title: 'Sem título', body: '', createdAt: now, updatedAt: now, ...fields })
@@ -421,7 +423,7 @@ export function useWorkspace() {
 
   return {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
-    load, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, createDoc, progress, clearLocal,
+    load, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, addComment, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
     starred, toggleStar, doneRatio, touchRecent,
     today: () => day(0), day,
