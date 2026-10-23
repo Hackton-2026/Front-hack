@@ -30,7 +30,7 @@ async function loginWithGoogle(credential) {
 
 async function register(data) {
   await api('/api/auth/register/', { method: 'POST', body: data, auth: false })
-  await login(data.username, data.password)
+  await login(data.email, data.password) // o login aceita e-mail
 }
 
 // Recebe um FormData (para mandar foto junto) ou objeto
