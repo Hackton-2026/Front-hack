@@ -11,6 +11,7 @@ const router = createRouter({
   routes: [
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
+    { path: '/contato', alias: '/contact-us', component: () => import('./views/ContactView.vue'), meta: { bare: true } },
     { path: '/blog', alias: '/news', component: () => import('./views/BlogView.vue'), meta: { bare: true } },
     { path: '/blog/como-funciona', alias: '/como-funciona', component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },
     { path: '/blog/:slug', component: () => import('./views/BlogArticleView.vue'), meta: { bare: true } },

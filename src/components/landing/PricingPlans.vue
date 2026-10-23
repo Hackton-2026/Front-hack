@@ -43,7 +43,7 @@ const PLANS = [
           <span v-else class="plan__val custom">Sob medida</span>
         </div>
         <p class="plan__bill">{{ p.month ? (yearly ? `Cobrado anualmente: R$ ${p.year * 12}/membro` : 'Cobrado mensalmente') : p.month === 0 ? 'Sem cartão de crédito' : 'Contrato anual' }}</p>
-        <GooeyButton :variant="p.popular ? 'primary' : 'secondary'" size="lg" block :href="p.month === undefined ? '#contato' : undefined" :to="p.month === undefined ? undefined : '/login'" class="plan__cta">{{ p.cta }}</GooeyButton>
+        <GooeyButton :variant="p.popular ? 'primary' : 'secondary'" size="lg" block :to="p.month === undefined ? '/contato?assunto=comercial' : '/login'" class="plan__cta">{{ p.cta }}</GooeyButton>
         <ul class="plan__list">
           <li v-for="f in p.features" :key="f">
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>{{ f }}
