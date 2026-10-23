@@ -81,7 +81,7 @@ watch(q, async () => { await nextTick(); staggerIn(root.value?.querySelectorAll(
     </div>
 
     <form class="capture" @submit.prevent="add">
-      <AppIcon name="plus" :size="16" />
+      <button type="submit" class="add" :disabled="!parsed.title" aria-label="Criar rascunho" title="Criar rascunho"><AppIcon name="plus" :size="16" /></button>
       <input v-model="capture" placeholder='Anote uma ideia: "Revisar copy #marketing !alta amanhã" e Enter' aria-label="Novo rascunho" />
       <span v-if="parsed.tags.length || parsed.priority || parsed.due" class="tokens" aria-live="polite">
         <span v-for="t in parsed.tags" :key="t" class="tok">#{{ t }}</span>
@@ -136,6 +136,10 @@ h1 { display: flex; align-items: center; gap: 0.5rem; }
 .capture { display: flex; align-items: center; gap: 0.6rem; margin: 0 1.25rem; padding: 0.6rem 0.8rem; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 10px; background: var(--surface); color: var(--accent-soft); }
 .capture:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
 .capture input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 14.5px; color: var(--text); outline: none; }
+.add { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; }
+.add:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.add:disabled { opacity: 0.5; cursor: default; }
+.add:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .tokens { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .tok { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); font-size: 12px; color: var(--accent-soft); }
 .bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 1.25rem; padding: 0.5rem 0.7rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface-2); }
