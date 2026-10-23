@@ -6,7 +6,7 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
   routes: [
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
-    { path: '/', redirect: '/explorar' },
+    { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
     { path: '/explorar', component: () => import('./views/ProductsView.vue') },
     { path: '/meus', component: () => import('./views/ProductsView.vue'), props: { mine: true }, meta: { auth: true } },
