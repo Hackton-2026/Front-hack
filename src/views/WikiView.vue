@@ -458,6 +458,10 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .md :deep(pre) { padding: 0.8rem 1rem; border-radius: 8px; background: var(--surface-2); overflow-x: auto; }
 .md :deep(pre code) { padding: 0; background: none; }
 .md :deep(blockquote) { margin: 0.6em 0; padding-left: 0.9rem; border-left: 3px solid var(--accent); color: var(--muted); }
+.md :deep(.md-table) { margin: 0.6rem 0; overflow-x: auto; }
+.md :deep(table) { width: 100%; border-collapse: collapse; font-size: 13px; }
+.md :deep(th), .md :deep(td) { padding: 0.4rem 0.6rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.md :deep(th) { background: var(--surface-2); font-weight: 600; color: var(--text); }
 .md :deep(hr) { border: 0; border-top: 1px solid var(--line); margin: 1.2em 0; }
 .md :deep(a) { color: var(--accent-soft); }
 .md :deep(.md-check) { padding-left: 0.2rem; list-style: none; }

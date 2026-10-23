@@ -1,5 +1,5 @@
 // Markdown simples da Wiki (sem dependência): títulos, negrito, itálico, código, listas, checklist,
-// citação, divisória e links. O texto é escapado antes, então HTML digitado não vira HTML de verdade.
+// citação, divisória, tabelas e links. O texto é escapado antes, então HTML digitado não vira HTML de verdade.
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 export const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
@@ -27,6 +27,19 @@ export function render(md) {
       const code = []
       while (++i < lines.length && !lines[i].startsWith('```')) code.push(esc(lines[i]))
       out.push(`<pre><code>${code.join('\n')}</code></pre>`)
+      continue
+    }
+    // tabela: linhas seguidas começando com "|"; a 2ª linha "|---|---|" separa o cabeçalho
+    if (line.trim().startsWith('|')) {
+      close()
+      const rows = []
+      for (; i < lines.length && lines[i].trim().startsWith('|'); i++) rows.push(lines[i])
+      i--
+      const cells = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => inline(c.trim()))
+      const isSep = (r) => /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/.test(r.trim())
+      const head = rows.length > 1 && isSep(rows[1]) ? cells(rows[0]) : null
+      const body = (head ? rows.slice(2) : rows).filter((r) => !isSep(r)).map(cells)
+      out.push(`<div class="md-table"><table>${head ? `<thead><tr>${head.map((c) => `<th>${c}</th>`).join('')}</tr></thead>` : ''}<tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`)
       continue
     }
     let m

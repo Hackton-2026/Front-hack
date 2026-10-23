@@ -31,4 +31,8 @@ const html = computed(() => render(props.text || ''))
 .md :deep(blockquote) { margin: 0.5rem 0; padding: 0.1rem 0 0.1rem 0.75rem; border-left: 3px solid var(--accent); color: var(--muted); }
 .md :deep(hr) { margin: 0.8rem 0; border: 0; border-top: 1px solid var(--line); }
 .md :deep(a) { color: var(--accent-soft); }
+.md :deep(.md-table) { margin: 0.6rem 0; overflow-x: auto; }
+.md :deep(table) { width: 100%; border-collapse: collapse; font-size: 13px; }
+.md :deep(th), .md :deep(td) { padding: 0.4rem 0.6rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.md :deep(th) { background: var(--surface-2); font-weight: 600; color: var(--text); }
 </style>
