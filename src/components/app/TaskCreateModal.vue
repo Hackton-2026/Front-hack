@@ -18,7 +18,7 @@ const titleInput = ref(null)
 
 watch(() => ui.creating, async (defaults) => {
   if (!defaults) return
-  Object.assign(form, { title: '', projectId: state.projects[0]?.id || '', status: 'todo', priority: '', assignees: [state.me], due: '', description: '', cycle: null, modules: [] }, defaults)
+  Object.assign(form, { title: '', projectId: state.projects[0]?.id || '', status: 'todo', priority: state.prefs.defaultPriority, assignees: state.prefs.assignMe ? [state.me] : [], due: '', description: '', cycle: null, modules: [] }, defaults)
   error.value = ''
   await nextTick()
   titleInput.value?.focus()
@@ -85,7 +85,7 @@ h2 { margin: 0; font: 600 1rem/1.2 'Geist', system-ui, sans-serif; color: var(--
 .x { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .x:hover { background: var(--surface-2); color: var(--text); }
 .title { padding: 0; border: 0; background: none; font: 600 1.25rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); outline: none; }
-textarea, select, .row input { width: 100%; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; color-scheme: dark; }
+textarea, select, .row input { width: 100%; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; }
 textarea { padding: 0.6rem 0.7rem; resize: vertical; }
 select, .row input { height: 34px; padding: 0 0.5rem; }
 textarea:focus, select:focus, .row input:focus { border-color: var(--accent); }

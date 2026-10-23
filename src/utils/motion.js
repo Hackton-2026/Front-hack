@@ -7,7 +7,8 @@ gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin)
 gsap.ticker.lagSmoothing(0)
 
 export { gsap }
-export const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+// data-calm = "Modo de desempenho" ligado nos Ajustes
+export const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.calm === 'on'
 
 /**
  * v-reveal            → o elemento aparece suave ao entrar na tela

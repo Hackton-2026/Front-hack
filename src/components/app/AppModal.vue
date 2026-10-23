@@ -54,7 +54,7 @@ footer { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25
 .box :deep(.f) { display: flex; flex-direction: column; gap: 0.35rem; }
 .box :deep(.f > span) { font-size: 12.5px; font-weight: 500; color: var(--muted); }
 .box :deep(.row2) { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.box :deep(:is(input:not([type='checkbox']), textarea, select)) { width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 7px; background: #0f0e0d; font: inherit; color: var(--text); outline: none; color-scheme: dark; }
+.box :deep(:is(input:not([type='checkbox']), textarea, select)) { width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 7px; background: #0f0e0d; font: inherit; color: var(--text); outline: none; }
 .box :deep(:is(input, textarea, select):focus) { border-color: var(--accent); }
 .box :deep(.btn) { padding: 0.5rem 0.95rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); font-weight: 500; color: var(--text); cursor: pointer; }
 .box :deep(.btn.primary) { border-color: var(--accent); background: var(--accent); color: #140700; }

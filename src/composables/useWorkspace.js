@@ -33,7 +33,9 @@ const localDefaults = () => ({
     { id: 'doc-1', title: 'Como o time trabalha', body: 'Toda tarefa tem um responsável e um prazo.\nO que está em revisão é aprovado em até um dia útil.', updatedAt: new Date().toISOString(), example: true },
   ],
   prefs: {
-    weekStart: 0, theme: 'dark', density: 'comfortable', notify: { assigned: true, mention: true, due: true, digest: false },
+    weekStart: 0, theme: 'dark', density: 'comfortable',
+    accent: '#e56515', contrast: false, calm: false, showIds: true, handCursor: true, shortcuts: true, defaultView: 'list', defaultPriority: '', assignMe: true,
+    notify: { assigned: true, mention: true, due: true, status: true, done: false, digest: false, followOwn: true },
     // barra lateral (pessoal, como no Plane): o que aparece, o que está fixado do "Mais" e o que tem estrela
     nav: { drafts: true, mine: true, notes: true },
     pinned: [],
@@ -74,7 +76,8 @@ export const COVERS = [
 function readLocal() {
   try {
     const data = JSON.parse(localStorage.getItem(LOCAL_KEY))
-    if (data) return { ...localDefaults(), ...data, prefs: { ...localDefaults().prefs, ...data.prefs } }
+    const d = localDefaults()
+    if (data) return { ...d, ...data, prefs: { ...d.prefs, ...data.prefs, notify: { ...d.prefs.notify, ...data.prefs?.notify } } }
   } catch { /* nada salvo */ }
   return localDefaults()
 }
@@ -87,6 +90,8 @@ const state = reactive({
   me: null,
   isAdmin: false,
   workspaceName: '',
+  slug: '',
+  settings: {}, // seções de Workspace.settings (general, governance, products, identity, schedule, integrations)
   members: [],
   projects: [],
   tasks: [...local.drafts], // rascunhos locais + tarefas da API
@@ -134,7 +139,7 @@ async function load() {
       ['projects', 'tasks', 'activity', 'inbox', 'cycles', 'modules', 'pages', 'views'].map((r) => api(`/api/${r}/`)),
     )
     Object.assign(state, {
-      me: ws.me, isAdmin: ws.is_admin, workspaceName: ws.name, members: ws.members, projects, activity: activity.map(fromActivity), inbox,
+      me: ws.me, isAdmin: ws.is_admin, workspaceName: ws.name, slug: ws.slug, settings: ws.settings || {}, members: ws.members, projects, activity: activity.map(fromActivity), inbox,
       cycles, modules, pages, views, loaded: true,
     })
     state.tasks = [...state.tasks.filter((t) => t.draft), ...tasks.map(fromApi)]
@@ -361,10 +366,29 @@ export function useWorkspace() {
   // progresso de um grupo de tarefas (ciclo, módulo)
   const doneRatio = (list) => (list.length ? list.filter((t) => t.status === 'done').length / list.length : 0)
 
-  async function renameWorkspace(name) {
+  // PATCH {name?, slug?, settings?: {seção: {...}}} (só admin). Devolve true se salvou.
+  async function saveWorkspace(body) {
     try {
-      const ws = await api('/api/workspace/', { method: 'PATCH', body: { name } })
-      state.workspaceName = ws.name
+      const ws = await api('/api/workspace/', { method: 'PATCH', body })
+      Object.assign(state, { workspaceName: ws.name, slug: ws.slug, settings: ws.settings, members: ws.members })
+      return true
+    } catch (e) {
+      fail(e)
+      return false
+    }
+  }
+  const renameWorkspace = (name) => saveWorkspace({ name })
+  async function setMemberRole(m, role) {
+    try {
+      m.role = (await api(`/api/workspace/members/${m.id}/`, { method: 'PATCH', body: { role } })).role
+    } catch (e) {
+      fail(e)
+    }
+  }
+  async function removeMember(m) {
+    try {
+      await api(`/api/workspace/members/${m.id}/`, { method: 'DELETE' })
+      state.members = state.members.filter((x) => x.id !== m.id)
     } catch (e) {
       fail(e)
     }
@@ -394,7 +418,7 @@ export function useWorkspace() {
 
   return {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
-    load, createTask, updateTask, removeTask, createProject, renameWorkspace, markRead, markAllRead, taskActivity, createDoc, progress, clearLocal,
+    load, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
     starred, toggleStar, doneRatio, touchRecent,
     today: () => day(0), day,

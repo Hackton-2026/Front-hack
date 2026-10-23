@@ -27,7 +27,7 @@ const { ui, newTask } = useUi()
 const { complete } = useOnboarding()
 const pid = computed(() => Number(props.id)) // a rota traz texto; os ids da API são números
 const p = computed(() => project(pid.value))
-const view = computed(() => VIEWS.find((v) => v.id === route.query.v)?.id || 'list')
+const view = computed(() => VIEWS.find((v) => v.id === route.query.v)?.id || state.prefs.defaultView)
 const onlyMine = ref(false)
 const q = ref('')
 const tabs = ref(null)

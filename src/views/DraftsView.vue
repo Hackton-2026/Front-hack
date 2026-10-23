@@ -65,7 +65,7 @@ header p { margin: 0; color: var(--muted); }
 .item + .item { border-top: 1px solid var(--line); }
 .item__title { flex: 1; min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item__title:hover { color: var(--accent-soft); }
-select { height: 30px; padding: 0 0.4rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 12.5px; color: var(--text); color-scheme: dark; }
+select { height: 30px; padding: 0 0.4rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 12.5px; color: var(--text); }
 .pub { height: 30px; padding: 0 0.7rem; border: 1px solid var(--accent); border-radius: 6px; background: rgb(229 101 21 / 0.12); font-size: 12.5px; font-weight: 500; cursor: pointer; }
 .pub:hover { background: var(--accent); color: #000; }
 .rm { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
