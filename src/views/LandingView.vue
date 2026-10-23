@@ -3,6 +3,7 @@
 import { onMounted, onUnmounted } from 'vue'
 import Lenis from 'lenis'
 import 'lenis/dist/lenis.css'
+import '../assets/landing.css'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import SiteNav from '../components/landing/SiteNav.vue'
@@ -35,24 +36,3 @@ onUnmounted(() => {
     <SiteFooter />
   </div>
 </template>
-
-<style scoped>
-.lp {
-  /* Paleta "Clockwork" das referências + preto do leonardo.ai */
-  --lp-orange: #e56515;
-  --lp-orange-soft: #fba45c;
-  --lp-grey: #919599;
-  --lp-grey-light: #cdcdcb;
-  --lp-white: #f8f8f8;
-  --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
-  --lp-hero: 'Inter', 'Geist', system-ui, sans-serif;
-  --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #000;
-  color: var(--lp-white);
-  font-family: var(--lp-sans);
-  overflow-x: clip;
-}
-:global(html:has(.lp)) { background: #000; }
-:global(html:has(.lp) body) { background: #000; }
-.lp ::selection { background: var(--lp-orange); color: #000; }
-</style>

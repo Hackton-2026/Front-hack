@@ -10,6 +10,7 @@ const COLUMNS = [
   { title: 'Desenvolvedores', links: ['Documentação', 'Referência da API', 'Status'] },
   { title: 'Empresa', links: ['Sobre', 'Fale conosco'] },
 ]
+const footerLink = (label) => label === 'Como funciona' ? '/blog/como-funciona' : label === 'Preços' ? '/#planos' : label === 'Fale conosco' ? '/#contato' : '/#topo'
 
 const email = ref('')
 const joined = ref(false)
@@ -54,10 +55,10 @@ onUnmounted(() => ctx?.revert())
 
     <div class="foot__bottom">
       <div class="foot__cols">
-        <a href="#topo" class="foot__logo" aria-label="Novexo, voltar ao topo">NOVEXO</a>
+        <RouterLink to="/#topo" class="foot__logo" aria-label="Novexo, início">NOVEXO</RouterLink>
         <nav v-for="c in COLUMNS" :key="c.title" class="foot__col" :aria-label="c.title">
           <h3>{{ c.title }}</h3>
-          <a v-for="l in c.links" :key="l" :href="l === 'Preços' ? '#planos' : l === 'Fale conosco' ? '#contato' : '#topo'">{{ l }}</a>
+          <RouterLink v-for="l in c.links" :key="l" :to="footerLink(l)">{{ l }}</RouterLink>
         </nav>
       </div>
       <p class="foot__copy">© 2026 Novexo. Todos os direitos reservados.</p>

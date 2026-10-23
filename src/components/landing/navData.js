@@ -49,7 +49,7 @@ export const MENU = [
         { group: 'Destaques', links: ['Novexo IA', 'Modelos prontos', 'Painéis', 'Controle de tempo'], more: 'Ver todos os recursos' },
       ],
     ],
-    feature: { title: 'Novo no Novexo? Aprenda o básico.', cta: 'Começar', art: 'a' },
+    feature: { title: 'Novo no Novexo? Aprenda o básico.', cta: 'Começar', art: 'a', to: '/blog/como-funciona' },
   },
   {
     id: 'solucoes',
@@ -84,13 +84,13 @@ export const MENU = [
     label: 'Aprender',
     columns: [
       [{ items: [
-        { icon: 'book', title: 'Central Novexo', desc: 'Guias para dominar o Novexo.' },
-        { icon: 'news', title: 'Blog', desc: 'Produtividade e gestão de times.' },
+        { icon: 'book', title: 'Como funciona', desc: 'Seu primeiro projeto, passo a passo.', to: '/blog/como-funciona' },
+        { icon: 'news', title: 'Blog', desc: 'Produtividade e gestão de times.', to: '/blog' },
         { icon: 'play', title: 'Webinars', desc: 'Sessões ao vivo e gravadas.' },
       ] }],
     ],
-    feature: { title: 'Como escrever tarefas que se explicam sozinhas', cta: 'Saiba mais', art: 'd' },
+    feature: { title: 'Menos ruído. Mais trabalho feito.', cta: 'Conheça o Novexo', art: 'd', to: '/blog/como-funciona' },
   },
-  { id: 'planos', label: 'Preços', href: '#planos' },
-  { id: 'contato', label: 'Contato', href: '#contato' },
+  { id: 'planos', label: 'Preços', href: '/#planos' },
+  { id: 'contato', label: 'Contato', href: '/#contato' },
 ]

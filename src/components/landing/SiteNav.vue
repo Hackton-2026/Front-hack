@@ -2,6 +2,7 @@
 // Nav no padrão do leonardo.ai: header fixo e transparente, menu centralizado, megamenus que se cruzam (fade + sobe 20px),
 // camada "glossy" com blur que aparece quando o conteúdo passa por baixo, botões gooey e menu hambúrguer no mobile
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
 import { MENU, ICONS } from './navData'
 
@@ -10,6 +11,8 @@ const scrolled = ref(false)
 const mobileOpen = ref(false)
 const mobileSection = ref(null)
 let closeTimer
+const route = useRoute()
+watch(() => route.fullPath, () => { active.value = null; mobileOpen.value = false; mobileSection.value = null })
 
 const open = (id) => { clearTimeout(closeTimer); active.value = id }
 const scheduleClose = () => { clearTimeout(closeTimer); closeTimer = setTimeout(() => (active.value = null), 140) }
@@ -24,6 +27,7 @@ onMounted(() => {
   addEventListener('keydown', onKey)
 })
 onUnmounted(() => {
+  clearTimeout(closeTimer)
   removeEventListener('scroll', onScroll)
   removeEventListener('keydown', onKey)
   document.documentElement.style.overflow = ''
@@ -36,7 +40,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
     <div class="nav__glossy" aria-hidden="true" />
 
     <div class="nav__bar">
-      <a href="#topo" class="nav__logo" aria-label="Novexo, início">NOVEXO</a>
+      <RouterLink to="/#topo" class="nav__logo" aria-label="Novexo, início">NOVEXO</RouterLink>
 
       <nav class="nav__menu" aria-label="Principal" @mouseleave="scheduleClose">
         <div v-for="item in MENU" :key="item.id" class="nav__item" @mouseenter="item.columns ? open(item.id) : scheduleClose()">
@@ -53,12 +57,12 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
               <path d="M2.6 5.5l4.5 4 4.5-4" fill="none" stroke="currentColor" stroke-width="1.75" />
             </svg>
           </button>
-          <a v-else :href="item.href" class="nav__link">{{ item.label }}</a>
+          <RouterLink v-else :to="item.href" class="nav__link">{{ item.label }}</RouterLink>
         </div>
       </nav>
 
       <div class="nav__actions">
-        <GooeyButton variant="secondary" href="#topo">Tutorial</GooeyButton>
+        <GooeyButton variant="secondary" to="/blog/como-funciona">Tutorial</GooeyButton>
         <GooeyButton variant="primary" to="/login">Entrar</GooeyButton>
       </div>
 
@@ -89,21 +93,21 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
         <div v-for="(col, ci) in item.columns" :key="ci" class="mm__col">
           <div v-for="(g, gi) in col" :key="gi" class="mm__group">
             <span v-if="g.group" class="mm__title">{{ g.group }}</span>
-            <a v-for="it in g.items" :key="it.title" href="#topo" class="mm__item" @click="active = null">
+            <RouterLink v-for="it in g.items" :key="it.title" :to="it.to || '/#topo'" class="mm__item" @click="active = null">
               <svg class="mm__icon" viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS[it.icon]" /></svg>
               <span class="mm__text">
                 <span class="roll"><span class="roll__in"><span>{{ it.title }}</span><span aria-hidden="true">{{ it.title }}</span></span></span>
                 <span class="mm__desc">{{ it.desc }}</span>
               </span>
-            </a>
-            <a v-for="l in g.links" :key="l" href="#topo" class="mm__plain" @click="active = null">{{ l }}</a>
-            <a v-if="g.more" href="#topo" class="mm__more" @click="active = null">{{ g.more }} <span aria-hidden="true">→</span></a>
+            </RouterLink>
+            <RouterLink v-for="l in g.links" :key="l" to="/#topo" class="mm__plain" @click="active = null">{{ l }}</RouterLink>
+            <RouterLink v-if="g.more" to="/#topo" class="mm__more" @click="active = null">{{ g.more }} <span aria-hidden="true">→</span></RouterLink>
           </div>
         </div>
-        <a href="#topo" class="mm__feature" :class="`art-${item.feature.art}`" @click="active = null">
+        <RouterLink :to="item.feature.to || '/#topo'" class="mm__feature" :class="`art-${item.feature.art}`" @click="active = null">
           <span class="mm__feature-title">{{ item.feature.title }}</span>
           <span class="mm__feature-cta">{{ item.feature.cta }}</span>
-        </a>
+        </RouterLink>
       </div>
     </div>
 
@@ -117,15 +121,15 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
               <path d="M2.6 5.5l4.5 4 4.5-4" fill="none" stroke="currentColor" stroke-width="1.75" />
             </svg>
           </button>
-          <a v-else :href="item.href" class="mob__link" @click="mobileOpen = false">{{ item.label }}</a>
+          <RouterLink v-else :to="item.href" class="mob__link" @click="mobileOpen = false">{{ item.label }}</RouterLink>
           <div v-if="item.columns" class="mob__sub" :class="{ 'is-open': mobileSection === item.id }">
             <div>
               <template v-for="col in item.columns">
                 <template v-for="g in col">
-                  <a v-for="it in g.items" :key="it.title" href="#topo" class="mob__subitem" @click="mobileOpen = false">
+                  <RouterLink v-for="it in g.items" :key="it.title" :to="it.to || '/#topo'" class="mob__subitem" @click="mobileOpen = false">
                     <svg class="mm__icon" viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS[it.icon]" /></svg>{{ it.title }}
-                  </a>
-                  <a v-for="l in g.links" :key="l" href="#topo" class="mob__subitem" @click="mobileOpen = false">{{ l }}</a>
+                  </RouterLink>
+                  <RouterLink v-for="l in g.links" :key="l" to="/#topo" class="mob__subitem" @click="mobileOpen = false">{{ l }}</RouterLink>
                 </template>
               </template>
             </div>
@@ -133,7 +137,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
         </div>
       </div>
       <div class="mob__actions">
-        <GooeyButton variant="secondary" size="lg" href="#topo" @click="mobileOpen = false">Tutorial</GooeyButton>
+        <GooeyButton variant="secondary" size="lg" to="/blog/como-funciona" @click="mobileOpen = false">Tutorial</GooeyButton>
         <GooeyButton variant="primary" size="lg" to="/login">Entrar</GooeyButton>
       </div>
     </div>
