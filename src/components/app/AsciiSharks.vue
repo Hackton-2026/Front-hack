@@ -22,6 +22,9 @@ const SPEED = 0.55 // 1 = velocidade original da biblioteca
 const WAKE = 0.09 // energia extra que a cauda deixa na água (ondas mais fortes)
 const WAKE_FADE = 0.55 // 1 = ondas somem no tempo original; menor = duram mais
 const GRID_ALPHA = 0.35 // grade de fundo mais apagada que a original
+const SPREAD = 0.4 // tubarões se afastam quando as cabeças ficam a menos disso (fração do menor lado da tela)
+const MARGIN = 0.1 // começam a virar antes de chegar na borda (fração do menor lado da tela)
+const NUDGE = 1.6 // quanto esses dois empurrões viram o tubarão (radianos por segundo, no máximo)
 
 const canvas = ref(null)
 let engine
@@ -63,8 +66,41 @@ onMounted(() => {
   // O mundo é SCALE vezes maior, então tudo andaria SCALE vezes mais devagar na tela enquanto a cauda bate
   // no ritmo normal (fica "balançando" no lugar). O tempo roda SCALE vezes mais rápido e a batida
   // da cauda (phase) volta ao ritmo original.
+  // A biblioteca só separa tubarões quase encostados e só vira de volta com o focinho já fora da tela:
+  // antes do passo dela, cada um vira um pouco para longe dos outros e da borda
+  const spread = (dt) => {
+    const { sharks, width: W, height: H } = world
+    const side = Math.min(W, H)
+    const range = side * SPREAD
+    const margin = side * MARGIN
+    for (const sh of sharks) {
+      const hx = sh.nodes[0]
+      const hy = sh.nodes[1]
+      let px = 0
+      let py = 0
+      for (const o of sharks) {
+        if (o === sh) continue
+        const ox = hx - o.nodes[0]
+        const oy = hy - o.nodes[1]
+        const d = Math.hypot(ox, oy)
+        if (d < range && d > 1e-3) {
+          px += (ox / d) * (1 - d / range)
+          py += (oy / d) * (1 - d / range)
+        }
+      }
+      px += Math.max(0, margin - hx) / margin - Math.max(0, hx - (W - margin)) / margin
+      py += Math.max(0, margin - hy) / margin - Math.max(0, hy - (H - margin)) / margin
+      const strength = Math.min(1, Math.hypot(px, py))
+      if (strength < 1e-3) continue
+      let diff = Math.atan2(py, px) - sh.heading
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff)) // menor ângulo, entre -π e π
+      const max = NUDGE * strength * dt
+      sh.heading += Math.max(-max, Math.min(max, diff))
+    }
+  }
   const step = world.step.bind(world)
   world.step = (dt) => {
+    spread(dt * SPEED)
     const sharkPhase = world.sharks.map((s) => s.phase)
     const fishPhase = world.fish.map((f) => f.phase)
     step(dt * SCALE * SPEED)
