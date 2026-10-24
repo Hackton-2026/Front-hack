@@ -168,31 +168,35 @@ watch(total, () => { brick?.unmount?.(); brick = null; mountBrick() }) // o valo
 
 // ---- sucesso
 const successBox = ref(null)
+// Aprovado: mostra o recibo por alguns segundos e já abre o workspace (dá para ir antes no botão)
+const REDIRECT_MS = 4000
+let leave
 async function success(p) {
   done.value = p
   error.value = ''
+  clearTimeout(leave)
+  leave = setTimeout(goWorkspace, REDIRECT_MS)
   await nextTick()
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  window.scrollTo({ top: 0 })
   if (prefersReducedMotion() || !successBox.value) return
   gsap.timeline()
-    .fromTo(successBox.value, { autoAlpha: 0, y: 24, scale: 0.97 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.6, ease: 'expo.out' })
-    .fromTo(successBox.value.querySelector('.ok__ring'), { strokeDashoffset: 189 }, { strokeDashoffset: 0, duration: 0.7, ease: 'power2.out' }, '-=0.3')
-    .fromTo(successBox.value.querySelector('.ok__tick'), { strokeDashoffset: 40 }, { strokeDashoffset: 0, duration: 0.4, ease: 'power2.out' }, '-=0.2')
-    .from(successBox.value.querySelectorAll('.receipt li'), { y: 8, autoAlpha: 0, stagger: 0.05, duration: 0.3 }, '-=0.1')
+    .from(successBox.value.querySelectorAll('.ok > *'), { y: 14, autoAlpha: 0, duration: 0.5, stagger: 0.06, ease: 'expo.out' })
+    .fromTo(successBox.value.querySelector('.ok__tick'), { strokeDashoffset: 40 }, { strokeDashoffset: 0, duration: 0.45, ease: 'power2.out' }, 0.15)
 }
+const goWorkspace = () => { clearTimeout(leave); router.push('/inicio') }
+const stayHere = () => clearTimeout(leave)
 
 // ---- entrada
 const root = ref(null)
 onMounted(() => {
   if (prefersReducedMotion()) return
-  gsap.from(root.value.querySelectorAll('.reveal'), { y: 28, autoAlpha: 0, filter: 'blur(6px)', duration: 0.9, ease: 'expo.out', stagger: 0.08, clearProps: 'filter,transform' })
+  gsap.from(root.value.querySelectorAll('.reveal'), { y: 28, autoAlpha: 0, duration: 0.9, ease: 'expo.out', stagger: 0.08, clearProps: 'transform' })
 })
-onUnmounted(() => { stopPix(); brick?.unmount?.() })
+onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 </script>
 
 <template>
   <div ref="root" class="co">
-    <div class="glow" aria-hidden="true" />
     <header class="bar">
       <RouterLink to="/" class="logo" aria-label="Novexo, início">NOVEXO</RouterLink>
       <span class="secure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10V8a6 6 0 0 1 12 0v2 M5 10h14v11H5z M12 14v3" /></svg>Pagamento seguro</span>
@@ -200,21 +204,24 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
     </header>
 
     <!-- Sucesso -->
-    <section v-if="done" ref="successBox" class="ok" aria-live="polite">
-      <svg class="ok__icon" viewBox="0 0 64 64" aria-hidden="true"><circle class="ok__ring" cx="32" cy="32" r="30" /><path class="ok__tick" d="M20 33l8 8 16-17" /></svg>
-      <h1>Bem-vindo ao {{ done.plan_name }}!</h1>
-      <p class="ok__sub">Pagamento aprovado. Seu workspace já está com o plano novo.</p>
-      <ul class="receipt">
-        <li><span>Plano</span><strong>{{ done.plan_name }} · {{ done.interval === 'year' ? 'anual' : 'mensal' }}</strong></li>
-        <li><span>Pessoas</span><strong>{{ done.seats }}</strong></li>
-        <li><span>Forma de pagamento</span><strong>{{ done.method === 'pix' ? 'Pix' : `Cartão ${done.card_brand} final ${done.card_last4}${done.installments > 1 ? ` · ${done.installments}x` : ''}` }}</strong></li>
-        <li class="total"><span>Total pago</span><strong>{{ brl(done.amount_cents) }}</strong></li>
-      </ul>
-      <div class="ok__actions">
-        <GooeyButton variant="primary" size="lg" to="/inicio">Ir para o workspace</GooeyButton>
-        <GooeyButton variant="secondary" size="lg" to="/ajustes?tab=billing">Ver plano e pagamentos</GooeyButton>
+    <section v-if="done" ref="successBox" class="ok-wrap" aria-live="polite">
+      <div class="ok">
+        <span class="ok__badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ok__tick" d="M5 12.5l4.5 4.5L19 7.5" /></svg>Pagamento aprovado</span>
+        <h1>Bem-vindo ao<br />{{ done.plan_name }}</h1>
+        <p class="ok__sub">O plano já está ativo no seu workspace. Abrindo ele para você…</p>
+        <dl class="receipt">
+          <div><dt>Plano</dt><dd>{{ done.plan_name }} · {{ done.interval === 'year' ? 'anual' : 'mensal' }}</dd></div>
+          <div><dt>Pessoas</dt><dd>{{ done.seats }}</dd></div>
+          <div><dt>Pagamento</dt><dd>{{ done.method === 'pix' ? 'Pix' : `Cartão ${done.card_brand} final ${done.card_last4}${done.installments > 1 ? ` · ${done.installments}x` : ''}` }}</dd></div>
+          <div class="total"><dt>Total</dt><dd>{{ brl(done.amount_cents) }}</dd></div>
+        </dl>
+        <div class="ok__go">
+          <span class="ok__bar" aria-hidden="true"><i :style="{ animationDuration: `${REDIRECT_MS}ms` }" /></span>
+          <button type="button" class="ok__btn" @click="goWorkspace">Ir para o workspace agora</button>
+          <RouterLink to="/ajustes?tab=billing" class="ok__link" @click="stayHere">Ver recibo em Ajustes</RouterLink>
+        </div>
+        <p v-if="done.gateway === 'test'" class="testnote">Modo de teste: nenhum valor foi cobrado de verdade.</p>
       </div>
-      <p v-if="done.gateway === 'test'" class="testnote">Modo de teste: nenhum valor foi cobrado de verdade.</p>
     </section>
 
     <main v-else class="grid">
@@ -376,7 +383,6 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
   font-family: var(--lp-sans);
 }
 :global(html:has(.co)), :global(html:has(.co) body) { background: #000; }
-.glow { position: absolute; inset: -20vh -10vw auto; z-index: -1; height: 80vh; background: radial-gradient(50% 60% at 30% 0%, rgb(229 101 21 / 0.28), transparent 70%), radial-gradient(40% 50% at 85% 10%, rgb(251 164 92 / 0.12), transparent 70%); pointer-events: none; }
 
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 76rem; margin: 0 auto; padding: 1.5rem 0; }
 .logo { font: 800 1.5rem/1 var(--lp-display); letter-spacing: -0.02em; color: var(--lp-white); text-decoration: none; }
@@ -439,7 +445,7 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
 .trust span::before { content: '✓ '; color: var(--lp-orange); }
 
 /* ---- pagamento */
-.pay { position: relative; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: 18px; background: rgb(17 17 17 / 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 40px 100px -50px #000; }
+.pay { position: relative; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: 18px; background: #111111; }
 .pay__title { margin: 0 0 1rem; color: var(--lp-white); font: 800 1.35rem/1 var(--lp-display); text-transform: uppercase; }
 .test { margin: 0 0 1.25rem; padding: 0.75rem 0.9rem; border: 1px dashed rgb(251 164 92 / 0.5); border-radius: 10px; background: rgb(229 101 21 / 0.08); font-size: 0.8125rem; line-height: 1.5; color: rgb(248 248 248 / 0.8); }
 .test strong { color: var(--lp-orange-soft); }
@@ -509,18 +515,30 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
 .fine { margin: 0; font-size: 0.75rem; line-height: 1.5; color: var(--lp-grey); }
 
 /* ---- sucesso */
-.ok { display: flex; flex-direction: column; align-items: center; gap: 0.9rem; max-width: 34rem; margin: 3rem auto 0; padding: clamp(1.5rem, 4vw, 2.5rem); border: 1px solid var(--lp-orange); border-radius: 20px; background: linear-gradient(180deg, #2a1306 0%, #111111 65%); text-align: center; box-shadow: 0 40px 100px -40px rgb(229 101 21 / 0.6); }
-.ok__icon { width: 76px; height: 76px; fill: none; stroke: var(--lp-orange); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.ok__ring { stroke-dasharray: 189; }
-.ok__tick { stroke-dasharray: 40; stroke: var(--lp-white); stroke-width: 4; }
-.ok h1 { margin: 0; color: var(--lp-white); font: 900 clamp(1.8rem, 5vw, 2.6rem)/1 var(--lp-display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; }
-.ok__sub { margin: 0; color: rgb(248 248 248 / 0.7); }
-.receipt { display: flex; flex-direction: column; gap: 0.55rem; width: 100%; margin: 0.5rem 0; padding: 1rem 0 0; list-style: none; border-top: 1px solid var(--line); }
-.receipt li { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9375rem; color: rgb(248 248 248 / 0.7); text-align: left; }
-.receipt strong { color: var(--lp-white); text-align: right; }
-.receipt .total { padding-top: 0.6rem; border-top: 1px solid var(--line); }
-.receipt .total strong { font: 900 1.4rem/1 var(--lp-display); }
-.ok__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 0.5rem; }
+.ok-wrap { display: grid; place-items: center; min-height: calc(100vh - 160px); padding: 2rem 0 4rem; }
+.ok { display: flex; flex-direction: column; align-items: flex-start; gap: 1.25rem; width: min(100%, 30rem); padding: clamp(1.5rem, 4vw, 2.25rem); border: 1px solid var(--line); border-radius: 18px; background: #111111; }
+.ok__badge { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.35rem 0.75rem 0.35rem 0.5rem; border: 1px solid var(--line); border-radius: 999px; font-size: 0.8125rem; font-weight: 500; color: var(--lp-white); }
+.ok__badge svg { width: 18px; height: 18px; padding: 2px; border-radius: 50%; background: var(--lp-orange); fill: none; stroke: #000; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ok__tick { stroke-dasharray: 40; }
+.ok h1 { margin: 0; color: var(--lp-white); font: 900 clamp(2rem, 6vw, 3rem)/0.95 var(--lp-display); text-transform: uppercase; letter-spacing: -0.03em; }
+.ok__sub { margin: 0; color: rgb(248 248 248 / 0.65); line-height: 1.5; }
+.receipt { display: flex; flex-direction: column; width: 100%; margin: 0; border-top: 1px solid var(--line); }
+.receipt > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--line); font-size: 0.9375rem; }
+.receipt dt { color: rgb(248 248 248 / 0.6); }
+.receipt dd { margin: 0; color: var(--lp-white); font-weight: 500; text-align: right; }
+.receipt .total { border-bottom: 0; padding-top: 0.9rem; }
+.receipt .total dd { font: 900 1.5rem/1 var(--lp-display); }
+.ok__go { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
+.ok__bar { display: block; height: 3px; overflow: hidden; border-radius: 999px; background: var(--line); }
+.ok__bar i { display: block; height: 100%; background: var(--lp-white); transform-origin: left; animation: ok-go linear forwards; }
+@keyframes ok-go { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.ok__btn { height: 48px; border: 0; border-radius: 999px; background: var(--lp-white); font: 600 0.9375rem/1 var(--lp-sans); color: #000; cursor: pointer; transition: transform 0.15s ease; }
+.ok__btn:hover { transform: translateY(-1px); }
+.ok__btn:active { transform: scale(0.98); }
+.ok__link { align-self: center; font-size: 0.875rem; color: rgb(248 248 248 / 0.7); }
+.ok__link:hover { color: var(--lp-white); }
+:is(.ok__btn, .ok__link):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .ok__bar i { animation: none; transform: scaleX(1); } }
 .testnote { margin: 0; font-size: 0.75rem; color: var(--lp-grey); }
 
 .num-enter-active, .num-leave-active { transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s; }
