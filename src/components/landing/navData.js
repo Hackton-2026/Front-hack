@@ -123,8 +123,8 @@ export const MENU = [
     ],
     feature: { title: 'Como funciona o Novexo', cta: 'Veja o passo a passo', art: salamanca, to: '/blog/como-funciona' },
   },
-  { id: 'planos', label: 'Preços', href: '/#planos' },
-  { id: 'contato', label: 'Contato', href: '/#contato' },
+  { id: 'planos', label: 'Preços', href: '/precos' },
+  { id: 'contato', label: 'Contato', href: '/contato' },
 ]
 
 // Rotas públicas de apresentação dos recursos.

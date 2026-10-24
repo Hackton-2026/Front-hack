@@ -13,7 +13,7 @@ const COLUMNS = [
   { title: 'Desenvolvedores', links: ['Documentação', 'Referência da API', 'Status'] },
   { title: 'Empresa', links: ['Blog', 'Sobre', 'Fale conosco'] },
 ]
-const footerLink = (label) => label === 'Blog' ? '/blog' : label === 'Como funciona' ? '/blog/como-funciona' : label === 'Preços' ? '/#planos' : label === 'Fale conosco' ? '/#contato' : '/#topo'
+const footerLink = (label) => label === 'Blog' ? '/blog' : label === 'Como funciona' ? '/blog/como-funciona' : label === 'Preços' ? '/precos' : label === 'Fale conosco' ? '/contato' : '/#topo'
 
 const email = ref('')
 const joined = ref(false)
