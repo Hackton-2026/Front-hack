@@ -263,7 +263,7 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
         </article>
 
         <dl class="bill reveal">
-          <div><dt>{{ brl(perSeatMonth) }} × {{ seats }} {{ seats === 1 ? 'pessoa' : 'pessoas' }}{{ yearly ? ' × 12 meses' : '' }}</dt><dd>{{ brl(total + saving) }}</dd></div>
+          <div><dt>{{ brl(plan.month * 100) }} × {{ seats }} {{ seats === 1 ? 'pessoa' : 'pessoas' }}{{ yearly ? ' × 12 meses' : '' }}</dt><dd>{{ brl(total + saving) }}</dd></div>
           <div v-if="saving" class="save"><dt>Desconto do plano anual</dt><dd>− {{ brl(saving) }}</dd></div>
           <div class="sum"><dt>Total {{ yearly ? 'hoje (1 ano)' : 'por mês' }}</dt><dd><Transition name="num" mode="out-in"><span :key="total">{{ brl(total) }}</span></Transition></dd></div>
         </dl>
@@ -391,7 +391,7 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
 
 /* ---- resumo */
 .eyebrow { margin: 0; font: 600 0.75rem/1 var(--lp-sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--lp-orange-soft); }
-.title { margin: 0.75rem 0 1.5rem; font: 900 clamp(2rem, 4.4vw, 3.25rem)/0.95 var(--lp-display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; }
+.title { margin: 0.75rem 0 1.5rem; color: var(--lp-white); font: 900 clamp(2rem, 4.4vw, 3.25rem)/0.95 var(--lp-display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; }
 .pick { display: inline-flex; gap: 0.4rem; margin-bottom: 1.25rem; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: #0b0b0b; }
 .pick button { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border: 0; border-radius: 999px; background: none; font: 500 0.9375rem/1 var(--lp-sans); color: rgb(248 248 248 / 0.7); cursor: pointer; transition: background 0.3s, color 0.3s; }
 .pick button[aria-checked='true'] { background: var(--lp-white); color: #000; }
@@ -401,7 +401,7 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
 .plan.popular { background: linear-gradient(180deg, #2a1306 0%, #111111 60%); border-color: var(--lp-orange); box-shadow: 0 30px 80px -40px rgb(229 101 21 / 0.6); }
 .plan__badge { position: absolute; top: -0.8rem; left: 1.75rem; padding: 0.3rem 0.8rem; border-radius: 999px; background: var(--lp-orange); font: 600 0.75rem/1 var(--lp-sans); color: #000; }
 .plan__top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.plan__name { margin: 0 0 0.4rem; font: 800 1.6rem/1 var(--lp-display); text-transform: uppercase; }
+.plan__name { margin: 0 0 0.4rem; color: var(--lp-white); font: 800 1.6rem/1 var(--lp-display); text-transform: uppercase; }
 .plan__desc { margin: 0; max-width: 18rem; font-size: 0.9375rem; line-height: 1.35; color: rgb(248 248 248 / 0.55); }
 .plan__price { display: flex; align-items: baseline; gap: 0.35rem; margin: 1.5rem 0 1.25rem; }
 .plan__cur { font: 600 1.125rem/1 var(--lp-sans); }
@@ -440,7 +440,7 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
 
 /* ---- pagamento */
 .pay { position: relative; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: 18px; background: rgb(17 17 17 / 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 40px 100px -50px #000; }
-.pay__title { margin: 0 0 1rem; font: 800 1.35rem/1 var(--lp-display); text-transform: uppercase; }
+.pay__title { margin: 0 0 1rem; color: var(--lp-white); font: 800 1.35rem/1 var(--lp-display); text-transform: uppercase; }
 .test { margin: 0 0 1.25rem; padding: 0.75rem 0.9rem; border: 1px dashed rgb(251 164 92 / 0.5); border-radius: 10px; background: rgb(229 101 21 / 0.08); font-size: 0.8125rem; line-height: 1.5; color: rgb(248 248 248 / 0.8); }
 .test strong { color: var(--lp-orange-soft); }
 .test code { padding: 0 0.25rem; border-radius: 4px; background: rgb(255 255 255 / 0.08); font: 0.78rem/1.4 'Geist Mono', ui-monospace, monospace; white-space: nowrap; }
@@ -513,7 +513,7 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
 .ok__icon { width: 76px; height: 76px; fill: none; stroke: var(--lp-orange); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .ok__ring { stroke-dasharray: 189; }
 .ok__tick { stroke-dasharray: 40; stroke: var(--lp-white); stroke-width: 4; }
-.ok h1 { margin: 0; font: 900 clamp(1.8rem, 5vw, 2.6rem)/1 var(--lp-display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; }
+.ok h1 { margin: 0; color: var(--lp-white); font: 900 clamp(1.8rem, 5vw, 2.6rem)/1 var(--lp-display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; }
 .ok__sub { margin: 0; color: rgb(248 248 248 / 0.7); }
 .receipt { display: flex; flex-direction: column; gap: 0.55rem; width: 100%; margin: 0.5rem 0; padding: 1rem 0 0; list-style: none; border-top: 1px solid var(--line); }
 .receipt li { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9375rem; color: rgb(248 248 248 / 0.7); text-align: left; }
