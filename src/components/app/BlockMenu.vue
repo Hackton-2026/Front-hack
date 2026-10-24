@@ -2,7 +2,7 @@
 // Menu de blocos da Wiki (o "+" e o "/" do Notion): blocos básicos, mídia, base de dados e blocos avançados.
 // Escolher um bloco emite "insert" com o markdown dele (%c% marca onde o cursor fica). Alguns pedem um passo a mais:
 // link, imagem, página, projeto ou texto do botão.
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { compressImage } from '../../utils/image'
 import { DB_VIEWS } from '../../utils/dbviews'
 import { useWorkspace } from '../../composables/useWorkspace'
@@ -122,11 +122,18 @@ function key(e) {
 }
 const scrollActive = () => nextTick(() => box.value?.querySelector('.it.on')?.scrollIntoView({ block: 'nearest' }))
 defineExpose({ key, empty: computed(() => !flat.value.length) })
-onMounted(() => { if (props.query === null) box.value?.querySelector('.search')?.focus() })
+// clicar fora fecha (no próximo clique, para não pegar o clique que abriu o menu)
+const outside = (e) => { if (!box.value?.contains(e.target)) emit('close') }
+onMounted(() => {
+  if (props.query === null) box.value?.querySelector('.search')?.focus()
+  setTimeout(() => document.addEventListener('mousedown', outside))
+})
+onUnmounted(() => document.removeEventListener('mousedown', outside))
 </script>
 
 <template>
   <div ref="box" class="bm" role="dialog" aria-label="Inserir bloco" @keydown="key($event) && $event.preventDefault()">
+    <button type="button" class="x" aria-label="Fechar" title="Fechar (Esc)" @mousedown.prevent @click="emit('close')">×</button>
     <template v-if="!step">
       <input v-if="query === null" v-model="search" class="search" placeholder="Filtrar blocos…" aria-label="Filtrar blocos" />
       <div class="list" role="listbox" aria-label="Blocos">
@@ -189,7 +196,11 @@ onMounted(() => { if (props.query === null) box.value?.querySelector('.search')?
 
 <style scoped>
 .bm { position: absolute; z-index: 30; display: flex; flex-direction: column; width: 20rem; max-height: 22rem; padding: 0.35rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 44px rgb(0 0 0 / 0.5); }
+.x { position: absolute; top: 0.35rem; right: 0.35rem; z-index: 1; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: var(--surface); font-size: 18px; line-height: 1; color: var(--muted); cursor: pointer; }
+.x:hover { background: var(--surface-2); color: var(--text); }
+.x:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 1px; }
 .search, .step input { width: 100%; height: 32px; margin-bottom: 0.25rem; padding: 0 0.6rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--bg); font: inherit; font-size: 13px; color: var(--text); outline: none; }
+.search { width: calc(100% - 2rem); }
 .search:focus, .step input:focus { border-color: var(--accent); }
 .list { overflow-y: auto; }
 .sec { margin: 0.45rem 0.4rem 0.2rem; font-size: 11.5px; font-weight: 600; color: var(--muted); }

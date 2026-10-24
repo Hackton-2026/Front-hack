@@ -22,7 +22,7 @@ import AppModal from '../components/app/AppModal.vue'
 const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
 const ICONS = ['', '📄', '📌', '✅', '🚀', '💡', '📚', '🧭', '🛠️', '📈', '🗓️', '🔒', '🎯', '🧪', '👋']
 const TOOLBAR = [
-  ['H1', '# ', ''], ['H2', '## ', ''], ['B', '**', '**'], ['I', '*', '*'], ['S', '~~', '~~'],
+  ['B', '**', '**'], ['I', '*', '*'], ['S', '~~', '~~'],
   ['• Lista', '- ', ''], ['☐ Tarefa', '- [ ] ', ''], ['1. Lista', '1. ', ''], ['❝', '> ', ''], ['</>', '`', '`'], ['Link', '[', '](https://)'], ['—', '\n---\n', ''],
 ]
 const LABEL_COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3b82f6', '#a855f7', '#ec4899', '#919599']
