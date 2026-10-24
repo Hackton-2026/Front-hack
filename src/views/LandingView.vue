@@ -40,6 +40,7 @@ onUnmounted(() => {
 .lp {
   /* Paleta "Clockwork" das referências + preto do leonardo.ai */
   --lp-orange: #e56515;
+  --footer-transition-color: var(--lp-orange);
   --lp-orange-soft: #fba45c;
   --lp-grey: #919599;
   --lp-grey-light: #cdcdcb;

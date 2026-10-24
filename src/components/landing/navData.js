@@ -58,8 +58,7 @@ export const MENU = [
       [
         {
           group: 'Destaques',
-          links: ['Novexo IA', 'Modelos prontos', 'Painéis', 'Controle de tempo'],
-          more: 'Ver todos os recursos',
+          links: ['Novexo IA'],
         },
       ],
     ],
@@ -72,19 +71,15 @@ export const MENU = [
       [
         {
           items: [
-            { icon: 'marketing', title: 'Marketing', desc: 'Campanhas do briefing à entrega' },
             { icon: 'code', title: 'Engenharia', desc: 'Sprints, bugs e roadmap' },
             { icon: 'pen', title: 'Design', desc: 'Revisões e aprovações sem ruído' },
           ],
-          more: 'Ver todas as soluções',
         },
       ],
       [
         {
           items: [
-            { icon: 'briefcase', title: 'Agências', desc: 'Projetos de vários clientes' },
             { icon: 'sliders', title: 'Operações', desc: 'Processos padronizados e medidos' },
-            { icon: 'cap', title: 'Educação', desc: 'Turmas, trabalhos e cronogramas' },
           ],
         },
       ],
@@ -140,6 +135,14 @@ export const MENU = [
 
 // Rotas públicas de apresentação dos recursos.
 export const PRODUCT_LINKS = {
+  Design: '/solucoes/design',
+  Engenharia: '/solucoes/engenharia',
+  Agências: '/solucoes/agencias',
+  Operações: '/solucoes/operacoes',
+  Educação: '/solucoes/educacao',
+  Documentos: '/produto/documentos',
+  Automações: '/produto/automacoes',
+  Integrações: '/produto/integracoes',
   'Novexo IA': '/produto/ia',
   Chat: '/produto/chat',
   Tarefas: '/produto/tarefas',

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
-import { prefersReducedMotion, vReveal } from '../utils/motion'
+import { prefersReducedMotion } from '../utils/motion'
+import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
@@ -34,10 +35,10 @@ const selectedPrompt = ref(prompts[0])
 </script>
 
 <template>
-  <div id="topo" class="ai-guide">
+  <div id="topo" v-tutorial-motion class="tutorial-page ai-guide">
     <SiteNav />
     <main class="guide">
-      <header v-reveal.now.stagger class="intro">
+      <header class="intro">
         <p class="label">PRODUTO / NOVEXO IA</p>
         <h1>Como usar a<br /><em>Novexo IA</em></h1>
         <p>
@@ -46,8 +47,8 @@ const selectedPrompt = ref(prompts[0])
       </header>
 
       <section aria-labelledby="open-heading">
-        <div v-reveal class="step-heading">
-          <span class="step-number">1</span>
+        <div class="step-heading">
+          <span class="step-number">01</span>
           <div>
             <h2 id="open-heading">Abra a página da IA</h2>
             <p>
@@ -56,7 +57,7 @@ const selectedPrompt = ref(prompts[0])
             </p>
           </div>
         </div>
-        <figure v-reveal class="workspace-figure">
+        <figure class="workspace-figure">
           <div ref="screenshot" class="screenshot">
             <img
               :src="workspaceImage"
@@ -85,18 +86,17 @@ const selectedPrompt = ref(prompts[0])
               <span class="cursor-label">Clique em IA</span>
             </div>
           </div>
-          <figcaption class="shot-caption">
-            <span>Página inicial da IA no workspace.</span
-            ><button v-if="cursorVisible" type="button" @click="replay++">
+          <div class="shot-caption">
+            <button v-if="cursorVisible" type="button" @click="replay++">
               Rever animação <span aria-hidden="true">↻</span>
             </button>
-          </figcaption>
+          </div>
         </figure>
       </section>
 
       <section aria-labelledby="prompt-heading">
-        <div v-reveal class="step-heading">
-          <span class="step-number">2</span>
+        <div class="step-heading">
+          <span class="step-number">02</span>
           <div>
             <h2 id="prompt-heading">Escreva o que você precisa</h2>
             <p>
@@ -105,7 +105,7 @@ const selectedPrompt = ref(prompts[0])
             </p>
           </div>
         </div>
-        <figure v-reveal class="prompt-figure">
+        <figure class="prompt-figure">
           <div class="prompt-preview">
             <span class="preview-label">EXEMPLO DE PREENCHIMENTO</span>
             <div class="composer">
@@ -118,7 +118,6 @@ const selectedPrompt = ref(prompts[0])
               </div>
             </div>
           </div>
-          <figcaption>Exemplo de um pedido no campo de mensagem.</figcaption>
         </figure>
         <div class="examples">
           <p>Outros pedidos que você pode testar:</p>
@@ -141,7 +140,7 @@ const selectedPrompt = ref(prompts[0])
         </p>
       </section>
 
-      <div v-reveal class="guide-end">
+      <div class="guide-end">
         <p>Você pode continuar a conversa para fazer outra pergunta ou detalhar o pedido.</p>
         <GooeyButton to="/ia" size="lg"
           >Abrir a Novexo IA <span aria-hidden="true">↗</span></GooeyButton
@@ -223,19 +222,6 @@ section + section {
   align-items: flex-start;
   gap: 18px;
   margin-bottom: 24px;
-}
-.step-number {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  background: #e5651520;
-  border: 1px solid #e5651550;
-  color: #fba45c;
-  border-radius: 50%;
-  font-size: 14px;
-  margin-top: 2px;
 }
 h2 {
   font-size: 24px;

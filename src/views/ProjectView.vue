@@ -1,4 +1,5 @@
 <script setup>
+import ProjectIcon from '../components/app/ProjectIcon.vue'
 // Itens de trabalho do projeto: as três visualizações (Lista, Quadro, Calendário) sobre os mesmos dados.
 // Também abre um ciclo, um módulo ou uma visão salva: aí mostra só as tarefas dele.
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
@@ -73,7 +74,7 @@ onMounted(() => moveInk(false))
   <div v-if="p && scope" class="proj">
     <header class="head">
       <div class="head__title">
-        <span v-if="p.icon" class="emoji" aria-hidden="true">{{ p.icon }}</span><span v-else class="sq" :style="{ background: p.color }" />
+        <span v-if="p.icon" class="emoji" aria-hidden="true"><ProjectIcon :icon="p.icon" /></span><span v-else class="sq" :style="{ background: p.color }" />
         <div>
           <RouterLink v-if="scope.kind" :to="`/projetos/${p.id}/${scope.back}`" class="back">{{ scope.kind }} · {{ p.name }}</RouterLink>
           <h1>{{ scope.kind ? scope.name : p.name }}</h1>

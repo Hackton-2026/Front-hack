@@ -5,6 +5,47 @@ const router = createRouter({
   history: createWebHistory(),
   scrollBehavior: () => ({ top: 0 }),
   routes: [
+    {
+      path: '/solucoes/design',
+      component: () => import('./views/DesignView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/engenharia',
+      component: () => import('./views/EngenhariaView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/agencias',
+      component: () => import('./views/AgenciasView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/operacoes',
+      component: () => import('./views/OperacoesView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/educacao',
+      component: () => import('./views/EducacaoView.vue'),
+      meta: { bare: true },
+    },
+
+    {
+      path: '/produto/documentos',
+      component: () => import('./views/DocumentosTutorial.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/produto/automacoes',
+      component: () => import('./views/AutomacoesTutorial.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/produto/integracoes',
+      component: () => import('./views/IntegracoesTutorial.vue'),
+      meta: { bare: true },
+    },
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
     {

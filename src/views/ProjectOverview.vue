@@ -1,4 +1,5 @@
 <script setup>
+import ProjectIcon from '../components/app/ProjectIcon.vue'
 // Visão geral do projeto (Plane): capa, ícone, nome e descrição editáveis, atalhos para as partes do projeto
 // e o painel lateral com Propriedades, Atualizações (no prazo / em risco / atrasado) e Atividade.
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
@@ -108,7 +109,7 @@ onMounted(async () => {
       <div class="doc">
         <div class="icon-wrap">
           <button type="button" class="icon" :disabled="!state.isAdmin" :aria-expanded="picking" aria-label="Trocar ícone do projeto" @click="picking = !picking">
-            <span v-if="p.icon">{{ p.icon }}</span><span v-else class="sq" :style="{ background: p.color }" />
+            <span v-if="p.icon"><ProjectIcon :icon="p.icon" /></span><span v-else class="sq" :style="{ background: p.color }" />
           </button>
           <div v-if="picking" class="emojis" role="listbox" aria-label="Ícones">
             <button v-for="e in EMOJIS" :key="e" type="button" role="option" :aria-selected="p.icon === e" @click="pick(e)">{{ e }}</button>

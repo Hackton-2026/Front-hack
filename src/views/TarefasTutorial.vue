@@ -1,5 +1,5 @@
 <script setup>
-import { vReveal } from '../utils/motion'
+import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
@@ -29,10 +29,10 @@ const steps = [
 </script>
 
 <template>
-  <div id="topo" class="tasks-guide">
+  <div id="topo" v-tutorial-motion class="tutorial-page tasks-guide">
     <SiteNav />
     <main class="guide">
-      <header v-reveal.now.stagger class="intro">
+      <header class="intro">
         <p class="label">PRODUTO / TAREFAS</p>
         <h1>Como organizar<br /><em>suas tarefas</em></h1>
         <p>
@@ -45,14 +45,14 @@ const steps = [
         :key="step.title"
         :aria-labelledby="`task-step-${index}`"
       >
-        <div v-reveal class="step-heading">
-          <span class="step-number">{{ index + 1 }}</span>
+        <div class="step-heading">
+          <span class="step-number">{{ String(index + 1).padStart(2, '0') }}</span>
           <div>
             <h2 :id="`task-step-${index}`">{{ step.title }}</h2>
             <p>{{ step.text }}</p>
           </div>
         </div>
-        <figure v-reveal>
+        <figure>
           <video
             v-if="step.video"
             :src="step.video"
@@ -73,11 +73,10 @@ const steps = [
             ><span>Vídeo em breve</span>
             <p>{{ step.caption }}</p>
           </div>
-          <figcaption>{{ step.caption }}.</figcaption>
         </figure>
       </section>
 
-      <div v-reveal class="guide-end">
+      <div class="guide-end">
         <p>
           Para encontrar apenas as suas tarefas, use o filtro <strong>Só minhas</strong> no projeto
           ou abra <strong>Seu trabalho</strong> na barra lateral.
@@ -162,19 +161,6 @@ section + section {
   align-items: flex-start;
   gap: 18px;
   margin-bottom: 24px;
-}
-.step-number {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  background: #e5651520;
-  border: 1px solid #e5651550;
-  color: #fba45c;
-  border-radius: 50%;
-  font-size: 14px;
-  margin-top: 2px;
 }
 h2 {
   font-size: 24px;

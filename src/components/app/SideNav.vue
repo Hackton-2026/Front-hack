@@ -1,4 +1,5 @@
 <script setup>
+import ProjectIcon from './ProjectIcon.vue'
 // Barra lateral "Trabalho" do Plane: itens pessoais, Workspace (com o menu "Mais" e itens fixados),
 // projetos que abrem o menu do projeto (visão geral, itens, ciclos, módulos, visões, páginas) e "Experimente".
 // O que aparece é pessoal e fica salvo nas preferências (Personalizar navegação).
@@ -189,7 +190,7 @@ onUnmounted(() => {
         <div v-for="p in state.projects" :key="p.id" class="proj">
           <div class="proj__row">
             <button type="button" class="side__link proj__btn" :aria-expanded="openProjects.has(p.id)" @click="toggleProject(p)">
-              <span v-if="p.icon" class="emoji" aria-hidden="true">{{ p.icon }}</span><span v-else class="dot" :style="{ background: p.color }" />
+              <span v-if="p.icon" class="emoji" aria-hidden="true"><ProjectIcon :icon="p.icon" /></span><span v-else class="dot" :style="{ background: p.color }" />
               <span class="proj__name">{{ p.name }}</span>
               <AppIcon name="chevron" :size="13" class="chev proj__chev" />
             </button>
@@ -288,7 +289,7 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .proj__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .proj__chev { opacity: 0; }
 .proj__row:hover .proj__chev, .proj__btn:focus-visible .proj__chev { opacity: 1; }
-.emoji { width: 17px; font-size: 14px; line-height: 1; text-align: center; }
+.emoji { display: inline-flex; flex-shrink: 0; overflow: hidden; width: 17px; font-size: 14px; line-height: 1; text-align: center; }
 .dot { flex-shrink: 0; width: 8px; height: 8px; margin: 0 4.5px; border-radius: 2px; }
 .pmenu-btn { position: absolute; right: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s; }
 .proj__row:hover .pmenu-btn, .pmenu-btn:focus-visible, .pmenu-btn[aria-expanded='true'] { opacity: 1; }
