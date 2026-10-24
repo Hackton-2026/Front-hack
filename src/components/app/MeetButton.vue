@@ -93,7 +93,7 @@ function sendPasted() {
 
 <style scoped>
 .meet { position: static; } /* o painel se apoia na caixa de mensagem (position: relative), na largura dela */
-.meet__btn { display: inline-flex; align-items: center; gap: 0.35rem; height: 26px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease; }
+.meet__btn { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.35rem; height: 26px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease; }
 .meet__btn:hover, .meet__btn[aria-expanded='true'] { border-color: var(--line-strong); color: var(--text); }
 .meet__pop { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 5; display: flex; flex-direction: column; gap: 0.55rem; padding: 0.85rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 14px 34px rgb(0 0 0 / 0.42); }
 .meet__pop strong { font-size: 13.5px; color: var(--text); }

@@ -296,10 +296,10 @@ mark.nvx { background: rgb(229 101 21 / 0.18); color: var(--accent-soft); }
 .dots i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes dot { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
 .error { margin: 0 0.9rem 0.5rem; padding: 0.55rem 0.8rem; border: 1px solid rgb(229 101 21 / 0.45); border-radius: 8px; background: rgb(229 101 21 / 0.1); font-size: 13px; color: #ffd2b3; }
-.composer { position: relative; display: flex; flex-direction: column; gap: 0.35rem; margin: 0 0.75rem 0.75rem; padding: 0.65rem 0.65rem 0.5rem 0.85rem; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); }
+.composer { container-type: inline-size; position: relative; display: flex; flex-direction: column; gap: 0.35rem; margin: 0 0.75rem 0.75rem; padding: 0.65rem 0.65rem 0.5rem 0.85rem; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); }
 .composer:focus-within { border-color: var(--accent); }
 .composer textarea { min-height: 1.5rem; max-height: 10rem; border: 0; background: none; font: inherit; color: var(--text); resize: none; outline: none; field-sizing: content; }
-.bar { display: flex; align-items: center; gap: 0.6rem; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; }
 .call { display: flex; align-items: center; gap: 0.65rem; margin-top: 0.45rem; padding: 0.6rem 0.7rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.2s ease; }
 .call:hover { border-color: var(--text); }
 .call__ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--surface-2); }
@@ -308,13 +308,14 @@ mark.nvx { background: rgb(229 101 21 / 0.18); color: var(--accent-soft); }
 .call__txt small { font: 11.5px/1.3 'Geist Mono', monospace; color: var(--muted); }
 .call__go { padding: 0.3rem 0.7rem; border-radius: 6px; background: var(--text); font-size: 12.5px; font-weight: 600; color: var(--bg); }
 .call:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-.mention { display: inline-flex; align-items: center; gap: 0.3rem; height: 26px; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: color 0.2s var(--ease), border-color 0.2s var(--ease); }
+.mention { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.3rem; height: 26px; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: color 0.2s var(--ease), border-color 0.2s var(--ease); }
 .mention:hover, .mention.on { border-color: var(--accent); color: var(--accent-soft); }
-.hint { margin-left: auto; font-size: 12px; color: var(--muted); }
-.send { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; background: var(--accent); color: #000; cursor: pointer; }
+.hint { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.send { flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; background: var(--accent); color: #000; cursor: pointer; }
 .send:disabled { background: var(--surface-2); color: var(--muted); cursor: default; }
 :is(.mention, .send, .x, .people):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-@media (max-width: 560px) { .hint { display: none; } }
+/* o chat também abre num painel estreito ao lado: quem decide é a largura do próprio campo, não a da janela */
+@container (max-width: 470px) { .hint { display: none; } .send { margin-left: auto; } }
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; } }
 .msg.sys { justify-content: center; margin: 0.7rem 0 0; padding-left: 0; }
 .sys__txt { display: inline-flex; align-items: flex-start; gap: 0.4rem; max-width: 90%; margin: 0; padding: 0.4rem 0.7rem; border: 1px solid rgb(37 211 102 / 0.35); border-radius: 999px; background: rgb(37 211 102 / 0.08); font-size: 12px; line-height: 1.45; color: var(--muted); }
