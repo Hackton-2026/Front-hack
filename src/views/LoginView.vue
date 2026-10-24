@@ -112,6 +112,7 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
 
     <aside class="art" aria-hidden="true">
       <div class="art__shapes" />
+      <div class="art__glow" />
       <div class="art__copy">
         <p class="art__title">Organize o trabalho que seu time sempre precisou.</p>
         <p class="art__sub">Tarefas, quadros e metas num só lugar, do primeiro sprint ao centésimo.</p>
@@ -200,6 +201,16 @@ h1 { margin: 1.75rem 0 0.75rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend
 }
 .art__shapes::before { top: 8%; right: 6%; background: linear-gradient(135deg, #fff4d6, #ffc46b 55%, #ff8a7a); opacity: 0.9; }
 .art__shapes::after { bottom: 10%; left: 18%; background: linear-gradient(135deg, #ffe0ea, #fba45c 50%, #e56515); opacity: 0.75; }
+/* mini motion: os dois blocos flutuam e giram de leve em ritmos diferentes, e uma luz rosada passeia por cima */
+.art__glow { position: absolute; top: -15%; left: -15%; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgb(255 228 238 / 0.85), transparent 65%); mix-blend-mode: soft-light; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .art__shapes::before { animation: art-flutua-a 14s ease-in-out infinite alternate; }
+  .art__shapes::after { animation: art-flutua-b 17s ease-in-out infinite alternate; }
+  .art__glow { animation: art-luz 20s ease-in-out infinite alternate; }
+}
+@keyframes art-flutua-a { from { translate: 0 0; rotate: 45deg; scale: 1; } to { translate: -4% 6%; rotate: 53deg; scale: 1.06; } }
+@keyframes art-flutua-b { from { translate: 0 0; rotate: 45deg; scale: 1; } to { translate: 7% -5%; rotate: 38deg; scale: 0.95; } }
+@keyframes art-luz { from { translate: 0 0; } 50% { translate: 55% 25%; } to { translate: 20% 70%; } }
 .art__copy { position: absolute; inset: auto 2.5rem 2.5rem; display: flex; flex-direction: column; gap: 1.25rem; color: #1a1a1a; }
 .art__title { margin: 0; max-width: 12ch; font: 500 clamp(3rem, 5.4vw, 5.25rem)/0.95 'Geist', system-ui, sans-serif; letter-spacing: -0.055em; text-wrap: balance; }
 .art__sub { margin: 0; max-width: 28ch; font: 400 clamp(1.25rem, 1.9vw, 1.75rem)/1.1 'Geist', system-ui, sans-serif; letter-spacing: -0.03em; }

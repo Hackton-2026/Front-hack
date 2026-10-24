@@ -5,8 +5,10 @@ import AppNav from './components/AppNav.vue'
 import AppShell from './components/app/AppShell.vue'
 import ChatBot from './components/ChatBot.vue'
 import { useAuth } from './composables/useAuth'
+import { useSmoothScroll } from './composables/useSmoothScroll'
 
 const { user } = useAuth()
+useSmoothScroll()
 const router = useRouter()
 // Deslogou (botão Sair ou token expirado) em página privada → volta pro login
 watch(user, (u) => {
