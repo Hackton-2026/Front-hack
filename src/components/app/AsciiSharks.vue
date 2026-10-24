@@ -22,12 +22,14 @@ const SPEED = 0.55 // 1 = velocidade original da biblioteca
 const WAKE = 0.09 // energia extra que a cauda deixa na água (ondas mais fortes)
 const WAKE_FADE = 0.55 // 1 = ondas somem no tempo original; menor = duram mais
 const GRID_ALPHA = 0.35 // grade de fundo mais apagada que a original
+const DARKEN = 0.4 // tema claro: pontos e ondas escurecidos para aparecer no fundo claro
 const SPREAD = 0.4 // tubarões se afastam quando as cabeças ficam a menos disso (fração do menor lado da tela)
 const MARGIN = 0.1 // começam a virar antes de chegar na borda (fração do menor lado da tela)
 const NUDGE = 1.6 // quanto esses dois empurrões viram o tubarão (radianos por segundo, no máximo)
 
 const canvas = ref(null)
 let engine
+let light = false // tema claro da página (Ajustes › Aparência), conferido a cada quadro
 onMounted(() => {
   // A biblioteca pede o canvas opaco ({ alpha: false }), que fica preto atrás dos tubarões no tema claro. O navegador
   // devolve sempre o primeiro contexto criado, então pedindo antes (transparente) o fundo vem da página
@@ -58,10 +60,31 @@ onMounted(() => {
     g.globalAlpha = GRID_ALPHA
     paintGrid(g, this.width, this.height, this.cw, this.ch, this.dpr)
     g.globalAlpha = 1
+    if (light) {
+      // a grade sai branca da biblioteca: no tema claro, repinta as mesmas linhas de escuro
+      g.setTransform(1, 0, 0, 1, 0, 0)
+      g.globalCompositeOperation = 'source-in'
+      g.fillStyle = '#000'
+      g.fillRect(0, 0, this.bg.width, this.bg.height)
+      g.globalCompositeOperation = 'source-over'
+    }
   }
   // A biblioteca apaga o quadro anterior pintando o fundo preto por cima; transparente, é preciso limpar antes
+  // Ondas, cardumes e grade vêm em cores claras (feitas para brilhar no preto); depois do filtro viram um laranja quase
+  // branco que some no tema claro. No claro, as mesmas cores escurecidas (DARKEN) viram um laranja forte.
+  const darken = (c) => c.replace(/rgba\((\d+),(\d+),(\d+),/, (_, r, g, b) => `rgba(${[r, g, b].map((v) => Math.round(v * DARKEN)).join(',')},`)
+  const palettes = {
+    dark: { dotStyles: renderer.dotStyles, fishStyles: renderer.fishStyles },
+    light: { dotStyles: renderer.dotStyles.map(darken), fishStyles: renderer.fishStyles.map(darken) },
+  }
   const render = renderer.render.bind(renderer)
   renderer.render = (w, dt) => {
+    const now = !!canvas.value.closest('.is-light')
+    if (now !== light) {
+      light = now
+      Object.assign(renderer, palettes[light ? 'light' : 'dark'])
+      renderer.paintBackground()
+    }
     renderer.ctx.setTransform(1, 0, 0, 1, 0, 0)
     renderer.ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
     render(w, dt)
