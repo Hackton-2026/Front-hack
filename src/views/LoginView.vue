@@ -153,7 +153,7 @@ h1 { margin: 1.75rem 0 0.75rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend
 .form { display: flex; flex-direction: column; gap: 1.25rem; width: 100%; }
 .field { display: flex; flex-direction: column; gap: 0.5rem; }
 .field > span:first-child { font-size: 0.875rem; font-weight: 600; }
-.opt { font-size: 0.78rem; font-weight: 400; color: var(--color-muted, #a29d95); }
+.opt { font-size: 0.78rem; font-weight: 400; color: var(--muted); }
 .field input {
   width: 100%;
   height: 2.75rem;

@@ -362,8 +362,8 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
   top: 26px;
   z-index: 60;
   padding-top: 1.5rem;
-  translate: -50% 0;
-  transform: translateY(20px);
+  /* centraliza no transform (e não com translate: o minificador do build apagava o translate quando havia transform) */
+  transform: translate(-50%, 20px);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -374,7 +374,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 }
 .mm.is-active {
   z-index: 70;
-  transform: none;
+  transform: translate(-50%, 0);
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -391,8 +391,10 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 
 .mm__panel {
   display: flex;
+  flex-wrap: wrap;
   gap: 2.5rem 4rem;
   width: max-content;
+  max-width: calc(100vw - 2rem); /* entre 1100 e ~1200px de tela o painel mais largo não cabia */
   padding: 2.5rem 3.5rem;
   border-radius: 12px;
   background: #111111;
