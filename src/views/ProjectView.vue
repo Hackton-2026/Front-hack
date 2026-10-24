@@ -114,7 +114,8 @@ const add = () => newTask({ projectId: p.value.id, ...scope.value.defaults })
 
 watch([p, scope], ([v, s]) => (ui.crumb = !v ? 'Projeto não encontrado' : s?.kind ? `${v.name} › ${s.name}` : `${v.name} › Itens de trabalho`), { immediate: true })
 function setView(id) {
-  const query = { ...route.query, v: id === 'list' ? undefined : id }
+  // sem ?v= a página cai na visão padrão (Ajustes > Preferências), então só some quando é ela
+  const query = { ...route.query, v: id === state.prefs.defaultView ? undefined : id }
   props.view ? router.push({ path: `/projetos/${pid.value}`, query }) : router.replace({ query })
   if (id !== 'list') complete('view')
 }

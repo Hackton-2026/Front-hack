@@ -62,6 +62,8 @@ function changeCover() {
   save({ cover: (p.value.cover + 1) % COVERS.length })
   if (!prefersReducedMotion()) gsap.fromTo(root.value.querySelector('.cover'), { filter: 'brightness(1.5)' }, { filter: 'brightness(1)', duration: 0.6, ease: 'power2.out' })
 }
+// cor do ícone e do projeto (aparece na barra lateral, nos cards e no Kanban)
+const COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3fb8a5', '#4fb0c6', '#6c8cff', '#a77bf3', '#e86fa8', '#ff5b4d', '#cdcdcb', '#919599']
 function pick(e) {
   picking.value = false
   save({ icon: e })
@@ -114,7 +116,10 @@ onMounted(async () => {
             <ProjectIcon :icon="p.icon" :color="p.color" :size="28" />
           </button>
           <div v-if="picking" class="emojis" role="listbox" aria-label="Ícones">
-            <button v-for="e in PROJECT_ICONS" :key="e" type="button" role="option" :aria-selected="iconClass(p.icon) === e" :aria-label="e.slice(6)" @click="pick(e)"><ProjectIcon :icon="e" :size="17" /></button>
+            <div class="colors" role="group" aria-label="Cor do projeto">
+              <button v-for="c in COLORS" :key="c" type="button" class="sw" :style="{ background: c }" :aria-pressed="p.color === c" :aria-label="`Cor ${c}`" @click="save({ color: c })" />
+            </div>
+            <button v-for="e in PROJECT_ICONS" :key="e" type="button" role="option" :aria-selected="iconClass(p.icon) === e" :aria-label="e.slice(6)" @click="pick(e)"><ProjectIcon :icon="e" :color="p.color" :size="17" /></button>
             <button type="button" class="none" @click="pick('')">Sem ícone</button>
             <a class="credit" href="https://www.flaticon.com/uicons" target="_blank" rel="noopener">Uicons by Flaticon</a>
           </div>
@@ -210,6 +215,11 @@ onMounted(async () => {
 .emojis button:hover, .emojis button[aria-selected='true'] { background: var(--surface-2); }
 .emojis .credit { grid-column: 1 / -1; padding: 0.2rem 0 0; font-size: 11px; color: var(--muted); text-align: center; text-decoration: none; }
 .emojis .credit:hover { color: var(--text); }
+.emojis .colors { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.15rem 0.2rem 0.5rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--line); }
+.emojis .sw { width: 20px; height: 20px; border-radius: 50%; }
+.emojis .sw:hover { transform: scale(1.12); }
+.emojis .sw[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+.emojis .sw:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .emojis .none { grid-column: 1 / -1; width: auto; height: 28px; font-size: 12.5px; color: var(--muted); }
 .name { margin-top: 0.75rem; padding: 0; border: 0; background: none; font: 650 1.15rem/1.3 'Geist', system-ui, sans-serif; color: var(--muted); outline: none; }
 .desc { width: 100%; padding: 0.25rem 0; border: 0; border-radius: 6px; background: none; font: 400 1.05rem/1.7 'Geist', system-ui, sans-serif; color: var(--text); resize: none; overflow: hidden; outline: none; }

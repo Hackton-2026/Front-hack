@@ -13,6 +13,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import GooeyButton from '../components/GooeyButton.vue'
 import SettingsList from '../components/app/SettingsList.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import DeleteProjectDialog from '../components/app/DeleteProjectDialog.vue'
 
 const GROUPS = [
   { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações']] },
@@ -104,6 +105,7 @@ const tab = ref(route.query.tab || 'profile') // o menu da conta abre direto em 
 watch(() => route.query.tab, (t) => { if (t) tab.value = t })
 const panel = ref(null)
 const status = ref('')
+const deleting = ref(null)
 const confirm2 = ref('') // ação perigosa esperando o segundo clique
 const isAdmin = computed(() => state.isAdmin)
 const myRole = computed(() => state.members.find((m) => m.id === state.me)?.role)
@@ -598,6 +600,8 @@ async function onImport(e) {
             </ul>
             <h3>Zona de perigo</h3>
             <button type="button" class="danger" @click="twice('archive', () => archiveProject(proj).then((ok) => ok && (status = 'Projeto arquivado. Ele fica em Arquivados.')))">{{ confirm2 === 'archive' ? 'Clique de novo para arquivar' : 'Arquivar projeto' }}</button>
+            <button v-if="state.isAdmin" type="button" class="danger" @click="deleting = proj">Excluir projeto</button>
+            <DeleteProjectDialog :project="deleting" @close="deleting = null" />
           </template>
         </template>
 
