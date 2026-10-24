@@ -135,7 +135,7 @@ async function decide(action, ok) {
      --ai-bg/--ai-text e --ai-shark-filter (os tubarões saem em cinza; o filtro pinta de laranja). */
   --ai-bg: var(--bg);
   /* tira as cores da biblioteca e pinta tudo num laranja só, bem alaranjado */
-  --ai-shark-filter: grayscale(1) sepia(1) saturate(5) hue-rotate(-18deg) brightness(1.1);
+  --ai-shark-filter: grayscale(1) sepia(1) saturate(9) hue-rotate(-24deg) brightness(1.15);
   --ai-text: var(--text);
   --ai-muted: var(--muted);
   --ai-glass: rgb(24 22 20 / 0.62);
