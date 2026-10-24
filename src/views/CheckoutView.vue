@@ -212,7 +212,7 @@ onUnmounted(() => { stopPix(); brick?.unmount?.() })
       </ul>
       <div class="ok__actions">
         <GooeyButton variant="primary" size="lg" to="/inicio">Ir para o workspace</GooeyButton>
-        <GooeyButton variant="secondary" size="lg" to="/">Voltar ao site</GooeyButton>
+        <GooeyButton variant="secondary" size="lg" to="/ajustes?tab=billing">Ver plano e pagamentos</GooeyButton>
       </div>
       <p v-if="done.gateway === 'test'" class="testnote">Modo de teste: nenhum valor foi cobrado de verdade.</p>
     </section>
