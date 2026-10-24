@@ -1,14 +1,72 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import { useUi } from './composables/useUi'
+import { CUSTOM_PLAN_PATH, canEnterCustomPlan } from './utils/customPlanEntry'
 
 const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, top: 110 }
+    return { top: 0 }
+  },
   routes: [
+    {
+      path: '/solucoes/design',
+      component: () => import('./views/DesignView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/engenharia',
+      component: () => import('./views/EngenhariaView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/agencias',
+      component: () => import('./views/AgenciasView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/operacoes',
+      component: () => import('./views/OperacoesView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/educacao',
+      component: () => import('./views/EducacaoView.vue'),
+      meta: { bare: true },
+    },
+
+    {
+      path: '/produto/documentos',
+      component: () => import('./views/DocumentosTutorial.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/produto/automacoes',
+      component: () => import('./views/AutomacoesTutorial.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/produto/integracoes',
+      component: () => import('./views/IntegracoesTutorial.vue'),
+      meta: { bare: true },
+    },
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
+    { path: '/produto/quadros', component: () => import('./views/QuadrosTutorial.vue'), meta: { bare: true } },
+    { path: '/produto/calendario', component: () => import('./views/CalendarioTutorial.vue'), meta: { bare: true } },
+    { path: '/produto/chat', component: () => import('./views/ChatTutorial.vue'), meta: { bare: true } },
+    { path: '/produto/tarefas', component: () => import('./views/TarefasTutorial.vue'), meta: { bare: true } },
+    { path: '/produto/ia', component: () => import('./views/AiTutorialView.vue'), meta: { bare: true } },
+    { path: '/precos', alias: '/pricing', component: () => import('./views/PricingView.vue'), meta: { bare: true } },
+    { path: CUSTOM_PLAN_PATH, component: () => import('./views/CustomPlanView.vue'), meta: { bare: true }, beforeEnter: () => canEnterCustomPlan() || { path: '/precos', hash: '#enterprise', replace: true } },
+    { path: '/contato', alias: '/contact-us', component: () => import('./views/ContactView.vue'), meta: { bare: true } },
+    { path: '/blog', alias: '/news', component: () => import('./views/BlogView.vue'), meta: { bare: true } },
+    { path: '/blog/como-funciona', alias: '/como-funciona', component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },
+    { path: '/blog/:slug', component: () => import('./views/BlogArticleView.vue'), meta: { bare: true } },
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
+    { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true } }, // pagamento dos planos
     // Área logada do Novexo: meta.app = renderiza dentro da AppShell (App.vue); area marca o item do trilho
     { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Começar', icon: 'rocket' } },
     { path: '/inicio', component: () => import('./views/HomeView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Início', icon: 'home' } },
@@ -24,7 +82,6 @@ const router = createRouter({
     { path: '/projetos/:id/ciclos/:cycle', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Ciclo', icon: 'cycle' } },
     { path: '/projetos/:id/modulos', component: () => import('./views/ModulesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Módulos', icon: 'module' } },
     { path: '/projetos/:id/modulos/:module', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Módulo', icon: 'module' } },
-    { path: '/projetos/:id/visoes', component: () => import('./views/ViewsView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Visões', icon: 'layers' } },
     { path: '/projetos/:id/visoes/:view', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Visão', icon: 'layers' } },
     { path: '/projetos/:id/paginas', component: () => import('./views/PagesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Páginas', icon: 'page' } },
     { path: '/projetos/:id/paginas/:page', component: () => import('./views/PageEditor.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Página', icon: 'page' } },
@@ -40,7 +97,6 @@ const router = createRouter({
     },
     { path: '/convite/:token', component: () => import('./views/InviteView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Convite', icon: 'user' } },
     // "Mais" do workspace
-    { path: '/visoes', component: () => import('./views/ViewsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Visões', icon: 'layers' } },
     { path: '/ciclos', component: () => import('./views/CyclesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Ciclos ativos', icon: 'cycle' } },
     { path: '/analises', component: () => import('./views/AnalyticsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Análises', icon: 'chart' } },
     { path: '/arquivados', component: () => import('./views/ArchivesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Arquivados', icon: 'archive' } },
@@ -49,11 +105,26 @@ const router = createRouter({
     { path: '/ia', component: () => import('./views/AiView.vue'), meta: { app: true, auth: true, area: 'ai', title: 'Novexo IA', icon: 'ai' } },
     { path: '/ajustes', component: () => import('./views/SettingsView.vue'), meta: { app: true, auth: true, area: 'settings', title: 'Ajustes', icon: 'settings' } },
     { path: '/explorar', component: () => import('./views/ProductsView.vue') },
-    { path: '/meus', component: () => import('./views/ProductsView.vue'), props: { mine: true }, meta: { auth: true } },
+    {
+      path: '/meus',
+      component: () => import('./views/ProductsView.vue'),
+      props: { mine: true },
+      meta: { auth: true },
+    },
     { path: '/novo', component: () => import('./views/ProductFormView.vue'), meta: { auth: true } },
-    { path: '/editar/:id', component: () => import('./views/ProductFormView.vue'), props: true, meta: { auth: true } },
+    {
+      path: '/editar/:id',
+      component: () => import('./views/ProductFormView.vue'),
+      props: true,
+      meta: { auth: true },
+    },
     { path: '/perfil', component: () => import('./views/ProfileView.vue'), meta: { auth: true } },
-    { path: '/chat/:id?', component: () => import('./views/ChatView.vue'), props: true, meta: { auth: true } },
+    {
+      path: '/chat/:id?',
+      component: () => import('./views/ChatView.vue'),
+      props: true,
+      meta: { auth: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })

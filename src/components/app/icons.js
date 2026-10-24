@@ -52,6 +52,7 @@ export const ICON = {
   list: 'M8 6h12 M8 12h12 M8 18h12 M4 6h.01 M4 12h.01 M4 18h.01',
   sort: 'M4 6h9 M4 12h6 M4 18h3 M17 4v16 M14 17l3 3 3-3',
   filter: 'M4 6h16 M7 12h10 M10 18h4',
+  upload: 'M12 16V4 M7 9l5-5 5 5 M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3',
   trash: 'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13',
   undo: 'M9 14L4 9l5-5 M4 9h11a5 5 0 0 1 0 10h-3',
   video: 'M3 7h12v10H3z M15 10.5l6-3.5v10l-6-3.5',

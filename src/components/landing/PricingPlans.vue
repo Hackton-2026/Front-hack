@@ -1,20 +1,12 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
+import { PLANS } from './plans'
+import { openCustomPlan } from '../../utils/customPlanEntry'
 
 const yearly = ref(true)
-
-// shortcut: planos fixos no front; quando o backend tiver planos/assinaturas, buscar de lá
-const PLANS = [
-  { name: 'Grátis', desc: 'Para organizar a vida e projetos pessoais.', month: 0, year: 0, cta: 'Começar grátis',
-    features: ['Tarefas e listas ilimitadas', 'Até 3 quadros', '100 MB de armazenamento', 'Apps web e celular'] },
-  { name: 'Essencial', desc: 'Para times pequenos que querem ritmo.', month: 29, year: 23, cta: 'Testar 14 dias',
-    features: ['Tudo do Grátis', 'Quadros e calendário ilimitados', 'Comentários e menções', '5 GB por membro', '100 automações/mês'] },
-  { name: 'Business', desc: 'Para times que crescem e precisam medir.', month: 59, year: 47, cta: 'Testar 14 dias', popular: true,
-    features: ['Tudo do Essencial', 'Metas e painéis', 'Controle de tempo', 'Permissões por espaço', '10 mil automações/mês', 'Novexo IA incluída'] },
-  { name: 'Enterprise', desc: 'Para empresas com segurança e escala.', cta: 'Falar com vendas',
-    features: ['Tudo do Business', 'SSO e auditoria', 'Automações ilimitadas', 'Gerente de conta dedicado', 'SLA de 99,9%'] },
-]
+const router = useRouter()
 </script>
 
 <template>
@@ -43,7 +35,7 @@ const PLANS = [
           <span v-else class="plan__val custom">Sob medida</span>
         </div>
         <p class="plan__bill">{{ p.month ? (yearly ? `Cobrado anualmente: R$ ${p.year * 12}/membro` : 'Cobrado mensalmente') : p.month === 0 ? 'Sem cartão de crédito' : 'Contrato anual' }}</p>
-        <GooeyButton :variant="p.popular ? 'primary' : 'secondary'" size="lg" block :href="p.month === undefined ? '#contato' : undefined" :to="p.month === undefined ? undefined : '/login'" class="plan__cta">{{ p.cta }}</GooeyButton>
+        <GooeyButton :variant="p.popular ? 'primary' : 'secondary'" size="lg" block :to="p.month === undefined ? undefined : p.month ? `/checkout?plano=${p.code}&ciclo=${yearly ? 'anual' : 'mensal'}` : '/login'" class="plan__cta" @click="p.month === undefined && openCustomPlan(router)">{{ p.cta }}</GooeyButton>
         <ul class="plan__list">
           <li v-for="f in p.features" :key="f">
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>{{ f }}

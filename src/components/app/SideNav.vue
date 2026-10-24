@@ -10,6 +10,8 @@ import { useUi } from '../../composables/useUi'
 import { useOnboarding } from '../../composables/useOnboarding'
 import AppIcon from './AppIcon.vue'
 import ProjectIcon from './ProjectIcon.vue'
+import DeleteProjectDialog from './DeleteProjectDialog.vue'
+import { api } from '../../services/api'
 
 const emit = defineEmits(['collapse'])
 const PERSONAL = [
@@ -20,7 +22,6 @@ const PERSONAL = [
   { key: 'favorites', icon: 'star', label: 'Favoritos', to: '/favoritos' },
 ]
 const MORE = [
-  { key: 'views', icon: 'layers', label: 'Visões', to: '/visoes' },
   { key: 'cycles', icon: 'cycle', label: 'Ciclos', to: '/ciclos' },
   { key: 'analytics', icon: 'chart', label: 'Análises', to: '/analises' },
   { key: 'archives', icon: 'archive', label: 'Arquivados', to: '/arquivados' },
@@ -31,7 +32,6 @@ const SUB = [
   { key: null, icon: 'items', label: 'Itens de trabalho', path: '' },
   { key: 'cycles', icon: 'cycle', label: 'Ciclos', path: '/ciclos' },
   { key: 'modules', icon: 'module', label: 'Módulos', path: '/modulos' },
-  { key: 'views', icon: 'layers', label: 'Visões', path: '/visoes' },
   { key: 'pages', icon: 'page', label: 'Páginas', path: '/paginas' },
   { key: null, icon: 'chat', label: 'Chat', path: '/chat' },
   { key: null, icon: 'user', label: 'Membros', path: '/membros' },
@@ -44,13 +44,26 @@ const TRY = [
 const FEATURES = [
   { key: 'cycles', label: 'Ciclos' },
   { key: 'modules', label: 'Módulos' },
-  { key: 'views', label: 'Visões' },
   { key: 'pages', label: 'Páginas' },
 ]
 
 const route = useRoute()
 const router = useRouter()
 const { state, createProject, archiveProject } = useWorkspace()
+
+// selo do plano no rodapé: grátis → assinar; em teste → dias que faltam; pago → abre Planos e cobrança
+const plan = ref(null)
+api('/api/billing/').then((b) => (plan.value = b.subscription && { ...b.subscription, name: b.plans.find((p) => p.code === b.subscription.plan)?.name })).catch(() => {})
+const planBadge = computed(() => {
+  const s = plan.value
+  if (!s) return null
+  if (s.status === 'trialing' && s.trial_ends_at) {
+    const days = Math.max(0, Math.ceil((new Date(s.trial_ends_at) - Date.now()) / 864e5))
+    return { text: `Teste do ${s.name}: ${days} ${days === 1 ? 'dia' : 'dias'}`, to: `/checkout?plano=${s.plan}&ciclo=anual` }
+  }
+  if (s.plan === 'free' || s.status === 'canceled') return { text: 'Assinar um plano', to: '/checkout?plano=business&ciclo=anual' }
+  return { text: `Plano ${s.name}${s.status === 'past_due' ? ' · pagamento pendente' : ''}`, to: '/ajustes?tab=billing' }
+})
 const { newTask, toast } = useUi()
 const { complete } = useOnboarding()
 const prefs = computed(() => state.prefs)
@@ -68,6 +81,7 @@ const openProjects = reactive(new Set())
 const reduced = prefersReducedMotion()
 
 // projeto da rota atual fica aberto no menu
+const deleting = ref(null)
 const currentProject = computed(() => (route.path.match(/^\/projetos\/(\d+)/) || [])[1])
 watch(currentProject, (id) => id && openProjects.add(Number(id)), { immediate: true })
 
@@ -82,12 +96,13 @@ function togglePin(key) {
 // Abrir/fechar seções e projetos: altura até o conteúdo e os itens descendo em cascata
 function onEnter(el, done) {
   if (reduced) return done()
-  gsap.fromTo(el, { height: 0, autoAlpha: 0 }, { height: 'auto', autoAlpha: 1, duration: 0.3, ease: 'power3.out', onComplete: done })
+  // overflow só durante a animação: parado, ele cortaria o menu ⋯ dos projetos
+  gsap.fromTo(el, { height: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', autoAlpha: 1, duration: 0.3, ease: 'power3.out', clearProps: 'overflow', onComplete: done })
   gsap.from(el.children, { x: -6, autoAlpha: 0, duration: 0.25, stagger: 0.03, ease: 'power2.out', delay: 0.05 })
 }
 function onLeave(el, done) {
   if (reduced) return done()
-  gsap.to(el, { height: 0, autoAlpha: 0, duration: 0.22, ease: 'power2.in', onComplete: done })
+  gsap.to(el, { height: 0, autoAlpha: 0, overflow: 'hidden', duration: 0.22, ease: 'power2.in', onComplete: done })
 }
 // Painel "Mais" desliza da borda da barra lateral
 function onMoreEnter(el, done) {
@@ -204,6 +219,7 @@ onUnmounted(() => {
               <button type="button" role="menuitem" @click="copyLink(p)"><AppIcon name="arrow" :size="15" />Copiar link</button>
               <RouterLink v-if="p.my_permission === 'full'" role="menuitem" :to="`${base(p)}/membros`" @click="menuFor = null"><AppIcon name="user" :size="15" />Convidar pessoas</RouterLink>
               <button v-if="state.isAdmin && !p.shared" type="button" role="menuitem" @click="archive(p)"><AppIcon name="archive" :size="15" />Arquivar</button>
+              <button v-if="state.isAdmin && !p.shared" type="button" role="menuitem" class="danger" @click="menuFor = null; deleting = p"><AppIcon name="trash" :size="15" />Excluir</button>
               <RouterLink v-if="p.shared" role="menuitem" :to="`${base(p)}/membros`" @click="menuFor = null"><AppIcon name="close" :size="15" />Sair do projeto</RouterLink>
             </div>
           </div>
@@ -229,7 +245,7 @@ onUnmounted(() => {
       </div>
     </Transition>
   </div>
-  <RouterLink to="/#planos" class="trial">Teste do Business: 13 dias</RouterLink>
+  <RouterLink v-if="planBadge" :to="planBadge.to" class="trial">{{ planBadge.text }}</RouterLink>
 
   <Teleport to="body">
     <Transition :css="false" @enter="onMoreEnter" @leave="onMoreLeave">
@@ -263,6 +279,7 @@ onUnmounted(() => {
       </section>
     </div>
   </Teleport>
+  <DeleteProjectDialog :project="deleting" @close="deleting = null" />
 </template>
 
 <style scoped>
@@ -275,7 +292,7 @@ onUnmounted(() => {
 .new-btn:hover { border-color: var(--accent); }
 kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radius: 4px; font: 500 11px/1.3 'Geist Mono', monospace; color: var(--muted); }
 .side__group { display: flex; flex-direction: column; gap: 1px; }
-.sect, .sub { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+.sect, .sub { display: flex; flex-direction: column; gap: 1px; }
 .side__label { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0.25rem 0.5rem; border: 0; border-radius: 6px; background: none; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; text-align: left; }
 button.side__label:hover, .label-btn:hover { color: var(--text); }
 .label-btn { display: flex; align-items: center; justify-content: space-between; flex: 1; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
@@ -296,7 +313,7 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .proj__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .proj__chev { opacity: 0; }
 .proj__row:hover .proj__chev, .proj__btn:focus-visible .proj__chev { opacity: 1; }
-.emoji { width: 17px; font-size: 14px; line-height: 1; text-align: center; }
+.emoji { display: inline-flex; flex-shrink: 0; overflow: hidden; width: 17px; font-size: 14px; line-height: 1; text-align: center; }
 .dot { flex-shrink: 0; width: 8px; height: 8px; margin: 0 4.5px; border-radius: 2px; }
 .pmenu-btn { position: absolute; right: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s; }
 .proj__row:hover .pmenu-btn, .pmenu-btn:focus-visible, .pmenu-btn[aria-expanded='true'] { opacity: 1; }
@@ -304,6 +321,7 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .pmenu { position: absolute; top: 32px; right: 0; z-index: 40; display: flex; flex-direction: column; min-width: 12rem; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 34px rgb(0 0 0 / 0.45); }
 .pmenu a, .pmenu button { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; color: var(--text); text-decoration: none; text-align: left; cursor: pointer; }
 .pmenu a:hover, .pmenu button:hover { background: var(--surface-2); }
+.pmenu .danger { color: #ff8a7a; }
 .sub { margin: 1px 0 4px 1rem; padding-left: 0.5rem; border-left: 1px solid var(--line); }
 .sub__link { padding: 0.34rem 0.5rem; font-size: 13px; }
 .new-project input { width: 100%; height: 30px; margin-top: 2px; padding: 0 0.5rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; }

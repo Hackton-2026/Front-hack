@@ -10,6 +10,20 @@ export { gsap }
 // data-calm = "Modo de desempenho" ligado nos Ajustes
 export const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.calm === 'on'
 
+// Mesma entrada de letras na página inicial, no blog e no Como funciona.
+export function revealTitleCharacters(targets) {
+  return gsap.from(targets, {
+    y: 10,
+    opacity: 0,
+    filter: 'blur(10px)',
+    duration: 1,
+    ease: 'expo.out',
+    stagger: 0.045,
+    delay: 0.15,
+    clearProps: 'transform,opacity,filter',
+  })
+}
+
 /**
  * v-reveal            → o elemento aparece suave ao entrar na tela
  * v-reveal.stagger    → os filhos aparecem em cascata

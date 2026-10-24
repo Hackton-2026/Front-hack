@@ -19,7 +19,7 @@ onUnmounted(() => { tween?.scrollTrigger?.kill(); tween?.kill() })
       <div class="cta__content">
         <h2 class="cta__title">Fale com a gente antes do próximo sprint.</h2>
         <div class="cta__btns">
-          <GooeyButton variant="primary" size="lg" href="mailto:contato@novexo.app">
+          <GooeyButton variant="primary" size="lg" to="/contato?assunto=comercial">
             Agendar demo
             <svg class="cta__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.47 19.53a.75.75 0 0 1 0-1.06l5.72-5.72H4a.75.75 0 0 1 0-1.5h14.19l-5.72-5.72a.75.75 0 0 1 1.06-1.06l7 7a.75.75 0 0 1 0 1.06l-7 7c-.3.3-.77.3-1.06 0Z" /></svg>
           </GooeyButton>

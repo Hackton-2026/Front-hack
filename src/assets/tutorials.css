@@ -1,0 +1,384 @@
+/* Visual compartilhado pelas páginas públicas de tutoriais e soluções. */
+.tutorial-page[class] {
+  --footer-transition-color: #0c0b0a;
+  --tutorial-line: rgb(255 255 255 / 0.12);
+  --tutorial-muted: #ada39a;
+  --tutorial-accent: #ffb77f;
+  background:
+    radial-gradient(ellipse 65% 620px at 75% 0, rgb(130 60 27 / 0.19), transparent 85%), #0c0b0a;
+  overflow-x: clip;
+}
+
+.tutorial-page main.guide {
+  width: min(1280px, calc(100% - 96px));
+  padding: 166px 0 100px;
+}
+
+.tutorial-page .guide > .intro {
+  position: relative;
+  max-width: 960px;
+  margin-bottom: 100px;
+}
+
+.tutorial-page .intro > .label {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: #d8b398;
+}
+
+.tutorial-page .intro > .label::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: #eaa06d;
+}
+
+.tutorial-page .intro > h1 {
+  margin-bottom: 30px;
+  font-size: clamp(48px, 6.7vw, 90px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.tutorial-page .intro > h1 em {
+  display: inline-block;
+  color: #f7b786;
+}
+
+.tutorial-page .intro > p:last-child {
+  max-width: 620px;
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--tutorial-muted);
+}
+
+/* Texto à esquerda e vídeo à direita, mantendo a ordem de leitura do HTML. */
+.tutorial-page main.guide > section:not(.update-entry) {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  gap: 50px 64px;
+  align-items: center;
+  border-top: 1px solid var(--tutorial-line);
+  padding-top: 48px;
+  margin-top: 0;
+}
+
+.tutorial-page main.guide > section:not(.update-entry) + section:not(.update-entry) {
+  margin-top: 100px;
+}
+
+.tutorial-page .guide .step-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+  margin: 0;
+}
+
+.tutorial-page .guide .step-number {
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(150deg, #ffd8b8 5%, #e58a46 75%, #995733);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: clamp(60px, 5vw, 76px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  padding: 0.04em 0.06em;
+  margin-left: -0.06em;
+}
+
+.tutorial-page .guide .step-heading h2,
+.tutorial-page .guide .image-description h2 {
+  max-width: 410px;
+  margin-bottom: 20px;
+  font-size: clamp(25px, 2.4vw, 34px);
+  font-weight: 500;
+  line-height: 1.16;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.tutorial-page .guide .step-heading p,
+.tutorial-page .guide .image-description p {
+  max-width: 420px;
+  color: var(--tutorial-muted);
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.tutorial-page .guide figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.tutorial-page .guide .video-placeholder,
+.tutorial-page .guide video,
+.tutorial-page .guide .screenshot,
+.tutorial-page .guide .prompt-preview {
+  border: 1px solid rgb(219 172 135 / 0.24);
+  border-radius: 20px;
+  box-shadow: 0 20px 70px -30px #000;
+}
+
+.tutorial-page .guide .video-placeholder {
+  position: relative;
+  isolation: isolate;
+  gap: 16px;
+  padding: 30px;
+  background:
+    radial-gradient(ellipse at 75% 10%, rgb(174 93 43 / 0.12), transparent 70%),
+    linear-gradient(145deg, #1b1713, #0d0c0a 75%);
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+.tutorial-page .guide .video-placeholder:hover {
+  border-color: rgb(251 164 92 / 0.5);
+  box-shadow: 0 20px 80px -35px #b7663430;
+}
+
+.tutorial-page .guide .video-placeholder > svg {
+  box-sizing: content-box;
+  width: 34px;
+  height: 34px;
+  padding: 20px;
+  border: 1px solid #ffffff25;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.025);
+  stroke: #e8b58d;
+}
+
+.tutorial-page .guide .video-placeholder > span {
+  color: #ded0c3;
+  font-size: 14px;
+}
+
+.tutorial-page .guide .video-placeholder > p {
+  max-width: 320px;
+  color: #95877c;
+  font-size: 12px;
+}
+
+.tutorial-page .guide figcaption {
+  margin-top: 16px;
+  color: #9b8c80;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.tutorial-page .guide > .guide-end {
+  margin-top: 90px;
+  padding: 34px 0 0;
+  border-top: 1px solid var(--tutorial-line);
+  gap: 32px;
+}
+
+.tutorial-page .guide > .availability {
+  display: inline-block;
+  margin-bottom: 36px;
+  border-radius: 999px;
+  background: #c06f3210;
+}
+
+/* O print completo da IA precisa de mais espaço para continuar legível. */
+.tutorial-page.ai-guide main.guide > section {
+  grid-template-columns: 1fr;
+  gap: 36px;
+}
+
+.tutorial-page.ai-guide .guide .step-heading {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.tutorial-page.ai-guide .guide .step-heading h2,
+.tutorial-page.ai-guide .guide .step-heading p {
+  max-width: 700px;
+}
+
+.tutorial-page.ai-guide .guide .prompt-preview {
+  padding: 48px clamp(24px, 8vw, 140px);
+  background: radial-gradient(ellipse at top right, #52301c40, transparent 70%), #080706;
+}
+
+.tutorial-page.ai-guide .guide .examples,
+.tutorial-page.ai-guide .guide .note {
+  margin-top: 0;
+}
+
+.tutorial-page .guide .image-description {
+  margin: 0;
+}
+
+.tutorial-page .guide > .update-entry {
+  padding: 36px 0;
+}
+
+@media (max-width: 1000px) {
+  .tutorial-page main.guide {
+    width: calc(100% - 56px);
+    padding-top: 140px;
+  }
+
+  .tutorial-page main.guide > section:not(.update-entry) {
+    column-gap: 36px;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .tutorial-page main.guide {
+    width: calc(100% - 40px);
+    padding: 118px 0 60px;
+  }
+
+  .tutorial-page .guide > .intro {
+    margin-bottom: 60px;
+  }
+
+  .tutorial-page .intro > h1 {
+    font-size: clamp(42px, 9vw, 62px);
+  }
+
+  .tutorial-page .intro > p:last-child {
+    font-size: 16px;
+  }
+
+  .tutorial-page main.guide > section:not(.update-entry),
+  .tutorial-page.ai-guide main.guide > section {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 30px;
+  }
+
+  .tutorial-page main.guide > section:not(.update-entry) + section:not(.update-entry) {
+    margin-top: 64px;
+  }
+
+  .tutorial-page .guide .step-heading,
+  .tutorial-page.ai-guide .guide .step-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .tutorial-page .guide .step-number {
+    font-size: 56px;
+  }
+
+  .tutorial-page .guide .step-heading p,
+  .tutorial-page .guide .image-description p {
+    max-width: none;
+    line-height: 1.75;
+  }
+
+  .tutorial-page .guide .video-placeholder,
+  .tutorial-page .guide video {
+    border-radius: 14px;
+  }
+
+  .tutorial-page .guide .video-placeholder > svg {
+    width: 25px;
+    height: 25px;
+    padding: 13px;
+  }
+
+  .tutorial-page .guide .video-placeholder {
+    gap: 9px;
+    padding: 18px;
+  }
+
+  .tutorial-page .guide > .guide-end {
+    margin-top: 55px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-page .guide .video-placeholder {
+    transition: none;
+  }
+}
+
+/* As linhas aparecem progressivamente na entrada de cada etapa. */
+.tutorial-page main.guide > section {
+  position: relative;
+}
+
+.tutorial-page main.guide > section::before {
+  content: '';
+  position: absolute;
+  inset: -1px 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, #d9884b, #f3bf9360 55%, transparent);
+  transform: scaleX(var(--line-progress, 1));
+  transform-origin: left;
+  pointer-events: none;
+}
+
+.tutorial-page .guide .video-placeholder::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    320px circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    #fba45c12,
+    transparent 75%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .tutorial-page .guide .video-placeholder {
+    transition:
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.4s,
+      box-shadow 0.4s;
+  }
+  .tutorial-page .guide .video-placeholder:hover {
+    transform: translateY(-5px);
+  }
+  .tutorial-page .guide .video-placeholder:hover::after {
+    opacity: 1;
+  }
+  .tutorial-page .guide .video-placeholder > svg {
+    transition:
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      background 0.4s,
+      border-color 0.4s;
+  }
+  .tutorial-page .guide .video-placeholder:hover > svg {
+    transform: scale(1.1);
+    border-color: #fba45c70;
+    background: #e58a4612;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-page .guide .video-placeholder::after {
+    display: none;
+  }
+}

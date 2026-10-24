@@ -58,6 +58,7 @@ footer { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25
 .box :deep(:is(input, textarea, select):focus) { border-color: var(--accent); }
 .box :deep(.btn) { padding: 0.5rem 0.95rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); font-weight: 500; color: var(--text); cursor: pointer; }
 .box :deep(.btn.primary) { border-color: var(--accent); background: var(--accent); color: #140700; }
+.box :deep(.btn.danger) { border-color: #d9483b; background: #d9483b; color: #fff; }
 .box :deep(.btn:disabled) { opacity: 0.5; cursor: not-allowed; }
 .box :deep(.chips) { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .box :deep(.chip) { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }

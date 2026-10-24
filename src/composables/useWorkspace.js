@@ -1,6 +1,7 @@
 import { computed, reactive, toRaw, watch } from 'vue'
 import { api } from '../services/api'
 import { useUi } from './useUi'
+import { PROJECT_ICONS } from '../components/app/projectIcons'
 
 // Dados da área logada. Projetos, tarefas (com checklist e etiquetas), membros, atividade e caixa de entrada
 // vêm da API do Back-hack (/api/...). Rascunhos, wiki e preferências são pessoais e ficam no navegador.
@@ -253,7 +254,9 @@ export function useWorkspace() {
   }
   async function createProject(name, color = '#e56515') {
     try {
-      const p = await api('/api/projects/', { method: 'POST', body: { name, color } })
+      // projeto novo nasce com um ícone sorteado (dá para trocar na visão geral)
+      const icon = PROJECT_ICONS[Math.floor(Math.random() * PROJECT_ICONS.length)]
+      const p = await api('/api/projects/', { method: 'POST', body: { name, color, icon } })
       state.projects.push(p)
       refreshFeed()
       return p
@@ -340,9 +343,10 @@ export function useWorkspace() {
       return false
     }
   }
-  async function archiveProject(p) {
+  // hard: exclui de vez (tarefas, ciclos, páginas e chat juntos); sem ele, só arquiva
+  async function archiveProject(p, hard = false) {
     try {
-      await api(`/api/projects/${p.id}/`, { method: 'DELETE' })
+      await api(`/api/projects/${p.id}/${hard ? '?hard=1' : ''}`, { method: 'DELETE' })
       state.projects.splice(state.projects.indexOf(p), 1)
       for (const k of ['cycles', 'modules', 'pages', 'views']) state[k] = state[k].filter((x) => x.project !== p.id)
       state.tasks = state.tasks.filter((t) => t.projectId !== p.id)

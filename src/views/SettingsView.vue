@@ -12,11 +12,13 @@ import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import GooeyButton from '../components/GooeyButton.vue'
 import SettingsList from '../components/app/SettingsList.vue'
+import WhatsAppSettings from '../components/app/WhatsAppSettings.vue'
 import AppSelect from '../components/app/AppSelect.vue'
 import IntegrationsPanel from '../components/app/IntegrationsPanel.vue'
+import DeleteProjectDialog from '../components/app/DeleteProjectDialog.vue'
 
 const GROUPS = [
-  { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações']] },
+  { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações'], ['whatsapp', 'WhatsApp']] },
   { label: 'Administração', tabs: [['general', 'Geral'], ['members', 'Pessoas'], ['billing', 'Planos e cobrança'], ['import', 'Importar'], ['export', 'Exportar'], ['worklogs', 'Registros de horas'], ['identity', 'Identidade'], ['governance', 'Governança'], ['schedule', 'Cronograma de trabalho']] },
   { label: 'Produtos', tabs: [['wiki', 'Wiki'], ['ai', 'Novexo IA']] },
   { label: 'Recursos', tabs: [['projects', 'Projetos'], ['teams', 'Times'], ['initiatives', 'Iniciativas'], ['customers', 'Clientes'], ['templates', 'Modelos'], ['tags', 'Etiquetas'], ['integrations', 'Integrações'], ['releases', 'Lançamentos']] },
@@ -45,7 +47,7 @@ const VIEWS = [['list', 'Lista'], ['board', 'Quadro'], ['calendar', 'Calendário
 const ROLES = [['admin', 'Admin'], ['member', 'Membro'], ['limited', 'Membro limitado'], ['guest', 'Convidado']]
 const ROLE_NAMES = { owner: 'Dono', ...Object.fromEntries(ROLES) }
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['views', 'Visões'], ['pages', 'Páginas']]
+const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['pages', 'Páginas']]
 
 // Formulários das telas de lista (SettingsList)
 const opts = (pairs) => pairs.map(([value, label]) => ({ value, label }))
@@ -104,6 +106,7 @@ const tab = ref(route.query.tab || 'profile') // o menu da conta abre direto em 
 watch(() => route.query.tab, (t) => { if (t) tab.value = t })
 const panel = ref(null)
 const status = ref('')
+const deleting = ref(null)
 const confirm2 = ref('') // ação perigosa esperando o segundo clique
 const isAdmin = computed(() => state.isAdmin)
 const myRole = computed(() => state.members.find((m) => m.id === state.me)?.role)
@@ -203,14 +206,28 @@ watch(() => state.slug, (s) => (slugInput.value = s), { immediate: true })
 const origin = location.origin
 
 // ---- Planos
+// O pagamento é na página de checkout (/checkout, Pix ou cartão pelo app billing); aqui ficam o plano, os botões e o histórico.
 const billing = ref(null)
+const payments = ref([])
+const yearly = ref(false)
 async function loadBilling() {
-  try { billing.value = await api('/api/billing/') } catch (e) { status.value = e.message }
+  try {
+    const [b, list] = await Promise.all([api('/api/billing/'), api('/api/payments/').catch(() => [])])
+    billing.value = b
+    payments.value = list
+  } catch (e) { status.value = e.message }
 }
-// aberto direto na aba (link "?tab=billing"): o watch do tab só roda quando a aba muda
+// aberto direto na aba (link "?tab=billing", a volta do checkout): o watch do tab só roda quando a aba muda
 if (tab.value === 'billing') loadBilling()
 if (tab.value === 'notify') loadDevices()
 const price = (cents) => (cents == null ? 'Sob consulta' : cents === 0 ? 'Grátis' : `R$ ${(cents / 100).toLocaleString('pt-BR')}/membro/mês`)
+const planPrice = (p) => (yearly.value && p.price_year_cents ? price(p.price_year_cents) : price(p.price_month_cents))
+const SUB_STATUS = { active: 'Ativa', trialing: 'Em teste', past_due: 'Pagamento pendente', canceled: 'Cancelada' }
+const current = computed(() => billing.value?.subscription)
+const isCurrent = (p) => current.value?.plan === p.code && current.value?.status !== 'canceled'
+const checkoutLink = (p) => `/checkout?plano=${p.code}&ciclo=${yearly.value ? 'anual' : 'mensal'}`
+const brl = (cents) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const PAY_STATUS = { approved: 'ok', pending: 'wait', rejected: 'bad', expired: 'bad', canceled: 'bad' }
 
 // ---- Cronograma
 const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
@@ -385,6 +402,7 @@ async function onImport(e) {
           </ul>
         </template>
 
+        <WhatsAppSettings v-else-if="tab === 'whatsapp'" />
         <template v-else-if="tab === 'notify'">
           <div class="bar">
             <strong>Navegador</strong>
@@ -462,13 +480,35 @@ async function onImport(e) {
           <template v-else>
             <div class="bar">
               <strong>Plano atual</strong>
-              <span>{{ billing.subscription ? billing.plans.find((p) => p.code === billing.subscription.plan)?.name || billing.subscription.plan : 'Grátis' }}</span>
-              <span v-if="billing.subscription?.trial_ends_at" class="hint">· teste até {{ fmtDate(billing.subscription.trial_ends_at) }}</span>
+              <span>{{ current ? billing.plans.find((p) => p.code === current.plan)?.name || current.plan : 'Grátis' }}</span>
+              <span v-if="current?.status && current.status !== 'active'" class="hint">· {{ SUB_STATUS[current.status] }}</span>
+              <span v-if="current?.trial_ends_at" class="hint">· teste até {{ fmtDate(current.trial_ends_at) }}</span>
+              <span v-if="current?.current_period_end && current.plan !== 'free'" class="hint">· vale até {{ fmtDate(current.current_period_end) }}</span>
+            </div>
+            <div class="seg billing-seg" role="group" aria-label="Período">
+              <label><input v-model="yearly" type="radio" name="period" :value="false" />Mensal</label>
+              <label><input v-model="yearly" type="radio" name="period" :value="true" />Anual <small>20% off</small></label>
             </div>
             <ul class="plans">
-              <li v-for="p in billing.plans" :key="p.code" :class="{ on: billing.subscription?.plan === p.code }"><strong>{{ p.name }}</strong><span class="hint">{{ price(p.price_month_cents) }}</span></li>
+              <li v-for="p in billing.plans" :key="p.code" :class="{ on: isCurrent(p) }">
+                <strong>{{ p.name }}</strong><span class="hint">{{ planPrice(p) }}</span>
+                <span v-if="isCurrent(p) && !(p.price_month_cents && current?.current_period_end)" class="hint">Seu plano</span>
+                <RouterLink v-else-if="isAdmin && p.price_month_cents" :to="checkoutLink(p)" class="pg-btn" :class="{ primary: !isCurrent(p) }">{{ isCurrent(p) ? 'Renovar' : 'Assinar' }}</RouterLink>
+              </li>
             </ul>
-            <RouterLink to="/#planos" class="link">Comparar planos</RouterLink>
+            <p class="hint">Pagamento por Pix ou cartão (até 12x no anual), com o valor calculado pelas pessoas do workspace. <RouterLink to="/#planos" class="link">Comparar planos</RouterLink></p>
+            <template v-if="payments.length">
+              <h3 class="pay-title">Pagamentos</h3>
+              <ul class="rows pays">
+                <li v-for="p in payments" :key="p.id">
+                  <span class="pay-when">{{ fmtDate(p.paid_at || p.created_at) }}</span>
+                  <span class="pay-what">{{ p.plan_name }} · {{ p.interval === 'year' ? 'anual' : 'mensal' }} · {{ p.seats }} {{ p.seats === 1 ? 'pessoa' : 'pessoas' }}</span>
+                  <span class="pay-how">{{ p.method === 'pix' ? 'Pix' : `Cartão ${p.card_brand} •••• ${p.card_last4}`.trim() }}<template v-if="p.installments > 1"> em {{ p.installments }}x</template></span>
+                  <strong>{{ brl(p.amount_cents) }}</strong>
+                  <span class="pay-status" :class="PAY_STATUS[p.status]">{{ p.status_label }}</span>
+                </li>
+              </ul>
+            </template>
           </template>
         </template>
 
@@ -601,6 +641,8 @@ async function onImport(e) {
             </ul>
             <h3>Zona de perigo</h3>
             <button type="button" class="danger" @click="twice('archive', () => archiveProject(proj).then((ok) => ok && (status = 'Projeto arquivado. Ele fica em Arquivados.')))">{{ confirm2 === 'archive' ? 'Clique de novo para arquivar' : 'Arquivar projeto' }}</button>
+            <button v-if="state.isAdmin" type="button" class="danger" @click="deleting = proj">Excluir projeto</button>
+            <DeleteProjectDialog :project="deleting" @close="deleting = null" />
           </template>
         </template>
 
@@ -699,6 +741,18 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .plans li { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
 .plans li.on { border-color: var(--accent); }
+.plans li .pg-btn { justify-content: center; margin-top: 0.35rem; text-decoration: none; }
+.billing-seg { margin: 0.75rem 0; }
+.billing-seg small { margin-left: 0.3rem; color: var(--muted); }
+.pay-title { margin: 1.25rem 0 0.4rem; font-size: 13px; font-weight: 600; color: var(--text); }
+.pays li { flex-wrap: wrap; }
+.pay-when { width: 8.5rem; color: var(--muted); white-space: nowrap; }
+.pay-what { flex: 1; min-width: 10rem; }
+.pay-how { color: var(--muted); }
+.pay-status { padding: 0.1rem 0.45rem; border-radius: 5px; background: var(--surface-2); font-size: 11.5px; }
+.pay-status.ok { color: #7fc47a; }
+.pay-status.wait { color: #f2c46d; }
+.pay-status.bad { color: #ff8a80; }
 .days { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .days button { min-width: 2.75rem; padding: 0.3rem 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .days button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent); color: #fff; }

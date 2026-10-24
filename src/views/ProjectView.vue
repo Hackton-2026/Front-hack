@@ -101,7 +101,7 @@ const scope = computed(() => {
     if (!v) return null
     const f = v.config || {}
     const has = (k, val) => !f[k]?.length || f[k].includes(val)
-    return { kind: 'Visão', name: v.name, back: 'visoes', defaults: {}, match: (t) => has('status', t.status) && has('priority', t.priority) && (!f.assignees?.length || t.assignees.some((a) => f.assignees.includes(a))) && (!f.tags?.length || t.tags.some((g) => f.tags.includes(g))) }
+    return { kind: 'Visão', name: v.name, back: '', defaults: {}, match: (t) => has('status', t.status) && has('priority', t.priority) && (!f.assignees?.length || t.assignees.some((a) => f.assignees.includes(a))) && (!f.tags?.length || t.tags.some((g) => f.tags.includes(g))) }
   }
   return { kind: '', name: '', match: () => true, defaults: {} }
 })
@@ -114,7 +114,8 @@ const add = () => newTask({ projectId: p.value.id, ...scope.value.defaults })
 
 watch([p, scope], ([v, s]) => (ui.crumb = !v ? 'Projeto não encontrado' : s?.kind ? `${v.name} › ${s.name}` : `${v.name} › Itens de trabalho`), { immediate: true })
 function setView(id) {
-  const query = { ...route.query, v: id === 'list' ? undefined : id }
+  // sem ?v= a página cai na visão padrão (Ajustes > Preferências), então só some quando é ela
+  const query = { ...route.query, v: id === state.prefs.defaultView ? undefined : id }
   props.view ? router.push({ path: `/projetos/${pid.value}`, query }) : router.replace({ query })
   if (id !== 'list') complete('view')
 }

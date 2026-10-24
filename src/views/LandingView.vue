@@ -3,6 +3,7 @@
 import { onMounted, onUnmounted } from 'vue'
 import Lenis from 'lenis'
 import 'lenis/dist/lenis.css'
+import '../assets/landing.css'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import SiteNav from '../components/landing/SiteNav.vue'
@@ -40,6 +41,7 @@ onUnmounted(() => {
 .lp {
   /* Paleta "Clockwork" das referências + preto do leonardo.ai */
   --lp-orange: #e56515;
+  --footer-transition-color: var(--lp-orange);
   --lp-orange-soft: #fba45c;
   --lp-grey: #919599;
   --lp-grey-light: #cdcdcb;
