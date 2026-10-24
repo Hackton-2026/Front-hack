@@ -10,9 +10,10 @@ import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import GooeyButton from '../components/GooeyButton.vue'
 import SettingsList from '../components/app/SettingsList.vue'
+import WhatsAppSettings from '../components/app/WhatsAppSettings.vue'
 
 const GROUPS = [
-  { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações']] },
+  { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações'], ['whatsapp', 'WhatsApp']] },
   { label: 'Administração', tabs: [['general', 'Geral'], ['members', 'Pessoas'], ['billing', 'Planos e cobrança'], ['import', 'Importar'], ['export', 'Exportar'], ['worklogs', 'Registros de horas'], ['identity', 'Identidade'], ['governance', 'Governança'], ['schedule', 'Cronograma de trabalho']] },
   { label: 'Produtos', tabs: [['wiki', 'Wiki'], ['ai', 'Novexo IA']] },
   { label: 'Recursos', tabs: [['projects', 'Projetos'], ['teams', 'Times'], ['initiatives', 'Iniciativas'], ['customers', 'Clientes'], ['templates', 'Modelos'], ['tags', 'Etiquetas'], ['integrations', 'Integrações'], ['releases', 'Lançamentos']] },
@@ -348,6 +349,7 @@ async function onImport(e) {
           </ul>
         </template>
 
+        <WhatsAppSettings v-else-if="tab === 'whatsapp'" />
         <template v-else-if="tab === 'notify'">
           <div class="bar">
             <strong>Navegador</strong>
