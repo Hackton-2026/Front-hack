@@ -313,7 +313,7 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .proj__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .proj__chev { opacity: 0; }
 .proj__row:hover .proj__chev, .proj__btn:focus-visible .proj__chev { opacity: 1; }
-.emoji { width: 17px; font-size: 14px; line-height: 1; text-align: center; }
+.emoji { display: inline-flex; flex-shrink: 0; overflow: hidden; width: 17px; font-size: 14px; line-height: 1; text-align: center; }
 .dot { flex-shrink: 0; width: 8px; height: 8px; margin: 0 4.5px; border-radius: 2px; }
 .pmenu-btn { position: absolute; right: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s; }
 .proj__row:hover .pmenu-btn, .pmenu-btn:focus-visible, .pmenu-btn[aria-expanded='true'] { opacity: 1; }

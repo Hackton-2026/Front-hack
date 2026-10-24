@@ -6,8 +6,54 @@ const router = createRouter({
   history: createWebHistory(),
   scrollBehavior: () => ({ top: 0 }),
   routes: [
+    {
+      path: '/solucoes/design',
+      component: () => import('./views/DesignView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/engenharia',
+      component: () => import('./views/EngenhariaView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/agencias',
+      component: () => import('./views/AgenciasView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/operacoes',
+      component: () => import('./views/OperacoesView.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/solucoes/educacao',
+      component: () => import('./views/EducacaoView.vue'),
+      meta: { bare: true },
+    },
+
+    {
+      path: '/produto/documentos',
+      component: () => import('./views/DocumentosTutorial.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/produto/automacoes',
+      component: () => import('./views/AutomacoesTutorial.vue'),
+      meta: { bare: true },
+    },
+    {
+      path: '/produto/integracoes',
+      component: () => import('./views/IntegracoesTutorial.vue'),
+      meta: { bare: true },
+    },
     // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
+    { path: '/produto/quadros', component: () => import('./views/QuadrosTutorial.vue'), meta: { bare: true } },
+    { path: '/produto/calendario', component: () => import('./views/CalendarioTutorial.vue'), meta: { bare: true } },
+    { path: '/produto/chat', component: () => import('./views/ChatTutorial.vue'), meta: { bare: true } },
+    { path: '/produto/tarefas', component: () => import('./views/TarefasTutorial.vue'), meta: { bare: true } },
+    { path: '/produto/ia', component: () => import('./views/AiTutorialView.vue'), meta: { bare: true } },
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
     { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true } }, // pagamento dos planos
     // Área logada do Novexo: meta.app = renderiza dentro da AppShell (App.vue); area marca o item do trilho
@@ -48,11 +94,26 @@ const router = createRouter({
     { path: '/ia', component: () => import('./views/AiView.vue'), meta: { app: true, auth: true, area: 'ai', title: 'Novexo IA', icon: 'ai' } },
     { path: '/ajustes', component: () => import('./views/SettingsView.vue'), meta: { app: true, auth: true, area: 'settings', title: 'Ajustes', icon: 'settings' } },
     { path: '/explorar', component: () => import('./views/ProductsView.vue') },
-    { path: '/meus', component: () => import('./views/ProductsView.vue'), props: { mine: true }, meta: { auth: true } },
+    {
+      path: '/meus',
+      component: () => import('./views/ProductsView.vue'),
+      props: { mine: true },
+      meta: { auth: true },
+    },
     { path: '/novo', component: () => import('./views/ProductFormView.vue'), meta: { auth: true } },
-    { path: '/editar/:id', component: () => import('./views/ProductFormView.vue'), props: true, meta: { auth: true } },
+    {
+      path: '/editar/:id',
+      component: () => import('./views/ProductFormView.vue'),
+      props: true,
+      meta: { auth: true },
+    },
     { path: '/perfil', component: () => import('./views/ProfileView.vue'), meta: { auth: true } },
-    { path: '/chat/:id?', component: () => import('./views/ChatView.vue'), props: true, meta: { auth: true } },
+    {
+      path: '/chat/:id?',
+      component: () => import('./views/ChatView.vue'),
+      props: true,
+      meta: { auth: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })

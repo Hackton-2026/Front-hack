@@ -21,7 +21,8 @@ export const ICONS = {
   briefcase: 'M3 7h18v13H3z M9 7V4h6v3 M3 12h18',
   sliders: 'M4 6h10 M18 6h2 M4 12h4 M12 12h8 M4 18h12 M16 4v4 M10 10v4 M16 16v4',
   cap: 'M2 9l10-5 10 5-10 5z M6 11v5c3 2 9 2 12 0v-5',
-  users: 'M9 11a3 3 0 1 0 0-6a3 3 0 1 0 0 6 M3 20c0-3 3-5 6-5s6 2 6 5 M16 5a3 3 0 0 1 0 6 M18 15c2 .5 3 2 3 5',
+  users:
+    'M9 11a3 3 0 1 0 0-6a3 3 0 1 0 0 6 M3 20c0-3 3-5 6-5s6 2 6 5 M16 5a3 3 0 0 1 0 6 M18 15c2 .5 3 2 3 5',
   terminal: 'M3 4h18v16H3z M7 9l3 3-3 3 M12 15h5',
   book: 'M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1z M12 6v14',
   news: 'M4 5h13v14H6a2 2 0 0 1-2-2z M17 9h3v8a2 2 0 0 1-2 2 M8 9h5 M8 13h5',
@@ -34,25 +35,37 @@ export const MENU = [
     label: 'Produto',
     columns: [
       [
-        { group: 'Planejar', items: [
-          { icon: 'tasks', title: 'Tarefas', desc: 'Listas, subtarefas e prioridades' },
-          { icon: 'board', title: 'Quadros', desc: 'Kanban para cada fluxo do time' },
-          { icon: 'calendar', title: 'Calendário', desc: 'Prazos e entregas lado a lado' },
-          { icon: 'goals', title: 'Metas', desc: 'Objetivos ligados ao trabalho real' },
-        ] },
+        {
+          group: 'Planejar',
+          items: [
+            { icon: 'tasks', title: 'Tarefas', desc: 'Listas, subtarefas e prioridades' },
+            { icon: 'board', title: 'Quadros', desc: 'Kanban para cada fluxo do time' },
+            { icon: 'calendar', title: 'Calendário', desc: 'Prazos e entregas lado a lado' },
+            { icon: 'goals', title: 'Metas', desc: 'Objetivos ligados ao trabalho real' },
+          ],
+        },
       ],
       [
-        { group: 'Colaborar', items: [
-          { icon: 'chat', title: 'Chat', desc: 'Conversas dentro de cada tarefa' },
-          { icon: 'docs', title: 'Documentos', desc: 'Wikis e specs junto das tarefas' },
-        ] },
-        { group: 'Automatizar', items: [
-          { icon: 'bolt', title: 'Automações', desc: 'Regras que fazem o repetitivo' },
-          { icon: 'plug', title: 'Integrações', desc: 'Conecte as ferramentas que já usa' },
-        ] },
+        {
+          group: 'Colaborar',
+          items: [
+            { icon: 'chat', title: 'Chat', desc: 'Conversas dentro de cada tarefa' },
+            { icon: 'docs', title: 'Documentos', desc: 'Wikis e specs junto das tarefas' },
+          ],
+        },
+        {
+          group: 'Automatizar',
+          items: [
+            { icon: 'bolt', title: 'Automações', desc: 'Regras que fazem o repetitivo' },
+            { icon: 'plug', title: 'Integrações', desc: 'Conecte as ferramentas que já usa' },
+          ],
+        },
       ],
       [
-        { group: 'Destaques', links: ['Novexo IA', 'Modelos prontos', 'Painéis', 'Controle de tempo'], more: 'Ver todos os recursos' },
+        {
+          group: 'Destaques',
+          links: ['Novexo IA'],
+        },
       ],
     ],
     feature: { title: 'Novo no Novexo? Aprenda o básico.', cta: 'Começar', art: elche },
@@ -61,16 +74,21 @@ export const MENU = [
     id: 'solucoes',
     label: 'Soluções',
     columns: [
-      [{ items: [
-        { icon: 'marketing', title: 'Marketing', desc: 'Campanhas do briefing à entrega' },
-        { icon: 'code', title: 'Engenharia', desc: 'Sprints, bugs e roadmap' },
-        { icon: 'pen', title: 'Design', desc: 'Revisões e aprovações sem ruído' },
-      ], more: 'Ver todas as soluções' }],
-      [{ items: [
-        { icon: 'briefcase', title: 'Agências', desc: 'Projetos de vários clientes' },
-        { icon: 'sliders', title: 'Operações', desc: 'Processos padronizados e medidos' },
-        { icon: 'cap', title: 'Educação', desc: 'Turmas, trabalhos e cronogramas' },
-      ] }],
+      [
+        {
+          items: [
+            { icon: 'code', title: 'Engenharia', desc: 'Sprints, bugs e roadmap' },
+            { icon: 'pen', title: 'Design', desc: 'Revisões e aprovações sem ruído' },
+          ],
+        },
+      ],
+      [
+        {
+          items: [
+            { icon: 'sliders', title: 'Operações', desc: 'Processos padronizados e medidos' },
+          ],
+        },
+      ],
     ],
     feature: { title: 'Dá para usar o Novexo com clientes?', cta: 'Veja como', art: malaga },
   },
@@ -78,10 +96,18 @@ export const MENU = [
     id: 'empresas',
     label: 'Empresas',
     columns: [
-      [{ items: [
-        { icon: 'users', title: 'Times e workspaces', desc: 'Espaços compartilhados com permissões' },
-        { icon: 'terminal', title: 'API e integrações', desc: 'Construa fluxos sob medida' },
-      ] }],
+      [
+        {
+          items: [
+            {
+              icon: 'users',
+              title: 'Times e workspaces',
+              desc: 'Espaços compartilhados com permissões',
+            },
+            { icon: 'terminal', title: 'API e integrações', desc: 'Construa fluxos sob medida' },
+          ],
+        },
+      ],
     ],
     feature: { title: 'Como um time de 40 pessoas cortou 30% das reuniões', cta: 'Ler o case', art: sardinero },
   },
@@ -89,14 +115,35 @@ export const MENU = [
     id: 'aprender',
     label: 'Aprender',
     columns: [
-      [{ items: [
-        { icon: 'book', title: 'Central Novexo', desc: 'Guias para dominar o Novexo.' },
-        { icon: 'news', title: 'Blog', desc: 'Produtividade e gestão de times.' },
-        { icon: 'play', title: 'Webinars', desc: 'Sessões ao vivo e gravadas.' },
-      ] }],
+      [
+        {
+          items: [
+            { icon: 'book', title: 'Central Novexo', desc: 'Guias para dominar o Novexo.' },
+            { icon: 'news', title: 'Blog', desc: 'Produtividade e gestão de times.' },
+            { icon: 'play', title: 'Webinars', desc: 'Sessões ao vivo e gravadas.' },
+          ],
+        },
+      ],
     ],
     feature: { title: 'Como escrever tarefas que se explicam sozinhas', cta: 'Saiba mais', art: salamanca },
   },
   { id: 'planos', label: 'Preços', href: '#planos' },
   { id: 'contato', label: 'Contato', href: '#contato' },
 ]
+
+// Rotas públicas de apresentação dos recursos.
+export const PRODUCT_LINKS = {
+  Design: '/solucoes/design',
+  Engenharia: '/solucoes/engenharia',
+  Agências: '/solucoes/agencias',
+  Operações: '/solucoes/operacoes',
+  Educação: '/solucoes/educacao',
+  Documentos: '/produto/documentos',
+  Automações: '/produto/automacoes',
+  Integrações: '/produto/integracoes',
+  'Novexo IA': '/produto/ia',
+  Chat: '/produto/chat',
+  Tarefas: '/produto/tarefas',
+  Quadros: '/produto/quadros',
+  Calendário: '/produto/calendario',
+}
