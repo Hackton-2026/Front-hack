@@ -5,6 +5,7 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { COVERS, UPDATE_STATES, useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
+import { api } from '../services/api'
 import AppIcon from '../components/app/AppIcon.vue'
 import ProjectIcon from '../components/app/ProjectIcon.vue'
 import { PROJECT_ICONS, iconClass } from '../components/app/projectIcons'
@@ -13,7 +14,7 @@ import ProgressRing from '../components/app/ProgressRing.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const { state, project, tasksOf, progress, updateProject, postUpdate, projectActivity, STATUSES, today } = useWorkspace()
-const { ui } = useUi()
+const { ui, toast } = useUi()
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
 
@@ -45,8 +46,29 @@ const ago = (iso) => {
   return m < 1 ? 'agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
+// materiais de apoio: links para documentos, pastas, Figma, repositório...
+const materials = ref([])
+const newLink = reactive({ url: '', name: '', open: false, error: '' })
+const canEdit = computed(() => ['edit', 'full'].includes(p.value?.my_permission))
+const host = (url) => { try { return new URL(url).hostname.replace(/^www\./, '') } catch { return url } }
+const linksApi = (path = '', opts) => api(`/api/projects/${pid.value}/links/${path}`, opts)
+const loadLinks = async () => { materials.value = await linksApi().catch(() => []) }
+async function addLink() {
+  const url = /^https?:\/\//i.test(newLink.url.trim()) ? newLink.url.trim() : `https://${newLink.url.trim()}`
+  try {
+    materials.value = await linksApi('', { method: 'POST', body: { url, name: newLink.name.trim() } })
+    Object.assign(newLink, { url: '', name: '', open: false, error: '' })
+  } catch (e) {
+    newLink.error = e.message
+  }
+}
+async function removeLink(l) {
+  try { await linksApi(`${l.id}/`, { method: 'DELETE' }); materials.value = materials.value.filter((x) => x !== l) } catch (e) { toast(e.message) }
+}
+
 async function refresh() {
   if (!p.value) return
+  loadLinks()
   loadingFeed.value = true
   try { feed.value = await projectActivity(pid.value) } catch { feed.value = [] } finally { loadingFeed.value = false }
 }
@@ -129,6 +151,27 @@ onMounted(async () => {
             <i class="fi-rr-arrow-small-right link__go" aria-hidden="true" />
           </RouterLink>
         </div>
+        <div class="sec-row">
+          <h2 class="sec">Materiais de apoio</h2>
+          <button v-if="canEdit && !newLink.open" type="button" class="add-link" @click="newLink.open = true"><AppIcon name="plus" :size="13" />Adicionar link</button>
+        </div>
+        <form v-if="newLink.open" class="link-form" @submit.prevent="addLink">
+          <input v-model="newLink.url" type="text" placeholder="https://drive.google.com/…" aria-label="Endereço do link" required @vue:mounted="({ el }) => el.focus()" />
+          <input v-model="newLink.name" type="text" maxlength="120" placeholder="Nome (opcional)" aria-label="Nome do link" />
+          <button type="submit" class="pg-btn primary" :disabled="!newLink.url.trim()">Adicionar</button>
+          <button type="button" class="pg-btn" @click="Object.assign(newLink, { open: false, error: '' })">Cancelar</button>
+          <p v-if="newLink.error" class="link-error" role="alert">{{ newLink.error }}</p>
+        </form>
+        <ul v-if="materials.length" class="materials">
+          <li v-for="l in materials" :key="l.id">
+            <a :href="l.url" target="_blank" rel="noopener noreferrer" class="material">
+              <span class="link__icon"><i class="fi-rr-link-alt" aria-hidden="true" /></span>
+              <span class="link__text"><strong>{{ l.name || host(l.url) }}</strong><small>{{ host(l.url) }}<template v-if="l.created_by"> · adicionado por {{ l.created_by }}</template></small></span>
+            </a>
+            <button v-if="canEdit" type="button" class="rm" :aria-label="`Remover ${l.name || host(l.url)}`" title="Remover" @click="removeLink(l)"><AppIcon name="trash" :size="13" /></button>
+          </li>
+        </ul>
+        <p v-else-if="!newLink.open" class="pg-muted">Nenhum link ainda. Guarde aqui a pasta do Drive, o Figma, o repositório ou documentos do projeto.</p>
         <template v-if="activeCycle">
           <h2 class="sec">Ciclo em andamento</h2>
           <RouterLink :to="`/projetos/${p.id}/ciclos/${activeCycle.id}`" class="cycle">
@@ -216,6 +259,24 @@ onMounted(async () => {
 .desc::placeholder { color: #5d5851; }
 .name:focus-visible, .desc:focus-visible { box-shadow: 0 0 0 1px var(--line-strong); }
 .sec { margin: 1.5rem 0 0.4rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font: 600 1.05rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
+/* materiais de apoio */
+.sec-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1.5rem 0 0.4rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+.sec-row .sec { margin: 0; padding: 0; border: 0; }
+.add-link { display: inline-flex; align-items: center; gap: 0.35rem; height: 28px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.add-link:hover { border-color: var(--line-strong); color: var(--text); }
+.link-form { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem; }
+.link-form input { flex: 1 1 12rem; min-width: 0; height: 32px; padding: 0 0.65rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13px; color: var(--text); outline: none; }
+.link-form input:focus { border-color: var(--accent); }
+.link-error { flex-basis: 100%; margin: 0; font-size: 12.5px; color: #ffb4ab; }
+.materials { display: flex; flex-direction: column; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.materials li { display: flex; align-items: center; gap: 0.4rem; }
+.material { display: flex; flex: 1; align-items: center; gap: 0.75rem; min-width: 0; padding: 0.55rem 0.75rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.2s var(--ease); }
+.material:hover { border-color: var(--line-strong); }
+.material .link__icon { width: 30px; height: 30px; font-size: 14px; }
+.material small { font-size: 12.5px; color: var(--muted); }
+.rm { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.rm:hover { background: var(--surface-2); color: var(--text); }
+:is(.add-link, .material, .rm):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.6rem; }
 .link, .cycle { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.2s var(--ease), translate 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .link:hover, .cycle:hover { border-color: var(--line-strong); translate: 0 -2px; }

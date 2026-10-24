@@ -5,6 +5,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
+import { api } from '../services/api'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
 
@@ -87,6 +88,22 @@ async function run(key, fn, done) {
   }
 }
 const cancel = (inv) => run(`inv-${inv.id}`, () => cancelInvite(pid.value, inv.id), refresh)
+
+// Link de convite: qualquer pessoa com ele cria a conta (ou entra) e já cai no projeto
+const link = ref(null) // { token, permission, uses } ou null
+const linkUrl = computed(() => link.value && `${location.origin}/entrar/${link.value.token}`)
+const linkApi = (opts) => api(`/api/projects/${pid.value}/invite-link/`, opts)
+watch(() => data.value?.can_manage, async (can) => { link.value = can ? await linkApi().catch(() => null) : null }, { immediate: true })
+const saveLink = (perm, newCode = false) => run('link', async () => { link.value = await linkApi({ method: 'POST', body: { permission: perm, new_code: newCode } }) })
+const dropLink = () => run('link', async () => { await linkApi({ method: 'DELETE' }); link.value = null })
+async function copyLink() {
+  try {
+    await navigator.clipboard.writeText(linkUrl.value)
+    ui.toast('Link copiado. Quem abrir cria a conta e já entra no projeto.')
+  } catch {
+    ui.toast('Não foi possível copiar. Selecione o link e copie manualmente.')
+  }
+}
 const changePerm = (m, perm) => run(`perm-${m.id}`, () => setProjectPermission(pid.value, m.id, perm), refresh)
 const remove = (m) => run(`rm-${m.id}`, () => removeProjectMember(pid.value, m.id), async () => { await refresh(); load() })
 async function leave() {
@@ -144,6 +161,32 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
         </div>
         <p class="hint">{{ PERMISSIONS.find((x) => x[0] === permission)[2] }}. A pessoa aceita entrando com esse e-mail (se já tem conta, o convite aparece na caixa de entrada dela).</p>
       </form>
+
+      <section v-if="data?.can_manage" class="card">
+        <h2>Link de convite</h2>
+        <template v-if="link">
+          <div class="row">
+            <label class="sr-only" for="invite-link">Link de convite</label>
+            <input id="invite-link" :value="linkUrl" readonly @focus="$event.target.select()" />
+            <button type="button" class="pg-btn primary" @click="copyLink">Copiar link</button>
+          </div>
+          <div class="row link-opts">
+            <AppSelect size="sm" :model-value="link.permission" :options="PERM_OPTIONS" :disabled="busy === 'link'" aria-label="Permissão de quem entra pelo link" @change="(v) => saveLink(v)" />
+            <span class="hint">{{ link.uses }} {{ link.uses === 1 ? 'pessoa entrou' : 'pessoas entraram' }} por ele</span>
+            <span class="spacer" />
+            <button type="button" class="pg-btn ghost" :disabled="busy === 'link'" @click="saveLink(link.permission, true)">Trocar link</button>
+            <button type="button" class="pg-btn ghost" :disabled="busy === 'link'" @click="dropLink">Desativar</button>
+          </div>
+          <p class="hint">Mande para quem quiser, mesmo quem ainda não tem conta: a pessoa cria a conta e já entra neste projeto. Trocar o link faz o antigo parar de funcionar.</p>
+        </template>
+        <template v-else>
+          <p class="hint">Gere um link para mandar no grupo ou no WhatsApp. Quem abrir cria a conta (ou entra) e já cai neste projeto.</p>
+          <div class="row">
+            <AppSelect v-model="permission" :options="PERM_OPTIONS" aria-label="Permissão de quem entra pelo link" />
+            <button type="button" class="pg-btn primary" :disabled="busy === 'link'" @click="saveLink(permission)">Criar link de convite</button>
+          </div>
+        </template>
+      </section>
 
       <section v-if="data" class="card">
         <h2>Quem participa</h2>
@@ -216,6 +259,9 @@ h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--text); }
 .row input { flex: 1 1 14rem; min-width: 0; height: 30px; padding: 0 0.65rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; }
 .row input:focus { border-color: var(--accent); }
 .hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+.row input[readonly] { color: var(--muted); }
+.link-opts { align-items: center; }
+.spacer { flex: 1; }
 .error { margin: 0; padding: 0.6rem 0.8rem; border: 1px solid rgb(229 101 21 / 0.45); border-radius: 8px; background: rgb(229 101 21 / 0.1); font-size: 13px; color: #ffd2b3; }
 .list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .person { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-top: 1px solid var(--line); }
