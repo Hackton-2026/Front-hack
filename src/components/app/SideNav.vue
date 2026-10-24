@@ -75,6 +75,16 @@ const sub = computed(() => SUB.filter((s) => !s.key || prefs.value.features[s.ke
 const moreOpen = ref(false)
 const customizing = ref(false)
 const menuFor = ref(null) // projeto com o menu "..." aberto
+const menuPos = ref({ top: 0, left: 0 })
+// o menu abre ao lado da barra lateral (fora dela), na altura do "...", sem passar do fim da tela
+function toggleMenu(p, e) {
+  if (menuFor.value === p.id) { menuFor.value = null; return }
+  const r = e.currentTarget.getBoundingClientRect()
+  const edge = e.currentTarget.closest('aside')?.getBoundingClientRect().right ?? r.right
+  menuPos.value = { top: Math.max(8, Math.min(r.top - 4, innerHeight - 250)), left: Math.max(edge, r.right) + 8 }
+  menuFor.value = p.id
+}
+const closeMenu = () => { menuFor.value = null }
 const addingProject = ref(false)
 const projectName = ref('')
 const projInput = ref(null)
@@ -166,9 +176,13 @@ function onKey(e) {
 watch(() => route.path, () => (moreOpen.value = false))
 onMounted(() => {
   addEventListener('click', onDocClick)
+  addEventListener('scroll', closeMenu, true) // rolou a barra ou a página: o menu ao lado ficaria solto
+  addEventListener('resize', closeMenu)
   addEventListener('keydown', onKey)
 })
 onUnmounted(() => {
+  removeEventListener('scroll', closeMenu, true)
+  removeEventListener('resize', closeMenu)
   removeEventListener('click', onDocClick)
   removeEventListener('keydown', onKey)
 })
@@ -214,8 +228,9 @@ onUnmounted(() => {
               <span v-if="p.shared" class="shared" :title="`Compartilhado por ${p.owner_name}`"><AppIcon name="user" :size="12" /></span>
               <AppIcon name="chevron" :size="13" class="chev proj__chev" />
             </button>
-            <button type="button" class="pmenu-btn" :aria-label="`Opções de ${p.name}`" :aria-expanded="menuFor === p.id" @click="menuFor = menuFor === p.id ? null : p.id"><AppIcon name="more" :size="15" /></button>
-            <div v-if="menuFor === p.id" class="pmenu" role="menu">
+            <button type="button" class="pmenu-btn" :aria-label="`Opções de ${p.name}`" :aria-expanded="menuFor === p.id" @click="toggleMenu(p, $event)"><AppIcon name="more" :size="15" /></button>
+            <Teleport defer to=".app">
+            <div v-if="menuFor === p.id" class="pmenu" role="menu" :style="{ top: `${menuPos.top}px`, left: `${menuPos.left}px` }">
               <RouterLink role="menuitem" :to="`${base(p)}/visao-geral`" @click="menuFor = null"><AppIcon name="overview" :size="15" />Abrir visão geral</RouterLink>
               <button type="button" role="menuitem" @click="copyLink(p)"><AppIcon name="arrow" :size="15" />Copiar link</button>
               <RouterLink v-if="p.my_permission === 'full'" role="menuitem" :to="`${base(p)}/membros`" @click="menuFor = null"><AppIcon name="user" :size="15" />Convidar pessoas</RouterLink>
@@ -223,6 +238,7 @@ onUnmounted(() => {
               <button v-if="state.isAdmin && !p.shared" type="button" role="menuitem" class="danger" @click="menuFor = null; deleting = p"><AppIcon name="trash" :size="15" />Excluir</button>
               <RouterLink v-if="p.shared" role="menuitem" :to="`${base(p)}/membros`" @click="menuFor = null"><AppIcon name="close" :size="15" />Sair do projeto</RouterLink>
             </div>
+            </Teleport>
           </div>
           <Transition :css="false" @enter="onEnter" @leave="onLeave">
             <div v-if="openProjects.has(p.id)" class="sub">
@@ -319,7 +335,7 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .pmenu-btn { position: absolute; right: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s; }
 .proj__row:hover .pmenu-btn, .pmenu-btn:focus-visible, .pmenu-btn[aria-expanded='true'] { opacity: 1; }
 .pmenu-btn:hover { background: var(--line); color: var(--text); }
-.pmenu { position: absolute; top: 32px; right: 0; z-index: 40; display: flex; flex-direction: column; min-width: 12rem; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 34px rgb(0 0 0 / 0.45); }
+.pmenu { position: fixed; z-index: 70; display: flex; flex-direction: column; min-width: 12rem; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 34px rgb(0 0 0 / 0.45); }
 .pmenu a, .pmenu button { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; color: var(--text); text-decoration: none; text-align: left; cursor: pointer; }
 .pmenu a:hover, .pmenu button:hover { background: var(--surface-2); }
 .pmenu .danger { color: #ff8a7a; }
