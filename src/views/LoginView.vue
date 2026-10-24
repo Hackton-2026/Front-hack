@@ -21,7 +21,8 @@ const toggleMode = () => {
   router.replace({ query: { ...route.query, modo: isRegister.value ? undefined : 'cadastro' } })
 }
 
-const form = reactive({ first_name: '', email: '', password: '', whatsapp: '' })
+// o e-mail digitado no rodapé do site chega pelo estado da navegação (não pela URL)
+const form = reactive({ first_name: '', email: String(history.state?.email || ''), password: '', whatsapp: '' })
 const showPassword = ref(false)
 const error = ref('')
 const loading = ref(false)

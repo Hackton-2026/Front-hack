@@ -1,6 +1,8 @@
 <script setup>
 // Rodapé (na linha da referência): foto de fundo, headline, e-mail em pílula de vidro e colunas de links
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth } from '../../composables/useAuth'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import GooeyButton from '../GooeyButton.vue'
 import FlaticonIcon from '../FlaticonIcon.vue'
@@ -20,14 +22,17 @@ const LINKS = {
 }
 const footerLink = (label) => LINKS[label] || '/#topo'
 
+// Fora da conta: o e-mail abre o cadastro já preenchido. Logado: vira um atalho para o workspace.
+const { user } = useAuth()
+const router = useRouter()
 const email = ref('')
-const joined = ref(false)
 const emailError = ref('')
-function joinWaitlist() {
-  // shortcut: só valida no front; ligar ao endpoint de lista de espera (tabela WaitlistEntry) quando a API existir
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) { emailError.value = 'Digite um e-mail válido.'; return }
+function startSignup() {
+  const value = email.value.trim()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { emailError.value = 'Digite um e-mail válido.'; return }
   emailError.value = ''
-  joined.value = true
+  // vai no estado da navegação, não na URL: o e-mail não fica no histórico nem em logs
+  router.push({ path: '/login', query: { modo: 'cadastro' }, state: { email: value } })
 }
 
 const root = ref(null)
@@ -58,14 +63,16 @@ onUnmounted(() => ctx?.revert())
 
     <div class="foot__head">
       <h2 class="foot__title">O Novexo ajuda times a criar rotinas que crescem com eles, em vez de serem substituídas</h2>
-      <form class="foot__form" novalidate @submit.prevent="joinWaitlist">
+      <div v-if="user" class="foot__form">
+        <span class="foot__hello">Que bom te ver, {{ user.first_name || user.username }}.</span>
+        <GooeyButton variant="secondary" size="lg" to="/inicio" class="foot__submit">Abrir workspace <FlaticonIcon name="arrow-right" :size="16" /></GooeyButton>
+      </div>
+      <form v-else class="foot__form" novalidate @submit.prevent="startSignup">
         <label for="foot-email" class="sr-only">E-mail de trabalho</label>
-        <input id="foot-email" v-model="email" type="email" placeholder="E-mail de trabalho" autocomplete="email" :disabled="joined" :aria-invalid="!!emailError" aria-describedby="foot-email-msg" />
-        <GooeyButton variant="secondary" size="lg" type="submit" :disabled="joined" class="foot__submit">
-          {{ joined ? 'Você está na lista' : 'Garantir acesso' }} <FlaticonIcon :name="joined ? 'check' : 'plus'" :size="16" />
-        </GooeyButton>
+        <input id="foot-email" v-model="email" type="email" placeholder="E-mail de trabalho" autocomplete="email" :aria-invalid="!!emailError" aria-describedby="foot-email-msg" @input="emailError = ''" />
+        <GooeyButton variant="secondary" size="lg" type="submit" class="foot__submit">Começar grátis <FlaticonIcon name="arrow-right" :size="16" /></GooeyButton>
       </form>
-      <p id="foot-email-msg" class="foot__msg" aria-live="polite">{{ emailError || (joined ? 'Pronto! Avisaremos você por e-mail.' : '') }}</p>
+      <p id="foot-email-msg" class="foot__msg" aria-live="polite">{{ emailError || (user ? '' : 'Sem cartão de crédito. Leva menos de um minuto.') }}</p>
     </div>
 
     <div class="foot__bottom">
@@ -143,12 +150,14 @@ onUnmounted(() => ctx?.revert())
 }
 .foot__form input { flex: 1; min-width: 0; padding: 0.9rem 1.5rem; border: 0; background: none; font: 400 1rem/1.2 var(--lp-sans); color: var(--lp-white); outline: none; }
 .foot__form input::placeholder { color: rgb(248 248 248 / 0.75); }
+.foot__hello { flex: 1; min-width: 0; padding: 0.9rem 1.5rem; font: 400 1rem/1.2 var(--lp-sans); color: var(--lp-white); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .foot__form:focus-within { border-color: rgb(255 255 255 / 0.6); }
 .foot__submit { flex-shrink: 0; }
 .foot__msg { min-height: 1.2em; margin: -1.5rem 0 0; font: 400 0.875rem/1.2 var(--lp-sans); color: var(--lp-white); }
 @media (max-width: 520px) {
   .foot__form { flex-direction: column; border-radius: 24px; }
-  .foot__form input, .foot__submit, .foot__submit :deep(.gb__btn) { width: 100%; }
+  .foot__form input, .foot__hello, .foot__submit, .foot__submit :deep(.gb__btn) { width: 100%; }
+  .foot__hello { text-align: center; }
 }
 
 .foot__bottom { display: flex; flex-direction: column; gap: 1.5rem; padding-top: 4rem; }
