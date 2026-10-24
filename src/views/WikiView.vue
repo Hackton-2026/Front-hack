@@ -386,8 +386,8 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
       <div class="list__head">
         <strong>Wiki</strong>
         <span class="head-btns">
-          <button type="button" class="new-page" title="Importar páginas" @click="importing = true"><AppIcon name="upload" :size="14" /> Importar</button>
-          <button type="button" class="new-page" @click="create()"><AppIcon name="plus" :size="14" /> Nova página</button>
+          <button type="button" class="new-page" title="Importar páginas" aria-label="Importar páginas" @click="importing = true"><AppIcon name="upload" :size="13" /></button>
+          <button type="button" class="new-page" title="Nova página" @click="create()"><AppIcon name="plus" :size="13" /> Nova</button>
         </span>
       </div>
       <AppModal :open="importing" title="Importar para a Wiki" @close="importing = false">
@@ -569,7 +569,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 .imp strong { font-size: 13.5px; font-weight: 500; }
 .imp small { font-size: 12px; color: var(--muted); }
 .imp input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.new-page { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--text); cursor: pointer; }
+.new-page { display: inline-flex; align-items: center; gap: 0.25rem; height: 26px; padding: 0 0.5rem; white-space: nowrap; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12px; color: var(--text); cursor: pointer; }
 .new-page:hover { border-color: var(--accent); }
 .find { display: flex; align-items: center; gap: 0.4rem; height: 30px; margin-bottom: 0.4rem; padding: 0 0.5rem; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
 .find:focus-within { border-color: var(--accent); }
