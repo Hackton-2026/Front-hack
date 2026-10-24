@@ -7,18 +7,22 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
-import { outline, render, toggleCheck } from '../utils/markdown'
+import { esc, outline, render, toggleCheck } from '../utils/markdown'
+import { dbView } from '../utils/dbviews'
+import { IMPORT_KINDS, importFiles } from '../utils/importers'
 import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useOnboarding } from '../composables/useOnboarding'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import BlockMenu from '../components/app/BlockMenu.vue'
+import AppModal from '../components/app/AppModal.vue'
 
 const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
 const ICONS = ['', '📄', '📌', '✅', '🚀', '💡', '📚', '🧭', '🛠️', '📈', '🗓️', '🔒', '🎯', '🧪', '👋']
 const TOOLBAR = [
-  ['H1', '# ', ''], ['H2', '## ', ''], ['B', '**', '**'], ['I', '*', '*'], ['S', '~~', '~~'],
+  ['B', '**', '**'], ['I', '*', '*'], ['S', '~~', '~~'],
   ['• Lista', '- ', ''], ['☐ Tarefa', '- [ ] ', ''], ['1. Lista', '1. ', ''], ['❝', '> ', ''], ['</>', '`', '`'], ['Link', '[', '](https://)'], ['—', '\n---\n', ''],
 ]
 const LABEL_COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3b82f6', '#a855f7', '#ec4899', '#919599']
@@ -26,9 +30,9 @@ const LABEL_COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3b82f6', '#a
 const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
-const { state, createDoc } = useWorkspace()
+const { state, createDoc, createTask, code, project, member, today, STATUSES, PRIORITIES } = useWorkspace()
 const { complete } = useOnboarding()
-const { toast } = useUi()
+const { toast, openTask } = useUi()
 
 // Páginas e ajustes antigos ganham os campos novos
 state.prefs.wiki ||= { collections: [{ id: 'geral', name: 'Minhas páginas' }], labels: [] }
@@ -78,7 +82,30 @@ const crumbs = computed(() => {
   for (let p = doc.value && byId(doc.value.parentId); p; p = byId(p.parentId)) out.unshift(p)
   return out
 })
-const html = computed(() => (doc.value ? render(doc.value.body) : ''))
+// blocos que dependem do resto do site (base de dados, botão, navegação, bloco sincronizado)
+function ctx(seen = new Set()) {
+  return {
+    docTitle: (id) => byId(id)?.title,
+    embed(kind, arg) {
+      if (kind.startsWith('db:')) {
+        const pid = arg === 'all' ? null : Number(arg)
+        const list = state.tasks.filter((t) => !t.draft && (!pid || t.projectId === pid))
+        return dbView(kind.slice(3), list, pid ? project(pid)?.name || 'Projeto removido' : 'Todos os projetos', { STATUSES, PRIORITIES, code, project, member, today: today() })
+      }
+      if (kind === 'button') return `<button type="button" class="md-btn" data-action="task" data-title="${esc(arg)}">＋ ${esc(arg || 'Nova tarefa')}</button>`
+      if (kind === 'breadcrumb') return `<nav class="md-crumbs">${[...crumbs.value, doc.value].map((d) => `<a href="?doc=${d.id}" data-doc="${d.id}">${esc(d.icon || '📄')} ${esc(d.title || 'Sem título')}</a>`).join('<span>/</span>')}</nav>`
+      if (kind === 'sync') {
+        const d = byId(arg)
+        if (!d) return '<p class="md-empty">A página deste bloco sincronizado não existe mais.</p>'
+        if (seen.has(arg)) return '<p class="md-empty">Bloco sincronizado apontando para ele mesmo.</p>'
+        // as caixas de seleção são da outra página: aqui ficam só para ver
+        return `<div class="md-sync"><a href="?doc=${d.id}" data-doc="${d.id}">⟳ ${esc(d.title || 'Sem título')}</a>${render(d.body, ctx(new Set([...seen, arg]))).replace(/ data-line="\d+"/g, ' disabled')}</div>`
+      }
+      return undefined
+    },
+  }
+}
+const html = computed(() => (doc.value ? render(doc.value.body, ctx(new Set([doc.value.id]))) : ''))
 const toc = computed(() => (doc.value ? outline(doc.value.body) : []))
 const words = computed(() => (doc.value?.body.trim().match(/\S+/g) || []).length)
 const when = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -142,13 +169,125 @@ function format([, before, after]) {
   nextTick(() => { el.focus(); const pos = (block ? b : b + after.length) + before.length; el.setSelectionRange(pos, pos) })
 }
 function onPreviewClick(e) {
+  const go = e.target.closest('[data-doc]')
+  if (go) { e.preventDefault(); return open(go.dataset.doc) }
+  const t = e.target.closest('[data-task]')
+  if (t) return openTask(state.tasks.find((x) => String(x.id) === t.dataset.task))
+  const btn = e.target.closest('[data-action="task"]')
+  if (btn) { createTask({ title: btn.dataset.title || 'Nova tarefa', projectId: null, assignees: [state.me] }); return toast('Tarefa criada em Rascunhos.') }
   const line = e.target.dataset?.line
   if (line === undefined || doc.value.locked) return
   doc.value.body = toggleCheck(doc.value.body, Number(line))
   touch()
 }
 const jump = (id) => document.getElementById(id)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
-watch(activeId, () => { saved.value = ''; mode.value = doc.value?.locked ? 'view' : 'edit' })
+watch(activeId, () => { saved.value = ''; menu.value = null; mode.value = doc.value?.locked ? 'view' : 'edit' })
+// equações ($$ … $$): o KaTeX só carrega quando a página tem uma
+watch([html, mode], async () => {
+  await nextTick()
+  const els = editor.value?.querySelectorAll('.md-math') || []
+  if (!els.length) return
+  const [{ default: katex }] = await Promise.all([import('katex'), import('katex/dist/katex.min.css')])
+  els.forEach((el) => katex.render(el.dataset.tex, el, { displayMode: true, throwOnError: false }))
+}, { immediate: true })
+
+// ---- menu de blocos (o + e o / do Notion)
+const menu = ref(null) // { query: texto depois do / (null = aberto pelo +), from: posição do /, top }
+const blockMenu = ref(null)
+// altura do cursor dentro do textarea (cópia invisível com o mesmo texto até o cursor)
+function caretTop(el, pos) {
+  const cs = getComputedStyle(el)
+  const m = document.createElement('div')
+  for (const p of ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'paddingTop', 'paddingLeft', 'paddingRight', 'boxSizing', 'tabSize']) m.style[p] = cs[p]
+  Object.assign(m.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', width: `${el.clientWidth}px` })
+  m.textContent = el.value.slice(0, pos)
+  const mark = m.appendChild(document.createElement('span'))
+  mark.textContent = '\u200b'
+  document.body.appendChild(m)
+  const top = mark.offsetTop + mark.offsetHeight
+  m.remove()
+  return el.offsetTop + top - el.scrollTop + 4
+}
+// + ao passar o mouse na linha (como no Notion): onde começa e a altura de cada linha, com quebra automática
+const hoverLine = ref(null) // { i, top, h }
+let boxes = null
+let boxesKey = ''
+function lineBoxes(el) {
+  const key = `${el.clientWidth}|${el.value}`
+  if (key === boxesKey) return boxes
+  const cs = getComputedStyle(el)
+  const m = document.createElement('div')
+  for (const p of ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'paddingTop', 'paddingLeft', 'paddingRight', 'boxSizing', 'tabSize']) m.style[p] = cs[p]
+  Object.assign(m.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', width: `${el.clientWidth}px` })
+  for (const l of el.value.split('\n')) m.appendChild(document.createElement('div')).textContent = l || '\u200b'
+  document.body.appendChild(m)
+  boxes = [...m.children].map((d) => ({ top: d.offsetTop, h: d.offsetHeight }))
+  m.remove()
+  boxesKey = key
+  return boxes
+}
+function onHover(e) {
+  const el = area.value
+  if (!el || menu.value) return
+  const y = e.clientY - el.getBoundingClientRect().top
+  const list = lineBoxes(el)
+  const i = list.findIndex((b) => y < b.top + b.h)
+  hoverLine.value = i < 0 || y < 0 ? null : { i, top: el.offsetTop + list[i].top, h: list[i].h }
+}
+// linha vazia: o bloco entra nela; com texto: abre uma linha nova embaixo
+async function addBelow(i) {
+  const el = area.value
+  const lines = doc.value.body.split('\n')
+  let pos = lines.slice(0, i).reduce((n, l) => n + l.length + 1, 0)
+  if (lines[i].trim()) {
+    pos += lines[i].length
+    doc.value.body = `${doc.value.body.slice(0, pos)}\n${doc.value.body.slice(pos)}`
+    pos += 1
+    touch()
+  }
+  hoverLine.value = null
+  await nextTick()
+  el.focus()
+  el.setSelectionRange(pos, pos)
+  menu.value = { query: null, from: null, top: caretTop(el, pos) }
+}
+function onType() {
+  touch()
+  const el = area.value
+  const before = el.value.slice(el.value.lastIndexOf('\n', el.selectionStart - 1) + 1, el.selectionStart)
+  const m = before.match(/(?:^|\s)\/([^\s/]{0,24})$/)
+  if (m) menu.value = { query: m[1], from: el.selectionStart - m[1].length - 1, top: menu.value?.query != null ? menu.value.top : caretTop(el, el.selectionStart) }
+  else if (menu.value?.query != null) menu.value = null
+}
+// sai do texto sem ir para o menu (ex.: o passo de colar link) fecha o menu do /
+const onAreaBlur = () => setTimeout(() => { if (menu.value?.query != null && !document.activeElement?.closest('.bm')) menu.value = null })
+function onAreaKey(e) {
+  if (menu.value?.query != null && blockMenu.value?.key(e)) e.preventDefault()
+}
+// põe o bloco: linha vazia vira o bloco; senão, ele entra na linha de baixo. %c% é onde o cursor fica
+function insertBlock(snippet) {
+  const el = area.value
+  let v = doc.value.body
+  let pos = el.selectionStart
+  if (menu.value?.from != null) { v = v.slice(0, menu.value.from) + v.slice(pos); pos = menu.value.from }
+  const ls = v.lastIndexOf('\n', pos - 1) + 1
+  let le = v.indexOf('\n', pos)
+  if (le < 0) le = v.length
+  const empty = !v.slice(ls, le).trim()
+  const at = empty ? ls : le
+  const text = (empty ? '' : '\n') + snippet
+  const caret = at + text.indexOf('%c%')
+  doc.value.body = v.slice(0, empty ? ls : at) + text.replace('%c%', '') + v.slice(empty ? le : at)
+  menu.value = null
+  touch()
+  nextTick(() => { el.focus(); el.setSelectionRange(caret, caret) })
+}
+function newSubpage() {
+  const d = createDoc({ ...JSON.parse(JSON.stringify(DOC_DEFAULTS)), parentId: doc.value.id, collectionId: doc.value.collectionId, title: 'Sem título' })
+  expanded.value.add(doc.value.id)
+  insertBlock(`[[${d.id}|Sem título]]%c%`)
+  toast('Subpágina criada. Abra pelo link ou pela árvore ao lado.')
+}
 
 // ---- etiquetas
 function addLabel() {
@@ -178,6 +317,28 @@ function renameCollection(c) {
 function removeCollection(c) {
   if (state.docs.some((d) => d.collectionId === c.id && !d.archived)) { toast('Mova ou arquive as páginas da coleção antes de apagar.'); return }
   wiki.collections.splice(wiki.collections.indexOf(c), 1)
+}
+
+// ---- importar (como o Notion): cada arquivo vira uma página na primeira coleção
+const importing = ref(false)
+const importBusy = ref(false)
+async function importPick(e) {
+  const files = [...e.target.files]
+  e.target.value = ''
+  if (!files.length) return
+  importBusy.value = true
+  try {
+    const pages = await importFiles(files)
+    let first
+    for (const p of [...pages].reverse()) first = createDoc({ ...JSON.parse(JSON.stringify(DOC_DEFAULTS)), collectionId: wiki.collections[0].id, title: p.title.slice(0, 200), body: p.body })
+    importing.value = false
+    toast(`${pages.length} ${pages.length === 1 ? 'página importada' : 'páginas importadas'}.`)
+    open(first.id)
+  } catch (err) {
+    toast(err.message || 'Não foi possível importar.')
+  } finally {
+    importBusy.value = false
+  }
 }
 
 // ---- ações da página
@@ -224,8 +385,21 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
     <aside class="list" aria-label="Páginas da wiki">
       <div class="list__head">
         <strong>Wiki</strong>
-        <button type="button" class="new-page" @click="create()"><AppIcon name="plus" :size="14" /> Nova página</button>
+        <span class="head-btns">
+          <button type="button" class="new-page" title="Importar páginas" @click="importing = true"><AppIcon name="upload" :size="14" /> Importar</button>
+          <button type="button" class="new-page" @click="create()"><AppIcon name="plus" :size="14" /> Nova página</button>
+        </span>
       </div>
+      <AppModal :open="importing" title="Importar para a Wiki" @close="importing = false">
+        <p class="imp-hint">Cada arquivo vira uma página em “{{ wiki.collections[0].name }}”. Dá para escolher vários de uma vez.</p>
+        <div class="imp-grid">
+          <label v-for="k in IMPORT_KINDS" :key="k.id" class="imp" :class="{ busy: importBusy }">
+            <strong>{{ k.label }}</strong><small>{{ k.hint }}</small>
+            <input type="file" multiple :accept="k.accept" :disabled="importBusy" @change="importPick" />
+          </label>
+        </div>
+        <p class="imp-hint">Tarefas (Trello, Jira, Asana, planilhas) entram por CSV em <RouterLink to="/ajustes" @click="importing = false">Ajustes › Importar</RouterLink>.</p>
+      </AppModal>
       <label class="find"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar páginas" aria-label="Buscar páginas" /></label>
       <div v-if="wiki.labels.length" class="labels" role="group" aria-label="Filtrar por etiqueta">
         <button v-for="l in wiki.labels" :key="l.id" type="button" class="chip" :aria-pressed="labelFilter === l.id" :style="{ '--c': l.color }" @click="labelFilter = labelFilter === l.id ? '' : l.id">{{ l.name }}</button>
@@ -322,7 +496,11 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
           <div class="tools" role="toolbar" aria-label="Formatação">
             <button v-for="t in TOOLBAR" :key="t[0]" type="button" :title="t[0]" @mousedown.prevent @click="format(t)">{{ t[0] }}</button>
           </div>
-          <textarea ref="area" v-model="doc.body" class="body" placeholder="Comece a escrever. Use # para títulos, - para listas e - [ ] para tarefas." aria-label="Conteúdo da página" @input="touch" />
+          <div class="write" @mousemove="onHover" @mouseleave="hoverLine = null">
+            <button v-if="hoverLine && !menu" type="button" class="line-add" :style="{ top: `${hoverLine.top + hoverLine.h / 2 - 11}px` }" aria-label="Adicionar bloco abaixo desta linha" title="Clique para adicionar um bloco abaixo (ou digite /)" @mousedown.prevent @click="addBelow(hoverLine.i)">+</button>
+            <textarea ref="area" v-model="doc.body" class="body" placeholder="Comece a escrever, ou digite / para escolher um bloco (título, tabela, toggle, vídeo, base de dados…)." aria-label="Conteúdo da página" @input="onType" @keydown="onAreaKey" @blur="onAreaBlur" />
+            <BlockMenu v-if="menu" ref="blockMenu" :query="menu.query" :doc-id="doc.id" :style="{ top: `${menu.top}px` }" @insert="insertBlock" @page="newSubpage" @close="menu = null" />
+          </div>
         </template>
         <!-- eslint-disable-next-line vue/no-v-html -- render() escapa o texto antes de montar o HTML -->
         <div v-else class="md" @click="onPreviewClick" v-html="html || '<p class=&quot;muted&quot;>Página vazia.</p>'" />
@@ -381,6 +559,16 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 @media (max-width: 760px) { .wiki { grid-template-columns: minmax(0, 1fr); height: auto; } .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 45vh; } .page { grid-template-columns: minmax(0, 1fr); } .side { display: none; } }
 .list { display: flex; flex-direction: column; gap: 1px; min-height: 0; padding: 0.9rem 0.6rem; border-right: 1px solid var(--line); overflow-y: auto; }
 .list__head { display: flex; align-items: center; justify-content: space-between; padding: 0 0.35rem 0.6rem; }
+.head-btns { display: flex; gap: 0.3rem; }
+.imp-hint { margin: 0; font-size: 13px; color: var(--muted); }
+.imp-hint a { color: var(--accent-soft); }
+.imp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0.5rem; }
+.imp { position: relative; display: flex; flex-direction: column; gap: 0.15rem; padding: 0.75rem; border: 1px solid var(--line-strong); border-radius: 9px; cursor: pointer; }
+.imp:hover, .imp:focus-within { border-color: var(--accent); }
+.imp.busy { opacity: 0.5; cursor: progress; }
+.imp strong { font-size: 13.5px; font-weight: 500; }
+.imp small { font-size: 12px; color: var(--muted); }
+.imp input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .new-page { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--text); cursor: pointer; }
 .new-page:hover { border-color: var(--accent); }
 .find { display: flex; align-items: center; gap: 0.4rem; height: 30px; margin-bottom: 0.4rem; padding: 0 0.5rem; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
@@ -449,7 +637,11 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .tools { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 2px; padding: 0.3rem 0; background: var(--bg); border-bottom: 1px solid var(--line); }
 .tools button { min-width: 28px; height: 26px; padding: 0 0.4rem; border: 0; border-radius: 5px; background: none; font: 600 12px/1 'Geist', system-ui, sans-serif; color: var(--muted); cursor: pointer; }
 .tools button:hover { background: var(--surface-2); color: var(--text); }
-.body { min-height: 50vh; padding: 0.5rem 0; border: 0; background: none; font: 400 15px/1.7 'Geist Mono', ui-monospace, monospace; color: var(--text); resize: none; outline: none; field-sizing: content; }
+.write { position: relative; }
+.write { margin-left: -2rem; padding-left: 2rem; }
+.line-add { position: absolute; left: 0.35rem; z-index: 2; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 5px; background: none; font: 400 18px/1 'Geist', system-ui, sans-serif; color: var(--muted); cursor: pointer; }
+.line-add:hover { background: var(--surface-2); color: var(--text); }
+.body { width: 100%; min-height: 50vh; padding: 0.5rem 0; border: 0; background: none; font: 400 15px/1.7 'Geist Mono', ui-monospace, monospace; color: var(--text); resize: none; outline: none; field-sizing: content; }
 .md { min-height: 30vh; font-size: 15px; line-height: 1.7; color: var(--text); overflow-wrap: anywhere; }
 .md :deep(h1), .md :deep(h2), .md :deep(h3) { margin: 1.2em 0 0.4em; line-height: 1.25; color: var(--text); scroll-margin-top: 1rem; }
 .md :deep(h1) { font-size: 1.6rem; } .md :deep(h2) { font-size: 1.3rem; } .md :deep(h3) { font-size: 1.1rem; }
