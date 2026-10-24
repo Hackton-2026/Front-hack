@@ -7,6 +7,7 @@ import { useAuth } from '../../composables/useAuth'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useOnboarding } from '../../composables/useOnboarding'
 import GooeyButton from '../GooeyButton.vue'
+import AppSelect from './AppSelect.vue'
 
 const { user } = useAuth()
 const { state, inviteToProject } = useWorkspace()
@@ -59,11 +60,7 @@ async function invite() {
         </li>
       </ul>
       <form class="invite" novalidate @submit.prevent="invite">
-        <label for="invite-project" class="sr-only">Projeto</label>
-        <select id="invite-project" v-model="projectId" :disabled="!mine.length">
-          <option v-if="!mine.length" :value="null">Nenhum projeto seu</option>
-          <option v-for="p in mine" :key="p.id" :value="p.id">{{ p.name }}</option>
-        </select>
+        <AppSelect v-model="projectId" :options="mine.map((p) => ({ value: p.id, label: p.name }))" placeholder="Nenhum projeto seu" aria-label="Projeto" :disabled="!mine.length" />
         <label for="invite-email" class="sr-only">E-mail de quem você quer convidar</label>
         <input id="invite-email" v-model="email" type="email" placeholder="nome@empresa.com" autocomplete="off" :aria-invalid="!!error" aria-describedby="invite-msg" />
         <GooeyButton type="submit" variant="primary" :disabled="sending">{{ sending ? 'Convidando…' : 'Convidar' }}</GooeyButton>
@@ -86,10 +83,10 @@ h2 { margin: 0 0 0.25rem; font: 600 1.25rem/1.2 'Geist', system-ui, sans-serif; 
 .pending .ava { background: var(--surface-2); color: var(--muted); border: 1px dashed var(--line-strong); }
 .invite { display: flex; gap: 0.5rem; }
 .invite input { flex: 1; min-width: 0; height: 36px; padding: 0 0.75rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; transition: border-color 0.2s var(--ease); }
-.invite select { flex: 0 1 11rem; min-width: 0; height: 36px; padding: 0 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); }
+.invite :deep(.sel) { flex: 0 1 11rem; min-width: 0; height: 36px; }
 .invite input:focus { border-color: var(--accent); }
 .msg { min-height: 1em; margin: -0.5rem 0 0; font-size: 12.5px; color: #ffb48a; }
 .manage { align-self: flex-start; font-size: 12.5px; color: var(--accent-soft); }
-@media (max-width: 560px) { .invite { flex-wrap: wrap; } .invite select { flex-basis: 100%; } }
+@media (max-width: 560px) { .invite { flex-wrap: wrap; } .invite :deep(.sel) { flex-basis: 100%; } }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>

@@ -21,10 +21,13 @@ export const vReveal = {
     if (prefersReducedMotion()) return
     el._reveal = gsap.from(modifiers.stagger ? el.children : el, {
       opacity: 0,
-      y: 16,
-      duration: 1,
+      y: 48,
+      scale: 0.96,
+      filter: 'blur(8px)',
+      duration: 1.2,
       ease: 'expo.out',
-      stagger: 0.08,
+      stagger: 0.12,
+      clearProps: 'filter,transform', // tira blur/transform ao terminar, para não pesar no hover dos cards
       delay: Number(value) || 0,
       scrollTrigger: modifiers.now ? undefined : { trigger: el, start: 'top 88%', once: true },
     })

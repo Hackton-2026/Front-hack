@@ -13,6 +13,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useOnboarding } from '../composables/useOnboarding'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
 const ICONS = ['', '📄', '📌', '✅', '🚀', '💡', '📚', '🧭', '🛠️', '📈', '🗓️', '🔒', '🎯', '🧪', '👋']
@@ -285,7 +286,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
                 <button type="button" @click="toggle('locked'); mode = doc.locked ? 'view' : mode"><AppIcon name="lock" :size="14" /> {{ doc.locked ? 'Desbloquear' : 'Bloquear edição' }}</button>
                 <button type="button" @click="toggle('fullWidth')"><AppIcon name="layers" :size="14" /> {{ doc.fullWidth ? 'Largura normal' : 'Largura total' }}</button>
                 <label class="menu__select">Coleção
-                  <select :value="doc.collectionId" @change="move($event.target.value)"><option v-for="c in wiki.collections" :key="c.id" :value="c.id">{{ c.name }}</option></select>
+                  <AppSelect :model-value="doc.collectionId" :options="wiki.collections.map((c) => ({ value: c.id, label: c.name }))" size="sm" aria-label="Coleção" @change="move" />
                 </label>
                 <button type="button" @click="copyLink"><AppIcon name="pin" :size="14" /> Copiar link</button>
                 <button type="button" @click="exportMd"><AppIcon name="arrow" :size="14" /> Exportar Markdown</button>
@@ -430,7 +431,6 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .menu__box button:hover { background: var(--surface-2); }
 .menu__box .danger { color: #ff8a80; }
 .menu__select { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.35rem 0.5rem; font-size: 12.5px; color: var(--muted); }
-.menu__select select { height: 26px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--bg); font: inherit; color: var(--text); }
 .notice { display: flex; align-items: center; gap: 0.4rem; margin: 0; padding: 0.45rem 0.7rem; border: 1px solid var(--line); border-radius: 7px; font-size: 12.5px; color: var(--muted); }
 .head { display: flex; flex-direction: column; gap: 0.3rem; }
 .emoji { position: relative; align-self: flex-start; }

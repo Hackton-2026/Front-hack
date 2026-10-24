@@ -1,4 +1,4 @@
-// Markdown simples da Wiki (sem dependência): títulos, negrito, itálico, código, listas, checklist,
+// Markdown simples da Wiki e das tarefas (sem dependência): títulos, negrito, itálico, sublinhado (++x++), imagem, código, listas, checklist,
 // citação, divisória, tabelas e links. O texto é escapado antes, então HTML digitado não vira HTML de verdade.
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 export const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -9,6 +9,8 @@ function inline(s) {
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>')
     .replace(/~~([^~]+)~~/g, '<s>$1</s>')
+    .replace(/\+\+([^+]+)\+\+/g, '<u>$1</u>')
+    .replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />')
     .replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
 }
 

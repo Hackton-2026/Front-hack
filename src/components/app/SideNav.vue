@@ -9,6 +9,7 @@ import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import { useOnboarding } from '../../composables/useOnboarding'
 import AppIcon from './AppIcon.vue'
+import ProjectIcon from './ProjectIcon.vue'
 
 const emit = defineEmits(['collapse'])
 const PERSONAL = [
@@ -16,6 +17,7 @@ const PERSONAL = [
   { key: 'drafts', icon: 'draft', label: 'Rascunhos', to: '/rascunhos' },
   { key: 'mine', icon: 'mine', label: 'Seu trabalho', to: '/meu-trabalho' },
   { key: 'notes', icon: 'note', label: 'Notas', to: '/notas' },
+  { key: 'favorites', icon: 'star', label: 'Favoritos', to: '/favoritos' },
 ]
 const MORE = [
   { key: 'views', icon: 'layers', label: 'Visões', to: '/visoes' },
@@ -52,7 +54,7 @@ const { state, createProject, archiveProject } = useWorkspace()
 const { newTask, toast } = useUi()
 const { complete } = useOnboarding()
 const prefs = computed(() => state.prefs)
-const personal = computed(() => PERSONAL.filter((n) => !n.key || prefs.value.nav[n.key]))
+const personal = computed(() => PERSONAL.filter((n) => !n.key || prefs.value.nav[n.key] !== false))
 const pinned = computed(() => MORE.filter((m) => prefs.value.pinned.includes(m.key)))
 const sub = computed(() => SUB.filter((s) => !s.key || prefs.value.features[s.key]))
 
@@ -191,7 +193,7 @@ onUnmounted(() => {
         <div v-for="p in state.projects" :key="p.id" class="proj">
           <div class="proj__row">
             <button type="button" class="side__link proj__btn" :aria-expanded="openProjects.has(p.id)" @click="toggleProject(p)">
-              <span v-if="p.icon" class="emoji" aria-hidden="true">{{ p.icon }}</span><span v-else class="dot" :style="{ background: p.color }" />
+              <ProjectIcon :icon="p.icon" :color="p.color" :size="15" class="emoji" />
               <span class="proj__name">{{ p.name }}</span>
               <span v-if="p.shared" class="shared" :title="`Compartilhado por ${p.owner_name}`"><AppIcon name="user" :size="12" /></span>
               <AppIcon name="chevron" :size="13" class="chev proj__chev" />
@@ -248,7 +250,7 @@ onUnmounted(() => {
         <p class="lead">Os itens marcados ficam sempre na barra lateral. Os outros continuam no menu Mais. Isso vale só para você.</p>
         <fieldset>
           <legend>Pessoal</legend>
-          <label v-for="n in PERSONAL.filter((x) => x.key)" :key="n.key"><input v-model="prefs.nav[n.key]" type="checkbox" /><AppIcon :name="n.icon" :size="15" />{{ n.label }}</label>
+          <label v-for="n in PERSONAL.filter((x) => x.key)" :key="n.key"><input type="checkbox" :checked="prefs.nav[n.key] !== false" @change="prefs.nav[n.key] = $event.target.checked" /><AppIcon :name="n.icon" :size="15" />{{ n.label }}</label>
         </fieldset>
         <fieldset>
           <legend>Workspace</legend>

@@ -7,9 +7,11 @@ import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
+import ProjectIcon from '../components/app/ProjectIcon.vue'
 import Avatars from '../components/app/Avatars.vue'
 import StatusBadge from '../components/app/StatusBadge.vue'
 import PriorityFlag from '../components/app/PriorityFlag.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const router = useRouter()
 const { user } = useAuth()
@@ -67,10 +69,10 @@ const removeLink = (l) => (state.prefs.quicklinks = state.prefs.quicklinks.filte
 // ---- recentes: o que foi aberto por último (tarefas, projetos, páginas)
 const filter = ref('all')
 const FILTERS = [
-  { id: 'all', label: 'Todos' },
-  { id: 'task', label: 'Itens de trabalho' },
-  { id: 'project', label: 'Projetos' },
-  { id: 'page', label: 'Páginas' },
+  { value: 'all', label: 'Todos' },
+  { value: 'task', label: 'Itens de trabalho' },
+  { value: 'project', label: 'Projetos' },
+  { value: 'page', label: 'Páginas' },
 ]
 const recents = computed(() => {
   const list = state.prefs.recents.map((r) => {
@@ -170,7 +172,7 @@ onUnmounted(() => { clearInterval(clock); tl?.kill() })
     <section class="block" aria-labelledby="rec-title">
       <header class="block__head">
         <h2 id="rec-title">Recentes</h2>
-        <select v-model="filter" class="sel" aria-label="Filtrar recentes"><option v-for="f in FILTERS" :key="f.id" :value="f.id">{{ f.label }}</option></select>
+        <AppSelect v-model="filter" :options="FILTERS" size="sm" aria-label="Filtrar recentes" />
       </header>
       <ul class="recs">
         <li v-for="r in recents" :key="r.key" class="rec">
@@ -179,7 +181,7 @@ onUnmounted(() => { clearInterval(clock); tl?.kill() })
               <AppIcon name="items" :size="15" class="rec__ic" /><span class="rec__code">{{ code(r.item) }}</span><strong>{{ r.item.title }}</strong>
             </template>
             <template v-else-if="r.kind === 'project'">
-              <span class="rec__emoji">{{ r.item.icon || '📁' }}</span><span class="rec__code">{{ r.item.prefix }}</span><strong>{{ r.item.name }}</strong>
+              <ProjectIcon class="rec__emoji" :icon="r.item.icon || 'fi-rr-folder-open'" :color="r.item.color" :size="15" /><span class="rec__code">{{ r.item.prefix }}</span><strong>{{ r.item.name }}</strong>
             </template>
             <template v-else>
               <AppIcon name="page" :size="15" class="rec__ic" /><strong>{{ r.item.title || 'Sem título' }}</strong>
@@ -245,7 +247,6 @@ h2 { margin: 0; font: 600 15px/1.3 'Geist', system-ui, sans-serif; color: #d6d1c
 .ql__x:hover { color: var(--text); }
 
 /* recentes */
-.sel { height: 30px; padding: 0 0.5rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface); font: inherit; font-size: 13px; color: var(--text); color-scheme: dark; cursor: pointer; }
 .recs { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .rec { display: flex; align-items: center; gap: 0.75rem; border-radius: 7px; transition: background 0.2s var(--ease); }
 .rec:hover { background: var(--surface); }
@@ -257,7 +258,7 @@ h2 { margin: 0; font: 600 15px/1.3 'Geist', system-ui, sans-serif; color: #d6d1c
 .rec__ago { flex-shrink: 0; font-size: 12.5px; color: var(--muted); }
 .rec__side { display: flex; flex-shrink: 0; align-items: center; gap: 0.4rem; padding-right: 0.5rem; }
 .muted { margin: 0; font-size: 13px; color: var(--muted); }
-:is(.btn, .icon-link, .ql__open, .ql__x, .rec button, .sel):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+:is(.btn, .icon-link, .ql__open, .ql__x, .rec button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 @media (max-width: 640px) {
   .ai { grid-template-columns: 1fr; gap: 1rem; }
   .rec__ago, .rec__side { display: none; }

@@ -6,6 +6,8 @@ import { gsap, prefersReducedMotion } from '../utils/motion'
 import { COVERS, UPDATE_STATES, useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
+import ProjectIcon from '../components/app/ProjectIcon.vue'
+import { PROJECT_ICONS, iconClass } from '../components/app/projectIcons'
 import Avatars from '../components/app/Avatars.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
 
@@ -14,7 +16,6 @@ const { state, project, tasksOf, progress, updateProject, postUpdate, projectAct
 const { ui } = useUi()
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
-const EMOJIS = ['👋', '🚀', '🎯', '🧩', '📦', '🗂️', '🛠️', '💡', '📈', '🔥', '⭐', '🌱', '🧪', '🎨', '📣', '🛒', '📱', '💻', '🔒', '🏁', '👇', '✅', '🧭', '🏗️']
 
 const panel = ref(true)
 const tab = ref('info')
@@ -30,12 +31,12 @@ const people = computed(() => [...new Set(tasks.value.flatMap((t) => t.assignees
 const cycles = computed(() => state.cycles.filter((c) => c.project === pid.value))
 const activeCycle = computed(() => cycles.value.find((c) => c.start_date <= today() && c.end_date >= today()))
 const LINKS = computed(() => [
-  { icon: 'items', label: 'Itens de trabalho', n: tasks.value.length, to: '', hint: 'as tarefas do time' },
-  { icon: 'cycle', label: 'Ciclos', n: cycles.value.length, to: '/ciclos', hint: 'sprints com começo e fim', key: 'cycles' },
-  { icon: 'module', label: 'Módulos', n: state.modules.filter((m) => m.project === pid.value).length, to: '/modulos', hint: 'partes do projeto', key: 'modules' },
-  { icon: 'page', label: 'Páginas', n: state.pages.filter((x) => x.project === pid.value && !x.archived).length, to: '/paginas', hint: 'documentos e decisões', key: 'pages' },
-  { icon: 'chat', label: 'Chat', n: 'Converse', to: '/chat', hint: 'com o time e com a @novexo' },
-  { icon: 'user', label: 'Membros', n: p.value?.members?.length || 1, to: '/membros', hint: p.value?.my_permission === 'full' ? 'convide pessoas' : 'quem participa' },
+  { icon: 'fi-rr-list-check', label: 'Itens de trabalho', n: tasks.value.length, to: '', hint: 'as tarefas do time' },
+  { icon: 'fi-rr-refresh', label: 'Ciclos', n: cycles.value.length, to: '/ciclos', hint: 'sprints com começo e fim', key: 'cycles' },
+  { icon: 'fi-rr-apps', label: 'Módulos', n: state.modules.filter((m) => m.project === pid.value).length, to: '/modulos', hint: 'partes do projeto', key: 'modules' },
+  { icon: 'fi-rr-document', label: 'Páginas', n: state.pages.filter((x) => x.project === pid.value && !x.archived).length, to: '/paginas', hint: 'documentos e decisões', key: 'pages' },
+  { icon: 'fi-rr-comment-alt', label: 'Chat', n: 'Converse', to: '/chat', hint: 'com o time e com a @novexo' },
+  { icon: 'fi-rr-users-alt', label: 'Membros', n: p.value?.members?.length || 1, to: '/membros', hint: p.value?.my_permission === 'full' ? 'convide pessoas' : 'quem participa' },
 ].filter((l) => !l.key || state.prefs.features[l.key]))
 const updates = computed(() => feed.value.filter((a) => a.details.kind === 'update'))
 const stateOf = (id) => UPDATE_STATES.find((s) => s.id === id) || UPDATE_STATES[0]
@@ -110,11 +111,12 @@ onMounted(async () => {
       <div class="doc">
         <div class="icon-wrap">
           <button type="button" class="icon" :disabled="!state.isAdmin" :aria-expanded="picking" aria-label="Trocar ícone do projeto" @click="picking = !picking">
-            <span v-if="p.icon">{{ p.icon }}</span><span v-else class="sq" :style="{ background: p.color }" />
+            <ProjectIcon :icon="p.icon" :color="p.color" :size="28" />
           </button>
           <div v-if="picking" class="emojis" role="listbox" aria-label="Ícones">
-            <button v-for="e in EMOJIS" :key="e" type="button" role="option" :aria-selected="p.icon === e" @click="pick(e)">{{ e }}</button>
+            <button v-for="e in PROJECT_ICONS" :key="e" type="button" role="option" :aria-selected="iconClass(p.icon) === e" :aria-label="e.slice(6)" @click="pick(e)"><ProjectIcon :icon="e" :size="17" /></button>
             <button type="button" class="none" @click="pick('')">Sem ícone</button>
+            <a class="credit" href="https://www.flaticon.com/uicons" target="_blank" rel="noopener">Uicons by Flaticon</a>
           </div>
         </div>
         <input class="name" :value="p.name" aria-label="Nome do projeto" maxlength="120" :readonly="!state.isAdmin" @change="$event.target.value.trim() && save({ name: $event.target.value.trim() })" />
@@ -122,9 +124,9 @@ onMounted(async () => {
         <h2 class="sec">O que tem neste projeto</h2>
         <div class="links">
           <RouterLink v-for="l in LINKS" :key="l.label" :to="`/projetos/${p.id}${l.to}`" class="link">
-            <span class="link__icon"><AppIcon :name="l.icon" :size="18" /></span>
-            <span><strong>{{ l.label }}</strong><small>{{ l.n }} · {{ l.hint }}</small></span>
-            <AppIcon name="arrow" :size="15" class="link__go" />
+            <span class="link__icon"><i :class="l.icon" aria-hidden="true" /></span>
+            <span class="link__text"><strong>{{ l.label }}</strong><small>{{ l.n }} · {{ l.hint }}</small></span>
+            <i class="fi-rr-arrow-small-right link__go" aria-hidden="true" />
           </RouterLink>
         </div>
         <template v-if="activeCycle">
@@ -203,8 +205,11 @@ onMounted(async () => {
 .icon:disabled { cursor: default; }
 .sq { width: 1.4rem; height: 1.4rem; border-radius: 6px; }
 .emojis { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; display: grid; grid-template-columns: repeat(8, 2.1rem); gap: 2px; padding: 0.4rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 40px rgb(0 0 0 / 0.45); }
-.emojis button { width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 6px; background: none; font-size: 1.15rem; cursor: pointer; }
+.emojis button { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.emojis button:hover, .emojis button[aria-selected='true'] { color: var(--text); }
 .emojis button:hover, .emojis button[aria-selected='true'] { background: var(--surface-2); }
+.emojis .credit { grid-column: 1 / -1; padding: 0.2rem 0 0; font-size: 11px; color: var(--muted); text-align: center; text-decoration: none; }
+.emojis .credit:hover { color: var(--text); }
 .emojis .none { grid-column: 1 / -1; width: auto; height: 28px; font-size: 12.5px; color: var(--muted); }
 .name { margin-top: 0.75rem; padding: 0; border: 0; background: none; font: 650 1.15rem/1.3 'Geist', system-ui, sans-serif; color: var(--muted); outline: none; }
 .desc { width: 100%; padding: 0.25rem 0; border: 0; border-radius: 6px; background: none; font: 400 1.05rem/1.7 'Geist', system-ui, sans-serif; color: var(--text); resize: none; overflow: hidden; outline: none; }
@@ -213,12 +218,15 @@ onMounted(async () => {
 .sec { margin: 1.5rem 0 0.4rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font: 600 1.05rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.6rem; }
 .link, .cycle { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.2s var(--ease), translate 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-.link:hover, .cycle:hover { border-color: var(--accent); translate: 0 -2px; }
-.link__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: var(--surface-2); color: var(--accent-soft); }
-.link span, .cycle span { display: flex; flex-direction: column; min-width: 0; }
+.link:hover, .cycle:hover { border-color: var(--line-strong); translate: 0 -2px; }
+.link { min-height: 4.25rem; }
+.link__icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 17px; line-height: 1; }
+.link__icon i::before, .link__go::before { display: block; line-height: 1; }
+.link__text strong, .link__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* uma linha só: os cartões ficam todos da mesma altura */
+.link__text, .cycle span { display: flex; flex-direction: column; min-width: 0; } /* só o texto: a caixa do ícone também é span */
 .link small, .cycle small { font-size: 12.5px; color: var(--muted); }
-.link__go { margin-left: auto; color: var(--muted); transition: translate 0.25s var(--ease); }
-.link:hover .link__go { translate: 2px -2px; color: var(--accent-soft); }
+.link__go { flex-shrink: 0; margin-left: auto; font-size: 16px; color: var(--muted); transition: translate 0.25s var(--ease), color 0.2s var(--ease); }
+.link:hover .link__go { translate: 3px 0; color: var(--text); }
 .side { position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; gap: 1rem; max-height: calc(100vh - 97px); overflow-y: auto; padding: 1rem 1.1rem; border-left: 1px solid var(--line); }
 .side__tabs { display: grid; grid-template-columns: repeat(3, 1fr); padding: 3px; border-radius: 8px; background: var(--surface); }
 .side__tabs button { display: grid; place-items: center; height: 28px; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }

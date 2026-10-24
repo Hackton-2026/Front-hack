@@ -6,6 +6,7 @@ import { staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const router = useRouter()
@@ -65,7 +66,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
       </div>
       <div class="pg-bar__right">
         <label class="pg-search"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar páginas" aria-label="Buscar páginas" /></label>
-        <select v-model="sort" class="pg-select" aria-label="Ordenar"><option value="updated">Modificadas</option><option value="created">Criadas</option><option value="name">Nome</option></select>
+        <AppSelect v-model="sort" :options="[{ value: 'updated', label: 'Modificadas' }, { value: 'created', label: 'Criadas' }, { value: 'name', label: 'Nome' }]" size="sm" aria-label="Ordenar" />
         <button type="button" class="pg-btn primary" @click="add"><AppIcon name="plus" :size="14" />Adicionar página</button>
       </div>
     </div>

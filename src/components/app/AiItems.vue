@@ -1,5 +1,5 @@
 <script setup>
-// Cards do que a Novexo IA criou ou mudou (tarefas e páginas), logo abaixo da resposta.
+// Cards do que a Novexo IA criou ou mudou (tarefas, páginas, projetos, ciclos e módulos), logo abaixo da resposta.
 // Tarefa abre no painel lateral sem sair da conversa; página e wiki abrem no lugar delas.
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
@@ -38,6 +38,16 @@ const due = (d) => d && new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day
       <RouterLink v-else-if="it.type === 'page'" :to="`/projetos/${it.project}/paginas/${it.id}`" class="card">
         <span class="ic"><AppIcon name="page" :size="15" /></span>
         <span class="txt"><small>Página do projeto</small><strong>{{ it.title }}</strong></span>
+        <AppIcon name="arrow" :size="14" class="go" />
+      </RouterLink>
+      <RouterLink v-else-if="it.type === 'project'" :to="`/projetos/${it.id}/visao-geral`" class="card" @click="load()">
+        <span class="ic"><AppIcon name="folder" :size="15" /></span>
+        <span class="txt"><small>Projeto</small><strong>{{ it.title }}</strong></span>
+        <AppIcon name="arrow" :size="14" class="go" />
+      </RouterLink>
+      <RouterLink v-else-if="it.type === 'cycle' || it.type === 'module'" :to="`/projetos/${it.project}/${it.type === 'cycle' ? 'ciclos' : 'modulos'}/${it.id}`" class="card">
+        <span class="ic"><AppIcon :name="it.type" :size="15" /></span>
+        <span class="txt"><small>{{ it.type === 'cycle' ? 'Ciclo' : 'Módulo' }}</small><strong>{{ it.title }}</strong></span>
         <AppIcon name="arrow" :size="14" class="go" />
       </RouterLink>
       <RouterLink v-else-if="it.type === 'wiki' && it.docId" :to="{ path: '/wiki', query: { doc: it.docId } }" class="card">
