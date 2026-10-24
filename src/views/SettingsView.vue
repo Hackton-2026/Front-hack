@@ -14,6 +14,7 @@ import GooeyButton from '../components/GooeyButton.vue'
 import SettingsList from '../components/app/SettingsList.vue'
 import WhatsAppSettings from '../components/app/WhatsAppSettings.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import IntegrationsPanel from '../components/app/IntegrationsPanel.vue'
 import DeleteProjectDialog from '../components/app/DeleteProjectDialog.vue'
 
 const GROUPS = [
@@ -47,7 +48,6 @@ const ROLES = [['admin', 'Admin'], ['member', 'Membro'], ['limited', 'Membro lim
 const ROLE_NAMES = { owner: 'Dono', ...Object.fromEntries(ROLES) }
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['pages', 'Páginas']]
-const INTEGRATIONS = ['GitHub', 'GitLab', 'Slack', 'Google Drive', 'Figma', 'Notion', 'Jira', 'Sentry']
 
 // Formulários das telas de lista (SettingsList)
 const opts = (pairs) => pairs.map(([value, label]) => ({ value, label }))
@@ -659,10 +659,7 @@ async function onImport(e) {
         </template>
 
         <template v-else-if="tab === 'integrations'">
-          <p class="hint">As integrações dependem de conectar contas externas no servidor e ainda não estão disponíveis.</p>
-          <ul class="plans">
-            <li v-for="name in INTEGRATIONS" :key="name"><strong>{{ name }}</strong><span class="hint">Em breve</span></li>
-          </ul>
+          <IntegrationsPanel />
         </template>
 
         <template v-else-if="LISTS[tab]">

@@ -1,26 +1,16 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { GOOGLE_CLIENT_ID } from '../config'
+import { loadGoogle } from '../utils/google'
 
 // Botão oficial do Google Identity Services. Emite "credential" (ID token) para mandar ao backend.
 const props = defineProps({ theme: { type: String, default: 'outline' } }) // outline | filled_black | filled_blue
 const emit = defineEmits(['credential'])
 const el = ref()
 
-function loadScript() {
-  if (window.google?.accounts) return Promise.resolve()
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script')
-    s.src = 'https://accounts.google.com/gsi/client'
-    s.onload = resolve
-    s.onerror = reject
-    document.head.appendChild(s)
-  })
-}
-
 onMounted(async () => {
   if (!GOOGLE_CLIENT_ID) return
-  await loadScript()
+  await loadGoogle()
   window.google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: ({ credential }) => emit('credential', credential),

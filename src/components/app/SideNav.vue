@@ -37,7 +37,7 @@ const SUB = [
   { key: null, icon: 'user', label: 'Membros', path: '/membros' },
 ]
 const TRY = [
-  { icon: 'github', label: 'Conectar ao GitHub', to: '/comecar' },
+  { icon: 'github', label: 'Conectar ao GitHub', to: '/ajustes?tab=integrations' },
   { icon: 'slack', label: 'Conectar ao Slack', to: '/comecar' },
   { icon: 'ai', label: 'Experimente a Novexo IA', to: '/ia' },
 ]

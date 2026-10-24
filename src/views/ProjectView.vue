@@ -10,6 +10,7 @@ import { useOnboarding } from '../composables/useOnboarding'
 import AppIcon from '../components/app/AppIcon.vue'
 import ProjectIcon from '../components/app/ProjectIcon.vue'
 import Avatars from '../components/app/Avatars.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 import TaskListView from '../components/app/TaskListView.vue'
 import TaskBoard from '../components/app/TaskBoard.vue'
 import TaskCalendar from '../components/app/TaskCalendar.vue'
@@ -37,7 +38,7 @@ const NO_FILTERS = ['doc', 'whiteboard', 'activity', 'form'] // layouts que não
 const props = defineProps({ id: { type: String, required: true }, cycle: { type: String, default: '' }, module: { type: String, default: '' }, view: { type: String, default: '' } })
 const route = useRoute()
 const router = useRouter()
-const { state, project, tasksOf, progress, doneRatio, createItem, updateItem, removeItem } = useWorkspace()
+const { state, STATUSES, PRIORITIES, project, member, isOverdue, tasksOf, progress, doneRatio, createItem, updateItem, removeItem } = useWorkspace()
 const { ui, newTask, openChat, closeChat } = useUi()
 const { complete } = useOnboarding()
 const pid = computed(() => Number(props.id)) // a rota traz texto; os ids da API são números
@@ -106,8 +107,28 @@ const scope = computed(() => {
   return { kind: '', name: '', match: () => true, defaults: {} }
 })
 const scoped = computed(() => (scope.value ? tasksOf(pid.value).filter(scope.value.match) : []))
-const tasks = computed(() => scoped.value.filter((t) => (!onlyMine.value || t.assignees.includes(state.me)) && (!q.value || t.title.toLowerCase().includes(q.value.toLowerCase()))))
 const people = computed(() => p.value?.members || []) // quem participa do projeto
+
+// barra de filtros: responsável, situação, prioridade e prazo ('' = todos)
+const f = ref({ who: '', status: '', priority: '', due: '' })
+const filtering = computed(() => Object.values(f.value).some(Boolean) || onlyMine.value || q.value)
+const clearFilters = () => { f.value = { who: '', status: '', priority: '', due: '' }; onlyMine.value = false; q.value = '' }
+const WHO_OPTIONS = computed(() => [{ value: '', label: 'Responsável' }, { value: 'none', label: 'Sem responsável' }, ...people.value.map((id) => ({ value: id, label: member(id)?.name || 'Pessoa' }))])
+const STATUS_OPTIONS = [{ value: '', label: 'Situação' }, ...STATUSES.map((s) => ({ value: s.id, label: s.name, color: s.color }))]
+const PRIORITY_OPTIONS = [{ value: '', label: 'Prioridade' }, ...PRIORITIES.map((x) => ({ value: x.id, label: x.name, color: x.color })), { value: 'none', label: 'Sem prioridade' }]
+const DUE_OPTIONS = [{ value: '', label: 'Prazo' }, { value: 'late', label: 'Atrasadas' }, { value: 'today', label: 'Vence hoje' }, { value: 'week', label: 'Próximos 7 dias' }, { value: 'none', label: 'Sem prazo' }]
+const ymd = (offset = 0) => { const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+const dueMatch = (t, k) => !k
+  || (k === 'late' && isOverdue(t))
+  || (k === 'today' && t.due === ymd())
+  || (k === 'week' && !!t.due && t.due >= ymd() && t.due <= ymd(7))
+  || (k === 'none' && !t.due)
+const tasks = computed(() => scoped.value.filter((t) => (!onlyMine.value || t.assignees.includes(state.me))
+  && (!q.value || t.title.toLowerCase().includes(q.value.toLowerCase()))
+  && (!f.value.who || (f.value.who === 'none' ? !t.assignees.length : t.assignees.includes(f.value.who)))
+  && (!f.value.status || t.status === f.value.status)
+  && (!f.value.priority || (f.value.priority === 'none' ? !t.priority : t.priority === f.value.priority))
+  && dueMatch(t, f.value.due)))
 const canEdit = computed(() => ['edit', 'full'].includes(p.value?.my_permission))
 const pct = computed(() => (scope.value?.kind ? doneRatio(scoped.value) : progress(pid.value)))
 const add = () => newTask({ projectId: p.value.id, ...scope.value.defaults })
@@ -191,8 +212,13 @@ onMounted(() => moveInk(false))
         <button type="button" class="danger" @click="deleteView">Apagar</button>
       </div>
       <div v-if="!NO_FILTERS.includes(kind)" class="filters">
-        <label class="find"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Filtrar tarefas" aria-label="Filtrar tarefas" /></label>
+        <label class="find"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar pelo título" aria-label="Buscar tarefas pelo título" /></label>
+        <AppSelect v-model="f.who" size="sm" :class="{ on: f.who }" :options="WHO_OPTIONS" aria-label="Filtrar por responsável" />
+        <AppSelect v-model="f.status" size="sm" :class="{ on: f.status }" :options="STATUS_OPTIONS" aria-label="Filtrar por situação" />
+        <AppSelect v-model="f.priority" size="sm" :class="{ on: f.priority }" :options="PRIORITY_OPTIONS" aria-label="Filtrar por prioridade" />
+        <AppSelect v-model="f.due" size="sm" :class="{ on: f.due }" :options="DUE_OPTIONS" aria-label="Filtrar por prazo" />
         <button type="button" class="toggle" :aria-pressed="onlyMine" @click="onlyMine = !onlyMine"><AppIcon name="mine" :size="14" />Só minhas</button>
+        <button v-if="filtering" type="button" class="clear" @click="clearFilters">Limpar<span class="sr-only"> filtros</span> · {{ tasks.length }} de {{ scoped.length }}</button>
       </div>
     </div>
 
@@ -273,7 +299,12 @@ h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spac
 .view-actions button:hover { background: var(--surface-2); color: var(--text); }
 .view-actions .danger:hover { color: #ff8a80; }
 .ink { position: absolute; left: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
-.filters { display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.45rem; }
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding-bottom: 0.45rem; }
+.filters :deep(.on) { border-color: var(--accent); color: var(--text); }
+.clear { height: 30px; padding: 0 0.6rem; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.clear:hover { color: var(--text); background: var(--surface-2); }
+.clear:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .find { display: flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
 .find:focus-within { border-color: var(--accent); }
 .find input { width: 9rem; border: 0; background: none; font: inherit; color: var(--text); outline: none; }
