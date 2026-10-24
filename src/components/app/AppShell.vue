@@ -5,6 +5,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } f
 import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
+import { api } from '../../services/api'
 import { useOnboarding } from '../../composables/useOnboarding'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
@@ -42,6 +43,20 @@ const initials = computed(() => name.value.slice(0, 2).toUpperCase())
 const fullName = computed(() => [user.value?.first_name, user.value?.last_name].filter(Boolean).join(' ') || name.value)
 const photo = computed(() => state.people.find((m) => m.id === state.me)?.avatar || user.value?.avatar || '')
 const accountOpen = ref(false)
+// e-mail ainda não confirmado: aviso no topo com "reenviar" (fechar esconde só nesta visita)
+const hideVerify = ref(false)
+const resending = ref(false)
+async function resendVerify() {
+  resending.value = true
+  try {
+    await api('/api/auth/verify-email/resend/', { method: 'POST' })
+    useUi().toast(`Mandamos um link novo para ${user.value.email}. Confira a caixa de entrada e o spam.`)
+  } catch (e) {
+    useUi().toast(e.status === 429 ? 'Espere um minuto para pedir outro link.' : e.message)
+  } finally {
+    resending.value = false
+  }
+}
 function signOut() { accountOpen.value = false; logout(); router.push('/login') }
 const title = computed(() => ui.crumb || route.meta.title || '')
 
@@ -209,6 +224,12 @@ onUnmounted(() => {
     <button v-if="collapsed && !noSide" type="button" class="expand" aria-label="Abrir barra lateral" @click="toggleSidebar"><AppIcon name="sidebar" :size="16" /></button>
 
     <main class="main">
+      <p v-if="user && user.email_verified === false && !hideVerify" class="verify" role="status">
+        <AppIcon name="inbox" :size="15" />
+        <span>Confirme seu e-mail <strong>{{ user.email }}</strong>: mandamos um link para lá.</span>
+        <button type="button" class="verify__btn" :disabled="resending" @click="resendVerify">{{ resending ? 'Enviando…' : 'Reenviar link' }}</button>
+        <button type="button" class="verify__x" aria-label="Fechar aviso" @click="hideVerify = true"><AppIcon name="close" :size="14" /></button>
+      </p>
       <div class="crumb"><AppIcon :name="route.meta.icon || 'work'" :size="16" /> {{ title }}<slot name="crumb" /></div>
       <div v-if="!state.loaded" class="loading" role="status">
         <template v-if="state.error">
@@ -332,6 +353,15 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 
 /* ---- conteúdo ---- */
 .main { grid-area: main; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-top: 1px solid var(--line); background: var(--bg); }
+.verify { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0; padding: 0.55rem 1.5rem; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); font-size: 13px; color: var(--text); }
+.verify strong { font-weight: 600; overflow-wrap: anywhere; }
+.verify > :deep(svg) { flex: none; color: var(--accent-soft); }
+.verify__btn { margin-left: auto; padding: 0.3rem 0.7rem; border: 1px solid var(--accent); border-radius: 6px; background: none; font: inherit; font-weight: 500; color: var(--text); cursor: pointer; }
+.verify__btn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.verify__btn:disabled { opacity: 0.6; cursor: default; }
+.verify__x { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.verify__x:hover { background: var(--surface-2); color: var(--text); }
+:is(.verify__btn, .verify__x):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .crumb { display: flex; align-items: center; gap: 0.5rem; min-height: 48px; padding: 0 1.5rem; border-bottom: 1px solid var(--line); font-weight: 500; }
 .app.is-collapsed .crumb { padding-left: 3.25rem; }
 .main__scroll { flex: 1; min-height: 0; overflow-y: auto; }
