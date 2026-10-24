@@ -53,6 +53,21 @@ const SECTIONS = [
     B('th3', 'Título 3 alternável', 'Título que esconde o que vem dentro', '▸', ':::toggle ### %c%Título\nConteúdo\n:::', 'toggle heading'),
     B('sync', 'Bloco sincronizado', 'Mostra o conteúdo de outra página, sempre igual', '⟳', { step: 'doc', make: (d) => `@[sync](${d.id})\n%c%` }, 'synced sincronizado'),
   ]],
+  ['Integrações', [
+    B('e-drive', 'Google Drive', 'Docs, Planilhas, Apresentações ou arquivo', '△', url('embed', 'Link do Google Drive'), 'google docs sheets slides planilha'),
+    B('e-figma', 'Figma', 'Arquivo, design ou protótipo', '◈', url('embed', 'Link do Figma'), 'figma design'),
+    B('e-gist', 'GitHub Gist', 'Trecho de código do GitHub', '⌥', url('embed', 'Link do Gist'), 'github gist codigo'),
+    B('e-maps', 'Google Maps', 'Mapa de um endereço', '📍', { step: 'map' }, 'mapa endereco local'),
+    B('e-loom', 'Loom', 'Vídeo gravado no Loom', '◉', url('embed', 'Link do Loom'), 'loom video'),
+    B('e-miro', 'Miro', 'Quadro do Miro', '▧', url('embed', 'Link do quadro do Miro'), 'miro quadro board'),
+    B('e-pdf', 'PDF', 'Documento PDF por link', '📄', url('embed', 'Link do PDF'), 'pdf documento'),
+    B('e-tweet', 'Post do X (Twitter)', 'Um post incorporado', '𝕏', url('embed', 'Link do post'), 'twitter x tweet'),
+    B('e-codepen', 'CodePen', 'Pen do CodePen', '✎', url('embed', 'Link do CodePen'), 'codepen'),
+    B('e-spotify', 'Spotify', 'Música, álbum, playlist ou podcast', '♫', url('embed', 'Link do Spotify'), 'spotify musica podcast'),
+    B('e-typeform', 'Typeform', 'Formulário do Typeform', '☰', url('embed', 'Link do Typeform'), 'typeform formulario'),
+    B('e-excalidraw', 'Excalidraw', 'Desenho do Excalidraw', '✐', url('embed', 'Link do Excalidraw'), 'excalidraw desenho'),
+    B('e-any', 'Incorporar link', 'Qualquer site que permita incorporar', '⧉', url('embed', 'Link do site'), 'embed incorporar iframe'),
+  ]],
 ]
 
 const plain = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -160,6 +175,10 @@ onMounted(() => { if (props.query === null) box.value?.querySelector('.search')?
           <button v-for="p in state.projects" :key="p.id" type="button" class="it" @click="pickProject(p.id)"><span class="ic" :style="{ color: p.color }">■</span><span class="tx"><strong>{{ p.name }}</strong></span></button>
         </div>
       </template>
+      <form v-else-if="step.then.step === 'map'" @submit.prevent="value.trim() && emit('insert', `@[map](${value.trim().replace(/[()]/g, '')})\n%c%`)">
+        <input v-model="value" placeholder="Endereço ou nome do lugar" aria-label="Endereço do mapa" />
+        <button type="submit" class="ok">Inserir</button>
+      </form>
       <form v-else @submit.prevent="submitText">
         <input v-model="value" placeholder="Título da tarefa que o botão cria" aria-label="Título da tarefa do botão" />
         <button type="submit" class="ok">Inserir</button>

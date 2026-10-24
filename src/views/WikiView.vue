@@ -9,6 +9,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { esc, outline, render, toggleCheck } from '../utils/markdown'
 import { dbView } from '../utils/dbviews'
+import { IMPORT_KINDS, importFiles } from '../utils/importers'
 import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useOnboarding } from '../composables/useOnboarding'
@@ -16,6 +17,7 @@ import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
 import BlockMenu from '../components/app/BlockMenu.vue'
+import AppModal from '../components/app/AppModal.vue'
 
 const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
 const ICONS = ['', '📄', '📌', '✅', '🚀', '💡', '📚', '🧭', '🛠️', '📈', '🗓️', '🔒', '🎯', '🧪', '👋']
@@ -206,10 +208,48 @@ function caretTop(el, pos) {
   m.remove()
   return el.offsetTop + top - el.scrollTop + 4
 }
-function openMenu() {
+// + ao passar o mouse na linha (como no Notion): onde começa e a altura de cada linha, com quebra automática
+const hoverLine = ref(null) // { i, top, h }
+let boxes = null
+let boxesKey = ''
+function lineBoxes(el) {
+  const key = `${el.clientWidth}|${el.value}`
+  if (key === boxesKey) return boxes
+  const cs = getComputedStyle(el)
+  const m = document.createElement('div')
+  for (const p of ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'paddingTop', 'paddingLeft', 'paddingRight', 'boxSizing', 'tabSize']) m.style[p] = cs[p]
+  Object.assign(m.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', width: `${el.clientWidth}px` })
+  for (const l of el.value.split('\n')) m.appendChild(document.createElement('div')).textContent = l || '\u200b'
+  document.body.appendChild(m)
+  boxes = [...m.children].map((d) => ({ top: d.offsetTop, h: d.offsetHeight }))
+  m.remove()
+  boxesKey = key
+  return boxes
+}
+function onHover(e) {
   const el = area.value
-  if (!el) return
-  menu.value = { query: null, from: null, top: caretTop(el, el.selectionStart) }
+  if (!el || menu.value) return
+  const y = e.clientY - el.getBoundingClientRect().top
+  const list = lineBoxes(el)
+  const i = list.findIndex((b) => y < b.top + b.h)
+  hoverLine.value = i < 0 || y < 0 ? null : { i, top: el.offsetTop + list[i].top, h: list[i].h }
+}
+// linha vazia: o bloco entra nela; com texto: abre uma linha nova embaixo
+async function addBelow(i) {
+  const el = area.value
+  const lines = doc.value.body.split('\n')
+  let pos = lines.slice(0, i).reduce((n, l) => n + l.length + 1, 0)
+  if (lines[i].trim()) {
+    pos += lines[i].length
+    doc.value.body = `${doc.value.body.slice(0, pos)}\n${doc.value.body.slice(pos)}`
+    pos += 1
+    touch()
+  }
+  hoverLine.value = null
+  await nextTick()
+  el.focus()
+  el.setSelectionRange(pos, pos)
+  menu.value = { query: null, from: null, top: caretTop(el, pos) }
 }
 function onType() {
   touch()
@@ -279,6 +319,28 @@ function removeCollection(c) {
   wiki.collections.splice(wiki.collections.indexOf(c), 1)
 }
 
+// ---- importar (como o Notion): cada arquivo vira uma página na primeira coleção
+const importing = ref(false)
+const importBusy = ref(false)
+async function importPick(e) {
+  const files = [...e.target.files]
+  e.target.value = ''
+  if (!files.length) return
+  importBusy.value = true
+  try {
+    const pages = await importFiles(files)
+    let first
+    for (const p of [...pages].reverse()) first = createDoc({ ...JSON.parse(JSON.stringify(DOC_DEFAULTS)), collectionId: wiki.collections[0].id, title: p.title.slice(0, 200), body: p.body })
+    importing.value = false
+    toast(`${pages.length} ${pages.length === 1 ? 'página importada' : 'páginas importadas'}.`)
+    open(first.id)
+  } catch (err) {
+    toast(err.message || 'Não foi possível importar.')
+  } finally {
+    importBusy.value = false
+  }
+}
+
 // ---- ações da página
 function duplicate() {
   const { id, versions, createdAt, updatedAt, ...rest } = JSON.parse(JSON.stringify(doc.value)) // structuredClone não aceita o proxy do Vue
@@ -323,8 +385,21 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
     <aside class="list" aria-label="Páginas da wiki">
       <div class="list__head">
         <strong>Wiki</strong>
-        <button type="button" class="new-page" @click="create()"><AppIcon name="plus" :size="14" /> Nova página</button>
+        <span class="head-btns">
+          <button type="button" class="new-page" title="Importar páginas" @click="importing = true"><AppIcon name="upload" :size="14" /> Importar</button>
+          <button type="button" class="new-page" @click="create()"><AppIcon name="plus" :size="14" /> Nova página</button>
+        </span>
       </div>
+      <AppModal :open="importing" title="Importar para a Wiki" @close="importing = false">
+        <p class="imp-hint">Cada arquivo vira uma página em “{{ wiki.collections[0].name }}”. Dá para escolher vários de uma vez.</p>
+        <div class="imp-grid">
+          <label v-for="k in IMPORT_KINDS" :key="k.id" class="imp" :class="{ busy: importBusy }">
+            <strong>{{ k.label }}</strong><small>{{ k.hint }}</small>
+            <input type="file" multiple :accept="k.accept" :disabled="importBusy" @change="importPick" />
+          </label>
+        </div>
+        <p class="imp-hint">Tarefas (Trello, Jira, Asana, planilhas) entram por CSV em <RouterLink to="/ajustes" @click="importing = false">Ajustes › Importar</RouterLink>.</p>
+      </AppModal>
       <label class="find"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar páginas" aria-label="Buscar páginas" /></label>
       <div v-if="wiki.labels.length" class="labels" role="group" aria-label="Filtrar por etiqueta">
         <button v-for="l in wiki.labels" :key="l.id" type="button" class="chip" :aria-pressed="labelFilter === l.id" :style="{ '--c': l.color }" @click="labelFilter = labelFilter === l.id ? '' : l.id">{{ l.name }}</button>
@@ -419,10 +494,10 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 
         <template v-if="mode === 'edit' && !doc.locked">
           <div class="tools" role="toolbar" aria-label="Formatação">
-            <button type="button" class="add-block" title="Inserir bloco (ou digite /)" :aria-expanded="!!menu" @mousedown.prevent @click="menu ? (menu = null) : openMenu()">＋ Bloco</button>
             <button v-for="t in TOOLBAR" :key="t[0]" type="button" :title="t[0]" @mousedown.prevent @click="format(t)">{{ t[0] }}</button>
           </div>
-          <div class="write">
+          <div class="write" @mousemove="onHover" @mouseleave="hoverLine = null">
+            <button v-if="hoverLine && !menu" type="button" class="line-add" :style="{ top: `${hoverLine.top + hoverLine.h / 2 - 11}px` }" aria-label="Adicionar bloco abaixo desta linha" title="Clique para adicionar um bloco abaixo (ou digite /)" @mousedown.prevent @click="addBelow(hoverLine.i)">+</button>
             <textarea ref="area" v-model="doc.body" class="body" placeholder="Comece a escrever, ou digite / para escolher um bloco (título, tabela, toggle, vídeo, base de dados…)." aria-label="Conteúdo da página" @input="onType" @keydown="onAreaKey" @blur="onAreaBlur" />
             <BlockMenu v-if="menu" ref="blockMenu" :query="menu.query" :doc-id="doc.id" :style="{ top: `${menu.top}px` }" @insert="insertBlock" @page="newSubpage" @close="menu = null" />
           </div>
@@ -484,6 +559,16 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 @media (max-width: 760px) { .wiki { grid-template-columns: minmax(0, 1fr); height: auto; } .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 45vh; } .page { grid-template-columns: minmax(0, 1fr); } .side { display: none; } }
 .list { display: flex; flex-direction: column; gap: 1px; min-height: 0; padding: 0.9rem 0.6rem; border-right: 1px solid var(--line); overflow-y: auto; }
 .list__head { display: flex; align-items: center; justify-content: space-between; padding: 0 0.35rem 0.6rem; }
+.head-btns { display: flex; gap: 0.3rem; }
+.imp-hint { margin: 0; font-size: 13px; color: var(--muted); }
+.imp-hint a { color: var(--accent-soft); }
+.imp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0.5rem; }
+.imp { position: relative; display: flex; flex-direction: column; gap: 0.15rem; padding: 0.75rem; border: 1px solid var(--line-strong); border-radius: 9px; cursor: pointer; }
+.imp:hover, .imp:focus-within { border-color: var(--accent); }
+.imp.busy { opacity: 0.5; cursor: progress; }
+.imp strong { font-size: 13.5px; font-weight: 500; }
+.imp small { font-size: 12px; color: var(--muted); }
+.imp input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .new-page { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--text); cursor: pointer; }
 .new-page:hover { border-color: var(--accent); }
 .find { display: flex; align-items: center; gap: 0.4rem; height: 30px; margin-bottom: 0.4rem; padding: 0 0.5rem; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
@@ -553,7 +638,9 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .tools button { min-width: 28px; height: 26px; padding: 0 0.4rem; border: 0; border-radius: 5px; background: none; font: 600 12px/1 'Geist', system-ui, sans-serif; color: var(--muted); cursor: pointer; }
 .tools button:hover { background: var(--surface-2); color: var(--text); }
 .write { position: relative; }
-.add-block { margin-right: 0.3rem; color: var(--accent-soft) !important; }
+.write { margin-left: -2rem; padding-left: 2rem; }
+.line-add { position: absolute; left: 0.35rem; z-index: 2; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 5px; background: none; font: 400 18px/1 'Geist', system-ui, sans-serif; color: var(--muted); cursor: pointer; }
+.line-add:hover { background: var(--surface-2); color: var(--text); }
 .body { width: 100%; min-height: 50vh; padding: 0.5rem 0; border: 0; background: none; font: 400 15px/1.7 'Geist Mono', ui-monospace, monospace; color: var(--text); resize: none; outline: none; field-sizing: content; }
 .md { min-height: 30vh; font-size: 15px; line-height: 1.7; color: var(--text); overflow-wrap: anywhere; }
 .md :deep(h1), .md :deep(h2), .md :deep(h3) { margin: 1.2em 0 0.4em; line-height: 1.25; color: var(--text); scroll-margin-top: 1rem; }
