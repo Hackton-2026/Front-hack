@@ -2,6 +2,7 @@
 // Nav no padrão do leonardo.ai: header fixo e transparente, menu centralizado, megamenus que se cruzam (fade + sobe 20px),
 // camada "glossy" com blur que aparece quando o conteúdo passa por baixo, botões gooey e menu hambúrguer no mobile
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
 import UserAvatar from '../UserAvatar.vue'
 import { useAuth } from '../../composables/useAuth'
@@ -13,6 +14,8 @@ const scrolled = ref(false)
 const mobileOpen = ref(false)
 const mobileSection = ref(null)
 let closeTimer
+const route = useRoute()
+watch(() => route.fullPath, () => { active.value = null; mobileOpen.value = false; mobileSection.value = null })
 
 const open = (id) => {
   clearTimeout(closeTimer)
@@ -38,6 +41,7 @@ onMounted(() => {
   addEventListener('keydown', onKey)
 })
 onUnmounted(() => {
+  clearTimeout(closeTimer)
   removeEventListener('scroll', onScroll)
   removeEventListener('keydown', onKey)
   document.documentElement.style.overflow = ''
@@ -92,7 +96,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
       </nav>
 
       <div class="nav__actions">
-        <GooeyButton variant="secondary" href="#topo">Tutorial</GooeyButton>
+        <GooeyButton variant="secondary" to="/blog/como-funciona">Tutorial</GooeyButton>
         <template v-if="user">
           <GooeyButton variant="primary" to="/inicio">Workspace</GooeyButton>
           <RouterLink to="/ajustes" class="nav__me" :title="user.first_name || user.username" aria-label="Sua conta"><UserAvatar :user="user" :size="36" /></RouterLink>
@@ -130,7 +134,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
             <a
               v-for="it in g.items"
               :key="it.title"
-              :href="PRODUCT_LINKS[it.title] || '/#topo'"
+              :href="it.to || PRODUCT_LINKS[it.title] || '/#topo'"
               class="mm__item"
               @click="active = null"
             >
@@ -160,7 +164,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
             >
           </div>
         </div>
-        <a href="#topo" class="mm__feature" @click="active = null">
+        <a :href="item.feature.to || '#topo'" class="mm__feature" @click="active = null">
           <img :src="item.feature.art" alt="" class="mm__art" loading="lazy" />
           <span class="mm__feature-title">{{ item.feature.title }}</span>
           <span class="mm__feature-cta">{{ item.feature.cta }}</span>
@@ -212,7 +216,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
                   <a
                     v-for="it in g.items"
                     :key="it.title"
-                    :href="PRODUCT_LINKS[it.title] || '/#topo'"
+                    :href="it.to || PRODUCT_LINKS[it.title] || '/#topo'"
                     class="mob__subitem"
                     @click="mobileOpen = false"
                   >
@@ -235,7 +239,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
         </div>
       </div>
       <div class="mob__actions">
-        <GooeyButton variant="secondary" size="lg" href="#topo" @click="mobileOpen = false">Tutorial</GooeyButton>
+        <GooeyButton variant="secondary" size="lg" to="/blog/como-funciona" @click="mobileOpen = false">Tutorial</GooeyButton>
         <GooeyButton v-if="user" variant="primary" size="lg" to="/inicio">Workspace</GooeyButton>
         <GooeyButton v-else variant="primary" size="lg" to="/login">Entrar</GooeyButton>
       </div>

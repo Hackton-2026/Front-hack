@@ -3,6 +3,7 @@
 import { onMounted, onUnmounted } from 'vue'
 import Lenis from 'lenis'
 import 'lenis/dist/lenis.css'
+import '../assets/landing.css'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import SiteNav from '../components/landing/SiteNav.vue'

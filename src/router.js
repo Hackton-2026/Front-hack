@@ -4,7 +4,11 @@ import { useUi } from './composables/useUi'
 
 const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, top: 110 }
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/solucoes/design',
@@ -54,6 +58,9 @@ const router = createRouter({
     { path: '/produto/chat', component: () => import('./views/ChatTutorial.vue'), meta: { bare: true } },
     { path: '/produto/tarefas', component: () => import('./views/TarefasTutorial.vue'), meta: { bare: true } },
     { path: '/produto/ia', component: () => import('./views/AiTutorialView.vue'), meta: { bare: true } },
+    { path: '/blog', alias: '/news', component: () => import('./views/BlogView.vue'), meta: { bare: true } },
+    { path: '/blog/como-funciona', alias: '/como-funciona', component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },
+    { path: '/blog/:slug', component: () => import('./views/BlogArticleView.vue'), meta: { bare: true } },
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
     { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true } }, // pagamento dos planos
     // Área logada do Novexo: meta.app = renderiza dentro da AppShell (App.vue); area marca o item do trilho

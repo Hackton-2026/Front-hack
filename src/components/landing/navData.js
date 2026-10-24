@@ -68,7 +68,7 @@ export const MENU = [
         },
       ],
     ],
-    feature: { title: 'Novo no Novexo? Aprenda o básico.', cta: 'Começar', art: elche },
+    feature: { title: 'Novo no Novexo? Aprenda o básico.', cta: 'Começar', art: elche, to: '/blog/como-funciona' },
   },
   {
     id: 'solucoes',
@@ -115,20 +115,16 @@ export const MENU = [
     id: 'aprender',
     label: 'Aprender',
     columns: [
-      [
-        {
-          items: [
-            { icon: 'book', title: 'Central Novexo', desc: 'Guias para dominar o Novexo.' },
-            { icon: 'news', title: 'Blog', desc: 'Produtividade e gestão de times.' },
-            { icon: 'play', title: 'Webinars', desc: 'Sessões ao vivo e gravadas.' },
-          ],
-        },
-      ],
+      [{ items: [
+        { icon: 'book', title: 'Como funciona', desc: 'Seu primeiro projeto, passo a passo.', to: '/blog/como-funciona' },
+        { icon: 'news', title: 'Blog', desc: 'Produtividade e gestão de times.', to: '/blog' },
+        { icon: 'play', title: 'Webinars', desc: 'Sessões ao vivo e gravadas.' },
+      ] }],
     ],
-    feature: { title: 'Como escrever tarefas que se explicam sozinhas', cta: 'Saiba mais', art: salamanca },
+    feature: { title: 'Como funciona o Novexo', cta: 'Veja o passo a passo', art: salamanca, to: '/blog/como-funciona' },
   },
-  { id: 'planos', label: 'Preços', href: '#planos' },
-  { id: 'contato', label: 'Contato', href: '#contato' },
+  { id: 'planos', label: 'Preços', href: '/#planos' },
+  { id: 'contato', label: 'Contato', href: '/#contato' },
 ]
 
 // Rotas públicas de apresentação dos recursos.
