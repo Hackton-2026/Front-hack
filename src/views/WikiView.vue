@@ -7,13 +7,15 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
-import { outline, render, toggleCheck } from '../utils/markdown'
+import { esc, outline, render, toggleCheck } from '../utils/markdown'
+import { dbView } from '../utils/dbviews'
 import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useOnboarding } from '../composables/useOnboarding'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import BlockMenu from '../components/app/BlockMenu.vue'
 
 const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
 const ICONS = ['', '📄', '📌', '✅', '🚀', '💡', '📚', '🧭', '🛠️', '📈', '🗓️', '🔒', '🎯', '🧪', '👋']
@@ -26,9 +28,9 @@ const LABEL_COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3b82f6', '#a
 const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
-const { state, createDoc } = useWorkspace()
+const { state, createDoc, createTask, code, project, member, today, STATUSES, PRIORITIES } = useWorkspace()
 const { complete } = useOnboarding()
-const { toast } = useUi()
+const { toast, openTask } = useUi()
 
 // Páginas e ajustes antigos ganham os campos novos
 state.prefs.wiki ||= { collections: [{ id: 'geral', name: 'Minhas páginas' }], labels: [] }
@@ -78,7 +80,30 @@ const crumbs = computed(() => {
   for (let p = doc.value && byId(doc.value.parentId); p; p = byId(p.parentId)) out.unshift(p)
   return out
 })
-const html = computed(() => (doc.value ? render(doc.value.body) : ''))
+// blocos que dependem do resto do site (base de dados, botão, navegação, bloco sincronizado)
+function ctx(seen = new Set()) {
+  return {
+    docTitle: (id) => byId(id)?.title,
+    embed(kind, arg) {
+      if (kind.startsWith('db:')) {
+        const pid = arg === 'all' ? null : Number(arg)
+        const list = state.tasks.filter((t) => !t.draft && (!pid || t.projectId === pid))
+        return dbView(kind.slice(3), list, pid ? project(pid)?.name || 'Projeto removido' : 'Todos os projetos', { STATUSES, PRIORITIES, code, project, member, today: today() })
+      }
+      if (kind === 'button') return `<button type="button" class="md-btn" data-action="task" data-title="${esc(arg)}">＋ ${esc(arg || 'Nova tarefa')}</button>`
+      if (kind === 'breadcrumb') return `<nav class="md-crumbs">${[...crumbs.value, doc.value].map((d) => `<a href="?doc=${d.id}" data-doc="${d.id}">${esc(d.icon || '📄')} ${esc(d.title || 'Sem título')}</a>`).join('<span>/</span>')}</nav>`
+      if (kind === 'sync') {
+        const d = byId(arg)
+        if (!d) return '<p class="md-empty">A página deste bloco sincronizado não existe mais.</p>'
+        if (seen.has(arg)) return '<p class="md-empty">Bloco sincronizado apontando para ele mesmo.</p>'
+        // as caixas de seleção são da outra página: aqui ficam só para ver
+        return `<div class="md-sync"><a href="?doc=${d.id}" data-doc="${d.id}">⟳ ${esc(d.title || 'Sem título')}</a>${render(d.body, ctx(new Set([...seen, arg]))).replace(/ data-line="\d+"/g, ' disabled')}</div>`
+      }
+      return undefined
+    },
+  }
+}
+const html = computed(() => (doc.value ? render(doc.value.body, ctx(new Set([doc.value.id]))) : ''))
 const toc = computed(() => (doc.value ? outline(doc.value.body) : []))
 const words = computed(() => (doc.value?.body.trim().match(/\S+/g) || []).length)
 const when = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -142,13 +167,87 @@ function format([, before, after]) {
   nextTick(() => { el.focus(); const pos = (block ? b : b + after.length) + before.length; el.setSelectionRange(pos, pos) })
 }
 function onPreviewClick(e) {
+  const go = e.target.closest('[data-doc]')
+  if (go) { e.preventDefault(); return open(go.dataset.doc) }
+  const t = e.target.closest('[data-task]')
+  if (t) return openTask(state.tasks.find((x) => String(x.id) === t.dataset.task))
+  const btn = e.target.closest('[data-action="task"]')
+  if (btn) { createTask({ title: btn.dataset.title || 'Nova tarefa', projectId: null, assignees: [state.me] }); return toast('Tarefa criada em Rascunhos.') }
   const line = e.target.dataset?.line
   if (line === undefined || doc.value.locked) return
   doc.value.body = toggleCheck(doc.value.body, Number(line))
   touch()
 }
 const jump = (id) => document.getElementById(id)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
-watch(activeId, () => { saved.value = ''; mode.value = doc.value?.locked ? 'view' : 'edit' })
+watch(activeId, () => { saved.value = ''; menu.value = null; mode.value = doc.value?.locked ? 'view' : 'edit' })
+// equações ($$ … $$): o KaTeX só carrega quando a página tem uma
+watch([html, mode], async () => {
+  await nextTick()
+  const els = editor.value?.querySelectorAll('.md-math') || []
+  if (!els.length) return
+  const [{ default: katex }] = await Promise.all([import('katex'), import('katex/dist/katex.min.css')])
+  els.forEach((el) => katex.render(el.dataset.tex, el, { displayMode: true, throwOnError: false }))
+}, { immediate: true })
+
+// ---- menu de blocos (o + e o / do Notion)
+const menu = ref(null) // { query: texto depois do / (null = aberto pelo +), from: posição do /, top }
+const blockMenu = ref(null)
+// altura do cursor dentro do textarea (cópia invisível com o mesmo texto até o cursor)
+function caretTop(el, pos) {
+  const cs = getComputedStyle(el)
+  const m = document.createElement('div')
+  for (const p of ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'paddingTop', 'paddingLeft', 'paddingRight', 'boxSizing', 'tabSize']) m.style[p] = cs[p]
+  Object.assign(m.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', width: `${el.clientWidth}px` })
+  m.textContent = el.value.slice(0, pos)
+  const mark = m.appendChild(document.createElement('span'))
+  mark.textContent = '\u200b'
+  document.body.appendChild(m)
+  const top = mark.offsetTop + mark.offsetHeight
+  m.remove()
+  return el.offsetTop + top - el.scrollTop + 4
+}
+function openMenu() {
+  const el = area.value
+  if (!el) return
+  menu.value = { query: null, from: null, top: caretTop(el, el.selectionStart) }
+}
+function onType() {
+  touch()
+  const el = area.value
+  const before = el.value.slice(el.value.lastIndexOf('\n', el.selectionStart - 1) + 1, el.selectionStart)
+  const m = before.match(/(?:^|\s)\/([^\s/]{0,24})$/)
+  if (m) menu.value = { query: m[1], from: el.selectionStart - m[1].length - 1, top: menu.value?.query != null ? menu.value.top : caretTop(el, el.selectionStart) }
+  else if (menu.value?.query != null) menu.value = null
+}
+// sai do texto sem ir para o menu (ex.: o passo de colar link) fecha o menu do /
+const onAreaBlur = () => setTimeout(() => { if (menu.value?.query != null && !document.activeElement?.closest('.bm')) menu.value = null })
+function onAreaKey(e) {
+  if (menu.value?.query != null && blockMenu.value?.key(e)) e.preventDefault()
+}
+// põe o bloco: linha vazia vira o bloco; senão, ele entra na linha de baixo. %c% é onde o cursor fica
+function insertBlock(snippet) {
+  const el = area.value
+  let v = doc.value.body
+  let pos = el.selectionStart
+  if (menu.value?.from != null) { v = v.slice(0, menu.value.from) + v.slice(pos); pos = menu.value.from }
+  const ls = v.lastIndexOf('\n', pos - 1) + 1
+  let le = v.indexOf('\n', pos)
+  if (le < 0) le = v.length
+  const empty = !v.slice(ls, le).trim()
+  const at = empty ? ls : le
+  const text = (empty ? '' : '\n') + snippet
+  const caret = at + text.indexOf('%c%')
+  doc.value.body = v.slice(0, empty ? ls : at) + text.replace('%c%', '') + v.slice(empty ? le : at)
+  menu.value = null
+  touch()
+  nextTick(() => { el.focus(); el.setSelectionRange(caret, caret) })
+}
+function newSubpage() {
+  const d = createDoc({ ...JSON.parse(JSON.stringify(DOC_DEFAULTS)), parentId: doc.value.id, collectionId: doc.value.collectionId, title: 'Sem título' })
+  expanded.value.add(doc.value.id)
+  insertBlock(`[[${d.id}|Sem título]]%c%`)
+  toast('Subpágina criada. Abra pelo link ou pela árvore ao lado.')
+}
 
 // ---- etiquetas
 function addLabel() {
@@ -320,9 +419,13 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 
         <template v-if="mode === 'edit' && !doc.locked">
           <div class="tools" role="toolbar" aria-label="Formatação">
+            <button type="button" class="add-block" title="Inserir bloco (ou digite /)" :aria-expanded="!!menu" @mousedown.prevent @click="menu ? (menu = null) : openMenu()">＋ Bloco</button>
             <button v-for="t in TOOLBAR" :key="t[0]" type="button" :title="t[0]" @mousedown.prevent @click="format(t)">{{ t[0] }}</button>
           </div>
-          <textarea ref="area" v-model="doc.body" class="body" placeholder="Comece a escrever. Use # para títulos, - para listas e - [ ] para tarefas." aria-label="Conteúdo da página" @input="touch" />
+          <div class="write">
+            <textarea ref="area" v-model="doc.body" class="body" placeholder="Comece a escrever, ou digite / para escolher um bloco (título, tabela, toggle, vídeo, base de dados…)." aria-label="Conteúdo da página" @input="onType" @keydown="onAreaKey" @blur="onAreaBlur" />
+            <BlockMenu v-if="menu" ref="blockMenu" :query="menu.query" :doc-id="doc.id" :style="{ top: `${menu.top}px` }" @insert="insertBlock" @page="newSubpage" @close="menu = null" />
+          </div>
         </template>
         <!-- eslint-disable-next-line vue/no-v-html -- render() escapa o texto antes de montar o HTML -->
         <div v-else class="md" @click="onPreviewClick" v-html="html || '<p class=&quot;muted&quot;>Página vazia.</p>'" />
@@ -449,7 +552,9 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .tools { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 2px; padding: 0.3rem 0; background: var(--bg); border-bottom: 1px solid var(--line); }
 .tools button { min-width: 28px; height: 26px; padding: 0 0.4rem; border: 0; border-radius: 5px; background: none; font: 600 12px/1 'Geist', system-ui, sans-serif; color: var(--muted); cursor: pointer; }
 .tools button:hover { background: var(--surface-2); color: var(--text); }
-.body { min-height: 50vh; padding: 0.5rem 0; border: 0; background: none; font: 400 15px/1.7 'Geist Mono', ui-monospace, monospace; color: var(--text); resize: none; outline: none; field-sizing: content; }
+.write { position: relative; }
+.add-block { margin-right: 0.3rem; color: var(--accent-soft) !important; }
+.body { width: 100%; min-height: 50vh; padding: 0.5rem 0; border: 0; background: none; font: 400 15px/1.7 'Geist Mono', ui-monospace, monospace; color: var(--text); resize: none; outline: none; field-sizing: content; }
 .md { min-height: 30vh; font-size: 15px; line-height: 1.7; color: var(--text); overflow-wrap: anywhere; }
 .md :deep(h1), .md :deep(h2), .md :deep(h3) { margin: 1.2em 0 0.4em; line-height: 1.25; color: var(--text); scroll-margin-top: 1rem; }
 .md :deep(h1) { font-size: 1.6rem; } .md :deep(h2) { font-size: 1.3rem; } .md :deep(h3) { font-size: 1.1rem; }
