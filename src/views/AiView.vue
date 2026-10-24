@@ -152,6 +152,9 @@ async function decide(action, ok) {
   color: var(--ai-text);
 }
 /* Escurece o centro para o texto ficar legível por cima dos tubarões */
+/* tema claro (Ajustes › Aparência): vidro claro em vez de escuro */
+:global(.app.is-light .ai) { --ai-glass: rgb(255 255 255 / 0.72); --ai-glass-line: rgb(0 0 0 / 0.1); }
+:global(.app.is-light .ai .error) { color: #9a3d06; }
 .veil { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 42% 38% at 50% 50%, color-mix(in srgb, var(--ai-bg) 88%, transparent), transparent 100%); }
 .has-chat .veil { background: linear-gradient(transparent 0%, color-mix(in srgb, var(--ai-bg) 70%, transparent) 40%, color-mix(in srgb, var(--ai-bg) 70%, transparent) 70%, var(--ai-bg) 100%); }
 

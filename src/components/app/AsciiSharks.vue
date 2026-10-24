@@ -29,6 +29,9 @@ const NUDGE = 1.6 // quanto esses dois empurrões viram o tubarão (radianos por
 const canvas = ref(null)
 let engine
 onMounted(() => {
+  // A biblioteca pede o canvas opaco ({ alpha: false }), que fica preto atrás dos tubarões no tema claro. O navegador
+  // devolve sempre o primeiro contexto criado, então pedindo antes (transparente) o fundo vem da página
+  canvas.value.getContext('2d')
   engine = new OceanEngine(canvas.value, SHARKS)
   // shortcut: sobrescreve métodos internos (resize, toLocal, paintBackground, render, step, depositWake, diffuse) do commit fixado no package.json;
   // ao atualizar a biblioteca, conferir se esses nomes ainda existem
