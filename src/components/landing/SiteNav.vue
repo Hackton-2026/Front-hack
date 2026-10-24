@@ -4,7 +4,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
-import UserAvatar from '../UserAvatar.vue'
+import AccountMenu from '../app/AccountMenu.vue'
 import { useAuth } from '../../composables/useAuth'
 import { MENU, ICONS, PRODUCT_LINKS } from './navData'
 
@@ -99,7 +99,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
         <GooeyButton variant="secondary" to="/blog/como-funciona">Tutorial</GooeyButton>
         <template v-if="user">
           <GooeyButton variant="primary" to="/inicio">Workspace</GooeyButton>
-          <RouterLink to="/ajustes" class="nav__me" :title="user.first_name || user.username" aria-label="Sua conta"><UserAvatar :user="user" :size="36" /></RouterLink>
+          <AccountMenu :size="36" ring />
         </template>
         <GooeyButton v-else variant="primary" to="/login">Entrar</GooeyButton>
       </div>

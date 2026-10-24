@@ -57,12 +57,19 @@ const router = createRouter({
     { path: '/precos', alias: '/pricing', component: () => import('./views/PricingView.vue'), meta: { bare: true } },
     { path: CUSTOM_PLAN_PATH, component: () => import('./views/CustomPlanView.vue'), meta: { bare: true }, beforeEnter: () => canEnterCustomPlan() || { path: '/precos', hash: '#enterprise', replace: true } },
     { path: '/contato', alias: '/contact-us', component: () => import('./views/ContactView.vue'), meta: { bare: true } },
+    // páginas institucionais (links do rodapé)
+    { path: '/casos-de-uso', component: () => import('./views/UseCasesView.vue'), meta: { bare: true } },
+    { path: '/seguranca', alias: '/security', component: () => import('./views/SecurityView.vue'), meta: { bare: true } },
+    { path: '/docs', alias: '/documentacao', component: () => import('./views/DocsView.vue'), meta: { bare: true } },
+    { path: '/status', component: () => import('./views/StatusView.vue'), meta: { bare: true } },
+    { path: '/sobre', alias: '/about', component: () => import('./views/AboutView.vue'), meta: { bare: true } },
     { path: '/blog', alias: '/news', component: () => import('./views/BlogView.vue'), meta: { bare: true } },
     { path: '/blog/como-funciona', alias: '/como-funciona', component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },
     { path: '/blog/:slug', component: () => import('./views/BlogArticleView.vue'), meta: { bare: true } },
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
     { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true } }, // pagamento dos planos
     { path: '/entrar/:token', component: () => import('./views/JoinView.vue'), props: true, meta: { bare: true } }, // link de convite (sem login)
+    { path: '/verificar-email', component: () => import('./views/VerifyEmailView.vue'), meta: { bare: true } }, // link do e-mail de verificação
     // Área logada do Novexo: meta.app = renderiza dentro da AppShell (App.vue); area marca o item do trilho
     { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Começar', icon: 'rocket' } },
     { path: '/inicio', component: () => import('./views/HomeView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Início', icon: 'home' } },

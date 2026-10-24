@@ -134,8 +134,8 @@ async function decide(action, ok) {
   /* Tokens da página: fundo igual ao das outras telas (--bg). Quando o tema claro existir, é só trocar
      --ai-bg/--ai-text e --ai-shark-filter (os tubarões saem em cinza; o filtro pinta de laranja). */
   --ai-bg: var(--bg);
-  /* tira as cores da biblioteca e pinta tudo num laranja só, menos saturado */
-  --ai-shark-filter: grayscale(1) sepia(1) saturate(2.4) hue-rotate(-12deg) brightness(1.05);
+  /* tira as cores da biblioteca e pinta tudo num laranja só, bem alaranjado */
+  --ai-shark-filter: grayscale(1) sepia(1) saturate(9) hue-rotate(-24deg) brightness(1.15);
   --ai-text: var(--text);
   --ai-muted: var(--muted);
   --ai-glass: rgb(24 22 20 / 0.62);
@@ -152,6 +152,9 @@ async function decide(action, ok) {
   color: var(--ai-text);
 }
 /* Escurece o centro para o texto ficar legível por cima dos tubarões */
+/* tema claro (Ajustes › Aparência): vidro claro em vez de escuro */
+:global(.app.is-light .ai) { --ai-glass: rgb(255 255 255 / 0.72); --ai-glass-line: rgb(0 0 0 / 0.1); }
+:global(.app.is-light .ai .error) { color: #9a3d06; }
 .veil { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 42% 38% at 50% 50%, color-mix(in srgb, var(--ai-bg) 88%, transparent), transparent 100%); }
 .has-chat .veil { background: linear-gradient(transparent 0%, color-mix(in srgb, var(--ai-bg) 70%, transparent) 40%, color-mix(in srgb, var(--ai-bg) 70%, transparent) 70%, var(--ai-bg) 100%); }
 

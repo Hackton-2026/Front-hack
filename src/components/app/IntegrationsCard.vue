@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useOnboarding } from '../../composables/useOnboarding'
 import AppIcon from './AppIcon.vue'
+import BrandIcon from './BrandIcon.vue'
 
 const APPS = [
   { slug: 'github', name: 'GitHub' },
@@ -36,7 +37,7 @@ function connect(app, e) {
       <h2 id="apps-title">Turbine seu workspace</h2>
       <div class="chips">
         <button v-for="a in APPS" :key="a.slug" type="button" class="chip" :class="{ 'is-on': connected.includes(a.slug) }" :aria-pressed="connected.includes(a.slug)" @click="connect(a, $event)">
-          <img :src="`https://cdn.simpleicons.org/${a.slug}/f2efea`" alt="" width="15" height="15" loading="lazy" />
+          <BrandIcon :name="a.slug" :size="15" />
           {{ connected.includes(a.slug) ? `${a.name} conectado` : `Conectar ${a.name}` }}
           <AppIcon v-if="connected.includes(a.slug)" name="check" :size="14" class="chip__ok" />
         </button>

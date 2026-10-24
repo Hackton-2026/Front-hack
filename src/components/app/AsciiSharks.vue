@@ -22,10 +22,18 @@ const SPEED = 0.55 // 1 = velocidade original da biblioteca
 const WAKE = 0.09 // energia extra que a cauda deixa na água (ondas mais fortes)
 const WAKE_FADE = 0.55 // 1 = ondas somem no tempo original; menor = duram mais
 const GRID_ALPHA = 0.35 // grade de fundo mais apagada que a original
+const DARKEN = 0.4 // tema claro: pontos e ondas escurecidos para aparecer no fundo claro
+const SPREAD = 0.4 // tubarões se afastam quando as cabeças ficam a menos disso (fração do menor lado da tela)
+const MARGIN = 0.1 // começam a virar antes de chegar na borda (fração do menor lado da tela)
+const NUDGE = 1.6 // quanto esses dois empurrões viram o tubarão (radianos por segundo, no máximo)
 
 const canvas = ref(null)
 let engine
+let light = false // tema claro da página (Ajustes › Aparência), conferido a cada quadro
 onMounted(() => {
+  // A biblioteca pede o canvas opaco ({ alpha: false }), que fica preto atrás dos tubarões no tema claro. O navegador
+  // devolve sempre o primeiro contexto criado, então pedindo antes (transparente) o fundo vem da página
+  canvas.value.getContext('2d')
   engine = new OceanEngine(canvas.value, SHARKS)
   // shortcut: sobrescreve métodos internos (resize, toLocal, paintBackground, render, step, depositWake, diffuse) do commit fixado no package.json;
   // ao atualizar a biblioteca, conferir se esses nomes ainda existem
@@ -52,10 +60,31 @@ onMounted(() => {
     g.globalAlpha = GRID_ALPHA
     paintGrid(g, this.width, this.height, this.cw, this.ch, this.dpr)
     g.globalAlpha = 1
+    if (light) {
+      // a grade sai branca da biblioteca: no tema claro, repinta as mesmas linhas de escuro
+      g.setTransform(1, 0, 0, 1, 0, 0)
+      g.globalCompositeOperation = 'source-in'
+      g.fillStyle = '#000'
+      g.fillRect(0, 0, this.bg.width, this.bg.height)
+      g.globalCompositeOperation = 'source-over'
+    }
   }
   // A biblioteca apaga o quadro anterior pintando o fundo preto por cima; transparente, é preciso limpar antes
+  // Ondas, cardumes e grade vêm em cores claras (feitas para brilhar no preto); depois do filtro viram um laranja quase
+  // branco que some no tema claro. No claro, as mesmas cores escurecidas (DARKEN) viram um laranja forte.
+  const darken = (c) => c.replace(/rgba\((\d+),(\d+),(\d+),/, (_, r, g, b) => `rgba(${[r, g, b].map((v) => Math.round(v * DARKEN)).join(',')},`)
+  const palettes = {
+    dark: { dotStyles: renderer.dotStyles, fishStyles: renderer.fishStyles },
+    light: { dotStyles: renderer.dotStyles.map(darken), fishStyles: renderer.fishStyles.map(darken) },
+  }
   const render = renderer.render.bind(renderer)
   renderer.render = (w, dt) => {
+    const now = !!canvas.value.closest('.is-light')
+    if (now !== light) {
+      light = now
+      Object.assign(renderer, palettes[light ? 'light' : 'dark'])
+      renderer.paintBackground()
+    }
     renderer.ctx.setTransform(1, 0, 0, 1, 0, 0)
     renderer.ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
     render(w, dt)
@@ -63,8 +92,41 @@ onMounted(() => {
   // O mundo é SCALE vezes maior, então tudo andaria SCALE vezes mais devagar na tela enquanto a cauda bate
   // no ritmo normal (fica "balançando" no lugar). O tempo roda SCALE vezes mais rápido e a batida
   // da cauda (phase) volta ao ritmo original.
+  // A biblioteca só separa tubarões quase encostados e só vira de volta com o focinho já fora da tela:
+  // antes do passo dela, cada um vira um pouco para longe dos outros e da borda
+  const spread = (dt) => {
+    const { sharks, width: W, height: H } = world
+    const side = Math.min(W, H)
+    const range = side * SPREAD
+    const margin = side * MARGIN
+    for (const sh of sharks) {
+      const hx = sh.nodes[0]
+      const hy = sh.nodes[1]
+      let px = 0
+      let py = 0
+      for (const o of sharks) {
+        if (o === sh) continue
+        const ox = hx - o.nodes[0]
+        const oy = hy - o.nodes[1]
+        const d = Math.hypot(ox, oy)
+        if (d < range && d > 1e-3) {
+          px += (ox / d) * (1 - d / range)
+          py += (oy / d) * (1 - d / range)
+        }
+      }
+      px += Math.max(0, margin - hx) / margin - Math.max(0, hx - (W - margin)) / margin
+      py += Math.max(0, margin - hy) / margin - Math.max(0, hy - (H - margin)) / margin
+      const strength = Math.min(1, Math.hypot(px, py))
+      if (strength < 1e-3) continue
+      let diff = Math.atan2(py, px) - sh.heading
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff)) // menor ângulo, entre -π e π
+      const max = NUDGE * strength * dt
+      sh.heading += Math.max(-max, Math.min(max, diff))
+    }
+  }
   const step = world.step.bind(world)
   world.step = (dt) => {
+    spread(dt * SPEED)
     const sharkPhase = world.sharks.map((s) => s.phase)
     const fishPhase = world.fish.map((f) => f.phase)
     step(dt * SCALE * SPEED)

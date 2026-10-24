@@ -4,10 +4,13 @@
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { useUi } from '../composables/useUi'
+import { api } from '../services/api'
 import GooeyButton from '../components/GooeyButton.vue'
 import GoogleButton from '../components/GoogleButton.vue'
 
 const { login, register, loginWithGoogle } = useAuth()
+const { toast } = useUi()
 const route = useRoute()
 const router = useRouter()
 
@@ -18,7 +21,8 @@ const toggleMode = () => {
   router.replace({ query: { ...route.query, modo: isRegister.value ? undefined : 'cadastro' } })
 }
 
-const form = reactive({ first_name: '', email: '', password: '' })
+// o e-mail digitado no rodapé do site chega pelo estado da navegação (não pela URL)
+const form = reactive({ first_name: '', email: String(history.state?.email || ''), password: '', whatsapp: '' })
 const showPassword = ref(false)
 const error = ref('')
 const loading = ref(false)
@@ -28,8 +32,8 @@ async function run(action) {
   error.value = ''
   loading.value = true
   try {
-    await action()
-    router.push(route.query.next || '/comecar')
+    const to = await action()
+    router.push(to || route.query.next || '/comecar')
   } catch (e) {
     // erros de campo do DRF ({password: [...]}) sem o nome técnico do campo na frente
     const fields = e.data && !e.data.detail && typeof e.data === 'object' ? Object.values(e.data).flat() : null
@@ -39,7 +43,20 @@ async function run(action) {
   }
 }
 
-const submit = () => run(() => (isRegister.value ? register({ ...form }) : login(form.email, form.password)))
+// WhatsApp é opcional: a conta é criada mesmo se o código não puder ser enviado; a confirmação fica em Ajustes › WhatsApp
+async function signUp() {
+  const { whatsapp, ...data } = form
+  await register(data)
+  if (!whatsapp.trim()) return null
+  try {
+    await api('/api/whatsapp/me/', { method: 'POST', body: { phone: whatsapp } })
+    toast('Mandamos um código no seu WhatsApp. Digite ele aqui para confirmar o número.')
+  } catch (e) {
+    toast(`Conta criada, mas o WhatsApp não foi cadastrado: ${e.message}`)
+  }
+  return '/ajustes?tab=whatsapp'
+}
+const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, form.password)))
 </script>
 
 <template>
@@ -61,6 +78,11 @@ const submit = () => run(() => (isRegister.value ? register({ ...form }) : login
           <label class="field">
             <span>{{ isRegister ? 'E-mail' : 'E-mail ou usuário' }}</span>
             <input v-model="form.email" :type="isRegister ? 'email' : 'text'" required :autocomplete="isRegister ? 'email' : 'username'" />
+          </label>
+          <label v-if="isRegister" class="field">
+            <span>WhatsApp <small class="opt">(opcional)</small></span>
+            <input v-model="form.whatsapp" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 91234-5678" aria-describedby="wa-hint" />
+            <small id="wa-hint" class="opt">Para receber os avisos dos seus projetos. Confirmamos com um código no WhatsApp.</small>
           </label>
           <label class="field">
             <span>Senha</span>
@@ -130,6 +152,7 @@ h1 { margin: 1.75rem 0 0.75rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend
 .form { display: flex; flex-direction: column; gap: 1.25rem; width: 100%; }
 .field { display: flex; flex-direction: column; gap: 0.5rem; }
 .field > span:first-child { font-size: 0.875rem; font-weight: 600; }
+.opt { font-size: 0.78rem; font-weight: 400; color: var(--color-muted, #a29d95); }
 .field input {
   width: 100%;
   height: 2.75rem;
