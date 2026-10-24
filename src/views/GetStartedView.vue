@@ -57,7 +57,7 @@ onUnmounted(() => ctx?.revert())
       <h2 id="trial-title">Seu teste de 14 dias do Business está ativo! <span class="badge">Termina em 13 dias</span></h2>
       <p>Use metas, painéis, controle de tempo e a Novexo IA. Adicione um cartão para continuar depois do teste, ou volte para o Grátis quando quiser.</p>
       <div class="trial__btns">
-        <GooeyButton variant="primary" to="/#planos">Assinar agora</GooeyButton>
+        <GooeyButton variant="primary" to="/checkout?plano=business&ciclo=anual">Assinar agora</GooeyButton>
         <GooeyButton variant="secondary" to="/#planos">Ver recursos do Business</GooeyButton>
       </div>
     </section>

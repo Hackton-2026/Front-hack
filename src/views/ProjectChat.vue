@@ -147,6 +147,12 @@ async function send(answer) {
     input.value?.focus()
   }
 }
+// /whatsapp manda a mensagem pelo WhatsApp para quem participa e confirmou o número (Ajustes › WhatsApp)
+const callsWhatsapp = computed(() => /^\/(whatsapp|whatsap|whatzap|zap)\b/i.test(text.value.trim()))
+function whatsapp() {
+  if (!callsWhatsapp.value) text.value = `/whatsapp ${text.value.trimStart()}`
+  input.value?.focus()
+}
 function mentionAi() {
   if (!callsAi.value) text.value = `@novexo ${text.value}`.trimEnd() + ' '
   input.value?.focus()
@@ -184,15 +190,16 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
       <div v-if="!messages.length && !error" class="empty">
         <span class="spark"><AppIcon name="chat" :size="22" /></span>
         <strong>Comece a conversa de {{ p?.name || 'projeto' }}</strong>
-        <p>Todo mundo do projeto vê estas mensagens. <code>@novexo</code> chama a IA e <code>@nome</code> avisa a pessoa.</p>
+        <p>Todo mundo do projeto vê estas mensagens. <code>@novexo</code> chama a IA, <code>@nome</code> avisa a pessoa e <code>/whatsapp</code> manda pelo WhatsApp.</p>
       </div>
-      <article v-for="(m, i) in messages" :key="m.id" class="msg" :class="{ me: mine(m), ai: m.is_ai, cont: sameAuthor(i) }">
-        <span v-if="!sameAuthor(i)" class="ava" :style="{ background: m.is_ai ? 'var(--accent)' : m.author?.color }">
+      <article v-for="(m, i) in messages" :key="m.id" class="msg" :class="{ me: mine(m), ai: m.is_ai, sys: m.is_system, cont: sameAuthor(i) && !m.is_system }">
+        <p v-if="m.is_system" class="sys__txt"><AppIcon name="chat" :size="13" />{{ m.body }}</p>
+        <span v-else-if="!sameAuthor(i)" class="ava" :style="{ background: m.is_ai ? 'var(--accent)' : m.author?.color }">
           <AppIcon v-if="m.is_ai" name="ai" :size="14" />
           <img v-else-if="m.author?.avatar" :src="m.author.avatar" alt="" />
           <template v-else>{{ initials(m.author?.name) }}</template>
         </span>
-        <div class="bubble">
+        <div v-if="!m.is_system" class="bubble">
           <header v-if="!sameAuthor(i)"><strong>{{ m.is_ai ? 'Novexo IA' : m.author?.name || 'Alguém que saiu' }}</strong><time :datetime="m.created_at">{{ time(m.created_at) }}</time></header>
           <template v-if="m.is_ai"><AiMarkdown :text="m.body" /><AiItems :items="m.items || []" /></template>
           <p v-else><template v-for="(x, k) in parts(m.body)" :key="k"><strong v-if="x.bold">{{ x.t }}</strong><mark v-else-if="x.at" :class="{ nvx: x.t.toLowerCase().startsWith('@novexo') }">{{ x.t }}</mark><template v-else>{{ x.t }}</template></template></p>
@@ -218,10 +225,11 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
           <RouterLink :to="`/projetos/${pid}/membros`" @mousedown.prevent @click="mention = null">Chamar participantes</RouterLink>
         </li>
       </ul>
-      <textarea ref="input" v-model="text" rows="1" maxlength="4000" placeholder="Mensagem… (@ para mencionar)" aria-label="Mensagem para o chat do projeto"
+      <textarea ref="input" v-model="text" rows="1" maxlength="4000" placeholder="Mensagem… (@ menciona, /whatsapp manda no zap)" aria-label="Mensagem para o chat do projeto"
         role="combobox" :aria-expanded="matches.length > 0" aria-autocomplete="list" @input="track" @click="track" @keydown="onKey" @blur="mention = null" />
       <div class="bar">
         <button type="button" class="mention" :class="{ on: callsAi }" :aria-pressed="callsAi" title="Chamar a Novexo IA" @click="mentionAi"><AppIcon name="ai" :size="14" />@novexo</button>
+        <button type="button" class="mention" :class="{ on: callsWhatsapp }" :aria-pressed="callsWhatsapp" title="Mandar pelo WhatsApp para quem participa" @click="whatsapp"><AppIcon name="chat" :size="14" />/whatsapp</button>
         <span class="hint"><kbd>↵</kbd> enviar · <kbd>⇧</kbd><kbd>↵</kbd> linha</span>
         <button type="submit" class="send" :disabled="sending || !text.trim()" aria-label="Enviar"><AppIcon name="arrow" :size="16" /></button>
       </div>
@@ -288,4 +296,7 @@ mark.nvx { background: rgb(229 101 21 / 0.18); color: var(--accent-soft); }
 :is(.mention, .send, .x, .people):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 @media (max-width: 560px) { .hint { display: none; } }
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; } }
+.msg.sys { justify-content: center; margin: 0.7rem 0 0; padding-left: 0; }
+.sys__txt { display: inline-flex; align-items: flex-start; gap: 0.4rem; max-width: 90%; margin: 0; padding: 0.4rem 0.7rem; border: 1px solid rgb(37 211 102 / 0.35); border-radius: 999px; background: rgb(37 211 102 / 0.08); font-size: 12px; line-height: 1.45; color: var(--muted); }
+.sys__txt .app-icon { flex-shrink: 0; margin-top: 2px; color: #25d366; }
 </style>

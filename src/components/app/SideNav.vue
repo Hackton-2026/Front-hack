@@ -11,6 +11,7 @@ import { useOnboarding } from '../../composables/useOnboarding'
 import AppIcon from './AppIcon.vue'
 import ProjectIcon from './ProjectIcon.vue'
 import DeleteProjectDialog from './DeleteProjectDialog.vue'
+import { api } from '../../services/api'
 
 const emit = defineEmits(['collapse'])
 const PERSONAL = [
@@ -49,6 +50,20 @@ const FEATURES = [
 const route = useRoute()
 const router = useRouter()
 const { state, createProject, archiveProject } = useWorkspace()
+
+// selo do plano no rodapé: grátis → assinar; em teste → dias que faltam; pago → abre Planos e cobrança
+const plan = ref(null)
+api('/api/billing/').then((b) => (plan.value = b.subscription && { ...b.subscription, name: b.plans.find((p) => p.code === b.subscription.plan)?.name })).catch(() => {})
+const planBadge = computed(() => {
+  const s = plan.value
+  if (!s) return null
+  if (s.status === 'trialing' && s.trial_ends_at) {
+    const days = Math.max(0, Math.ceil((new Date(s.trial_ends_at) - Date.now()) / 864e5))
+    return { text: `Teste do ${s.name}: ${days} ${days === 1 ? 'dia' : 'dias'}`, to: `/checkout?plano=${s.plan}&ciclo=anual` }
+  }
+  if (s.plan === 'free' || s.status === 'canceled') return { text: 'Assinar um plano', to: '/checkout?plano=business&ciclo=anual' }
+  return { text: `Plano ${s.name}${s.status === 'past_due' ? ' · pagamento pendente' : ''}`, to: '/ajustes?tab=billing' }
+})
 const { newTask, toast } = useUi()
 const { complete } = useOnboarding()
 const prefs = computed(() => state.prefs)
@@ -230,7 +245,7 @@ onUnmounted(() => {
       </div>
     </Transition>
   </div>
-  <RouterLink to="/#planos" class="trial">Teste do Business: 13 dias</RouterLink>
+  <RouterLink v-if="planBadge" :to="planBadge.to" class="trial">{{ planBadge.text }}</RouterLink>
 
   <Teleport to="body">
     <Transition :css="false" @enter="onMoreEnter" @leave="onMoreLeave">
