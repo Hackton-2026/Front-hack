@@ -129,7 +129,7 @@ function toApi(fields) {
   }
   return body
 }
-const fromActivity = (a) => ({ id: a.id, taskId: a.task, text: a.text, at: a.at, details: a.details || {} })
+const fromActivity = (a) => ({ id: a.id, taskId: a.task, actor: a.actor, type: a.event_type, text: a.text, at: a.at, details: a.details || {} })
 const KINDS = { cycle: 'cycles', module: 'modules', page: 'pages', view: 'views' }
 
 async function load() {
@@ -413,7 +413,6 @@ export function useWorkspace() {
   }
   const taskActivity = async (id) => (await api(`/api/activity/?task=${id}`)).map(fromActivity)
   const taskComments = (id) => api(`/api/tasks/${id}/comments/`)
-  const addComment = (id, body) => api(`/api/tasks/${id}/comments/`, { method: 'POST', body: { body } })
   function createDoc(fields = {}) {
     const now = new Date().toISOString()
     const d = reactive({ id: `doc-${Date.now().toString(36)}`, title: 'Sem título', body: '', createdAt: now, updatedAt: now, ...fields })
@@ -429,6 +428,24 @@ export function useWorkspace() {
   const inviteToProject = (pid, email, permission) => api(`/api/projects/${pid}/invitations/`, { method: 'POST', body: { email, permission } })
   const cancelInvite = (pid, inviteId) => api(`/api/projects/${pid}/invitations/${inviteId}/`, { method: 'DELETE' })
   const setProjectPermission = (pid, userId, permission) => api(`/api/projects/${pid}/members/${userId}/`, { method: 'PATCH', body: { permission } })
+  // Cargo da pessoa no projeto ("Desenvolvedor"...). Atualiza na hora o mapa de cargos do projeto (usado para atribuir por cargo)
+  async function setProjectRole(pid, userId, title) {
+    const res = await api(`/api/projects/${pid}/members/${userId}/`, { method: 'PATCH', body: { title } })
+    const p = project(pid)
+    if (p) {
+      const titles = { ...(p.titles || {}) }
+      if (res.title) titles[userId] = res.title
+      else delete titles[userId]
+      p.titles = titles
+    }
+    return res.title
+  }
+  // Cargos do projeto com quem tem cada um: [{ title, ids }], para "atribuir a todos os Desenvolvedores"
+  const rolesOf = (pid) => {
+    const groups = {}
+    for (const [id, title] of Object.entries(project(pid)?.titles || {})) (groups[title] ||= []).push(Number(id))
+    return Object.entries(groups).map(([title, ids]) => ({ title, ids })).sort((a, b) => a.title.localeCompare(b.title))
+  }
   async function removeProjectMember(pid, userId) {
     await api(`/api/projects/${pid}/members/${userId}/`, { method: 'DELETE' })
     if (userId === state.me) {
@@ -463,10 +480,10 @@ export function useWorkspace() {
 
   return {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
-    load, refreshFeed, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, addComment, createDoc, progress, clearLocal,
+    load, refreshFeed, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
     starred, toggleStar, doneRatio, touchRecent, peopleOf,
-    projectMembers, inviteToProject, cancelInvite, setProjectPermission, removeProjectMember, inviteInfo, acceptInvite, declineInvite,
+    projectMembers, inviteToProject, cancelInvite, setProjectPermission, setProjectRole, rolesOf, removeProjectMember, inviteInfo, acceptInvite, declineInvite,
     projectMessages, sendProjectMessage,
     today: () => day(0), day,
   }

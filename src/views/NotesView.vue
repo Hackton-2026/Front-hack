@@ -1,17 +1,33 @@
 <script setup>
-// Notas em página inteira (os mesmos Stickies do botão do canto, com mais espaço)
-import { nextTick, onMounted, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+// Notas (os Stickies do Plane, em página inteira): fixar no topo, buscar, filtrar por cor e por #etiqueta,
+// e transformar a nota em rascunho de tarefa. Ficam só para você.
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { useNotes } from '../composables/useOnboarding'
+import { useWorkspace } from '../composables/useWorkspace'
+import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
-import GooeyButton from '../components/GooeyButton.vue'
 
-const COLORS = ['#fba45c', '#e56515', '#cdcdcb', '#919599', '#f2c46d']
+const COLORS = ['#fba45c', '#e56515', '#cdcdcb', '#919599', '#f2c46d', '#7fc47a']
 const { notes, add, remove } = useNotes()
+const { state, createTask } = useWorkspace()
+const { toast } = useUi()
 const root = ref(null)
+const q = ref('')
+const color = ref('')
+const tag = ref('')
 const reduced = prefersReducedMotion()
 
+const tagsOf = (n) => [...new Set((n.text.match(/#[\p{L}\p{N}_-]+/gu) || []).map((t) => t.slice(1).toLowerCase()))]
+const allTags = computed(() => [...new Set(notes.value.flatMap(tagsOf))].sort())
+const shown = computed(() => notes.value.filter((n) => (!q.value || n.text.toLowerCase().includes(q.value.toLowerCase())) && (!color.value || n.color === color.value) && (!tag.value || tagsOf(n).includes(tag.value))))
+const pinned = computed(() => shown.value.filter((n) => n.pinned))
+const others = computed(() => shown.value.filter((n) => !n.pinned))
+const words = (n) => (n.text.trim().match(/\S+/g) || []).length
+const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+
 async function create() {
+  q.value = ''; color.value = ''; tag.value = ''
   const n = add(COLORS[notes.value.length % COLORS.length])
   await nextTick()
   const el = root.value.querySelector(`[data-note="${n.id}"]`)
@@ -23,53 +39,101 @@ function del(id) {
   if (!el || reduced) return remove(id)
   gsap.to(el, { scale: 0.85, autoAlpha: 0, duration: 0.25, ease: 'power2.in', onComplete: () => remove(id) })
 }
+async function pin(n, el) {
+  n.pinned = !n.pinned
+  await nextTick()
+  if (!reduced) gsap.fromTo(root.value.querySelector(`[data-note="${n.id}"]`), { y: -10, autoAlpha: 0.4 }, { y: 0, autoAlpha: 1, duration: 0.4, ease: 'power3.out' })
+}
+// primeira linha vira o título do rascunho; o resto, a descrição
+function toDraft(n) {
+  const [first, ...rest] = n.text.trim().split('\n')
+  if (!first) { toast('Escreva algo na nota antes.'); return }
+  createTask({ title: first.replace(/#[\p{L}\p{N}_-]+/gu, '').trim().slice(0, 200) || first.slice(0, 200), description: rest.join('\n').trim(), tags: tagsOf(n), projectId: null, assignees: [state.me] })
+  toast('Virou rascunho. Está em Rascunhos.')
+}
+watch([q, color, tag], async () => { await nextTick(); staggerIn(root.value?.querySelectorAll('.note')) })
 onMounted(() => {
   if (!reduced) gsap.from(root.value.querySelectorAll('.note'), { y: 16, rotation: () => gsap.utils.random(-3, 3), autoAlpha: 0, duration: 0.5, stagger: 0.05, ease: 'power3.out' })
 })
 </script>
 
 <template>
-  <div ref="root" class="page">
-    <header class="head">
-      <div>
-        <h1>Notas</h1>
-        <p>Ideias rápidas, links e lembretes. Ficam só para você.</p>
+  <div ref="root" class="pg notes">
+    <div class="pg-bar">
+      <h1>Notas <span class="count">{{ notes.length }}</span></h1>
+      <div class="pg-bar__right">
+        <label class="pg-search"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar nas notas" aria-label="Buscar nas notas" /></label>
+        <button type="button" class="pg-btn primary" @click="create"><AppIcon name="plus" :size="14" />Nova nota</button>
       </div>
-      <GooeyButton variant="primary" @click="create"><AppIcon name="plus" :size="15" /> Nova nota</GooeyButton>
-    </header>
-    <div class="grid">
-      <article v-for="n in notes" :key="n.id" :data-note="n.id" class="note" :style="{ '--note': n.color }">
-        <textarea v-model="n.text" placeholder="Escreva algo…" aria-label="Texto da nota" />
-        <footer>
-          <span class="colors">
-            <button v-for="c in COLORS" :key="c" type="button" :class="{ on: c === n.color }" :style="{ background: c }" :aria-label="`Cor ${c}`" @click="n.color = c" />
-          </span>
-          <time>{{ new Date(n.at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) }}</time>
-          <button type="button" class="del" aria-label="Apagar nota" @click="del(n.id)"><AppIcon name="close" :size="14" /></button>
-        </footer>
-      </article>
     </div>
-    <p v-if="!notes.length" class="empty">Nenhuma nota ainda. Crie a primeira com o botão “Nova nota”.</p>
+    <div v-if="notes.length" class="filters">
+      <div class="dots" role="group" aria-label="Filtrar por cor">
+        <button type="button" class="dot all" :aria-pressed="!color" aria-label="Todas as cores" @click="color = ''">Todas</button>
+        <button v-for="c in COLORS" :key="c" type="button" class="dot" :style="{ background: c }" :aria-pressed="color === c" :aria-label="`Só a cor ${c}`" @click="color = color === c ? '' : c" />
+      </div>
+      <div v-if="allTags.length" class="tags" role="group" aria-label="Filtrar por etiqueta">
+        <button v-for="t in allTags" :key="t" type="button" class="tagf" :aria-pressed="tag === t" @click="tag = tag === t ? '' : t">#{{ t }}</button>
+      </div>
+    </div>
+
+    <div v-if="!notes.length" class="pg-empty">
+      <span class="pg-empty__art"><AppIcon name="note" :size="36" /></span>
+      <h2>Ideias rápidas, links e lembretes</h2>
+      <p>Use #etiquetas para organizar, fixe as importantes no topo e transforme uma nota em rascunho de tarefa quando ela amadurecer.</p>
+      <button type="button" class="pg-btn primary" @click="create"><AppIcon name="plus" :size="14" />Criar a primeira nota</button>
+    </div>
+    <p v-else-if="!shown.length" class="pg-muted none">Nenhuma nota com esse filtro.</p>
+
+    <template v-for="[label, list] in [['Fixadas', pinned], ['Outras', others]]" :key="label">
+      <h2 v-if="list.length && pinned.length" class="sec">{{ label }}</h2>
+      <div v-if="list.length" class="grid">
+        <article v-for="n in list" :key="n.id" :data-note="n.id" class="note" :class="{ pinned: n.pinned }" :style="{ '--note': n.color }">
+          <button type="button" class="pin" :aria-pressed="!!n.pinned" :aria-label="n.pinned ? 'Desafixar' : 'Fixar no topo'" :title="n.pinned ? 'Desafixar' : 'Fixar no topo'" @click="pin(n)"><AppIcon name="pin" :size="14" /></button>
+          <textarea v-model="n.text" placeholder="Escreva algo… use #etiqueta" aria-label="Texto da nota" />
+          <div v-if="tagsOf(n).length" class="ntags"><span v-for="t in tagsOf(n)" :key="t">#{{ t }}</span></div>
+          <footer>
+            <span class="colors">
+              <button v-for="c in COLORS" :key="c" type="button" :class="{ on: c === n.color }" :style="{ background: c }" :aria-label="`Cor ${c}`" @click="n.color = c" />
+            </span>
+            <small>{{ when(n.at) }} · {{ words(n) }} pal.</small>
+            <button type="button" class="act" title="Virar rascunho de tarefa" aria-label="Virar rascunho de tarefa" @click="toDraft(n)"><AppIcon name="draft" :size="14" /></button>
+            <button type="button" class="act del" aria-label="Apagar nota" @click="del(n.id)"><AppIcon name="close" :size="14" /></button>
+          </footer>
+        </article>
+      </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.5rem; }
-.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
-h1 { margin: 0 0 0.25rem; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); }
-.head p { margin: 0; color: var(--muted); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.85rem; }
-.note { display: flex; flex-direction: column; min-height: 12rem; border-radius: 10px; background: var(--note); color: #1a1208; box-shadow: 0 8px 20px rgb(0 0 0 / 0.25); transition: translate 0.25s var(--ease), rotate 0.25s var(--ease); }
-.note:hover { translate: 0 -3px; rotate: -0.6deg; }
-textarea { flex: 1; padding: 0.85rem 0.9rem 0; border: 0; background: none; font: 500 14px/1.45 'Geist', system-ui, sans-serif; color: inherit; resize: none; outline: none; }
-textarea::placeholder { color: rgb(26 18 8 / 0.5); }
-footer { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.6rem; }
-.colors { display: flex; gap: 0.25rem; }
-.colors button { width: 13px; height: 13px; padding: 0; border: 1.5px solid rgb(26 18 8 / 0.35); border-radius: 50%; cursor: pointer; }
-.colors button.on { border-color: #1a1208; box-shadow: 0 0 0 1.5px var(--note), 0 0 0 3px #1a1208; }
-time { margin-left: auto; font-size: 11.5px; color: rgb(26 18 8 / 0.6); }
-.del { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: rgb(26 18 8 / 0.7); cursor: pointer; }
-.del:hover { background: rgb(26 18 8 / 0.12); }
-.empty { color: var(--muted); }
-:is(.colors button, .del):focus-visible { outline: 2px solid #1a1208; outline-offset: 2px; }
+.notes { gap: 0.9rem; padding-bottom: 2rem; }
+h1 { display: flex; align-items: center; gap: 0.5rem; }
+.count { padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--surface-2); font-size: 12px; font-weight: 500; color: var(--muted); }
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 0 1.25rem; }
+.dots, .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.dot { width: 20px; height: 20px; padding: 0; border: 2px solid transparent; border-radius: 50%; cursor: pointer; }
+.dot[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text); }
+.dot.all { width: auto; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12px; color: var(--muted); }
+.dot.all[aria-pressed='true'] { box-shadow: none; border-color: var(--accent); color: var(--text); }
+.tagf { padding: 0.15rem 0.55rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
+.tagf[aria-pressed='true'] { border-color: var(--accent); color: var(--accent-soft); }
+.sec { margin: 0; padding: 0 1.25rem; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.none { padding: 0 1.25rem; }
+.grid { columns: 15rem; column-gap: 0.9rem; padding: 0 1.25rem; }
+.note { position: relative; display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.9rem; padding: 0.85rem 0.85rem 0.6rem; border-radius: 12px; background: color-mix(in srgb, var(--note) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--note) 35%, transparent); break-inside: avoid; }
+.note.pinned { box-shadow: inset 0 3px var(--note); }
+.pin { position: absolute; top: 0.45rem; right: 0.45rem; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; opacity: 0; }
+.note:hover .pin, .pin[aria-pressed='true'], .pin:focus-visible { opacity: 1; }
+.pin[aria-pressed='true'] { color: var(--note); }
+textarea { min-height: 5.5rem; padding: 0 1.5rem 0 0; border: 0; background: none; font: 400 14px/1.55 'Geist', system-ui, sans-serif; color: var(--text); resize: none; outline: none; field-sizing: content; }
+.ntags { display: flex; flex-wrap: wrap; gap: 0.3rem; font-size: 11.5px; color: var(--note); }
+footer { display: flex; align-items: center; gap: 0.4rem; }
+.colors { display: flex; gap: 3px; }
+.colors button { width: 12px; height: 12px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; opacity: 0.55; }
+.colors button.on, .colors button:hover { opacity: 1; }
+footer small { margin-left: auto; font-size: 11px; color: var(--muted); }
+.act { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.act:hover { background: var(--surface-2); color: var(--text); }
+.del:hover { color: #ff8a80; }
+:is(.dot, .tagf, .pin, .act, .colors button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>

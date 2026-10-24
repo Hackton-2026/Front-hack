@@ -2,15 +2,18 @@
 // Ajustes no molde das settings do Plane e do ClickUp. Preferências pessoais ficam no navegador;
 // o resto é do workspace e vai para a API (/api/workspace/ settings, membros, times, itens, horas, webhooks e tokens).
 import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { parseCsv, toCsv } from '../utils/csv'
-import { api } from '../services/api'
+import { api, toFormData } from '../services/api'
+import { compressImage } from '../utils/image'
 import { disablePush, enablePush, pushConfigured, pushSupported, savedToken } from '../services/push'
 import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
 import GooeyButton from '../components/GooeyButton.vue'
 import SettingsList from '../components/app/SettingsList.vue'
 import WhatsAppSettings from '../components/app/WhatsAppSettings.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const GROUPS = [
   { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações'], ['whatsapp', 'WhatsApp']] },
@@ -97,7 +100,9 @@ const LISTS = {
 
 const { user, updateMe, logout } = useAuth()
 const { state, PRIORITIES, STATUSES, project, member, saveWorkspace, updateProject, archiveProject, createTask, updateTask, clearLocal, load } = useWorkspace()
-const tab = ref('profile')
+const route = useRoute()
+const tab = ref(route.query.tab || 'profile') // o menu da conta abre direto em Perfil ou Preferências
+watch(() => route.query.tab, (t) => { if (t) tab.value = t })
 const panel = ref(null)
 const status = ref('')
 const confirm2 = ref('') // ação perigosa esperando o segundo clique
@@ -147,6 +152,23 @@ async function saveProfile() {
     status.value = e.message
   }
 }
+// ---- foto de perfil: salva na hora e aparece nos avatares do app inteiro (quem entra pelo Google já vem com a foto de lá)
+const photoInput = ref(null)
+const photoBusy = ref(false)
+const initials = computed(() => (user.value?.first_name || user.value?.username || '?').slice(0, 2).toUpperCase())
+async function setPhoto(file) {
+  if (file && !file.type.startsWith('image/')) { status.value = 'Escolha um arquivo de imagem (JPG, PNG ou WebP).'; return }
+  photoBusy.value = true
+  try {
+    await updateMe(toFormData({ avatar: file ? await compressImage(file, 512) : null }))
+    load() // os avatares de projetos, chat e tarefas vêm do workspace
+    status.value = file ? 'Foto atualizada.' : 'Foto removida.'
+  } catch (e) {
+    status.value = e.message
+  } finally {
+    photoBusy.value = false
+  }
+}
 
 // ---- Notificações do navegador (a permissão é do navegador)
 const permission = ref(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
@@ -182,11 +204,28 @@ watch(() => state.slug, (s) => (slugInput.value = s), { immediate: true })
 const origin = location.origin
 
 // ---- Planos
+// O pagamento é na página de checkout (/checkout, Pix ou cartão pelo app billing); aqui ficam o plano, os botões e o histórico.
 const billing = ref(null)
+const payments = ref([])
+const yearly = ref(false)
 async function loadBilling() {
-  try { billing.value = await api('/api/billing/') } catch (e) { status.value = e.message }
+  try {
+    const [b, list] = await Promise.all([api('/api/billing/'), api('/api/payments/').catch(() => [])])
+    billing.value = b
+    payments.value = list
+  } catch (e) { status.value = e.message }
 }
+// aberto direto na aba (link "?tab=billing", a volta do checkout): o watch do tab só roda quando a aba muda
+if (tab.value === 'billing') loadBilling()
+if (tab.value === 'notify') loadDevices()
 const price = (cents) => (cents == null ? 'Sob consulta' : cents === 0 ? 'Grátis' : `R$ ${(cents / 100).toLocaleString('pt-BR')}/membro/mês`)
+const planPrice = (p) => (yearly.value && p.price_year_cents ? price(p.price_year_cents) : price(p.price_month_cents))
+const SUB_STATUS = { active: 'Ativa', trialing: 'Em teste', past_due: 'Pagamento pendente', canceled: 'Cancelada' }
+const current = computed(() => billing.value?.subscription)
+const isCurrent = (p) => current.value?.plan === p.code && current.value?.status !== 'canceled'
+const checkoutLink = (p) => `/checkout?plano=${p.code}&ciclo=${yearly.value ? 'anual' : 'mensal'}`
+const brl = (cents) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const PAY_STATUS = { approved: 'ok', pending: 'wait', rejected: 'bad', expired: 'bad', canceled: 'bad' }
 
 // ---- Cronograma
 const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
@@ -299,6 +338,18 @@ async function onImport(e) {
         <!-- ================= Minha conta ================= -->
         <template v-if="tab === 'profile'">
           <form class="form" @submit.prevent="saveProfile">
+            <div v-if="user" class="photo">
+              <span class="photo__av" :class="{ busy: photoBusy }"><img v-if="user.avatar" :src="user.avatar" alt="Sua foto de perfil" /><template v-else>{{ initials }}</template></span>
+              <div class="photo__txt">
+                <strong>Foto de perfil</strong>
+                <small>Aparece nas tarefas, no chat e para quem participa dos seus projetos. JPG, PNG ou WebP.</small>
+                <span class="photo__btns">
+                  <button type="button" class="pg-btn" :disabled="photoBusy" @click="photoInput.click()">{{ user.avatar ? 'Trocar foto' : 'Enviar foto' }}</button>
+                  <button v-if="user.avatar" type="button" class="link" :disabled="photoBusy" @click="setPhoto(null)">Remover</button>
+                </span>
+              </div>
+              <input ref="photoInput" type="file" accept="image/*" hidden @change="setPhoto($event.target.files[0]); $event.target.value = ''" />
+            </div>
             <div class="cols">
               <label>Nome <input v-model="profile.first_name" autocomplete="given-name" /></label>
               <label>E-mail <input v-model="profile.email" type="email" autocomplete="email" /></label>
@@ -329,16 +380,16 @@ async function onImport(e) {
           </div>
           <div class="form cols">
             <label>Início da semana
-              <select v-model.number="state.prefs.weekStart"><option :value="0">Domingo</option><option :value="1">Segunda-feira</option></select>
+              <AppSelect v-model="state.prefs.weekStart" :options="[{ value: 0, label: 'Domingo' }, { value: 1, label: 'Segunda-feira' }]" block />
             </label>
             <label>Densidade das listas
-              <select v-model="state.prefs.density"><option value="comfortable">Confortável</option><option value="compact">Compacta</option></select>
+              <AppSelect v-model="state.prefs.density" :options="[{ value: 'comfortable', label: 'Confortável' }, { value: 'compact', label: 'Compacta' }]" block />
             </label>
             <label>Visão padrão dos projetos
-              <select v-model="state.prefs.defaultView"><option v-for="[id, label] in VIEWS" :key="id" :value="id">{{ label }}</option></select>
+              <AppSelect v-model="state.prefs.defaultView" :options="VIEWS.map(([value, label]) => ({ value, label }))" block />
             </label>
             <label>Prioridade padrão da nova tarefa
-              <select v-model="state.prefs.defaultPriority"><option value="">Sem prioridade</option><option v-for="p in PRIORITIES" :key="p.id" :value="p.id">{{ p.name }}</option></select>
+              <AppSelect v-model="state.prefs.defaultPriority" :options="[{ value: '', label: 'Sem prioridade' }, ...PRIORITIES.map((p) => ({ value: p.id, label: p.name }))]" block />
             </label>
           </div>
           <ul class="toggles">
@@ -394,14 +445,10 @@ async function onImport(e) {
               <span class="prefix-input"><span>{{ origin }}/</span><input v-model="slugInput" :disabled="!isAdmin" @change="saveWorkspace({ slug: slugInput }).then((ok) => ok || (slugInput = state.slug))" /></span>
             </label>
             <label>Tamanho da empresa
-              <select :value="general.size" :disabled="!isAdmin" @change="setSetting('general', 'size', $event.target.value)">
-                <option value="">Escolher</option><option v-for="s in ['Só eu', '2-10', '11-50', '51-200', '201-500', '500+']" :key="s" :value="s">{{ s }}</option>
-              </select>
+              <AppSelect :model-value="general.size" :options="[{ value: '', label: 'Escolher' }, 'Só eu', '2-10', '11-50', '51-200', '201-500', '500+']" :disabled="!isAdmin" block @change="(v) => setSetting('general', 'size', v)" />
             </label>
             <label>Fuso horário
-              <select :value="general.timezone" :disabled="!isAdmin" @change="setSetting('general', 'timezone', $event.target.value)">
-                <option v-for="z in ['America/Sao_Paulo', 'America/Manaus', 'America/Fortaleza', 'America/Noronha', 'America/Rio_Branco', 'UTC', 'Europe/Lisbon']" :key="z" :value="z">{{ z }}</option>
-              </select>
+              <AppSelect :model-value="general.timezone" :options="['America/Sao_Paulo', 'America/Manaus', 'America/Fortaleza', 'America/Noronha', 'America/Rio_Branco', 'UTC', 'Europe/Lisbon']" :disabled="!isAdmin" block @change="(v) => setSetting('general', 'timezone', v)" />
             </label>
           </div>
         </template>
@@ -431,13 +478,35 @@ async function onImport(e) {
           <template v-else>
             <div class="bar">
               <strong>Plano atual</strong>
-              <span>{{ billing.subscription ? billing.plans.find((p) => p.code === billing.subscription.plan)?.name || billing.subscription.plan : 'Grátis' }}</span>
-              <span v-if="billing.subscription?.trial_ends_at" class="hint">· teste até {{ fmtDate(billing.subscription.trial_ends_at) }}</span>
+              <span>{{ current ? billing.plans.find((p) => p.code === current.plan)?.name || current.plan : 'Grátis' }}</span>
+              <span v-if="current?.status && current.status !== 'active'" class="hint">· {{ SUB_STATUS[current.status] }}</span>
+              <span v-if="current?.trial_ends_at" class="hint">· teste até {{ fmtDate(current.trial_ends_at) }}</span>
+              <span v-if="current?.current_period_end && current.plan !== 'free'" class="hint">· vale até {{ fmtDate(current.current_period_end) }}</span>
+            </div>
+            <div class="seg billing-seg" role="group" aria-label="Período">
+              <label><input v-model="yearly" type="radio" name="period" :value="false" />Mensal</label>
+              <label><input v-model="yearly" type="radio" name="period" :value="true" />Anual <small>20% off</small></label>
             </div>
             <ul class="plans">
-              <li v-for="p in billing.plans" :key="p.code" :class="{ on: billing.subscription?.plan === p.code }"><strong>{{ p.name }}</strong><span class="hint">{{ price(p.price_month_cents) }}</span></li>
+              <li v-for="p in billing.plans" :key="p.code" :class="{ on: isCurrent(p) }">
+                <strong>{{ p.name }}</strong><span class="hint">{{ planPrice(p) }}</span>
+                <span v-if="isCurrent(p) && !(p.price_month_cents && current?.current_period_end)" class="hint">Seu plano</span>
+                <RouterLink v-else-if="isAdmin && p.price_month_cents" :to="checkoutLink(p)" class="pg-btn" :class="{ primary: !isCurrent(p) }">{{ isCurrent(p) ? 'Renovar' : 'Assinar' }}</RouterLink>
+              </li>
             </ul>
-            <RouterLink to="/#planos" class="link">Comparar planos</RouterLink>
+            <p class="hint">Pagamento por Pix ou cartão (até 12x no anual), com o valor calculado pelas pessoas do workspace. <RouterLink to="/#planos" class="link">Comparar planos</RouterLink></p>
+            <template v-if="payments.length">
+              <h3 class="pay-title">Pagamentos</h3>
+              <ul class="rows pays">
+                <li v-for="p in payments" :key="p.id">
+                  <span class="pay-when">{{ fmtDate(p.paid_at || p.created_at) }}</span>
+                  <span class="pay-what">{{ p.plan_name }} · {{ p.interval === 'year' ? 'anual' : 'mensal' }} · {{ p.seats }} {{ p.seats === 1 ? 'pessoa' : 'pessoas' }}</span>
+                  <span class="pay-how">{{ p.method === 'pix' ? 'Pix' : `Cartão ${p.card_brand} •••• ${p.card_last4}`.trim() }}<template v-if="p.installments > 1"> em {{ p.installments }}x</template></span>
+                  <strong>{{ brl(p.amount_cents) }}</strong>
+                  <span class="pay-status" :class="PAY_STATUS[p.status]">{{ p.status_label }}</span>
+                </li>
+              </ul>
+            </template>
           </template>
         </template>
 
@@ -445,7 +514,7 @@ async function onImport(e) {
           <p class="hint">Importe tarefas de uma planilha CSV (do Novexo, Excel, Google Planilhas, Jira, Trello…). A primeira linha precisa ter os nomes das colunas: <strong>Título</strong> e, se quiser, Status, Prioridade, Prazo e Etiquetas.</p>
           <div class="form cols">
             <label>Projeto de destino
-              <select v-model="importProject"><option value="">{{ state.projects[0]?.name || 'Nenhum projeto' }}</option><option v-for="p in state.projects.slice(1)" :key="p.id" :value="p.id">{{ p.name }}</option></select>
+              <AppSelect v-model="importProject" :options="[{ value: '', label: state.projects[0]?.name || 'Nenhum projeto' }, ...state.projects.slice(1).map((p) => ({ value: p.id, label: p.name }))]" block />
             </label>
           </div>
           <label v-if="canWrite" class="link file">Escolher arquivo CSV<input type="file" accept=".csv,text/csv" @change="onImport" /></label>
@@ -483,10 +552,10 @@ async function onImport(e) {
           <template v-if="tab === 'governance'">
             <div class="form cols">
               <label>Quem cria projetos
-                <select :value="governance.createProjects" :disabled="!isAdmin" @change="setSetting('governance', 'createProjects', $event.target.value)"><option value="admin">Só administradores</option><option value="member">Administradores e membros</option></select>
+                <AppSelect :model-value="governance.createProjects" :options="[{ value: 'admin', label: 'Só administradores' }, { value: 'member', label: 'Administradores e membros' }]" :disabled="!isAdmin" block @change="(v) => setSetting('governance', 'createProjects', v)" />
               </label>
               <label>Quem apaga tarefas
-                <select :value="governance.deleteTasks" :disabled="!isAdmin" @change="setSetting('governance', 'deleteTasks', $event.target.value)"><option value="admin">Só administradores</option><option value="member">Quem criou a tarefa e administradores</option></select>
+                <AppSelect :model-value="governance.deleteTasks" :options="[{ value: 'admin', label: 'Só administradores' }, { value: 'member', label: 'Quem criou a tarefa e administradores' }]" :disabled="!isAdmin" block @change="(v) => setSetting('governance', 'deleteTasks', v)" />
               </label>
             </div>
           </template>
@@ -553,7 +622,7 @@ async function onImport(e) {
           <template v-else>
             <div class="form cols">
               <label>Projeto
-                <select :value="proj.id" @change="projectId = state.projects.find((p) => String(p.id) === $event.target.value)?.id; confirm2 = ''"><option v-for="p in state.projects" :key="p.id" :value="p.id">{{ p.name }}</option></select>
+                <AppSelect :model-value="proj.id" :options="state.projects.map((p) => ({ value: p.id, label: p.name }))" block @change="(v) => { projectId = v; confirm2 = '' }" />
               </label>
               <label>Nome <input :key="proj.id" :value="proj.name" @change="updateProject(proj, { name: $event.target.value.trim() || proj.name })" /></label>
               <label>Identificador <input :key="`p${proj.id}`" :value="proj.prefix" maxlength="8" @change="updateProject(proj, { prefix: $event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })" /></label>
@@ -629,9 +698,9 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .form { display: flex; flex-direction: column; gap: 0.7rem; max-width: 26rem; }
 .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.7rem 1rem; max-width: none; }
 .form label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 12px; font-weight: 500; color: var(--muted); }
-:is(.form input, .form select, .row input, .rows input, .rows select) { height: 32px; padding: 0 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
-:is(.form input, .form select, .row input, .rows input, .rows select):focus { border-color: var(--accent); }
-:is(input, select, button):disabled { opacity: 0.55; cursor: not-allowed; }
+:is(.form input, .row input, .rows input) { height: 32px; padding: 0 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
+:is(.form input, .row input, .rows input):focus { border-color: var(--accent); }
+:is(input, button):disabled { opacity: 0.55; cursor: not-allowed; }
 .prefix-input { display: flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); }
 .prefix-input span { padding-left: 0.6rem; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
 .form .prefix-input input { flex: 1; min-width: 0; border: 0; padding-left: 0.1rem; }
@@ -671,6 +740,18 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .plans li { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
 .plans li.on { border-color: var(--accent); }
+.plans li .pg-btn { justify-content: center; margin-top: 0.35rem; text-decoration: none; }
+.billing-seg { margin: 0.75rem 0; }
+.billing-seg small { margin-left: 0.3rem; color: var(--muted); }
+.pay-title { margin: 1.25rem 0 0.4rem; font-size: 13px; font-weight: 600; color: var(--text); }
+.pays li { flex-wrap: wrap; }
+.pay-when { width: 8.5rem; color: var(--muted); white-space: nowrap; }
+.pay-what { flex: 1; min-width: 10rem; }
+.pay-how { color: var(--muted); }
+.pay-status { padding: 0.1rem 0.45rem; border-radius: 5px; background: var(--surface-2); font-size: 11.5px; }
+.pay-status.ok { color: #7fc47a; }
+.pay-status.wait { color: #f2c46d; }
+.pay-status.bad { color: #ff8a80; }
 .days { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .days button { min-width: 2.75rem; padding: 0.3rem 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .days button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent); color: #fff; }
@@ -684,4 +765,11 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 :is(.tabs button, .link, .switch, .danger, .swatch, .days button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .block { display: block; }
+.photo { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.photo__av { display: grid; place-items: center; flex-shrink: 0; width: 64px; height: 64px; overflow: hidden; border-radius: 50%; background: var(--surface-2); font: 600 20px/1 'Geist', system-ui, sans-serif; color: var(--text); transition: opacity 0.2s ease; }
+.photo__av.busy { opacity: 0.5; }
+.photo__av img { width: 100%; height: 100%; object-fit: cover; }
+.photo__txt { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.photo__txt small { font-size: 12.5px; color: var(--muted); }
+.photo__btns { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; }
 </style>

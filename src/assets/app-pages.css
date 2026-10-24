@@ -3,6 +3,7 @@
 .app .pg { display: flex; flex-direction: column; min-height: 100%; }
 .app .pg-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; min-height: 48px; padding: 0.4rem 1.25rem; border-bottom: 1px solid var(--line); }
 .app .pg-bar__right { display: flex; align-items: center; gap: 0.4rem; margin-left: auto; }
+.app .pg-bar h1 { margin: 0; font: 600 15px/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .app .pg-tabs { display: flex; gap: 0.2rem; }
 .app .pg-tabs button { padding: 0.35rem 0.65rem; border: 0; border-radius: 6px; background: none; font-weight: 500; color: var(--muted); cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
 .app .pg-tabs button:hover { color: var(--text); }

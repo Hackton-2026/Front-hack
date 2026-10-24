@@ -8,11 +8,12 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppModal from '../components/app/AppModal.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
 
 const props = defineProps({ id: { type: String, default: '' } })
 const router = useRouter()
-const { state, project, today, day, doneRatio, createItem, updateItem, removeItem } = useWorkspace()
+const { state, project, today, day, doneRatio, createItem, updateItem, removeItem, member } = useWorkspace()
 const { ui } = useUi()
 const pid = computed(() => Number(props.id) || null)
 const p = computed(() => pid.value && project(pid.value))
@@ -82,6 +83,34 @@ function chart(c) {
 const editing = ref(null)
 const form = reactive({ name: '', description: '', start_date: '', end_date: '', project: null })
 const err = ref('')
+// próximo ciclo: começa no dia seguinte ao fim do último do projeto e dura o mesmo tanto
+function openNext() {
+  const projectId = pid.value || state.projects[0]?.id
+  const last = state.cycles.filter((c) => c.project === projectId).sort((a, b) => b.end_date.localeCompare(a.end_date))[0]
+  openForm()
+  if (!last) return
+  const len = Math.max(1, daysBetween(last.start_date, last.end_date))
+  const start = new Date(`${last.end_date}T12:00`); start.setDate(start.getDate() + 1)
+  const end = new Date(start); end.setDate(end.getDate() + len)
+  const iso = (d) => d.toISOString().slice(0, 10)
+  const n = state.cycles.filter((c) => c.project === projectId).length + 1
+  Object.assign(form, { name: `Ciclo ${n}`, start_date: iso(start), end_date: iso(end), project: projectId })
+}
+// linha do tempo: todos os ciclos (do projeto, ou de todos) de 2 semanas atrás até 6 semanas à frente
+const TL = { from: day(-14), days: 56 }
+const timeline = computed(() => state.cycles.filter((c) => (!pid.value || c.project === pid.value) && c.end_date >= TL.from && c.start_date <= day(TL.days - 14))
+  .sort((a, b) => a.start_date.localeCompare(b.start_date))
+  .map((c) => {
+    const s = Math.max(0, daysBetween(TL.from, c.start_date)), e = Math.min(TL.days, daysBetween(TL.from, c.end_date) + 1)
+    return { c, left: (s / TL.days) * 100, width: Math.max(2, ((e - s) / TL.days) * 100), phase: phase(c), pct: doneRatio(tasksOf(c)) }
+  }))
+const todayPos = (daysBetween(TL.from, today()) / TL.days) * 100
+const daysLeft = (c) => Math.max(0, daysBetween(today(), c.end_date))
+// carga por pessoa dentro do ciclo (itens abertos)
+const loadOf = (c) => {
+  const open = tasksOf(c).filter((t) => t.status !== 'done')
+  return [...new Set(open.flatMap((t) => t.assignees))].map((id) => ({ id, n: open.filter((t) => t.assignees.includes(id)).length })).sort((a, b) => b.n - a.n)
+}
 function openForm(c = null) {
   menu.value = null
   editing.value = c || 'new'
@@ -130,10 +159,20 @@ onUnmounted(() => removeEventListener('click', onDoc))
       <strong v-else>Ciclos ativos de todos os projetos</strong>
       <div class="pg-bar__right">
         <label class="pg-search"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar ciclos" aria-label="Buscar ciclos" /></label>
+        <button v-if="state.projects.length" type="button" class="pg-btn" @click="openNext"><AppIcon name="cycle" :size="14" />Próximo ciclo</button>
         <button v-if="state.projects.length" type="button" class="pg-btn primary" @click="openForm()"><AppIcon name="plus" :size="14" />Adicionar ciclo</button>
       </div>
     </div>
 
+    <section v-if="timeline.length" class="tl" aria-label="Linha do tempo dos ciclos">
+      <div class="tl__head"><strong>Linha do tempo</strong><span class="pg-muted">2 semanas atrás → 6 semanas à frente</span></div>
+      <div class="tl__track">
+        <span class="tl__today" :style="{ left: `${todayPos}%` }"><small>hoje</small></span>
+        <button v-for="b in timeline" :key="b.c.id" type="button" class="tl__bar" :class="b.phase" :style="{ left: `${b.left}%`, width: `${b.width}%` }" :title="`${b.c.name} · ${range(b.c)} · ${Math.round(b.pct * 100)}% concluído`" @click="open(b.c)">
+          <i :style="{ width: `${b.pct * 100}%` }" /><span>{{ b.c.name }}{{ !pid ? ` · ${project(b.c.project)?.name || ''}` : '' }}</span>
+        </button>
+      </div>
+    </section>
     <template v-if="shown.length">
       <template v-if="!pid || tab === 'active'">
         <article v-for="c in shown" :key="c.id" class="cyc">
@@ -143,6 +182,10 @@ onUnmounted(() => removeEventListener('click', onDoc))
             <button type="button" class="cyc__name" @click="open(c)">{{ c.name }}</button>
             <span v-if="!pid" class="pg-tag">{{ project(c.project)?.name }}</span>
             <span class="pg-pill cyc__date"><AppIcon name="calendar" :size="13" />{{ range(c) }}</span>
+            <span v-if="phase(c) === 'active'" class="left" :class="{ hot: daysLeft(c) <= 2 }">{{ daysLeft(c) === 0 ? 'termina hoje' : `faltam ${daysLeft(c)} d` }}</span>
+            <span v-if="loadOf(c).length" class="load" :title="loadOf(c).map((l) => `${member(l.id)?.name || '?'}: ${l.n}`).join(' · ')">
+              <span v-for="l in loadOf(c).slice(0, 4)" :key="l.id" class="load__p" :style="{ '--c': member(l.id)?.color || 'var(--accent)' }">{{ (member(l.id)?.name || '?').slice(0, 2).toUpperCase() }}<b>{{ l.n }}</b></span>
+            </span>
             <div class="menu-wrap">
               <button type="button" class="pg-icon" :aria-expanded="menu === c.id" aria-label="Opções do ciclo" @click="menu = menu === c.id ? null : c.id"><AppIcon name="more" :size="16" /></button>
               <div v-if="menu === c.id" class="pg-menu" role="menu">
@@ -208,7 +251,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
 
     <AppModal :open="!!editing" :title="editing === 'new' ? 'Novo ciclo' : 'Editar ciclo'" @close="editing = null" @submit="save">
       <label class="f"><span>Nome</span><input v-model="form.name" placeholder="Ex.: Sprint 3: pagamentos" maxlength="120" /></label>
-      <label v-if="!pid && editing === 'new'" class="f"><span>Projeto</span><select v-model="form.project"><option v-for="x in state.projects" :key="x.id" :value="x.id">{{ x.name }}</option></select></label>
+      <label v-if="!pid && editing === 'new'" class="f"><span>Projeto</span><AppSelect v-model="form.project" :options="state.projects.map((x) => ({ value: x.id, label: x.name }))" block /></label>
       <label class="f"><span>Descrição</span><textarea v-model="form.description" rows="2" placeholder="Objetivo do ciclo (opcional)" /></label>
       <div class="row2">
         <label class="f"><span>Começa</span><input v-model="form.start_date" type="date" required /></label>
@@ -265,4 +308,20 @@ figcaption span { margin-left: 0.3rem; font-weight: 400; color: var(--muted); }
   .cyc__body { grid-template-columns: 1fr; }
   .sum { border-right: 0; border-bottom: 1px solid var(--line); }
 }
+.tl { margin: 0 1.25rem 0.5rem; padding: 0.8rem 1rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.tl__head { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.7rem; font-size: 13px; }
+.tl__track { position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 28px; padding-top: 14px; }
+.tl__today { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--accent); }
+.tl__today small { position: absolute; top: -2px; left: 4px; font-size: 10.5px; color: var(--accent-soft); }
+.tl__bar { position: relative; height: 24px; margin-left: 0; overflow: hidden; padding: 0; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2); text-align: left; cursor: pointer; }
+.tl__bar i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--accent) 35%, transparent); }
+.tl__bar span { position: relative; padding: 0 0.5rem; font-size: 11.5px; font-weight: 500; line-height: 22px; color: var(--text); white-space: nowrap; }
+.tl__bar.active { border-color: var(--accent); }
+.tl__bar.completed { opacity: 0.6; }
+.left { padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--surface-2); font-size: 12px; color: var(--accent-soft); }
+.left.hot { color: #ff8a80; }
+.load { display: flex; gap: 4px; }
+.load__p { display: inline-flex; align-items: center; gap: 3px; padding: 0.1rem 0.4rem 0.1rem 0.3rem; border-radius: 999px; background: color-mix(in srgb, var(--c) 20%, transparent); font: 700 10px/1.6 'Lexend', system-ui, sans-serif; color: var(--c); }
+.load__p b { font: 600 11px/1 'Geist', system-ui, sans-serif; color: var(--text); }
+.tl__bar:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>

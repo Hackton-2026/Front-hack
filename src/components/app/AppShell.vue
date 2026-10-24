@@ -2,7 +2,7 @@
 // Casca da área logada (estrutura do app do Plane): trilho de ícones, barra lateral recolhível, topo com busca,
 // progresso do "Começar", caixa de entrada e ajuda. Fica montada entre as rotas; só o conteúdo troca.
 import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
 import { useOnboarding } from '../../composables/useOnboarding'
@@ -21,7 +21,8 @@ import '../../assets/app-pages.css'
 
 const route = useRoute()
 const noSide = computed(() => ['settings', 'ai'].includes(route.meta.area))
-const { user } = useAuth()
+const { user, logout } = useAuth()
+const router = useRouter()
 const { count, total } = useOnboarding()
 const { state, unread, load, refreshFeed, touchRecent } = useWorkspace()
 
@@ -33,9 +34,15 @@ lightQuery.addEventListener('change', onScheme)
 onUnmounted(() => lightQuery.removeEventListener('change', onScheme))
 const light = computed(() => state.prefs.theme === 'light' || (state.prefs.theme === 'auto' && systemLight.value))
 watchEffect(() => (document.documentElement.dataset.calm = state.prefs.calm ? 'on' : ''))
+// link copiado da tarefa (?task=ID) abre o painel dela
+watch(() => [route.query.task, state.loaded], ([id]) => { if (id && state.tasks.some((t) => t.id === Number(id))) ui.taskId = Number(id) }, { immediate: true })
 const { ui, newTask } = useUi()
 const name = computed(() => user.value?.first_name || user.value?.username || 'Visitante')
 const initials = computed(() => name.value.slice(0, 2).toUpperCase())
+const fullName = computed(() => [user.value?.first_name, user.value?.last_name].filter(Boolean).join(' ') || name.value)
+const photo = computed(() => state.people.find((m) => m.id === state.me)?.avatar || user.value?.avatar || '')
+const accountOpen = ref(false)
+function signOut() { accountOpen.value = false; logout(); router.push('/login') }
 const title = computed(() => ui.crumb || route.meta.title || '')
 
 const RAIL = [
@@ -75,10 +82,10 @@ function onKey(e) {
   if (!state.prefs.shortcuts && e.key !== 'Escape') return
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); ui.palette = !ui.palette }
   else if (!typing && e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && !ui.creating) { e.preventDefault(); newTask() }
-  else if (e.key === 'Escape') { inboxOpen.value = false; helpOpen.value = false }
+  else if (e.key === 'Escape') { inboxOpen.value = false; helpOpen.value = false; accountOpen.value = false }
 }
 function onClick(e) {
-  if (!e.target.closest('.pop')) { inboxOpen.value = false; helpOpen.value = false }
+  if (!e.target.closest('.pop')) { inboxOpen.value = false; helpOpen.value = false; accountOpen.value = false }
 }
 
 // Troca de página: o título volta para o da rota e o conteúdo entra subindo 10px (fade-in-up do Plane).
@@ -151,13 +158,13 @@ onUnmounted(() => {
           Começar
         </RouterLink>
         <div class="pop">
-          <button type="button" class="icon-btn" :aria-expanded="inboxOpen" aria-label="Caixa de entrada" @click="inboxOpen = !inboxOpen; helpOpen = false">
+          <button type="button" class="icon-btn" :aria-expanded="inboxOpen" aria-label="Caixa de entrada" @click="inboxOpen = !inboxOpen; helpOpen = false; accountOpen = false">
             <AppIcon name="inbox" /><span v-if="unread" class="badge">{{ unread > 9 ? '9+' : unread }}</span>
           </button>
           <InboxPanel :open="inboxOpen" @close="inboxOpen = false" />
         </div>
         <div class="pop">
-          <button type="button" class="icon-btn" :aria-expanded="helpOpen" aria-label="Ajuda" @click="helpOpen = !helpOpen; inboxOpen = false"><AppIcon name="help" /></button>
+          <button type="button" class="icon-btn" :aria-expanded="helpOpen" aria-label="Ajuda" @click="helpOpen = !helpOpen; inboxOpen = false; accountOpen = false"><AppIcon name="help" /></button>
           <div v-if="helpOpen" class="help">
             <strong>Atalhos</strong>
             <p><kbd>Ctrl</kbd><kbd>K</kbd> buscar e abrir qualquer coisa</p>
@@ -166,7 +173,22 @@ onUnmounted(() => {
             <RouterLink to="/comecar" @click="helpOpen = false">Ver o guia de início</RouterLink>
           </div>
         </div>
-        <RouterLink to="/ajustes" class="avatar" :title="name">{{ initials }}</RouterLink>
+        <div class="pop">
+          <button type="button" class="avatar" :aria-expanded="accountOpen" aria-haspopup="menu" :aria-label="`Conta de ${fullName}`" @click="accountOpen = !accountOpen; inboxOpen = false; helpOpen = false">
+            <img v-if="photo" :src="photo" alt="" /><template v-else>{{ initials }}</template>
+          </button>
+          <div v-if="accountOpen" class="account" role="menu">
+            <div class="account__card" :style="photo ? { '--bg': `url(${photo})` } : null">
+              <span class="account__av"><img v-if="photo" :src="photo" alt="" /><template v-else>{{ initials }}</template></span>
+              <strong>{{ fullName }}</strong>
+              <small>{{ user?.email }}</small>
+            </div>
+            <RouterLink to="/ajustes?tab=profile" role="menuitem" @click="accountOpen = false"><AppIcon name="settings" :size="16" />Ajustes</RouterLink>
+            <RouterLink to="/ajustes?tab=prefs" role="menuitem" @click="accountOpen = false"><AppIcon name="sliders" :size="16" />Preferências</RouterLink>
+            <hr />
+            <button type="button" role="menuitem" class="out" @click="signOut"><AppIcon name="logout" :size="16" />Sair</button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -274,7 +296,21 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .help p { margin: 0; color: var(--muted); }
 .help kbd { margin-right: 0.2rem; }
 .help a { color: var(--accent-soft); text-decoration: none; }
-.avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-soft), var(--accent)); font: 700 11px/1 'Lexend', system-ui, sans-serif; color: #000; text-decoration: none; }
+.avatar { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; overflow: hidden; border: 0; border-radius: 50%; background: linear-gradient(135deg, var(--accent-soft), var(--accent)); font: 700 11px/1 'Lexend', system-ui, sans-serif; color: #000; text-decoration: none; cursor: pointer; }
+.avatar img, .account__av img { width: 100%; height: 100%; object-fit: cover; }
+.account { position: absolute; top: 42px; right: 0; z-index: 60; display: flex; flex-direction: column; gap: 0.15rem; width: 17.5rem; padding: 0.45rem; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); box-shadow: 0 20px 40px rgb(0 0 0 / 0.45); transform-origin: top right; animation: account-in 0.18s var(--ease); }
+@keyframes account-in { from { opacity: 0; transform: scale(0.96) translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .account { animation: none; } }
+.account__card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; margin-bottom: 0.3rem; padding: 1.1rem 0.75rem 1rem; overflow: hidden; border-radius: 9px; background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); text-align: center; isolation: isolate; }
+.account__card::before { content: ''; position: absolute; inset: -20px; z-index: -1; background: var(--bg, none) center / cover; filter: blur(18px) brightness(0.45); }
+.account__av { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 0.3rem; overflow: hidden; border: 2px solid var(--surface); border-radius: 50%; background: linear-gradient(135deg, var(--accent-soft), var(--accent)); font: 700 17px/1 'Lexend', system-ui, sans-serif; color: #000; }
+.account__card strong { font-size: 15px; color: var(--text); }
+.account__card small { max-width: 100%; overflow: hidden; font-size: 12.5px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.account a, .account button { display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.6rem; border: 0; border-radius: 7px; background: none; font: inherit; font-size: 14px; color: var(--text); text-align: left; text-decoration: none; cursor: pointer; }
+.account a:hover, .account button:hover { background: var(--surface-2); }
+.account hr { width: 100%; margin: 0.2rem 0; border: 0; border-top: 1px solid var(--line); }
+.account .out { color: #f2a07a; }
+.account :is(a, button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: -2px; }
 :is(.ws, .icon-btn, .rail__item, .progress-btn, .expand, .search, .avatar):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 
 /* ---- trilho ---- */
@@ -285,8 +321,6 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .rail__item.is-active { color: var(--text); }
 .rail__item.is-active .rail__icon { background: var(--surface-2); color: var(--accent-soft); }
 /* Volta para a landing: fica sempre cinza (é uma saída, não uma área) */
-.rail__item--site .rail__icon { border: 1px solid var(--line); }
-.rail__item--site:hover .rail__icon { border-color: var(--line-strong); color: var(--text); }
 .rail__sep { width: 24px; height: 1px; margin: 0.4rem 0; background: var(--line); }
 .rail__dock { margin-top: auto; }
 
