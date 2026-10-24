@@ -10,6 +10,7 @@ import { useUi } from '../../composables/useUi'
 import { useOnboarding } from '../../composables/useOnboarding'
 import AppIcon from './AppIcon.vue'
 import ProjectIcon from './ProjectIcon.vue'
+import BrandIcon from './BrandIcon.vue'
 import DeleteProjectDialog from './DeleteProjectDialog.vue'
 import { api } from '../../services/api'
 
@@ -37,8 +38,8 @@ const SUB = [
   { key: null, icon: 'user', label: 'Membros', path: '/membros' },
 ]
 const TRY = [
-  { icon: 'github', label: 'Conectar ao GitHub', to: '/ajustes?tab=integrations' },
-  { icon: 'slack', label: 'Conectar ao Slack', to: '/comecar' },
+  { brand: 'github', label: 'Conectar ao GitHub', to: '/ajustes?tab=integrations' },
+  { brand: 'slack', label: 'Conectar ao Slack', to: '/comecar' },
   { icon: 'ai', label: 'Experimente a Novexo IA', to: '/ia' },
 ]
 const FEATURES = [
@@ -241,7 +242,7 @@ onUnmounted(() => {
     <button type="button" class="side__label" :aria-expanded="prefs.open.try" @click="toggleSection('try')">Experimente <AppIcon name="chevron" :size="14" class="chev" /></button>
     <Transition :css="false" @enter="onEnter" @leave="onLeave">
       <div v-if="prefs.open.try" class="sect">
-        <RouterLink v-for="t in TRY" :key="t.label" :to="t.to" class="side__link"><AppIcon :name="t.icon" :size="16" />{{ t.label }}</RouterLink>
+        <RouterLink v-for="t in TRY" :key="t.label" :to="t.to" class="side__link"><BrandIcon v-if="t.brand" :name="t.brand" :size="16" /><AppIcon v-else :name="t.icon" :size="16" />{{ t.label }}</RouterLink>
       </div>
     </Transition>
   </div>

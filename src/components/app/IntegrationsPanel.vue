@@ -6,8 +6,9 @@ import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import AppSelect from './AppSelect.vue'
+import BrandIcon from './BrandIcon.vue'
 
-const SOON = ['GitLab', 'Slack', 'Google Drive', 'Figma', 'Notion', 'Jira', 'Sentry']
+const SOON = [['GitLab', 'gitlab'], ['Slack', 'slack'], ['Google Drive', 'googledrive'], ['Figma', 'figma'], ['Notion', 'notion'], ['Jira', 'jira'], ['Sentry', 'sentry']]
 const { state, load } = useWorkspace()
 const { toast } = useUi()
 
@@ -53,7 +54,7 @@ onMounted(() => loadCal())
   <div class="integrations">
     <!-- GitHub -->
     <section class="card">
-      <header><span class="logo"><AppIcon name="github" :size="18" /></span><div><h3>GitHub</h3><p>Traga um repositório como projeto: cada issue aberta vira uma tarefa, com as etiquetas e o link de volta para o GitHub.</p></div></header>
+      <header><span class="logo"><BrandIcon name="github" :size="18" /></span><div><h3>GitHub</h3><p>Traga um repositório como projeto: cada issue aberta vira uma tarefa, com as etiquetas e o link de volta para o GitHub.</p></div></header>
       <form class="gh" @submit.prevent="importRepo">
         <input v-model="repo" placeholder="dono/repositório ou link do GitHub" aria-label="Repositório do GitHub" autocomplete="off" spellcheck="false" />
         <AppSelect v-model="target" :options="targets" aria-label="Para onde vão as tarefas" />
@@ -68,7 +69,7 @@ onMounted(() => loadCal())
 
     <!-- Google Agenda -->
     <section class="card">
-      <header><span class="logo"><AppIcon name="calendar" :size="18" /></span><div><h3>Google Agenda</h3><p>Suas tarefas com prazo aparecem no Google Agenda (ou Apple e Outlook) e atualizam sozinhas.</p></div></header>
+      <header><span class="logo"><BrandIcon name="googlecalendar" :size="18" /></span><div><h3>Google Agenda</h3><p>Suas tarefas com prazo aparecem no Google Agenda (ou Apple e Outlook) e atualizam sozinhas.</p></div></header>
       <template v-if="cal">
         <div class="link">
           <code>{{ cal.url }}</code>
@@ -87,12 +88,12 @@ onMounted(() => loadCal())
 
     <!-- Google Meet -->
     <section class="card">
-      <header><span class="logo"><AppIcon name="video" :size="18" /></span><div><h3>Google Meet</h3><p>No chat de cada projeto tem o botão de chamada: cria uma sala do Meet e manda o link para o time entrar com um clique.</p></div></header>
+      <header><span class="logo"><BrandIcon name="googlemeet" :size="18" /></span><div><h3>Google Meet</h3><p>No chat de cada projeto tem o botão de chamada: cria uma sala do Meet e manda o link para o time entrar com um clique.</p></div></header>
     </section>
 
     <section class="card soon">
       <h3>Em breve</h3>
-      <ul><li v-for="name in SOON" :key="name">{{ name }}</li></ul>
+      <ul><li v-for="[name, slug] in SOON" :key="name"><BrandIcon :name="slug" :size="14" />{{ name }}</li></ul>
     </section>
   </div>
 </template>
@@ -119,7 +120,7 @@ header p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 .msg a { margin-left: 0.3rem; color: var(--text); }
 .hint { margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
 .soon ul { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
-.soon li { padding: 0.2rem 0.55rem; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; color: var(--muted); }
+.soon li { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; color: var(--muted); }
 :is(.link-btn):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 @media (max-width: 560px) { .gh { grid-template-columns: 1fr; } }
 </style>
