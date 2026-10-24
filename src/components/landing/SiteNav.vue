@@ -54,7 +54,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
     <div class="nav__glossy" aria-hidden="true" />
 
     <div class="nav__bar">
-      <a href="/#topo" class="nav__logo" aria-label="Novexo, início">NOVEXO</a>
+      <RouterLink to="/#topo" class="nav__logo" aria-label="Novexo, início">NOVEXO</RouterLink>
 
       <nav class="nav__menu" aria-label="Principal" @mouseleave="scheduleClose">
         <div
@@ -86,11 +86,11 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
               />
             </svg>
           </button>
-          <a
+          <RouterLink
             v-else
-            :href="item.href?.startsWith('#') ? `/${item.href}` : item.href"
+            :to="item.href?.startsWith('#') ? `/${item.href}` : item.href"
             class="nav__link"
-            >{{ item.label }}</a
+            >{{ item.label }}</RouterLink
           >
         </div>
       </nav>
@@ -131,10 +131,10 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
         <div v-for="(col, ci) in item.columns" :key="ci" class="mm__col">
           <div v-for="(g, gi) in col" :key="gi" class="mm__group">
             <span v-if="g.group" class="mm__title">{{ g.group }}</span>
-            <a
+            <RouterLink
               v-for="it in g.items"
               :key="it.title"
-              :href="it.to || PRODUCT_LINKS[it.title] || '/#topo'"
+              :to="it.to || PRODUCT_LINKS[it.title] || '/#topo'"
               class="mm__item"
               @click="active = null"
             >
@@ -150,25 +150,25 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
                 >
                 <span class="mm__desc">{{ it.desc }}</span>
               </span>
-            </a>
-            <a
+            </RouterLink>
+            <RouterLink
               v-for="l in g.links"
               :key="l"
-              :href="PRODUCT_LINKS[l] || '/#topo'"
+              :to="PRODUCT_LINKS[l] || '/#topo'"
               class="mm__plain"
               @click="active = null"
-              >{{ l }}</a
+              >{{ l }}</RouterLink
             >
-            <a v-if="g.more" href="#topo" class="mm__more" @click="active = null"
-              >{{ g.more }} <span aria-hidden="true">→</span></a
+            <RouterLink v-if="g.more" to="/#topo" class="mm__more" @click="active = null"
+              >{{ g.more }} <span aria-hidden="true">→</span></RouterLink
             >
           </div>
         </div>
-        <a :href="item.feature.to || '#topo'" class="mm__feature" @click="active = null">
+        <RouterLink :to="item.feature.to || '#topo'" class="mm__feature" @click="active = null">
           <img :src="item.feature.art" alt="" class="mm__art" loading="lazy" />
           <span class="mm__feature-title">{{ item.feature.title }}</span>
           <span class="mm__feature-cta">{{ item.feature.cta }}</span>
-        </a>
+        </RouterLink>
       </div>
     </div>
 
@@ -198,12 +198,12 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
               />
             </svg>
           </button>
-          <a
+          <RouterLink
             v-else
-            :href="item.href?.startsWith('#') ? `/${item.href}` : item.href"
+            :to="item.href?.startsWith('#') ? `/${item.href}` : item.href"
             class="mob__link"
             @click="mobileOpen = false"
-            >{{ item.label }}</a
+            >{{ item.label }}</RouterLink
           >
           <div
             v-if="item.columns"
@@ -213,24 +213,24 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
             <div>
               <template v-for="col in item.columns">
                 <template v-for="g in col">
-                  <a
+                  <RouterLink
                     v-for="it in g.items"
                     :key="it.title"
-                    :href="it.to || PRODUCT_LINKS[it.title] || '/#topo'"
+                    :to="it.to || PRODUCT_LINKS[it.title] || '/#topo'"
                     class="mob__subitem"
                     @click="mobileOpen = false"
                   >
                     <svg class="mm__icon" viewBox="0 0 24 24" aria-hidden="true">
                       <path :d="ICONS[it.icon]" /></svg
                     >{{ it.title }}
-                  </a>
-                  <a
+                  </RouterLink>
+                  <RouterLink
                     v-for="l in g.links"
                     :key="l"
-                    :href="PRODUCT_LINKS[l] || '/#topo'"
+                    :to="PRODUCT_LINKS[l] || '/#topo'"
                     class="mob__subitem"
                     @click="mobileOpen = false"
-                    >{{ l }}</a
+                    >{{ l }}</RouterLink
                   >
                 </template>
               </template>

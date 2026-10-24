@@ -97,7 +97,7 @@ onUnmounted(() => ctx?.revert())
 .foot--blend {
   --foot-blend-height: clamp(18rem, 30vw, 26rem);
   padding-top: clamp(13rem, 23vw, 20rem);
-  background: #000;
+  background: var(--footer-transition-color, #000); /* a página pode dizer a cor de onde o degradê parte */
 }
 .foot--blend .foot__bg {
   -webkit-mask-image: linear-gradient(180deg,

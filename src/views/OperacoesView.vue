@@ -3,27 +3,28 @@ import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 // Adicione o caminho do vídeo em `video` quando a gravação estiver pronta.
-// Os vídeos são exibidos com controles, sem reprodução automática.
+// Os vídeos tocam mudos e em loop, sem controles.
 const steps = [
   {
     title: 'Registre o processo da equipe',
     text: 'Descreva as etapas e os critérios de conclusão nas Páginas de um projeto. Por exemplo: recebimento de um pedido, conferência, execução e revisão.',
     caption: 'Documentar um processo da empresa',
-    video: '',
+    video: '/tutoriais/operacoes/passo-1.mp4',
   },
   {
     title: 'Transforme as etapas em tarefas',
     text: 'Crie tarefas para o trabalho que precisa ser executado. Defina responsáveis e prazos e use checklists para as verificações que fazem parte da rotina.',
     caption: 'Organizar a execução de um processo',
-    video: '',
+    video: '/tutoriais/operacoes/passo-2.mp4',
   },
   {
     title: 'Revise o andamento com o time',
     text: 'Confira o Quadro para identificar o que está parado ou aguardando revisão. Use o chat do projeto para tirar dúvidas e atualize a documentação quando o processo mudar.',
     caption: 'Acompanhar pendências e revisar os processos',
-    video: '',
+    video: '/tutoriais/operacoes/passo-3.mp4',
   },
 ]
 </script>
@@ -33,7 +34,6 @@ const steps = [
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="label">SOLUÇÕES / OPERAÇÕES</p>
         <h1>Como organizar<br /><em>as operações</em></h1>
         <p>
           Use projetos, tarefas e documentos para registrar os processos da empresa e acompanhar a
@@ -57,8 +57,11 @@ const steps = [
           <video
             v-if="step.video"
             :src="step.video"
-            controls
-            preload="metadata"
+            :poster="step.video.replace('.mp4', '.jpg')"
+            autoplay
+            muted
+            loop
+            preload="auto"
             playsinline
             :aria-label="step.caption"
           />
@@ -83,11 +86,11 @@ const steps = [
           dentro do Novexo.
         </p>
         <GooeyButton to="/projetos" size="lg"
-          >Abrir meus projetos <span aria-hidden="true">↗</span></GooeyButton
+          >Abrir meus projetos <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter blend-from-black />
   </div>
 </template>
 
@@ -100,13 +103,13 @@ const steps = [
   --lp-white: #f8f8f8;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #100e0c;
+  background: #000;
   color: #f8f8f8;
   font-family: var(--lp-sans);
 }
 :global(html:has(.operacoes-guide)),
 :global(html:has(.operacoes-guide) body) {
-  background: #100e0c;
+  background: #000;
 }
 h1,
 h2,
@@ -126,12 +129,6 @@ h2 {
 .intro {
   max-width: 700px;
   margin-bottom: 52px;
-}
-.label {
-  color: #fba45c;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  margin-bottom: 18px;
 }
 h1 {
   font:
@@ -211,23 +208,6 @@ video {
   font-size: 13px;
   max-width: 340px;
 }
-figcaption {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #91867c;
-  margin-top: 12px;
-}
-.views-note {
-  margin-top: 42px;
-  padding: 26px;
-  border: 1px solid #e5651530;
-  border-radius: 12px;
-  background: #e5651509;
-}
-.views-note h2 {
-  font-size: 20px;
-}
-.views-note p,
 .guide-end p {
   font-size: 14px;
 }
@@ -272,10 +252,7 @@ figcaption {
     width: 32px;
   }
   .video-placeholder p {
-    font-size: 11px;
-  }
-  .views-note {
-    padding: 20px;
+    font-size: 12px;
   }
   .guide-end {
     flex-direction: column;

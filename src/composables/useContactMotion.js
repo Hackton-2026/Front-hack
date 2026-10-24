@@ -40,11 +40,6 @@ export function useContactMotion(root) {
         .from(select('.contact-shortcut'), { stagger: 0.1 }, 0.65)
         .from(select('.contact-panel'), { y: 30, duration: 1 }, 0.2)
 
-      gsap.fromTo(select('.contact-glow'), { y: -25, scale: 0.94 }, {
-        y: 45, scale: 1.08, ease: 'none',
-        scrollTrigger: { trigger: select('.contact-hero')[0], start: 'top top', end: 'bottom top', scrub: 1 },
-      })
-
       select('[data-contact-reveal]').forEach(element => {
         gsap.from(element, {
           autoAlpha: 0, y: 18, duration: 0.8, ease: 'power3.out',

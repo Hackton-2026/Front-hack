@@ -3,27 +3,28 @@ import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 // Adicione o caminho do vídeo em `video` quando a gravação estiver pronta.
-// Os vídeos são exibidos com controles, sem reprodução automática.
+// Os vídeos tocam mudos e em loop, sem controles.
 const steps = [
   {
     title: 'Abra um projeto',
     text: 'Na barra lateral, clique em Projetos e escolha o projeto em que você vai trabalhar. Abra Itens de trabalho para ver as tarefas.',
     caption: 'Abrir um projeto e acessar os itens de trabalho',
-    video: '',
+    video: '/tutoriais/tarefas/passo-1.mp4',
   },
   {
     title: 'Crie uma tarefa',
     text: 'Clique em Novo item de trabalho. Preencha o título, selecione o projeto e defina os responsáveis, o prazo e a prioridade. Adicione uma descrição se precisar explicar o que deve ser feito e clique em Criar tarefa.',
     caption: 'Preencher os dados e criar uma tarefa',
-    video: '',
+    video: '/tutoriais/tarefas/passo-2.mp4',
   },
   {
     title: 'Atualize o andamento',
     text: 'Clique no nome de uma tarefa para abrir os detalhes. Você pode alterar o status, ajustar os campos e adicionar etapas ao checklist. Ao terminar, use Marcar como concluída. Se for solicitada uma nota de conclusão, descreva o que foi entregue.',
     caption: 'Editar uma tarefa, usar o checklist e concluir',
-    video: '',
+    video: '/tutoriais/tarefas/passo-3.mp4',
   },
 ]
 </script>
@@ -33,7 +34,6 @@ const steps = [
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="label">PRODUTO / TAREFAS</p>
         <h1>Como organizar<br /><em>suas tarefas</em></h1>
         <p>
           Crie tarefas dentro de um projeto, defina quem vai fazer cada uma e acompanhe o andamento.
@@ -56,8 +56,11 @@ const steps = [
           <video
             v-if="step.video"
             :src="step.video"
-            controls
-            preload="metadata"
+            :poster="step.video.replace('.mp4', '.jpg')"
+            autoplay
+            muted
+            loop
+            preload="auto"
             playsinline
             :aria-label="step.caption"
           />
@@ -82,11 +85,11 @@ const steps = [
           ou abra <strong>Seu trabalho</strong> na barra lateral.
         </p>
         <GooeyButton to="/projetos" size="lg"
-          >Abrir meus projetos <span aria-hidden="true">↗</span></GooeyButton
+          >Abrir meus projetos <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter blend-from-black />
   </div>
 </template>
 
@@ -99,13 +102,13 @@ const steps = [
   --lp-white: #f8f8f8;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #100e0c;
+  background: #000;
   color: #f8f8f8;
   font-family: var(--lp-sans);
 }
 :global(html:has(.tasks-guide)),
 :global(html:has(.tasks-guide) body) {
-  background: #100e0c;
+  background: #000;
 }
 h1,
 h2,
@@ -125,12 +128,6 @@ h2 {
 .intro {
   max-width: 700px;
   margin-bottom: 52px;
-}
-.label {
-  color: #fba45c;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  margin-bottom: 18px;
 }
 h1 {
   font:
@@ -210,23 +207,6 @@ video {
   font-size: 13px;
   max-width: 340px;
 }
-figcaption {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #91867c;
-  margin-top: 12px;
-}
-.views-note {
-  margin-top: 42px;
-  padding: 26px;
-  border: 1px solid #e5651530;
-  border-radius: 12px;
-  background: #e5651509;
-}
-.views-note h2 {
-  font-size: 20px;
-}
-.views-note p,
 .guide-end p {
   font-size: 14px;
 }
@@ -271,10 +251,7 @@ figcaption {
     width: 32px;
   }
   .video-placeholder p {
-    font-size: 11px;
-  }
-  .views-note {
-    padding: 20px;
+    font-size: 12px;
   }
   .guide-end {
     flex-direction: column;

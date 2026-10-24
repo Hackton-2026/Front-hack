@@ -3,27 +3,28 @@ import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 // Adicione o caminho do vídeo em `video` quando a gravação estiver pronta.
-// Os vídeos são exibidos com controles, sem reprodução automática.
+// Os vídeos tocam mudos e em loop, sem controles.
 const steps = [
   {
     title: 'Abra o calendário do projeto',
     text: 'Entre em um projeto, abra Itens de trabalho e clique na aba Calendário. Use as setas para trocar de mês e o botão Hoje para voltar ao mês atual.',
     caption: 'Abrir o calendário e navegar entre os meses',
-    video: '',
+    video: '/tutoriais/calendario/passo-1.mp4',
   },
   {
     title: 'Crie uma tarefa com prazo',
     text: 'Clique em um espaço vazio no dia desejado para abrir o formulário de nova tarefa. O prazo já vem preenchido com essa data. Informe o título, confira o projeto e os demais campos e clique em Criar tarefa.',
     caption: 'Criar uma tarefa a partir de um dia do calendário',
-    video: '',
+    video: '/tutoriais/calendario/passo-2.mp4',
   },
   {
     title: 'Altere as datas das tarefas',
     text: 'Arraste uma tarefa para outro dia para mudar o prazo. As tarefas sem prazo ficam no painel Sem data: arraste uma delas para o calendário para definir uma data. Você também pode clicar na tarefa e editar o prazo nos detalhes.',
     caption: 'Reagendar uma tarefa e definir prazos para itens sem data',
-    video: '',
+    video: '/tutoriais/calendario/passo-3.mp4',
   },
 ]
 </script>
@@ -33,7 +34,6 @@ const steps = [
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="label">PRODUTO / CALENDÁRIO</p>
         <h1>Como usar o<br /><em>calendário</em></h1>
         <p>Veja os prazos das tarefas por dia e ajuste as datas dentro do projeto.</p>
       </header>
@@ -54,8 +54,11 @@ const steps = [
           <video
             v-if="step.video"
             :src="step.video"
-            controls
-            preload="metadata"
+            :poster="step.video.replace('.mp4', '.jpg')"
+            autoplay
+            muted
+            loop
+            preload="auto"
             playsinline
             :aria-label="step.caption"
           />
@@ -80,11 +83,11 @@ const steps = [
           detalhes. As alterações dependem das suas permissões.
         </p>
         <GooeyButton to="/projetos" size="lg"
-          >Abrir meus projetos <span aria-hidden="true">↗</span></GooeyButton
+          >Abrir meus projetos <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter blend-from-black />
   </div>
 </template>
 
@@ -97,13 +100,13 @@ const steps = [
   --lp-white: #f8f8f8;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #100e0c;
+  background: #000;
   color: #f8f8f8;
   font-family: var(--lp-sans);
 }
 :global(html:has(.calendar-guide)),
 :global(html:has(.calendar-guide) body) {
-  background: #100e0c;
+  background: #000;
 }
 h1,
 h2,
@@ -123,12 +126,6 @@ h2 {
 .intro {
   max-width: 700px;
   margin-bottom: 52px;
-}
-.label {
-  color: #fba45c;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  margin-bottom: 18px;
 }
 h1 {
   font:
@@ -208,23 +205,6 @@ video {
   font-size: 13px;
   max-width: 340px;
 }
-figcaption {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #91867c;
-  margin-top: 12px;
-}
-.views-note {
-  margin-top: 42px;
-  padding: 26px;
-  border: 1px solid #e5651530;
-  border-radius: 12px;
-  background: #e5651509;
-}
-.views-note h2 {
-  font-size: 20px;
-}
-.views-note p,
 .guide-end p {
   font-size: 14px;
 }
@@ -269,10 +249,7 @@ figcaption {
     width: 32px;
   }
   .video-placeholder p {
-    font-size: 11px;
-  }
-  .views-note {
-    padding: 20px;
+    font-size: 12px;
   }
   .guide-end {
     flex-direction: column;

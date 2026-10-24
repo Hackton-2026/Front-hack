@@ -1,11 +1,10 @@
 /* Visual compartilhado pelas páginas públicas de tutoriais e soluções. */
 .tutorial-page[class] {
-  --footer-transition-color: #0c0b0a;
+  --footer-transition-color: #000; /* o fundo que as páginas usam: o rodapé começa dessa cor e vira a foto */
   --tutorial-line: rgb(255 255 255 / 0.12);
   --tutorial-muted: #ada39a;
   --tutorial-accent: #ffb77f;
-  background:
-    radial-gradient(ellipse 65% 620px at 75% 0, rgb(130 60 27 / 0.19), transparent 85%), #0c0b0a;
+  background: #000;
   overflow-x: clip;
 }
 
@@ -18,23 +17,6 @@
   position: relative;
   max-width: 960px;
   margin-bottom: 100px;
-}
-
-.tutorial-page .intro > .label {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 30px;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: #d8b398;
-}
-
-.tutorial-page .intro > .label::before {
-  content: '';
-  width: 22px;
-  height: 1px;
-  background: #eaa06d;
 }
 
 .tutorial-page .intro > h1 {
@@ -88,10 +70,7 @@
   margin: 0;
   border: 0;
   border-radius: 0;
-  background: linear-gradient(150deg, #ffd8b8 5%, #e58a46 75%, #995733);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+  color: #e58a46;
   font-family: 'Geist', system-ui, sans-serif;
   font-size: clamp(60px, 5vw, 76px);
   font-weight: 500;
@@ -140,9 +119,7 @@
   isolation: isolate;
   gap: 16px;
   padding: 30px;
-  background:
-    radial-gradient(ellipse at 75% 10%, rgb(174 93 43 / 0.12), transparent 70%),
-    linear-gradient(145deg, #1b1713, #0d0c0a 75%);
+  background: #14110e;
   transition:
     border-color 0.4s ease,
     box-shadow 0.4s ease;
@@ -150,7 +127,6 @@
 
 .tutorial-page .guide .video-placeholder:hover {
   border-color: rgb(251 164 92 / 0.5);
-  box-shadow: 0 20px 80px -35px #b7663430;
 }
 
 .tutorial-page .guide .video-placeholder > svg {
@@ -173,13 +149,6 @@
   max-width: 320px;
   color: #95877c;
   font-size: 12px;
-}
-
-.tutorial-page .guide figcaption {
-  margin-top: 16px;
-  color: #9b8c80;
-  font-size: 11px;
-  line-height: 1.6;
 }
 
 .tutorial-page .guide > .guide-end {
@@ -216,7 +185,7 @@
 
 .tutorial-page.ai-guide .guide .prompt-preview {
   padding: 48px clamp(24px, 8vw, 140px);
-  background: radial-gradient(ellipse at top right, #52301c40, transparent 70%), #080706;
+  background: #080706;
 }
 
 .tutorial-page.ai-guide .guide .examples,
@@ -330,25 +299,10 @@
   position: absolute;
   inset: -1px 0 auto;
   height: 1px;
-  background: linear-gradient(90deg, #d9884b, #f3bf9360 55%, transparent);
+  background: rgb(217 136 75 / 0.6);
   transform: scaleX(var(--line-progress, 1));
   transform-origin: left;
   pointer-events: none;
-}
-
-.tutorial-page .guide .video-placeholder::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    320px circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
-    #fba45c12,
-    transparent 75%
-  );
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.5s;
 }
 
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
@@ -361,9 +315,6 @@
   .tutorial-page .guide .video-placeholder:hover {
     transform: translateY(-5px);
   }
-  .tutorial-page .guide .video-placeholder:hover::after {
-    opacity: 1;
-  }
   .tutorial-page .guide .video-placeholder > svg {
     transition:
       transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
@@ -374,11 +325,5 @@
     transform: scale(1.1);
     border-color: #fba45c70;
     background: #e58a4612;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tutorial-page .guide .video-placeholder::after {
-    display: none;
   }
 }

@@ -3,27 +3,28 @@ import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 // Adicione o caminho do vídeo em `video` quando a gravação estiver pronta.
-// Os vídeos são exibidos com controles, sem reprodução automática.
+// Os vídeos tocam mudos e em loop, sem controles.
 const steps = [
   {
     title: 'Crie um projeto para o curso',
     text: 'Organize cada curso, turma ou programa em um projeto. Cadastre aulas e atividades como tarefas e indique os responsáveis pela preparação.',
     caption: 'Organizar um programa de aulas em um projeto',
-    video: '',
+    video: '/tutoriais/educacao/passo-1.mp4',
   },
   {
     title: 'Reúna os materiais e as datas',
     text: 'Inclua links de materiais na descrição das tarefas e registre orientações nas Páginas do projeto. Defina os prazos das atividades e consulte o Calendário.',
     caption: 'Reunir materiais e datas das atividades',
-    video: '',
+    video: '/tutoriais/educacao/passo-2.mp4',
   },
   {
     title: 'Acompanhe as atividades',
     text: 'Use o Quadro para acompanhar a preparação das aulas e a execução das atividades. Combine dúvidas e avisos no chat do projeto.',
     caption: 'Acompanhar aulas e atividades do programa',
-    video: '',
+    video: '/tutoriais/educacao/passo-3.mp4',
   },
 ]
 </script>
@@ -33,7 +34,6 @@ const steps = [
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="label">SOLUÇÕES / EDUCAÇÃO</p>
         <h1>Como organizar<br /><em>aulas e cursos</em></h1>
         <p>
           Um exemplo de uso do Novexo por programas externos de ensino para organizar aulas,
@@ -57,8 +57,11 @@ const steps = [
           <video
             v-if="step.video"
             :src="step.video"
-            controls
-            preload="metadata"
+            :poster="step.video.replace('.mp4', '.jpg')"
+            autoplay
+            muted
+            loop
+            preload="auto"
             playsinline
             :aria-label="step.caption"
           />
@@ -84,11 +87,11 @@ const steps = [
           essas ferramentas.
         </p>
         <GooeyButton to="/projetos" size="lg"
-          >Abrir meus projetos <span aria-hidden="true">↗</span></GooeyButton
+          >Abrir meus projetos <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter blend-from-black />
   </div>
 </template>
 
@@ -101,13 +104,13 @@ const steps = [
   --lp-white: #f8f8f8;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #100e0c;
+  background: #000;
   color: #f8f8f8;
   font-family: var(--lp-sans);
 }
 :global(html:has(.educacao-guide)),
 :global(html:has(.educacao-guide) body) {
-  background: #100e0c;
+  background: #000;
 }
 h1,
 h2,
@@ -127,12 +130,6 @@ h2 {
 .intro {
   max-width: 700px;
   margin-bottom: 52px;
-}
-.label {
-  color: #fba45c;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  margin-bottom: 18px;
 }
 h1 {
   font:
@@ -212,23 +209,6 @@ video {
   font-size: 13px;
   max-width: 340px;
 }
-figcaption {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #91867c;
-  margin-top: 12px;
-}
-.views-note {
-  margin-top: 42px;
-  padding: 26px;
-  border: 1px solid #e5651530;
-  border-radius: 12px;
-  background: #e5651509;
-}
-.views-note h2 {
-  font-size: 20px;
-}
-.views-note p,
 .guide-end p {
   font-size: 14px;
 }
@@ -273,10 +253,7 @@ figcaption {
     width: 32px;
   }
   .video-placeholder p {
-    font-size: 11px;
-  }
-  .views-note {
-    padding: 20px;
+    font-size: 12px;
   }
   .guide-end {
     flex-direction: column;

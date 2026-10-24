@@ -3,27 +3,28 @@ import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 // Adicione o caminho do vídeo em `video` quando a gravação estiver pronta.
-// Os vídeos são exibidos com controles, sem reprodução automática.
+// Os vídeos tocam mudos e em loop, sem controles.
 const steps = [
   {
     title: 'Separe os projetos dos clientes',
     text: 'Crie um projeto para cada cliente ou contrato. Use nomes que ajudem a identificar o trabalho e cadastre as entregas como tarefas dentro do projeto correspondente.',
     caption: 'Organizar clientes e entregas por projeto',
-    video: '',
+    video: '/tutoriais/agencias/passo-1.mp4',
   },
   {
     title: 'Distribua as entregas',
     text: 'Defina responsáveis, prioridades e prazos para as tarefas. Use o checklist para registrar etapas internas, como planejamento, produção e revisão.',
     caption: 'Definir responsáveis e prazos das entregas',
-    video: '',
+    video: '/tutoriais/agencias/passo-2.mp4',
   },
   {
     title: 'Acompanhe o que falta entregar',
     text: 'Use o Quadro para acompanhar o andamento e o Calendário para conferir os prazos. Cada pessoa pode consultar Seu trabalho para encontrar as tarefas atribuídas a ela.',
     caption: 'Revisar o andamento e os prazos dos clientes',
-    video: '',
+    video: '/tutoriais/agencias/passo-3.mp4',
   },
 ]
 </script>
@@ -33,7 +34,6 @@ const steps = [
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="label">SOLUÇÕES / AGÊNCIAS</p>
         <h1>Como agências podem<br /><em>usar o Novexo</em></h1>
         <p>
           Separe as entregas de cada cliente, distribua o trabalho e acompanhe os prazos da equipe.
@@ -56,8 +56,11 @@ const steps = [
           <video
             v-if="step.video"
             :src="step.video"
-            controls
-            preload="metadata"
+            :poster="step.video.replace('.mp4', '.jpg')"
+            autoplay
+            muted
+            loop
+            preload="auto"
             playsinline
             :aria-label="step.caption"
           />
@@ -82,11 +85,11 @@ const steps = [
           consulta do time.
         </p>
         <GooeyButton to="/projetos" size="lg"
-          >Abrir meus projetos <span aria-hidden="true">↗</span></GooeyButton
+          >Abrir meus projetos <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter blend-from-black />
   </div>
 </template>
 
@@ -99,13 +102,13 @@ const steps = [
   --lp-white: #f8f8f8;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #100e0c;
+  background: #000;
   color: #f8f8f8;
   font-family: var(--lp-sans);
 }
 :global(html:has(.agencias-guide)),
 :global(html:has(.agencias-guide) body) {
-  background: #100e0c;
+  background: #000;
 }
 h1,
 h2,
@@ -125,12 +128,6 @@ h2 {
 .intro {
   max-width: 700px;
   margin-bottom: 52px;
-}
-.label {
-  color: #fba45c;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  margin-bottom: 18px;
 }
 h1 {
   font:
@@ -210,23 +207,6 @@ video {
   font-size: 13px;
   max-width: 340px;
 }
-figcaption {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #91867c;
-  margin-top: 12px;
-}
-.views-note {
-  margin-top: 42px;
-  padding: 26px;
-  border: 1px solid #e5651530;
-  border-radius: 12px;
-  background: #e5651509;
-}
-.views-note h2 {
-  font-size: 20px;
-}
-.views-note p,
 .guide-end p {
   font-size: 14px;
 }
@@ -271,10 +251,7 @@ figcaption {
     width: 32px;
   }
   .video-placeholder p {
-    font-size: 11px;
-  }
-  .views-note {
-    padding: 20px;
+    font-size: 12px;
   }
   .guide-end {
     flex-direction: column;

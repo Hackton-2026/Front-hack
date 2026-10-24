@@ -3,27 +3,28 @@ import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 // Adicione o caminho do vídeo em `video` quando a gravação estiver pronta.
-// Os vídeos são exibidos com controles, sem reprodução automática.
+// Os vídeos tocam mudos e em loop, sem controles.
 const steps = [
   {
     title: 'Escolha a ferramenta',
     text: 'A proposta é reunir as conexões em Ajustes → Integrações. Google Meet e Discord são exemplos de ferramentas previstas para esse espaço.',
     caption: 'Escolher uma ferramenta para conectar',
-    video: '',
+    video: '/tutoriais/integracoes/passo-1.mp4',
   },
   {
     title: 'Conecte a conta',
     text: 'No fluxo previsto, você autoriza a conexão na ferramenta escolhida e revisa as permissões solicitadas. A conexão deve ser feita com a conta que você pretende usar no trabalho.',
     caption: 'Autorizar a conexão com uma conta externa',
-    video: '',
+    video: '/tutoriais/integracoes/passo-2.mp4',
   },
   {
     title: 'Defina como usar no projeto',
     text: 'Exemplos de uso a configurar são vincular reuniões do Google Meet ao projeto ou enviar avisos para um canal do Discord. Cada ferramenta terá suas próprias opções.',
     caption: 'Configurar o uso da integração no projeto',
-    video: '',
+    video: '/tutoriais/integracoes/passo-3.mp4',
   },
 ]
 </script>
@@ -33,7 +34,6 @@ const steps = [
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="label">PRODUTO / INTEGRAÇÕES</p>
         <h1>Como funcionam as<br /><em>integrações</em></h1>
         <p>
           Conexões com ferramentas externas, como Google Meet e Discord, para usar junto dos seus
@@ -59,8 +59,11 @@ const steps = [
           <video
             v-if="step.video"
             :src="step.video"
-            controls
-            preload="metadata"
+            :poster="step.video.replace('.mp4', '.jpg')"
+            autoplay
+            muted
+            loop
+            preload="auto"
             playsinline
             :aria-label="step.caption"
           />
@@ -85,11 +88,11 @@ const steps = [
           usos previstos; não realiza a conexão com Google Meet ou Discord.
         </p>
         <GooeyButton to="/ajustes" size="lg"
-          >Abrir ajustes <span aria-hidden="true">↗</span></GooeyButton
+          >Abrir ajustes <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter blend-from-black />
   </div>
 </template>
 
@@ -102,13 +105,13 @@ const steps = [
   --lp-white: #f8f8f8;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #100e0c;
+  background: #000;
   color: #f8f8f8;
   font-family: var(--lp-sans);
 }
 :global(html:has(.integracoestutorial-guide)),
 :global(html:has(.integracoestutorial-guide) body) {
-  background: #100e0c;
+  background: #000;
 }
 h1,
 h2,
@@ -128,12 +131,6 @@ h2 {
 .intro {
   max-width: 700px;
   margin-bottom: 52px;
-}
-.label {
-  color: #fba45c;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  margin-bottom: 18px;
 }
 h1 {
   font:
@@ -213,23 +210,6 @@ video {
   font-size: 13px;
   max-width: 340px;
 }
-figcaption {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #91867c;
-  margin-top: 12px;
-}
-.views-note {
-  margin-top: 42px;
-  padding: 26px;
-  border: 1px solid #e5651530;
-  border-radius: 12px;
-  background: #e5651509;
-}
-.views-note h2 {
-  font-size: 20px;
-}
-.views-note p,
 .guide-end p {
   font-size: 14px;
 }
@@ -274,10 +254,7 @@ figcaption {
     width: 32px;
   }
   .video-placeholder p {
-    font-size: 11px;
-  }
-  .views-note {
-    padding: 20px;
+    font-size: 12px;
   }
   .guide-end {
     flex-direction: column;

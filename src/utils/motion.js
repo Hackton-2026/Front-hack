@@ -29,10 +29,15 @@ export function revealTitleCharacters(targets) {
  * v-reveal.stagger    → os filhos aparecem em cascata
  * v-reveal.now        → anima ao montar (sem esperar o scroll), bom para o topo da página
  * v-reveal="0.2"      → atraso em segundos
+ * v-reveal="{ now: cond, delay }" → o .now decidido em tempo de execução (o mesmo componente no topo de uma página e no meio de outra)
  */
 export const vReveal = {
   mounted(el, { modifiers, value }) {
     if (prefersReducedMotion()) return
+    if (value && typeof value === 'object') {
+      modifiers = { ...modifiers, now: modifiers.now || !!value.now }
+      value = value.delay
+    }
     el._reveal = gsap.from(modifiers.stagger ? el.children : el, {
       opacity: 0,
       y: 48,

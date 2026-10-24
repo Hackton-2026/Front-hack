@@ -127,12 +127,12 @@ onUnmounted(() => {
           <div v-else class="custom-fields">
             <div v-for="question in currentStep.questions" :id="`question-${question.id}`" :key="question.id" class="custom-question" :class="{ 'custom-question--full': ['textarea', 'choices'].includes(question.type) }">
               <fieldset v-if="question.type === 'choices'" :aria-describedby="errors[question.id] ? `error-${question.id}` : 'custom-priority-hint'" :aria-invalid="!!errors[question.id]">
-                <legend><span>{{ String(question.number).padStart(2, '0') }}</span>{{ question.label }}</legend>
+                <legend>{{ question.label }}</legend>
                 <p id="custom-priority-hint" class="custom-field-hint">{{ question.hint }}</p>
                 <div class="custom-priorities"><label v-for="resource in CUSTOM_PLAN_RESOURCES" :key="resource.id" :class="{ 'is-selected': answers.priorities.includes(resource.id) }"><input :id="`custom-priority-${resource.id}`" v-model="answers.priorities" type="checkbox" :value="resource.id" @change="clearError(question)" /><FlaticonIcon :name="resource.icon" :size="14" /><span>{{ resource.name }}</span></label></div>
               </fieldset>
               <template v-else>
-                <label :for="`custom-${question.id}`"><span>{{ String(question.number).padStart(2, '0') }}</span>{{ question.label }}</label>
+                <label :for="`custom-${question.id}`">{{ question.label }}</label>
                 <div v-if="question.type === 'select'" class="custom-select"><select :id="`custom-${question.id}`" v-model="answers[question.id]" :name="question.id" required :aria-invalid="!!errors[question.id]" :aria-describedby="errors[question.id] ? `error-${question.id}` : undefined" @change="clearError(question)"><option disabled value="">Selecione uma opção</option><option v-for="option in question.options" :key="option">{{ option }}</option></select><FlaticonIcon name="angle-small-down" :size="18" /></div>
                 <textarea v-else-if="question.type === 'textarea'" :id="`custom-${question.id}`" v-model.trim="answers[question.id]" :name="question.id" :placeholder="question.placeholder" :maxlength="question.max" rows="4" required :aria-invalid="!!errors[question.id]" :aria-describedby="errors[question.id] ? `error-${question.id}` : undefined" @input="clearError(question)" />
                 <input v-else :id="`custom-${question.id}`" v-model.trim="answers[question.id]" :name="question.id" :type="question.type" :autocomplete="question.autocomplete" :placeholder="question.placeholder" :min="question.type === 'number' ? question.min : undefined" :max="question.type === 'number' ? question.max : undefined" :maxlength="question.type === 'number' ? undefined : question.max" :step="question.type === 'number' ? 1 : undefined" required :aria-invalid="!!errors[question.id]" :aria-describedby="errors[question.id] ? `error-${question.id}` : undefined" @input="clearError(question)" />
@@ -159,7 +159,7 @@ onUnmounted(() => {
 
           <Transition name="custom-preview">
             <section v-if="preview.band" class="custom-preview" aria-labelledby="custom-preview-title">
-              <div class="custom-preview__heading"><span>Para {{ formatBRL(budget) }} / mês</span><FlaticonIcon name="arrow-up-right" :size="16" /><h2 id="custom-preview-title">{{ preview.band.title }}</h2></div>
+              <div class="custom-preview__heading"><span>Para {{ formatBRL(budget) }} / mês</span><h2 id="custom-preview-title">{{ preview.band.title }}</h2></div>
               <p>{{ preview.band.description }}</p>
               <ul class="custom-preview__features"><li><FlaticonIcon name="check" :size="11" />Base de colaboração do Novexo</li><li v-for="resource in previewHighlights" :key="resource.id"><FlaticonIcon name="check" :size="11" />{{ resource.name }}</li></ul>
               <details class="custom-chart" open><summary>Como o escopo evolui<FlaticonIcon name="angle-small-down" :size="17" /></summary><p>As barras ilustram a configuração sugerida. Os itens marcados são suas prioridades.</p><div v-for="resource in preview.resources" :key="resource.id" class="custom-resource" :class="{ 'is-priority': answers.priorities.includes(resource.id) }"><div><span><FlaticonIcon :name="resource.icon" :size="12" />{{ resource.name }}</span><span v-if="answers.priorities.includes(resource.id)" class="custom-resource__priority">Prioridade</span><span v-else-if="!resource.included" class="custom-resource__threshold">R$ {{ resource.from }}+</span></div><div class="custom-resource__track" role="progressbar" :aria-label="`Escopo sugerido para ${resource.name}`" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="resource.level" :aria-valuetext="resource.included ? 'Considerado nesta faixa de orçamento' : `Considerado a partir de R$ ${resource.from}`"><span :style="{ transform: `scaleX(${resource.level / 100})` }" /></div></div></details>
@@ -188,7 +188,7 @@ onUnmounted(() => {
 .custom-heading h1 { margin: 0; color: #f5eee6; font: 600 clamp(42px, 4.7vw, 63px)/1.06 var(--lp-hero); letter-spacing: -.065em; }
 .custom-heading h1 > span { color: var(--lp-orange-soft); }
 .custom-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 28px; align-items: start; }
-.custom-form, .custom-budget { position: relative; min-width: 0; padding: 30px; border: 1px solid var(--custom-line); border-radius: 14px; background: linear-gradient(145deg, #19130e, #0c0c0c 35%); }
+.custom-form, .custom-budget { position: relative; min-width: 0; padding: 30px; border: 1px solid var(--custom-line); border-radius: 14px; background: #0e0c0a; }
 .custom-form, .custom-question { scroll-margin-top: 25px; }
 .custom-steps { display: flex; justify-content: space-between; gap: 13px; }
 .custom-steps button { display: flex; flex-direction: column; align-items: flex-start; gap: 11px; padding: 0; border: 0; background: none; color: #b9a997; font: 400 11px/1.4 var(--lp-sans); cursor: pointer; }
@@ -196,7 +196,7 @@ onUnmounted(() => {
 .custom-steps button[aria-current='step'] { color: #f5dec7; }
 .custom-steps button[aria-current='step'] > span:first-child { background: var(--lp-orange-soft); color: #211205; border-color: var(--lp-orange-soft); }
 .custom-steps button:disabled { opacity: .55; cursor: default; }
-.custom-progress { display: flex; justify-content: space-between; gap: 16px; margin-top: 27px; color: #998b7c; font: 9px/1.5 var(--font-mono); }
+.custom-progress { display: flex; justify-content: space-between; gap: 16px; margin-top: 27px; color: #998b7c; font-size: 11px; line-height: 1.5; }
 .custom-progress__track { height: 2px; margin-top: 10px; background: #ffffff12; overflow: hidden; }
 .custom-progress__track > span { display: block; height: 100%; width: 100%; transform-origin: left; background: #fba45c; transition: transform .35s ease; }
 .custom-form__heading { margin-block: 30px; }
@@ -207,7 +207,6 @@ onUnmounted(() => {
 .custom-question { min-width: 0; }
 .custom-question--full { grid-column: 1 / -1; }
 .custom-question label:not(.custom-priorities label), .custom-question legend { display: flex; align-items: baseline; gap: 7px; margin-bottom: 10px; color: #d4c5b5; font-size: 11px; line-height: 1.6; }
-.custom-question label > span:first-child, .custom-question legend > span { color: #98734c; font: 9px var(--font-mono); }
 .custom-question :is(input:not([type='checkbox']), textarea, select), .custom-exact input { display: block; width: 100%; min-width: 0; min-height: 45px; padding: 12px; border: 1px solid #ffffff24; border-radius: 7px; background: #ffffff03; color: #f2e9e0; caret-color: var(--lp-orange-soft); font: 400 12px/1.5 var(--lp-sans); color-scheme: dark; transition: border-color .2s; }
 .custom-question :is(input, textarea)::placeholder { color: #8d8276; opacity: 1; }
 .custom-question :is(input, textarea, select):focus-visible, .custom-exact input:focus-visible { outline: none; border-color: #fba45c99; box-shadow: 0 0 0 2px #fba45c12; }
@@ -222,20 +221,20 @@ onUnmounted(() => {
 .custom-select option:checked { background: #3b2414; color: #fba45c; }
 .custom-question fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .custom-question legend { padding: 0; }
-.custom-field-hint { margin: -4px 0 13px; color: #978877; font-size: 10px; }
+.custom-field-hint { margin: -4px 0 13px; color: #978877; font-size: 11px; }
 .custom-priorities { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.custom-priorities label { display: flex; align-items: center; gap: 8px; padding: 12px 9px; border: 1px solid #ffffff1f; border-radius: 7px; color: #bdac9a; font-size: 10px; cursor: pointer; transition: border-color .2s, background .2s; }
+.custom-priorities label { display: flex; align-items: center; gap: 8px; padding: 12px 9px; border: 1px solid #ffffff1f; border-radius: 7px; color: #bdac9a; font-size: 11px; cursor: pointer; transition: border-color .2s, background .2s; }
 .custom-priorities label.is-selected { background: #e5651512; border-color: #fba45c66; color: #f0d2b3; }
 .custom-priorities input { width: 13px; height: 13px; margin: 0; accent-color: var(--lp-orange-soft); flex-shrink: 0; }
 .custom-priorities .flaticon { color: #c4935f; }
 .custom-error { margin: 9px 0 0; color: #fba45c; font-size: 11px; line-height: 1.6; }
 .custom-form__actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 32px; padding-top: 25px; border-top: 1px solid var(--custom-line); }
 .custom-form__actions :deep(.gb__btn), .custom-review__actions :deep(.gb__btn) { font-size: 13px; min-height: 44px; }
-.custom-form__required { max-width: 150px; color: #8e7e6d; font-size: 10px; line-height: 1.7; }
+.custom-form__required { max-width: 150px; color: #8e7e6d; font-size: 11px; line-height: 1.7; }
 .custom-text-button { display: inline-flex; align-items: center; justify-content: flex-start; gap: 8px; width: fit-content; padding: 6px 0; border: 0; background: none; color: #d5ba9c; font: 400 11px/1.5 var(--lp-sans); cursor: pointer; }
 .custom-text-button:hover { color: var(--lp-orange-soft); }
 .custom-sidebar { position: sticky; top: 25px; min-width: 0; }
-.custom-budget { padding: 26px; background: linear-gradient(155deg, #2b1b10, #100e0c 60%); border-color: #fba45c40; }
+.custom-budget { padding: 26px; background: #16100b; border-color: #fba45c40; }
 .custom-budget__head { display: flex; align-items: center; gap: 13px; }
 .custom-budget h2 { margin: 0; color: #eedbc8; font: 500 18px/1.3 var(--lp-hero); letter-spacing: -.04em; }
 .custom-budget > p { margin: 17px 0 0; color: #a79582; font-size: 11px; line-height: 1.7; }
@@ -245,24 +244,23 @@ onUnmounted(() => {
 .custom-range { display: block; appearance: none; width: 100%; height: 28px; padding: 0; margin: 25px 0 0; border: 0; background: none; cursor: pointer; touch-action: pan-y; }
 .custom-plan .custom-range:focus-visible { outline: none; }
 .custom-range::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: linear-gradient(to right, #fba45c 0 var(--budget-progress), #493421 var(--budget-progress) 100%); }
-.custom-range::-webkit-slider-thumb { appearance: none; width: 22px; height: 22px; margin-top: -8px; border: 4px solid #fba45c; border-radius: 50%; background: #201209; box-shadow: 0 0 0 4px #fba45c14; }
+.custom-range::-webkit-slider-thumb { appearance: none; width: 22px; height: 22px; margin-top: -8px; border: 4px solid #fba45c; border-radius: 50%; background: #201209; }
 .custom-range::-moz-range-track { height: 6px; border-radius: 999px; background: #493421; }
 .custom-range::-moz-range-progress { height: 6px; border-radius: 999px; background: #fba45c; }
 .custom-range::-moz-range-thumb { width: 14px; height: 14px; border: 4px solid #fba45c; border-radius: 50%; background: #201209; }
-.custom-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px #fba45c44, 0 0 20px #fba45c30; }
-.custom-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 6px #fba45c44, 0 0 20px #fba45c30; }
-.custom-budget__scale { display: flex; justify-content: space-between; color: #9b8269; font: 9px/1.5 var(--font-mono); }
+.custom-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px #fba45c44; }
+.custom-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 6px #fba45c44; }
+.custom-budget__scale { display: flex; justify-content: space-between; color: #9b8269; font-size: 11px; line-height: 1.5; }
 .custom-exact { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 23px; }
-.custom-exact > span:first-child { color: #b7a18b; font-size: 10px; }
+.custom-exact > span:first-child { color: #b7a18b; font-size: 11px; }
 .custom-exact > span:last-child { display: flex; align-items: center; gap: 7px; color: #d4b18e; font-size: 12px; }
 .custom-exact input { max-width: 78px; min-height: 35px; padding: 7px 9px; font-size: 12px; }
-.custom-budget > .custom-budget__hint { padding-top: 19px; border-top: 1px solid #b88e602b; color: #bca184; font-size: 10px; }
-.custom-preview { position: relative; margin-top: 16px; padding: 25px; border: 1px solid #fba45c40; border-radius: 12px; background: linear-gradient(150deg, #25180e, #100f0d 50%); }
-.custom-preview::before { content: ''; position: absolute; top: -6px; left: 33px; width: 10px; height: 10px; border: solid #fba45c40; border-width: 1px 0 0 1px; background: #25180e; transform: rotate(45deg); }
-.custom-preview__heading { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
-.custom-preview__heading > span { color: var(--lp-orange-soft); font: 10px/1.5 var(--font-mono); }
-.custom-preview__heading > .flaticon { color: #c49a70; }
-.custom-preview h2 { grid-column: 1 / -1; color: #f0dfcc; font: 500 24px/1.15 var(--lp-hero); letter-spacing: -.045em; margin: 0; }
+.custom-budget > .custom-budget__hint { padding-top: 19px; border-top: 1px solid #b88e602b; color: #bca184; font-size: 11px; }
+.custom-preview { position: relative; margin-top: 16px; padding: 25px; border: 1px solid #fba45c40; border-radius: 12px; background: #14100c; }
+.custom-preview::before { content: ''; position: absolute; top: -6px; left: 33px; width: 10px; height: 10px; border: solid #fba45c40; border-width: 1px 0 0 1px; background: #14100c; transform: rotate(45deg); }
+.custom-preview__heading { display: grid; gap: 12px; }
+.custom-preview__heading > span { color: var(--lp-orange-soft); font-size: 11px; line-height: 1.5; }
+.custom-preview h2 { color: #f0dfcc; font: 500 24px/1.15 var(--lp-hero); letter-spacing: -.045em; margin: 0; }
 .custom-preview > p { color: #b09b85; font-size: 11px; line-height: 1.85; margin: 15px 0; }
 .custom-preview__features { display: flex; flex-direction: column; gap: 10px; list-style: none; padding: 0; margin: 20px 0; }
 .custom-preview__features li { display: flex; align-items: center; gap: 9px; color: #d5bea4; font-size: 11px; }
@@ -271,17 +269,17 @@ onUnmounted(() => {
 .custom-chart summary { display: flex; align-items: center; justify-content: space-between; gap: 15px; list-style: none; color: #dcc4a8; font-size: 11px; cursor: pointer; }
 .custom-chart summary::-webkit-details-marker { display: none; }
 .custom-chart[open] summary > .flaticon { transform: rotate(180deg); }
-.custom-chart > p { color: #96816b; font-size: 10px; line-height: 1.8; margin-block: 13px 20px; }
+.custom-chart > p { color: #96816b; font-size: 11px; line-height: 1.8; margin-block: 13px 20px; }
 .custom-resource + .custom-resource { margin-top: 16px; }
 .custom-resource > div:first-child { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
-.custom-resource > div:first-child > span:first-child { display: inline-flex; gap: 8px; align-items: center; color: #b7a28c; font-size: 10px; }
+.custom-resource > div:first-child > span:first-child { display: inline-flex; gap: 8px; align-items: center; color: #b7a28c; font-size: 11px; }
 .custom-resource .flaticon { color: #a97b4a; }
-.custom-resource__priority { color: var(--lp-orange-soft); font: 8px var(--font-mono); }
-.custom-resource__threshold { color: #85715c; font-size: 9px; }
+.custom-resource__priority { color: var(--lp-orange-soft); font-size: 11px; }
+.custom-resource__threshold { color: #85715c; font-size: 11px; }
 .custom-resource__track { overflow: hidden; height: 5px; border-radius: 999px; background: #ffffff0b; }
-.custom-resource__track > span { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, #aa4f18, #fba45c); transform-origin: left; transition: transform .4s cubic-bezier(.16, 1, .3, 1); }
+.custom-resource__track > span { display: block; width: 100%; height: 100%; background: #fba45c; transform-origin: left; transition: transform .4s cubic-bezier(.16, 1, .3, 1); }
 .custom-resource.is-priority .custom-resource__track { background: #fba45c19; }
-.custom-preview > .custom-preview__note { border-top: 1px solid #e6ad6626; margin: 21px 0 0; padding-top: 15px; color: #9b8872; font-size: 10px; }
+.custom-preview > .custom-preview__note { border-top: 1px solid #e6ad6626; margin: 21px 0 0; padding-top: 15px; color: #9b8872; font-size: 11px; }
 .custom-review { margin: 0; }
 .custom-review__budget { margin-bottom: 25px; padding: 20px; border: 1px solid #fba45c40; border-radius: 9px; background: #e565150a; }
 .custom-review__budget dt { color: #baa38a; font-size: 11px; }
@@ -289,7 +287,7 @@ onUnmounted(() => {
 .custom-review__budget dd > span { color: #b2916e; font-size: 13px; }
 .custom-review__budget p { margin: 0; color: #bba184; font-size: 11px; }
 .custom-review__row { padding: 16px 0; border-bottom: 1px solid var(--custom-line); }
-.custom-review__row dt { color: #988571; font-size: 10px; line-height: 1.8; }
+.custom-review__row dt { color: #988571; font-size: 11px; line-height: 1.8; }
 .custom-review__row dd { margin: 6px 0 0; color: #e1d0bd; font-size: 12px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
 .custom-review__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; margin-top: 27px; }
 .custom-review__actions > p { width: 100%; margin: 0; color: #a18c75; font-size: 11px; line-height: 1.8; }
@@ -322,11 +320,10 @@ onUnmounted(() => {
   .custom-nav, .custom-main { padding-inline: 16px; }
   .custom-form { padding: 22px 18px; }
   .custom-steps { gap: 9px; }
-  .custom-steps button { font-size: 10px; }
   .custom-form__actions { gap: 12px; }
-  .custom-form__required { max-width: 110px; font-size: 9px; }
+  .custom-form__required { max-width: 110px; }
   .custom-form__actions :deep(.gb__btn) { padding-inline: 15px; font-size: 12px; }
-  .custom-priorities label { gap: 6px; padding-inline: 7px; font-size: 9px; }
+  .custom-priorities label { gap: 6px; padding-inline: 7px; }
   .custom-priorities .flaticon { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .custom-plan *, .custom-plan *::before, .custom-plan *::after { transition: none !important; } }

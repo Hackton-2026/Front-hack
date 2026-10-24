@@ -12,11 +12,6 @@ const router = createRouter({
   },
   routes: [
     {
-      path: '/solucoes/design',
-      component: () => import('./views/DesignView.vue'),
-      meta: { bare: true },
-    },
-    {
       path: '/solucoes/engenharia',
       component: () => import('./views/EngenhariaView.vue'),
       meta: { bare: true },

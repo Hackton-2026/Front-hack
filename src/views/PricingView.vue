@@ -6,6 +6,7 @@ import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
+import PricingPlans from '../components/landing/PricingPlans.vue'
 import { PRICING_PLANS, COMPARISON_GROUPS, annualTotal, annualSavings, formatBRL } from '../data/plans'
 import { usePricingMotion } from '../composables/usePricingMotion'
 import { openCustomPlan } from '../utils/customPlanEntry'
@@ -55,50 +56,9 @@ onUnmounted(() => { document.title = previousTitle })
     <a href="#planos" class="pricing-skip">Pular para os planos</a>
     <SiteNav />
     <main ref="root" class="pricing-main">
-      <header class="pricing-heading">
-        <h1>Planos para cada<br><span>fase do seu time.</span></h1>
-        <p class="pricing-heading__lead">Comece com o que você precisa hoje.<br>Encontre mais recursos conforme o trabalho cresce.</p>
-      </header>
-
-      <section id="planos" class="pricing-plans" aria-label="Planos e preços do Novexo">
-        <div class="pricing-billing">
-          <div class="pricing-billing__toggle" role="group" aria-label="Período de cobrança">
-            <span class="pricing-billing__thumb" :class="{ 'is-yearly': yearly }" aria-hidden="true" />
-            <button type="button" :aria-pressed="!yearly" @click="yearly = false">Mensal</button>
-            <button type="button" :aria-pressed="yearly" @click="yearly = true">Anual</button>
-          </div>
-          <span class="pricing-billing__saving"><FlaticonIcon name="arrow-trend-down" :size="14" />Economize cerca de 20% no anual</span>
-        </div>
-        <p class="sr-only" role="status">Exibindo valores com cobrança {{ yearly ? 'anual, equivalentes por mês' : 'mensal' }}.</p>
-
-        <div class="pricing-grid">
-          <article v-for="plan in PRICING_PLANS" :key="plan.id" class="price-card" :class="{ 'price-card--popular': plan.popular, 'price-card--enterprise': plan.id === 'enterprise' }" :data-plan="plan.id" :aria-labelledby="`plan-${plan.id}`">
-            <div class="price-card__surface">
-              <div class="price-card__top"><FlaticonIcon :name="plan.icon" framed :size="21" /><span v-if="plan.popular" class="price-card__popular">Mais popular</span></div>
-              <h2 :id="`plan-${plan.id}`">{{ plan.name }}</h2>
-              <p class="price-card__description">{{ plan.desc }}</p>
-              <div class="pricing-price">
-                <template v-if="plan.month !== undefined">
-                  <span class="pricing-price__amount"><span class="pricing-price__currency">R$</span><span class="pricing-price__value">{{ yearly ? plan.year : plan.month }}</span></span>
-                  <span class="pricing-price__unit">{{ plan.month ? 'por membro / mês' : 'para sempre' }}</span>
-                </template>
-                <template v-else><span class="pricing-price__custom">Sob medida</span><span class="pricing-price__unit">para sua empresa</span></template>
-              </div>
-              <div class="price-card__billing">
-                <template v-if="plan.month">
-                  <p>{{ yearly ? `${formatBRL(annualTotal(plan))} por membro, cobrado ao ano.` : 'Cobrado mensalmente por membro.' }}</p>
-                  <span v-if="yearly">Economize {{ formatBRL(annualSavings(plan)) }} por membro/ano.</span>
-                </template>
-                <p v-else>{{ plan.month === 0 ? 'Sem cartão de crédito.' : 'Contrato anual com proposta personalizada.' }}</p>
-              </div>
-              <GooeyButton :to="destination(plan)" :variant="plan.popular ? 'primary' : 'secondary'" block class="price-card__cta" :aria-label="`${plan.cta} — plano ${plan.name}`" @click="plan.id === 'enterprise' && enterCustomPlan()">{{ plan.cta }}<FlaticonIcon name="arrow-up-right" :size="13" /></GooeyButton>
-              <ul class="price-card__features"><li v-for="feature in plan.features" :key="feature"><FlaticonIcon name="check" :size="12" /><span>{{ feature }}</span></li></ul>
-              <a :href="plan.id === 'enterprise' ? '#enterprise' : `#detalhes-${plan.id}`" class="price-card__more">Entenda o plano <FlaticonIcon name="arrow-small-down" :size="16" /></a>
-            </div>
-          </article>
-        </div>
-        <a href="#comparar" class="pricing-compare-link">Compare todos os recursos<FlaticonIcon name="arrow-small-down" :size="17" /></a>
-      </section>
+      <h1 class="sr-only">Preços e planos do Novexo</h1>
+      <PricingPlans v-model:yearly="yearly" hero />
+      <a href="#comparar" class="pricing-compare-link">Compare todos os recursos<FlaticonIcon name="arrow-small-down" :size="17" /></a>
 
       <section class="pricing-highlights" aria-label="As diferenças em números">
         <article data-pricing-reveal><FlaticonIcon name="apps" :size="19" /><div class="pricing-highlights__value">{{ free.limits.boards }}<FlaticonIcon name="arrow-right" :size="23" /><span>Ilimitados</span></div><h2>Mais quadros para seus projetos.</h2><p>O Grátis tem até {{ free.limits.boards }} quadros. No Essencial, você cria quantos precisar para organizar o time.</p></article>
@@ -108,7 +68,7 @@ onUnmounted(() => { document.title = previousTitle })
 
       <section id="comparar" class="pricing-comparison" aria-labelledby="comparison-title">
         <div class="pricing-section-head" data-pricing-reveal>
-          <div><h2 id="comparison-title">Veja o que muda<br>de um plano para o outro.</h2><p>Os recursos lado a lado, para escolher com clareza.</p></div>
+          <h2 id="comparison-title">Veja o que muda<br>de um plano para o outro.</h2>
           <label class="pricing-differences"><input v-model="differencesOnly" type="checkbox" /><span>Mostrar só as diferenças</span></label>
         </div>
         <p class="sr-only" role="status">Comparando {{ comparedRows }} recursos entre os quatro planos.</p>
@@ -126,7 +86,7 @@ onUnmounted(() => { document.title = previousTitle })
       </section>
 
       <section class="pricing-details" aria-labelledby="details-title">
-        <div class="pricing-section-head" data-pricing-reveal><div><h2 id="details-title">Cada plano, na prática.</h2><p>Veja como os recursos se encaixam no seu dia a dia.</p></div></div>
+        <div class="pricing-section-head" data-pricing-reveal><h2 id="details-title">Cada plano, na prática.</h2></div>
         <div class="pricing-details__grid">
           <article v-for="plan in standardPlans" :id="`detalhes-${plan.id}`" :key="plan.id" class="pricing-detail" data-pricing-reveal>
             <div class="pricing-detail__label"><FlaticonIcon :name="plan.icon" :size="18" /><h3>{{ plan.name }}</h3></div>
@@ -138,10 +98,9 @@ onUnmounted(() => { document.title = previousTitle })
       </section>
 
       <section id="enterprise" class="pricing-enterprise" aria-labelledby="enterprise-title">
-        <div class="pricing-enterprise__glow" aria-hidden="true" />
         <div class="pricing-enterprise__intro" data-pricing-reveal>
           <div class="pricing-enterprise__label"><FlaticonIcon :name="enterprise.icon" framed :size="22" /><span>Enterprise</span></div>
-          <h2 id="enterprise-title">O Novexo no tamanho<br><span>da sua empresa.</span></h2>
+          <h2 id="enterprise-title">O Novexo no tamanho<br>da sua empresa.</h2>
           <p>{{ enterprise.detail.description }}</p>
           <GooeyButton variant="primary" size="lg" @click="enterCustomPlan">Vamos montar seu plano<FlaticonIcon name="arrow-up-right" :size="15" /></GooeyButton>
         </div>
@@ -165,47 +124,9 @@ onUnmounted(() => { document.title = previousTitle })
 .pricing-skip { position: fixed; z-index: 100; top: 12px; left: 20px; padding: 12px 20px; background: #fff; color: #000; transform: translateY(-170%); }
 .pricing-skip:focus { transform: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.pricing-heading { text-align: center; }
-.pricing-heading h1 { margin: 0; color: #f8f5f0; font: 600 clamp(44px, 5.3vw, 68px)/1.06 var(--lp-hero); letter-spacing: -.065em; }
-.pricing-heading h1 > span { color: var(--lp-orange-soft); }
-.pricing-heading__lead { margin: 25px 0 0; color: #aaa299; font-size: 14px; line-height: 1.8; }
-.pricing-plans, .pricing-comparison, .pricing-detail, .pricing-enterprise { scroll-margin-top: 115px; }
-.pricing-billing { display: flex; flex-direction: column; align-items: center; gap: 13px; margin: 35px 0 37px; }
-.pricing-billing__toggle { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; width: 230px; padding: 5px; border: 1px solid #ffffff1c; border-radius: 999px; background: #121212; }
-.pricing-billing__toggle button { position: relative; z-index: 1; padding: 11px 16px; border: 0; border-radius: 999px; background: transparent; color: #b9b1a9; font: 500 12px/1 var(--lp-sans); cursor: pointer; transition: color .25s; }
-.pricing-billing__toggle button[aria-pressed='true'] { color: #111; }
-.pricing-billing__thumb { position: absolute; top: 5px; bottom: 5px; left: 5px; width: calc(50% - 5px); border-radius: 999px; background: #f8f5f0; transition: transform .4s cubic-bezier(.16, 1, .3, 1); }
-.pricing-billing__thumb.is-yearly { transform: translateX(100%); }
-.pricing-billing__saving { display: inline-flex; align-items: center; gap: 7px; color: #c4a789; font-size: 11px; }
-.pricing-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; align-items: stretch; }
-.price-card { min-width: 0; display: flex; }
-.price-card__surface { position: relative; isolation: isolate; display: flex; flex-direction: column; width: 100%; padding: 25px 23px 22px; border: 1px solid #ffffff24; border-radius: 14px; background: linear-gradient(150deg, #171512, #0c0c0c 47%); transition: transform .4s cubic-bezier(.16, 1, .3, 1), border-color .3s, box-shadow .3s; }
-.price-card__surface::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: radial-gradient(ellipse at 20% 0, #fba45c12, transparent 65%); opacity: 0; transition: opacity .4s; pointer-events: none; }
-.price-card--popular .price-card__surface { border-color: #e56515bc; background: linear-gradient(165deg, #3b1d0c, #1b110b 35%, #0e0c0a 75%); box-shadow: 0 0 36px #e565150b; }
-.price-card--enterprise .price-card__surface { background: linear-gradient(145deg, #1b1815, #0c0c0c 55%); }
-.price-card__surface:hover, .price-card__surface:focus-within { border-color: #fba45c8c; box-shadow: 0 16px 38px #0005; }
-.price-card__surface:hover::before { opacity: 1; }
-@media (hover: hover) and (prefers-reduced-motion: no-preference) { .price-card__surface:hover { transform: translateY(-6px); } }
-.price-card__top { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.price-card__popular { color: #ffd5aa; font: 500 10px/1.3 var(--lp-sans); }
-.price-card h2 { color: #f3ece4; margin: 23px 0 9px; font: 550 25px/1.1 var(--lp-hero); letter-spacing: -.05em; }
-.price-card__description { margin: 0; min-height: 42px; color: #aaa197; font-size: 12px; line-height: 1.65; }
-.pricing-price { display: flex; flex-direction: column; justify-content: flex-end; gap: 9px; min-height: 105px; margin: 14px 0 17px; color: #f7eee4; }
-.pricing-price__amount { display: flex; align-items: baseline; gap: 5px; }
-.pricing-price__currency { font-size: 17px; }
-.pricing-price__value { display: inline-block; font: 600 56px/.94 var(--lp-hero); letter-spacing: -.07em; font-variant-numeric: tabular-nums; }
-.pricing-price__unit { color: #a89e93; font-size: 11px; }
-.pricing-price__custom { font: 550 clamp(25px, 2.4vw, 33px)/1.1 var(--lp-hero); letter-spacing: -.05em; white-space: nowrap; }
-.price-card__billing { min-height: 62px; margin-bottom: 18px; }
-.price-card__billing p { margin: 0; color: #aaa197; font-size: 10px; line-height: 1.7; }
-.price-card__billing > span { display: block; margin-top: 4px; color: #d8ab7e; font-size: 10px; line-height: 1.6; }
-.price-card__cta { margin-bottom: 25px; }
-.price-card__cta :deep(.gb__btn) { min-height: 43px; padding-inline: 12px; font-size: 12px; }
-.price-card__features { display: flex; flex-direction: column; gap: 13px; list-style: none; padding: 23px 0 27px; margin: 0; border-top: 1px solid var(--pricing-line); }
-.price-card__features li { display: flex; align-items: flex-start; gap: 9px; color: #c8beb3; font-size: 11px; line-height: 1.6; }
-.price-card__features .flaticon { margin-top: 3px; color: var(--lp-orange-soft); }
-.price-card__more { display: inline-flex; align-items: center; justify-content: space-between; gap: 9px; margin-top: auto; padding-top: 10px; color: #e0cbb6; font-size: 11px; text-decoration: none; }
-.price-card__more:hover { color: var(--lp-orange-soft); }
+.pricing-comparison, .pricing-detail, .pricing-enterprise { scroll-margin-top: 115px; }
+/* a seção de planos é a mesma da landing; aqui o espaço de cima já vem do .pricing-main */
+.pricing-main > .plans { padding: 0; scroll-margin-top: 115px; }
 .pricing-compare-link { display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; margin: 27px auto 0; color: #aca297; font-size: 12px; text-decoration: none; }
 .pricing-compare-link:hover { color: var(--lp-orange-soft); }
 .pricing-highlights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; margin: 90px 0 0; padding: 34px 0; border-block: 1px solid var(--pricing-line); }
@@ -218,20 +139,19 @@ onUnmounted(() => { document.title = previousTitle })
 .pricing-comparison, .pricing-details { margin-top: 95px; }
 .pricing-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 32px; }
 .pricing-section-head h2 { margin: 0; color: #f0e9e1; font: 500 clamp(30px, 3.5vw, 44px)/1.1 var(--lp-hero); letter-spacing: -.055em; }
-.pricing-section-head p { margin: 18px 0 0; color: #a69b90; font-size: 12px; }
 .pricing-differences { display: flex; align-items: center; gap: 9px; flex-shrink: 0; padding-bottom: 4px; color: #c5b9ab; font-size: 11px; cursor: pointer; }
 .pricing-differences input { width: 15px; height: 15px; margin: 0; accent-color: var(--lp-orange-soft); cursor: pointer; }
-.pricing-table-hint { display: none; align-items: center; gap: 7px; color: #a59a8e; font-size: 10px; }
+.pricing-table-hint { display: none; align-items: center; gap: 7px; color: #a59a8e; font-size: 11px; }
 .pricing-table-wrap { position: relative; overflow-x: auto; border: 1px solid var(--pricing-line); border-radius: 12px; scrollbar-color: #7e5635 #15110e; }
 .pricing-table { width: 100%; min-width: 780px; border-spacing: 0; table-layout: fixed; }
 .pricing-table th, .pricing-table td { text-align: center; padding: 17px 13px; border-bottom: 1px solid #ffffff0e; color: #bdb1a4; font-size: 11px; font-weight: 400; }
 .pricing-table tr > :first-child { width: 27%; text-align: left; padding-left: 24px; }
 .pricing-table thead th { padding-block: 27px; background: #12100e; color: #f0e6dc; }
 .pricing-table thead th > span { display: block; font-size: 15px; font-weight: 500; letter-spacing: -.03em; }
-.pricing-table thead small { display: block; margin-top: 9px; color: #9e9285; font-size: 9px; }
+.pricing-table thead small { display: block; margin-top: 9px; color: #9e9285; font-size: 11px; }
 .pricing-table tr:not(.pricing-table__group) > :nth-child(4) { background: #e565150b; }
 .pricing-table thead tr > :nth-child(4) { color: var(--lp-orange-soft); }
-.pricing-table__group th { padding-block: 15px; background: #ffffff05; color: #e0c09e; font-size: 10px; font-weight: 500; }
+.pricing-table__group th { padding-block: 15px; background: #ffffff05; color: #e0c09e; font-size: 11px; font-weight: 500; }
 .pricing-table td .flaticon { color: var(--lp-orange-soft); }
 .pricing-table td .is-excluded { color: #5a5046; }
 .pricing-table tbody:last-child tr:last-child > * { border-bottom: 0; }
@@ -246,11 +166,9 @@ onUnmounted(() => { document.title = previousTitle })
 .pricing-detail li .flaticon { color: #d39a61; margin-top: 4px; }
 .pricing-detail > .gb { margin-top: auto; }
 .pricing-detail :deep(.gb__btn) { font-size: 12px; min-height: 39px; }
-.pricing-enterprise { position: relative; isolation: isolate; display: grid; grid-template-columns: 1fr 1fr; gap: 45px 75px; overflow: hidden; margin-top: 100px; padding: 48px; border: 1px solid #e565154d; border-radius: 16px; background: linear-gradient(135deg, #26170c, #100d0b 55%, #0b0b0b); }
-.pricing-enterprise__glow { position: absolute; z-index: -1; inset: -20% -10% auto auto; width: 75%; height: 90%; pointer-events: none; background: radial-gradient(ellipse at center, #e565151f, transparent 70%); }
+.pricing-enterprise { display: grid; grid-template-columns: 1fr 1fr; gap: 45px 75px; margin-top: 100px; padding: 48px; border: 1px solid #e565154d; border-radius: 16px; background: #14100c; }
 .pricing-enterprise__label { display: flex; align-items: center; gap: 14px; color: #deb892; font-size: 13px; }
 .pricing-enterprise h2 { margin: 25px 0 20px; color: #f5e8dc; font: 500 clamp(32px, 3.7vw, 46px)/1.08 var(--lp-hero); letter-spacing: -.06em; }
-.pricing-enterprise h2 > span { color: var(--lp-orange-soft); }
 .pricing-enterprise__intro > p { max-width: 410px; margin: 0 0 28px; color: #b8a696; font-size: 12px; line-height: 1.9; }
 .pricing-enterprise__features { align-self: center; display: grid; grid-template-columns: 1fr 1fr; gap: 29px 24px; }
 .pricing-enterprise__features .flaticon { margin-bottom: 14px; color: var(--lp-orange-soft); }
@@ -274,17 +192,10 @@ onUnmounted(() => { document.title = previousTitle })
 .pricing-faq__answer > a { margin-top: 17px; }
 @media (max-width: 1150px) {
   .pricing-main { padding-inline: 30px; }
-  .pricing-grid { gap: 12px; }
-  .price-card__surface { padding-inline: 17px; }
-  .price-card__popular { font-size: 9px; }
   .pricing-enterprise { padding: 35px; gap: 35px; }
 }
 @media (max-width: 1000px) {
   .pricing-main { padding-top: 125px; }
-  .pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-  .price-card__surface { padding-inline: 28px; }
-  .pricing-price__custom { font-size: 34px; }
-  .price-card__description { min-height: 0; }
   .pricing-highlights { gap: 25px; margin-top: 65px; }
   .pricing-highlights__value { font-size: 37px; gap: 9px; }
   .pricing-highlights__value > span { font-size: 24px; }
@@ -310,18 +221,6 @@ onUnmounted(() => { document.title = previousTitle })
 }
 @media (max-width: 600px) {
   .pricing-main { padding: 108px 20px 15px; }
-  .pricing-heading h1 { font-size: clamp(38px, 7.5vw, 47px); }
-  .pricing-heading__lead { font-size: 12px; margin-top: 22px; }
-  .pricing-billing { margin: 29px 0 30px; }
-  .pricing-grid { grid-template-columns: 1fr; gap: 19px; }
-  .price-card__surface { padding: 25px; }
-  .price-card h2 { margin-top: 19px; }
-  .pricing-price { min-height: 95px; }
-  .price-card__billing { min-height: 47px; }
-  .price-card__description { min-height: 0; }
-  .price-card__features { gap: 14px; }
-  .price-card__features li { font-size: 12px; }
-  .price-card__more { margin-top: 0; }
   .pricing-highlights { grid-template-columns: 1fr; gap: 30px; margin-top: 55px; padding-block: 28px; }
   .pricing-highlights article { position: relative; padding-left: 38px; }
   .pricing-highlights article > .flaticon { position: absolute; top: 7px; left: 0; }
@@ -334,7 +233,6 @@ onUnmounted(() => { document.title = previousTitle })
   .pricing-table { min-width: 730px; }
   .pricing-table th, .pricing-table td { padding-inline: 10px; }
   .pricing-table thead th { padding-block: 23px; }
-  .pricing-table__group th { font-size: 10px; }
   .pricing-detail { display: flex; gap: 0; }
   .pricing-detail h4 { max-width: 290px; font-size: 25px; }
   .pricing-detail ul { margin-top: 20px; margin-bottom: 23px; }
@@ -350,8 +248,6 @@ onUnmounted(() => { document.title = previousTitle })
 }
 @media (max-width: 360px) {
   .pricing-main { padding-inline: 16px; }
-  .pricing-heading h1 { font-size: 35px; }
-  .price-card__surface { padding-inline: 22px; }
   .pricing-enterprise { padding-inline: 18px; }
   .pricing-enterprise h2 { font-size: 31px; }
 }

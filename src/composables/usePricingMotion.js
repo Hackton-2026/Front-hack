@@ -65,16 +65,6 @@ export function usePricingMotion(root, yearly) {
         })
       })
 
-      const glow = select('.pricing-enterprise__glow')[0]
-      if (glow && context.conditions.desktop) {
-        gsap.fromTo(glow, { y: -20, scale: 0.96 }, {
-          y: 24, scale: 1.04, ease: 'none',
-          scrollTrigger: {
-            trigger: glow.parentElement, start: 'top bottom', end: 'bottom top', scrub: 1,
-          },
-        })
-      }
-
       // context.add também rastreia os tweens criados depois de interações Vue.
       context.add('prices', () => {
         const prices = select('.pricing-price__value')

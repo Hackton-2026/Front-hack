@@ -1,17 +1,19 @@
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
 import { PLANS } from './plans'
 import { openCustomPlan } from '../../utils/customPlanEntry'
 
-const yearly = ref(true)
+// v-model:yearly opcional: a página Preços usa o mesmo período na tabela comparativa; a landing fica com o estado local
+const yearly = defineModel('yearly', { default: true })
+// hero: a seção é o topo da página (Preços), então anima ao abrir em vez de esperar o scroll
+defineProps({ hero: Boolean })
 const router = useRouter()
 </script>
 
 <template>
   <section id="planos" class="plans">
-    <div class="plans__head" v-reveal.stagger>
+    <div class="plans__head" v-reveal.stagger="{ now: hero }">
       <h2 class="plans__title">Planos para cada fase do seu time</h2>
       <p class="plans__sub">Comece grátis. Mude de plano quando o time crescer, sem perder nada do que já foi organizado.</p>
       <div class="toggle" role="group" aria-label="Período de cobrança">
@@ -21,7 +23,7 @@ const router = useRouter()
       </div>
     </div>
 
-    <div class="plans__grid" v-reveal.stagger>
+    <div class="plans__grid" v-reveal.stagger="{ now: hero, delay: hero ? 0.25 : 0 }">
       <article v-for="p in PLANS" :key="p.name" class="plan" :class="{ popular: p.popular }">
         <span v-if="p.popular" class="plan__badge">Mais popular</span>
         <h3 class="plan__name">{{ p.name }}</h3>

@@ -3,7 +3,6 @@
 // Cards em destaque: cartazes do Patronato Nacional del Turismo (1929-1936), acervo The Museum of Tourism via Google Arts & Culture
 import elche from '../../assets/landing/nav/elche.webp'
 import malaga from '../../assets/landing/nav/malaga.webp'
-import sardinero from '../../assets/landing/nav/sardinero.webp'
 import salamanca from '../../assets/landing/nav/salamanca.webp'
 
 export const ICONS = {
@@ -78,7 +77,6 @@ export const MENU = [
         {
           items: [
             { icon: 'code', title: 'Engenharia', desc: 'Sprints, bugs e roadmap' },
-            { icon: 'pen', title: 'Design', desc: 'Revisões e aprovações sem ruído' },
           ],
         },
       ],
@@ -93,32 +91,12 @@ export const MENU = [
     feature: { title: 'Dá para usar o Novexo com clientes?', cta: 'Veja como', art: malaga },
   },
   {
-    id: 'empresas',
-    label: 'Empresas',
-    columns: [
-      [
-        {
-          items: [
-            {
-              icon: 'users',
-              title: 'Times e workspaces',
-              desc: 'Espaços compartilhados com permissões',
-            },
-            { icon: 'terminal', title: 'API e integrações', desc: 'Construa fluxos sob medida' },
-          ],
-        },
-      ],
-    ],
-    feature: { title: 'Como um time de 40 pessoas cortou 30% das reuniões', cta: 'Ler o case', art: sardinero },
-  },
-  {
     id: 'aprender',
     label: 'Aprender',
     columns: [
       [{ items: [
         { icon: 'book', title: 'Como funciona', desc: 'Seu primeiro projeto, passo a passo.', to: '/blog/como-funciona' },
         { icon: 'news', title: 'Blog', desc: 'Produtividade e gestão de times.', to: '/blog' },
-        { icon: 'play', title: 'Webinars', desc: 'Sessões ao vivo e gravadas.' },
       ] }],
     ],
     feature: { title: 'Como funciona o Novexo', cta: 'Veja o passo a passo', art: salamanca, to: '/blog/como-funciona' },
@@ -129,7 +107,6 @@ export const MENU = [
 
 // Rotas públicas de apresentação dos recursos.
 export const PRODUCT_LINKS = {
-  Design: '/solucoes/design',
   Engenharia: '/solucoes/engenharia',
   Agências: '/solucoes/agencias',
   Operações: '/solucoes/operacoes',

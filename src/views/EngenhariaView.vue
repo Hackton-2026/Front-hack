@@ -3,6 +3,7 @@ import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 // Datas das atualizações obtidas no histórico de integração da dev.
 const formatDate = (date) =>
@@ -40,9 +41,8 @@ const updates = [
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="label">ENGENHARIA / ATUALIZAÇÕES</p>
         <h1>Atualizações<br /><em>do Novexo</em></h1>
-        <p>Novidades, melhorias e bugs corrigidos. Confira as atualizações mais recentes.</p>
+        <p>Novidades, melhorias e bugs corrigidos em cada versão.</p>
       </header>
 
       <section v-for="update in updates" :key="update.title" class="update-entry">
@@ -60,11 +60,11 @@ const updates = [
           conforme as atualizações forem publicadas.
         </p>
         <GooeyButton to="/inicio" size="lg"
-          >Abrir o Novexo <span aria-hidden="true">↗</span></GooeyButton
+          >Abrir o Novexo <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter blend-from-black />
   </div>
 </template>
 
@@ -77,13 +77,13 @@ const updates = [
   --lp-white: #f8f8f8;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #100e0c;
+  background: #000;
   color: #f8f8f8;
   font-family: var(--lp-sans);
 }
 :global(html:has(.engineering-guide)),
 :global(html:has(.engineering-guide) body) {
-  background: #100e0c;
+  background: #000;
 }
 h1,
 h2,
@@ -134,12 +134,6 @@ p {
 section + section {
   margin-top: 54px;
 }
-.step-heading {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
-  margin-bottom: 24px;
-}
 h2 {
   font-size: 24px;
   line-height: 1.3;
@@ -147,64 +141,6 @@ h2 {
   letter-spacing: -0.025em;
   margin-bottom: 10px;
 }
-.step-heading p {
-  max-width: 800px;
-}
-strong {
-  font-weight: 500;
-  color: #f8f8f8;
-}
-.video-placeholder,
-video {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border: 1px solid #ffffff20;
-  border-radius: 12px;
-  background: #080706;
-}
-.video-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 24px;
-  text-align: center;
-  border-style: dashed;
-}
-.video-placeholder svg {
-  width: 48px;
-  fill: none;
-  stroke: #a8754d;
-  stroke-width: 1.2;
-}
-.video-placeholder > span {
-  color: #cdb29d;
-  font-size: 15px;
-}
-.video-placeholder p {
-  color: #897d73;
-  font-size: 13px;
-  max-width: 340px;
-}
-figcaption {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #91867c;
-  margin-top: 12px;
-}
-.views-note {
-  margin-top: 42px;
-  padding: 26px;
-  border: 1px solid #e5651530;
-  border-radius: 12px;
-  background: #e5651509;
-}
-.views-note h2 {
-  font-size: 20px;
-}
-.views-note p,
 .guide-end p {
   font-size: 14px;
 }
@@ -232,27 +168,11 @@ figcaption {
   .intro {
     margin-bottom: 36px;
   }
-  .step-heading {
-    gap: 12px;
-  }
   h2 {
     font-size: 21px;
   }
   p {
     font-size: 15px;
-  }
-  .video-placeholder {
-    gap: 8px;
-    padding: 16px;
-  }
-  .video-placeholder svg {
-    width: 32px;
-  }
-  .video-placeholder p {
-    font-size: 11px;
-  }
-  .views-note {
-    padding: 20px;
   }
   .guide-end {
     flex-direction: column;

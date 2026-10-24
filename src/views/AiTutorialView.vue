@@ -5,6 +5,7 @@ import { vTutorialMotion } from '../utils/tutorialMotion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 import workspaceImage from '../assets/product/novexo-ia-workspace.png'
 
 const screenshot = ref(null)
@@ -39,7 +40,6 @@ const selectedPrompt = ref(prompts[0])
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="label">PRODUTO / NOVEXO IA</p>
         <h1>Como usar a<br /><em>Novexo IA</em></h1>
         <p>
           Use a IA para consultar suas tarefas, pedir um resumo ou atualizar o trabalho pelo chat.
@@ -88,7 +88,7 @@ const selectedPrompt = ref(prompts[0])
           </div>
           <div class="shot-caption">
             <button v-if="cursorVisible" type="button" @click="replay++">
-              Rever animação <span aria-hidden="true">↻</span>
+              Rever animação <FlaticonIcon name="rotate-right" :size="13" />
             </button>
           </div>
         </figure>
@@ -107,14 +107,15 @@ const selectedPrompt = ref(prompts[0])
         </div>
         <figure class="prompt-figure">
           <div class="prompt-preview">
-            <span class="preview-label">EXEMPLO DE PREENCHIMENTO</span>
             <div class="composer">
               <Transition name="prompt" mode="out-in"
                 ><p :key="selectedPrompt">{{ selectedPrompt }}</p></Transition
               >
               <div class="composer-bottom">
                 <span>↵ enviar · ⇧ ↵ nova linha</span
-                ><span class="send-icon" aria-hidden="true">↗</span>
+                ><span class="send-icon" aria-hidden="true"
+                  ><FlaticonIcon name="arrow-up-right" :size="16"
+                /></span>
               </div>
             </div>
           </div>
@@ -143,11 +144,11 @@ const selectedPrompt = ref(prompts[0])
       <div class="guide-end">
         <p>Você pode continuar a conversa para fazer outra pergunta ou detalhar o pedido.</p>
         <GooeyButton to="/ia" size="lg"
-          >Abrir a Novexo IA <span aria-hidden="true">↗</span></GooeyButton
+          >Abrir a Novexo IA <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>
-    <SiteFooter />
+    <SiteFooter blend-from-black />
   </div>
 </template>
 
@@ -160,13 +161,13 @@ const selectedPrompt = ref(prompts[0])
   --lp-white: #f8f8f8;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #100e0c;
+  background: #000;
   color: #f8f8f8;
   font-family: var(--lp-sans);
 }
 :global(html:has(.ai-guide)),
 :global(html:has(.ai-guide) body) {
-  background: #100e0c;
+  background: #000;
 }
 h1,
 h2,
@@ -186,12 +187,6 @@ h2 {
 .intro {
   max-width: 700px;
   margin-bottom: 52px;
-}
-.label {
-  color: #fba45c;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  margin-bottom: 18px;
 }
 h1 {
   font:
@@ -252,12 +247,6 @@ strong {
   max-width: none;
   margin-top: -6.3021%;
 }
-figcaption {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #91867c;
-  margin-top: 12px;
-}
 kbd {
   padding: 2px 5px;
   border: 1px solid #ffffff26;
@@ -273,13 +262,6 @@ kbd {
   border: 1px solid #ffffff20;
   border-radius: 12px;
   background: #060504;
-}
-.preview-label {
-  display: block;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  color: #9b8b7c;
-  margin-bottom: 20px;
 }
 .composer {
   padding: 20px;
@@ -424,7 +406,6 @@ a:focus-visible {
   border: 1.5px solid #fba45c;
   border-radius: 5px;
   opacity: 0;
-  box-shadow: 0 0 18px #e5651540;
 }
 .click-ring {
   position: absolute;
@@ -446,7 +427,7 @@ a:focus-visible {
   border-radius: 7px;
   background: #20160eee;
   color: #ffcfaa;
-  font-size: clamp(10px, 1.1vw, 13px);
+  font-size: clamp(11px, 1.1vw, 13px);
   opacity: 0;
 }
 .is-playing .demo-cursor {

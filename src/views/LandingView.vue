@@ -8,6 +8,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import SiteNav from '../components/landing/SiteNav.vue'
 import HeroParallax from '../components/landing/HeroParallax.vue'
+import FeatureList from '../components/landing/FeatureList.vue'
 import PricingPlans from '../components/landing/PricingPlans.vue'
 import ContactCta from '../components/landing/ContactCta.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
@@ -31,6 +32,7 @@ onUnmounted(() => {
   <div class="lp" id="topo">
     <SiteNav />
     <HeroParallax />
+    <FeatureList />
     <PricingPlans />
     <ContactCta />
     <SiteFooter />
