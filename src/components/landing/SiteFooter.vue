@@ -13,7 +13,12 @@ const COLUMNS = [
   { title: 'Desenvolvedores', links: ['Documentação', 'Referência da API', 'Status'] },
   { title: 'Empresa', links: ['Blog', 'Sobre', 'Fale conosco'] },
 ]
-const footerLink = (label) => label === 'Blog' ? '/blog' : label === 'Como funciona' ? '/blog/como-funciona' : label === 'Preços' ? '/precos' : label === 'Fale conosco' ? '/contato' : '/#topo'
+const LINKS = {
+  'Como funciona': '/blog/como-funciona', 'Casos de uso': '/casos-de-uso', Segurança: '/seguranca', Preços: '/precos',
+  Documentação: '/docs', 'Referência da API': '/docs#referencia', Status: '/status',
+  Blog: '/blog', Sobre: '/sobre', 'Fale conosco': '/contato',
+}
+const footerLink = (label) => LINKS[label] || '/#topo'
 
 const email = ref('')
 const joined = ref(false)
