@@ -12,10 +12,10 @@ import { vReveal } from '../utils/motion'
 const EVERY = 30 // segundos entre uma checagem e outra
 const SLOW_MS = 1500 // acima disso a rota conta como lenta
 
-// ok(resp, json): a rota respondeu como esperado. O login responde 405 a um GET, o que prova que está de pé.
+// ok(resp, json): a rota respondeu como esperado. /api/health/ diz se a API e o banco (contas, login) estão de pé.
 const CHECKS = reactive([
   { id: 'api', name: 'API', what: 'Projetos, tarefas, wiki e chat', path: '/api/payments/config/', ok: (r) => r.ok },
-  { id: 'auth', name: 'Login e cadastro', what: 'Entrar, criar conta e renovar a sessão', path: '/api/auth/login/', ok: (r) => r.status === 405 || r.ok },
+  { id: 'auth', name: 'Login e cadastro', what: 'Entrar, criar conta e renovar a sessão', path: '/api/health/', ok: (r, j) => r.ok && j?.database === true },
   { id: 'pay', name: 'Pagamentos', what: 'Pix e cartão pelo Mercado Pago', path: '/api/payments/config/', ok: (r, j) => r.ok && Array.isArray(j?.methods),
     note: (j) => (j?.test_mode ? 'Em modo de teste: nenhuma cobrança é real.' : '') },
 ].map((c) => ({ ...c, state: 'checking', ms: null, extra: '' })))
