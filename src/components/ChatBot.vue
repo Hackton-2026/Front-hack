@@ -8,6 +8,7 @@ import BaseButton from './BaseButton.vue'
 const { loadMe } = useAuth()
 const open = ref(false)
 const messages = ref([]) // { role: 'user' | 'assistant', content }
+const pending = ref([]) // ações sensíveis que a IA pediu e só rodam se a pessoa clicar em Confirmar
 const text = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -24,19 +25,39 @@ async function send() {
   loading.value = true
   scrollDown()
   try {
-    const { reply, changed } = await api('/api/ai/chat/', { method: 'POST', body: { messages: messages.value } })
+    const { reply, changed, pending: asked = [] } = await api('/api/ai/chat/', { method: 'POST', body: { messages: messages.value } })
     messages.value.push({ role: 'assistant', content: reply })
-    // A IA mudou algo: recarrega o usuário logado e avisa as telas de produtos
-    if (changed) {
-      loadMe()
-      window.dispatchEvent(new Event('products:changed'))
-    }
+    pending.value = asked
+    if (changed) refresh()
   } catch (e) {
     error.value = e.message
   } finally {
     loading.value = false
     scrollDown()
   }
+}
+
+// A IA mudou algo: recarrega o usuário logado e avisa as telas de produtos
+function refresh() {
+  loadMe()
+  window.dispatchEvent(new Event('products:changed'))
+}
+
+async function decide(action, ok) {
+  pending.value = pending.value.filter((p) => p !== action)
+  error.value = ''
+  if (!ok) {
+    messages.value.push({ role: 'user', content: `Cancelei: ${action.summary}` })
+    return scrollDown()
+  }
+  try {
+    await api('/api/ai/confirm/', { method: 'POST', body: { token: action.token } })
+    messages.value.push({ role: 'assistant', content: `Feito: ${action.summary}` })
+    refresh()
+  } catch (e) {
+    error.value = e.message
+  }
+  scrollDown()
 }
 </script>
 
@@ -48,8 +69,15 @@ async function send() {
         <button class="close" aria-label="Fechar assistente" @click="open = false">×</button>
       </header>
       <div ref="list" class="messages" aria-live="polite">
-        <p v-if="!messages.length" class="muted small">Oi! Pergunte o que quiser, procure produtos ou peça para editar seus produtos e seu perfil.</p>
+        <p v-if="!messages.length" class="muted small">Oi! Posso fazer por você o que você faria no site: produtos, perfil, conversas e tarefas, sempre dentro das suas permissões.</p>
         <p v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">{{ m.content }}</p>
+        <div v-for="p in pending" :key="p.token" class="confirm">
+          <p>{{ p.summary }}?</p>
+          <div class="confirm-actions">
+            <BaseButton small @click="decide(p, true)">Confirmar</BaseButton>
+            <BaseButton small variant="ghost" @click="decide(p, false)">Cancelar</BaseButton>
+          </div>
+        </div>
         <p v-if="loading" class="msg assistant muted">Pensando…</p>
       </div>
       <p v-if="error" class="alert alert-error">{{ error }}</p>
@@ -75,6 +103,9 @@ async function send() {
 .msg { margin: 0; max-width: 85%; padding: 6px 10px; border-radius: var(--radius-lg); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
 .msg.user { align-self: flex-end; background: var(--color-primary); color: var(--color-on-primary); border-bottom-right-radius: 4px; }
 .msg.assistant { align-self: flex-start; background: var(--color-surface-2); border-bottom-left-radius: 4px; }
+.confirm { align-self: stretch; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); }
+.confirm p { margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.confirm-actions { display: flex; gap: var(--space-2); }
 .panel .alert { margin: 0 var(--space-3); }
 .composer { display: flex; gap: var(--space-2); padding: var(--space-3); border-top: 1px solid var(--color-border); }
 .composer input { flex: 1; min-width: 0; }
