@@ -6,6 +6,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { compressImage } from '../../utils/image'
 import { DB_VIEWS } from '../../utils/dbviews'
 import { useWorkspace } from '../../composables/useWorkspace'
+import BrandIcon from './BrandIcon.vue'
 
 const props = defineProps({ query: { type: String, default: null }, docId: { type: String, default: '' } }) // query: texto depois do "/" (null = aberto pelo +)
 const emit = defineEmits(['insert', 'page', 'close'])
@@ -54,18 +55,18 @@ const SECTIONS = [
     B('sync', 'Bloco sincronizado', 'Mostra o conteúdo de outra página, sempre igual', '⟳', { step: 'doc', make: (d) => `@[sync](${d.id})\n%c%` }, 'synced sincronizado'),
   ]],
   ['Integrações', [
-    B('e-drive', 'Google Drive', 'Docs, Planilhas, Apresentações ou arquivo', '△', url('embed', 'Link do Google Drive'), 'google docs sheets slides planilha'),
-    B('e-figma', 'Figma', 'Arquivo, design ou protótipo', '◈', url('embed', 'Link do Figma'), 'figma design'),
-    B('e-gist', 'GitHub Gist', 'Trecho de código do GitHub', '⌥', url('embed', 'Link do Gist'), 'github gist codigo'),
-    B('e-maps', 'Google Maps', 'Mapa de um endereço', '📍', { step: 'map' }, 'mapa endereco local'),
-    B('e-loom', 'Loom', 'Vídeo gravado no Loom', '◉', url('embed', 'Link do Loom'), 'loom video'),
-    B('e-miro', 'Miro', 'Quadro do Miro', '▧', url('embed', 'Link do quadro do Miro'), 'miro quadro board'),
+    B('e-drive', 'Google Drive', 'Docs, Planilhas, Apresentações ou arquivo', 'brand:googledrive', url('embed', 'Link do Google Drive'), 'google docs sheets slides planilha'),
+    B('e-figma', 'Figma', 'Arquivo, design ou protótipo', 'brand:figma', url('embed', 'Link do Figma'), 'figma design'),
+    B('e-gist', 'GitHub Gist', 'Trecho de código do GitHub', 'brand:github', url('embed', 'Link do Gist'), 'github gist codigo'),
+    B('e-maps', 'Google Maps', 'Mapa de um endereço', 'brand:googlemaps', { step: 'map' }, 'mapa endereco local'),
+    B('e-loom', 'Loom', 'Vídeo gravado no Loom', 'brand:loom', url('embed', 'Link do Loom'), 'loom video'),
+    B('e-miro', 'Miro', 'Quadro do Miro', 'brand:miro', url('embed', 'Link do quadro do Miro'), 'miro quadro board'),
     B('e-pdf', 'PDF', 'Documento PDF por link', '📄', url('embed', 'Link do PDF'), 'pdf documento'),
-    B('e-tweet', 'Post do X (Twitter)', 'Um post incorporado', '𝕏', url('embed', 'Link do post'), 'twitter x tweet'),
-    B('e-codepen', 'CodePen', 'Pen do CodePen', '✎', url('embed', 'Link do CodePen'), 'codepen'),
-    B('e-spotify', 'Spotify', 'Música, álbum, playlist ou podcast', '♫', url('embed', 'Link do Spotify'), 'spotify musica podcast'),
-    B('e-typeform', 'Typeform', 'Formulário do Typeform', '☰', url('embed', 'Link do Typeform'), 'typeform formulario'),
-    B('e-excalidraw', 'Excalidraw', 'Desenho do Excalidraw', '✐', url('embed', 'Link do Excalidraw'), 'excalidraw desenho'),
+    B('e-tweet', 'Post do X (Twitter)', 'Um post incorporado', 'brand:x', url('embed', 'Link do post'), 'twitter x tweet'),
+    B('e-codepen', 'CodePen', 'Pen do CodePen', 'brand:codepen', url('embed', 'Link do CodePen'), 'codepen'),
+    B('e-spotify', 'Spotify', 'Música, álbum, playlist ou podcast', 'brand:spotify', url('embed', 'Link do Spotify'), 'spotify musica podcast'),
+    B('e-typeform', 'Typeform', 'Formulário do Typeform', 'brand:typeform', url('embed', 'Link do Typeform'), 'typeform formulario'),
+    B('e-excalidraw', 'Excalidraw', 'Desenho do Excalidraw', 'brand:excalidraw', url('embed', 'Link do Excalidraw'), 'excalidraw desenho'),
     B('e-any', 'Incorporar link', 'Qualquer site que permita incorporar', '⧉', url('embed', 'Link do site'), 'embed incorporar iframe'),
   ]],
 ]
@@ -151,7 +152,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside))
             @mouseenter="active = flat.indexOf(b)"
             @click="choose(b)"
           >
-            <span class="ic">{{ b.icon }}</span><span class="tx"><strong>{{ b.label }}</strong><small>{{ b.hint }}</small></span>
+            <span class="ic"><BrandIcon v-if="b.icon.startsWith('brand:')" :name="b.icon.slice(6)" :size="18" /><template v-else>{{ b.icon }}</template></span><span class="tx"><strong>{{ b.label }}</strong><small>{{ b.hint }}</small></span>
           </button>
         </template>
         <p v-if="!flat.length" class="none">Nenhum bloco com “{{ query ?? search }}”.</p>
