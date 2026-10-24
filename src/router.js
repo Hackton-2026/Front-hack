@@ -68,6 +68,7 @@ const router = createRouter({
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
     { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true } }, // pagamento dos planos
     { path: '/entrar/:token', component: () => import('./views/JoinView.vue'), props: true, meta: { bare: true } }, // link de convite (sem login)
+    { path: '/verificar-email', component: () => import('./views/VerifyEmailView.vue'), meta: { bare: true } }, // link do e-mail de verificação
     // Área logada do Novexo: meta.app = renderiza dentro da AppShell (App.vue); area marca o item do trilho
     { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Começar', icon: 'rocket' } },
     { path: '/inicio', component: () => import('./views/HomeView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Início', icon: 'home' } },
