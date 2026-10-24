@@ -11,6 +11,7 @@ import AppIcon from '../components/app/AppIcon.vue'
 import AiItems from '../components/app/AiItems.vue'
 import AiMarkdown from '../components/app/AiMarkdown.vue'
 import AiQuestions from '../components/app/AiQuestions.vue'
+import MeetButton from '../components/app/MeetButton.vue'
 
 const POLL_MS = 3000
 const props = defineProps({ id: { type: [String, Number], required: true } })
@@ -119,8 +120,9 @@ function onKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
 }
 
-async function send(answer) {
-  const body = typeof answer === 'string' ? `@novexo ${answer}` : text.value.trim()
+// answer: resposta ao formulário da IA (vai como "@novexo ..."); raw: mensagem pronta (ex.: link da chamada)
+async function send(answer, raw) {
+  const body = raw ?? (typeof answer === 'string' ? `@novexo ${answer}` : text.value.trim())
   if (!body || sending.value) return
   sending.value = true
   thinking.value = /@novexo\b/i.test(body)
@@ -130,7 +132,7 @@ async function send(answer) {
   const gen = generation
   try {
     const res = await sendProjectMessage(pid.value, body)
-    if (typeof answer !== 'string') text.value = ''
+    if (typeof answer !== 'string' && raw == null) text.value = ''
     if (gen !== generation) return
     add(res.messages)
     pending.value = res.pending || []
@@ -166,6 +168,10 @@ async function decide(action, ok) {
 // @menções destacadas e **negrito** (a IA às vezes usa). O texto continua escapado pelo Vue: só separamos em pedaços.
 const parts = (body) => body.split(/(\*\*[^*\n]+\*\*|@[\wÀ-ÿ.-]+)/g).filter(Boolean)
   .map((t) => (t.startsWith('**') && t.endsWith('**') && t.length > 4 ? { t: t.slice(2, -2), bold: true } : { t, at: t.startsWith('@') }))
+// link do Meet numa mensagem vira um card "Entrar na chamada"
+const MEET = /https:\/\/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/
+const meetOf = (body) => body.match(MEET)
+const startCall = (link) => send(null, `Chamada no Google Meet: ${link}`)
 const mine = (m) => m.author?.id === state.me
 const initials = (name) => (name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 const time = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -196,6 +202,11 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
           <header v-if="!sameAuthor(i)"><strong>{{ m.is_ai ? 'Novexo IA' : m.author?.name || 'Alguém que saiu' }}</strong><time :datetime="m.created_at">{{ time(m.created_at) }}</time></header>
           <template v-if="m.is_ai"><AiMarkdown :text="m.body" /><AiItems :items="m.items || []" /></template>
           <p v-else><template v-for="(x, k) in parts(m.body)" :key="k"><strong v-if="x.bold">{{ x.t }}</strong><mark v-else-if="x.at" :class="{ nvx: x.t.toLowerCase().startsWith('@novexo') }">{{ x.t }}</mark><template v-else>{{ x.t }}</template></template></p>
+          <a v-if="!m.is_ai && meetOf(m.body)" class="call" :href="meetOf(m.body)[0]" target="_blank" rel="noopener">
+            <span class="call__ic"><AppIcon name="video" :size="16" /></span>
+            <span class="call__txt"><strong>Chamada no Google Meet</strong><small>{{ meetOf(m.body)[1] }}</small></span>
+            <span class="call__go">Entrar</span>
+          </a>
         </div>
       </article>
       <div v-for="a in pending" :key="a.token" class="confirm">
@@ -222,6 +233,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
         role="combobox" :aria-expanded="matches.length > 0" aria-autocomplete="list" @input="track" @click="track" @keydown="onKey" @blur="mention = null" />
       <div class="bar">
         <button type="button" class="mention" :class="{ on: callsAi }" :aria-pressed="callsAi" title="Chamar a Novexo IA" @click="mentionAi"><AppIcon name="ai" :size="14" />@novexo</button>
+        <MeetButton @link="startCall" />
         <span class="hint"><kbd>↵</kbd> enviar · <kbd>⇧</kbd><kbd>↵</kbd> linha</span>
         <button type="submit" class="send" :disabled="sending || !text.trim()" aria-label="Enviar"><AppIcon name="arrow" :size="16" /></button>
       </div>
@@ -280,6 +292,14 @@ mark.nvx { background: rgb(229 101 21 / 0.18); color: var(--accent-soft); }
 .composer:focus-within { border-color: var(--accent); }
 .composer textarea { min-height: 1.5rem; max-height: 10rem; border: 0; background: none; font: inherit; color: var(--text); resize: none; outline: none; field-sizing: content; }
 .bar { display: flex; align-items: center; gap: 0.6rem; }
+.call { display: flex; align-items: center; gap: 0.65rem; margin-top: 0.45rem; padding: 0.6rem 0.7rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.2s ease; }
+.call:hover { border-color: var(--text); }
+.call__ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--surface-2); }
+.call__txt { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.call__txt strong { font-size: 13px; }
+.call__txt small { font: 11.5px/1.3 'Geist Mono', monospace; color: var(--muted); }
+.call__go { padding: 0.3rem 0.7rem; border-radius: 6px; background: var(--text); font-size: 12.5px; font-weight: 600; color: var(--bg); }
+.call:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .mention { display: inline-flex; align-items: center; gap: 0.3rem; height: 26px; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: color 0.2s var(--ease), border-color 0.2s var(--ease); }
 .mention:hover, .mention.on { border-color: var(--accent); color: var(--accent-soft); }
 .hint { margin-left: auto; font-size: 12px; color: var(--muted); }

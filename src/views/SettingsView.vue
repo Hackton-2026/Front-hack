@@ -13,6 +13,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import GooeyButton from '../components/GooeyButton.vue'
 import SettingsList from '../components/app/SettingsList.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import IntegrationsPanel from '../components/app/IntegrationsPanel.vue'
 
 const GROUPS = [
   { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações']] },
@@ -45,7 +46,6 @@ const ROLES = [['admin', 'Admin'], ['member', 'Membro'], ['limited', 'Membro lim
 const ROLE_NAMES = { owner: 'Dono', ...Object.fromEntries(ROLES) }
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['views', 'Visões'], ['pages', 'Páginas']]
-const INTEGRATIONS = ['GitHub', 'GitLab', 'Slack', 'Google Drive', 'Figma', 'Notion', 'Jira', 'Sentry']
 
 // Formulários das telas de lista (SettingsList)
 const opts = (pairs) => pairs.map(([value, label]) => ({ value, label }))
@@ -207,6 +207,9 @@ const billing = ref(null)
 async function loadBilling() {
   try { billing.value = await api('/api/billing/') } catch (e) { status.value = e.message }
 }
+// aberto direto na aba (link "?tab=billing"): o watch do tab só roda quando a aba muda
+if (tab.value === 'billing') loadBilling()
+if (tab.value === 'notify') loadDevices()
 const price = (cents) => (cents == null ? 'Sob consulta' : cents === 0 ? 'Grátis' : `R$ ${(cents / 100).toLocaleString('pt-BR')}/membro/mês`)
 
 // ---- Cronograma
@@ -614,10 +617,7 @@ async function onImport(e) {
         </template>
 
         <template v-else-if="tab === 'integrations'">
-          <p class="hint">As integrações dependem de conectar contas externas no servidor e ainda não estão disponíveis.</p>
-          <ul class="plans">
-            <li v-for="name in INTEGRATIONS" :key="name"><strong>{{ name }}</strong><span class="hint">Em breve</span></li>
-          </ul>
+          <IntegrationsPanel />
         </template>
 
         <template v-else-if="LISTS[tab]">

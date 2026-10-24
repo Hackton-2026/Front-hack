@@ -204,6 +204,19 @@ function toggleRole(r) {
   const a = task.value.assignees
   set({ assignees: roleOn(r) ? a.filter((id) => !r.ids.includes(id)) : [...new Set([...a, ...r.ids])] })
 }
+// "Adicionar ao Google Agenda": abre o Google Agenda com o evento preenchido (do início, ou do prazo, até o prazo)
+const ymd = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+const gcalUrl = computed(() => {
+  const t = task.value
+  if (!t?.due) return ''
+  const end = new Date(`${t.due}T12:00`)
+  end.setDate(end.getDate() + 1) // evento de dia inteiro: o fim é o dia seguinte
+  const start = (t.start && t.start <= t.due ? t.start : t.due).replaceAll('-', '')
+  const details = `${t.description ? `${t.description.slice(0, 800)}
+
+` : ''}${location.origin}/projetos/${t.projectId}`
+  return `https://calendar.google.com/calendar/render?${new URLSearchParams({ action: 'TEMPLATE', text: `${code(t)} · ${t.title}`, dates: `${start}/${ymd(end)}`, details })}`
+})
 const titleOf = (id) => state.projects.find((p) => p.id === task.value?.projectId)?.titles?.[id]
 
 // opções dos dropdowns
@@ -332,6 +345,7 @@ function destroy() {
             <div v-if="menu" class="menu" role="menu">
               <button v-if="saved" type="button" role="menuitem" @click="duplicate"><AppIcon name="doc" :size="14" />Duplicar</button>
               <button v-if="saved" type="button" role="menuitem" @click="copyCode(); menu = false"><AppIcon name="pin" :size="14" />Copiar código</button>
+              <a v-if="gcalUrl" role="menuitem" :href="gcalUrl" target="_blank" rel="noopener" @click="menu = false"><AppIcon name="calendar" :size="14" />Adicionar ao Google Agenda</a>
               <button type="button" role="menuitem" class="danger" @click="destroy"><AppIcon name="trash" :size="14" />{{ confirmDelete ? 'Clique de novo para apagar' : 'Apagar tarefa' }}</button>
             </div>
           </div>
@@ -563,8 +577,9 @@ function destroy() {
 .menu-wrap { position: relative; }
 .menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 5; display: flex; flex-direction: column; min-width: 13rem; max-height: 18rem; padding: 0.3rem; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.45); }
 .bar .menu { left: 0; right: auto; }
-.menu button { display: flex; flex-shrink: 0; align-items: center; gap: 0.5rem; white-space: nowrap; padding: 0.45rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; text-align: left; color: var(--text); cursor: pointer; }
-.menu button:hover { background: var(--surface-2); }
+.menu button, .menu a { text-decoration: none; }
+.menu button, .menu a { display: flex; flex-shrink: 0; align-items: center; gap: 0.5rem; white-space: nowrap; padding: 0.45rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; text-align: left; color: var(--text); cursor: pointer; }
+.menu button:hover, .menu a:hover { background: var(--surface-2); }
 .menu .danger { color: #ff8a80; }
 .menu .tick { margin-left: auto; color: var(--accent-soft); }
 .body { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; padding: 1.25rem 1.5rem 2rem; overflow-y: auto; }

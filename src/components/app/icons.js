@@ -54,6 +54,7 @@ export const ICON = {
   filter: 'M4 6h16 M7 12h10 M10 18h4',
   trash: 'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13',
   undo: 'M9 14L4 9l5-5 M4 9h11a5 5 0 0 1 0 10h-3',
+  video: 'M3 7h12v10H3z M15 10.5l6-3.5v10l-6-3.5',
   link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1 M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
   expand: 'M14 4h6v6 M20 4l-7 7 M10 20H4v-6 M4 20l7-7',
   peek: 'M4 5h16v14H4z M14 5v14',
