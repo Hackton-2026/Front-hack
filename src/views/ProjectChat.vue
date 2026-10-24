@@ -202,7 +202,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
         <p v-if="m.is_system" class="sys__txt"><AppIcon name="chat" :size="13" />{{ m.body }}</p>
         <span v-else-if="!sameAuthor(i)" class="ava" :style="{ background: m.is_ai ? 'var(--accent)' : m.author?.color }">
           <AppIcon v-if="m.is_ai" name="ai" :size="14" />
-          <img v-else-if="m.author?.avatar" :src="m.author.avatar" alt="" />
+          <img referrerpolicy="no-referrer" v-else-if="m.author?.avatar" :src="m.author.avatar" alt="" />
           <template v-else>{{ initials(m.author?.name) }}</template>
         </span>
         <div v-if="!m.is_system" class="bubble">
@@ -228,7 +228,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
     <form class="composer" @submit.prevent="send()">
       <ul v-if="matches.length" class="mentions" role="listbox" aria-label="Mencionar">
         <li v-for="(x, k) in matches" :key="x.id" role="option" :aria-selected="k === pick" @mousedown.prevent="choose(x)" @mouseenter="pick = k">
-          <span class="ava" :style="{ background: x.ai ? 'var(--accent)' : x.color }"><AppIcon v-if="x.ai" name="ai" :size="12" /><img v-else-if="x.avatar" :src="x.avatar" alt="" /><template v-else>{{ initials(x.name) }}</template></span>
+          <span class="ava" :style="{ background: x.ai ? 'var(--accent)' : x.color }"><AppIcon v-if="x.ai" name="ai" :size="12" /><img referrerpolicy="no-referrer" v-else-if="x.avatar" :src="x.avatar" alt="" /><template v-else>{{ initials(x.name) }}</template></span>
           <strong>{{ x.name }}</strong><span>@{{ x.username }}</span>
         </li>
         <li v-if="people.length === 1" class="alone" role="presentation">

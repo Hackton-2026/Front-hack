@@ -341,7 +341,7 @@ async function onImport(e) {
         <template v-if="tab === 'profile'">
           <form class="form" @submit.prevent="saveProfile">
             <div v-if="user" class="photo">
-              <span class="photo__av" :class="{ busy: photoBusy }"><img v-if="user.avatar" :src="user.avatar" alt="Sua foto de perfil" /><template v-else>{{ initials }}</template></span>
+              <span class="photo__av" :class="{ busy: photoBusy }"><img referrerpolicy="no-referrer" v-if="user.avatar" :src="user.avatar" alt="Sua foto de perfil" /><template v-else>{{ initials }}</template></span>
               <div class="photo__txt">
                 <strong>Foto de perfil</strong>
                 <small>Aparece nas tarefas, no chat e para quem participa dos seus projetos. JPG, PNG ou WebP.</small>
@@ -460,7 +460,7 @@ async function onImport(e) {
           <p class="hint">Seu workspace é só seu: notas, wiki e rascunhos ficam com você. Para trabalhar junto, convide pessoas para um <strong>projeto</strong>; elas veem só aquele projeto.</p>
           <ul class="rows">
             <li v-for="m in state.people" :key="m.id">
-              <span class="av" :style="{ background: m.color }"><img v-if="m.avatar" :src="m.avatar" alt="" class="av-img" /><template v-else>{{ m.name.slice(0, 2).toUpperCase() }}</template></span>
+              <span class="av" :style="{ background: m.color }"><img referrerpolicy="no-referrer" v-if="m.avatar" :src="m.avatar" alt="" class="av-img" /><template v-else>{{ m.name.slice(0, 2).toUpperCase() }}</template></span>
               <span class="grow">{{ m.name }}<small v-if="m.id === state.me" class="muted"> · você</small>
                 <small class="muted block">{{ state.projects.filter((p) => p.members?.includes(m.id)).map((p) => p.name).join(', ') || 'Nenhum projeto em comum' }}</small>
               </span>

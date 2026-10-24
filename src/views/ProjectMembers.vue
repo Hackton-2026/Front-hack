@@ -192,7 +192,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
         <h2>Quem participa</h2>
         <ul class="list">
           <li v-for="m in data.members" :key="m.id" class="person">
-            <span class="ava" :style="{ background: m.color }"><img v-if="m.avatar" :src="m.avatar" alt="" /><template v-else>{{ initials(m.name) }}</template></span>
+            <span class="ava" :style="{ background: m.color }"><img referrerpolicy="no-referrer" v-if="m.avatar" :src="m.avatar" alt="" /><template v-else>{{ initials(m.name) }}</template></span>
             <span class="who">
               <strong>{{ m.name }}<span v-if="m.id === state.me" class="you"> (você)</span></strong>
               <small>@{{ m.username }}<template v-if="m.owner"> · dono do projeto</template><template v-else-if="m.invited"> · convidado</template></small>

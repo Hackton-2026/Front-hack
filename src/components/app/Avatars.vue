@@ -9,7 +9,7 @@ const initials = (name) => name.split(' ').map((w) => w[0]).slice(0, 2).join('')
 <template>
   <span class="avs" :style="{ '--s': `${size}px` }">
     <span v-for="id in ids.slice(0, 3)" :key="id" class="av" :title="member(id)?.name" :style="{ background: member(id)?.color }">
-      <img v-if="member(id)?.avatar" :src="member(id).avatar" alt="" />
+      <img referrerpolicy="no-referrer" v-if="member(id)?.avatar" :src="member(id).avatar" alt="" />
       <template v-else>{{ initials(member(id)?.name || '?') }}</template>
     </span>
     <span v-if="ids.length > 3" class="av more">+{{ ids.length - 3 }}</span>

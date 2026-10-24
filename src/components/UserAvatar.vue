@@ -12,7 +12,7 @@ const initials = computed(() => {
 
 <template>
   <span class="avatar" :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${size * 0.4}px` }">
-    <img v-if="user?.avatar" :src="user.avatar" :alt="user.username" />
+    <img referrerpolicy="no-referrer" v-if="user?.avatar" :src="user.avatar" :alt="user.username" />
     <template v-else>{{ initials }}</template>
   </span>
 </template>
