@@ -44,7 +44,7 @@ const VIEWS = [['list', 'Lista'], ['board', 'Quadro'], ['calendar', 'Calendário
 const ROLES = [['admin', 'Admin'], ['member', 'Membro'], ['limited', 'Membro limitado'], ['guest', 'Convidado']]
 const ROLE_NAMES = { owner: 'Dono', ...Object.fromEntries(ROLES) }
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['views', 'Visões'], ['pages', 'Páginas']]
+const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['pages', 'Páginas']]
 const INTEGRATIONS = ['GitHub', 'GitLab', 'Slack', 'Google Drive', 'Figma', 'Notion', 'Jira', 'Sentry']
 
 // Formulários das telas de lista (SettingsList)

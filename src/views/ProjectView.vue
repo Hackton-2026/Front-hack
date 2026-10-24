@@ -101,7 +101,7 @@ const scope = computed(() => {
     if (!v) return null
     const f = v.config || {}
     const has = (k, val) => !f[k]?.length || f[k].includes(val)
-    return { kind: 'Visão', name: v.name, back: 'visoes', defaults: {}, match: (t) => has('status', t.status) && has('priority', t.priority) && (!f.assignees?.length || t.assignees.some((a) => f.assignees.includes(a))) && (!f.tags?.length || t.tags.some((g) => f.tags.includes(g))) }
+    return { kind: 'Visão', name: v.name, back: '', defaults: {}, match: (t) => has('status', t.status) && has('priority', t.priority) && (!f.assignees?.length || t.assignees.some((a) => f.assignees.includes(a))) && (!f.tags?.length || t.tags.some((g) => f.tags.includes(g))) }
   }
   return { kind: '', name: '', match: () => true, defaults: {} }
 })

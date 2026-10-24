@@ -24,7 +24,6 @@ const router = createRouter({
     { path: '/projetos/:id/ciclos/:cycle', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Ciclo', icon: 'cycle' } },
     { path: '/projetos/:id/modulos', component: () => import('./views/ModulesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Módulos', icon: 'module' } },
     { path: '/projetos/:id/modulos/:module', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Módulo', icon: 'module' } },
-    { path: '/projetos/:id/visoes', component: () => import('./views/ViewsView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Visões', icon: 'layers' } },
     { path: '/projetos/:id/visoes/:view', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Visão', icon: 'layers' } },
     { path: '/projetos/:id/paginas', component: () => import('./views/PagesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Páginas', icon: 'page' } },
     { path: '/projetos/:id/paginas/:page', component: () => import('./views/PageEditor.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Página', icon: 'page' } },
@@ -40,7 +39,6 @@ const router = createRouter({
     },
     { path: '/convite/:token', component: () => import('./views/InviteView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Convite', icon: 'user' } },
     // "Mais" do workspace
-    { path: '/visoes', component: () => import('./views/ViewsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Visões', icon: 'layers' } },
     { path: '/ciclos', component: () => import('./views/CyclesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Ciclos ativos', icon: 'cycle' } },
     { path: '/analises', component: () => import('./views/AnalyticsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Análises', icon: 'chart' } },
     { path: '/arquivados', component: () => import('./views/ArchivesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Arquivados', icon: 'archive' } },

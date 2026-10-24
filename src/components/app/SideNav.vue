@@ -20,7 +20,6 @@ const PERSONAL = [
   { key: 'favorites', icon: 'star', label: 'Favoritos', to: '/favoritos' },
 ]
 const MORE = [
-  { key: 'views', icon: 'layers', label: 'Visões', to: '/visoes' },
   { key: 'cycles', icon: 'cycle', label: 'Ciclos', to: '/ciclos' },
   { key: 'analytics', icon: 'chart', label: 'Análises', to: '/analises' },
   { key: 'archives', icon: 'archive', label: 'Arquivados', to: '/arquivados' },
@@ -31,7 +30,6 @@ const SUB = [
   { key: null, icon: 'items', label: 'Itens de trabalho', path: '' },
   { key: 'cycles', icon: 'cycle', label: 'Ciclos', path: '/ciclos' },
   { key: 'modules', icon: 'module', label: 'Módulos', path: '/modulos' },
-  { key: 'views', icon: 'layers', label: 'Visões', path: '/visoes' },
   { key: 'pages', icon: 'page', label: 'Páginas', path: '/paginas' },
   { key: null, icon: 'chat', label: 'Chat', path: '/chat' },
   { key: null, icon: 'user', label: 'Membros', path: '/membros' },
@@ -44,7 +42,6 @@ const TRY = [
 const FEATURES = [
   { key: 'cycles', label: 'Ciclos' },
   { key: 'modules', label: 'Módulos' },
-  { key: 'views', label: 'Visões' },
   { key: 'pages', label: 'Páginas' },
 ]
 
