@@ -2,8 +2,8 @@
 // Sala de voz do projeto: áudio, câmera e tela vão direto entre os navegadores (WebRTC, cada um com cada um; bom até ~6 pessoas).
 // O servidor (/ws/projects/:id/voice/) só diz quem está na sala e repassa a sinalização. Cada conexão nasce com 3 canais
 // fixos (microfone, câmera, tela): ligar câmera ou tela só troca a faixa do canal, sem renegociar.
-import { markRaw, onUnmounted, reactive, ref } from 'vue'
-import { wsUrl } from '../../services/api'
+import { computed, markRaw, onUnmounted, reactive, ref } from 'vue'
+import { api, wsUrl } from '../../services/api'
 import { useWorkspace } from '../../composables/useWorkspace'
 import AppIcon from './AppIcon.vue'
 
@@ -14,7 +14,7 @@ const SLOTS = ['audio', 'video', 'video'] // 0 microfone, 1 câmera, 2 tela
 const joined = ref(false)
 const busy = ref(false)
 const error = ref('')
-const me = reactive({ mic: true, cam: false, screen: false })
+const me = reactive({ mic: true, cam: false, screen: false, rec: false })
 const local = reactive({ cam: null, screen: null }) // pré-visualização
 const peers = reactive({}) // id -> { user, state, media: [audio, cam, screen] }
 const pcs = {} // id -> { pc, queue } (fora do reactive: objetos nativos do navegador)
@@ -30,8 +30,10 @@ let meterTimer = null
 function meter(id, stream) {
   const analyser = audioCtx.createAnalyser()
   analyser.fftSize = 512
-  audioCtx.createMediaStreamSource(stream).connect(analyser)
-  meters[id] = { analyser, data: new Uint8Array(analyser.fftSize) }
+  const source = audioCtx.createMediaStreamSource(stream)
+  source.connect(analyser)
+  if (recMix) source.connect(recMix) // entrou alguém durante a gravação da ata
+  meters[id] = { analyser, source, data: new Uint8Array(analyser.fftSize) }
 }
 function measure() {
   for (const [id, m] of Object.entries(meters)) {
@@ -39,6 +41,63 @@ function measure() {
     let sum = 0
     for (const v of m.data) sum += ((v - 128) / 128) ** 2
     speaking[id] = Math.sqrt(sum / m.data.length) > 0.03 && (id !== 'me' || me.mic)
+  }
+}
+
+// Ata da reunião: grava o áudio da sala inteira (eu + todo mundo) em trechos de ~2 min; cada trecho vira texto no Whisper
+// do Groq e, no fim, a IA escreve a ata como página do projeto. Todo mundo da sala vê o aviso de gravação.
+const SEGMENT_MS = 120000
+const anyoneRec = computed(() => me.rec || Object.values(peers).some((p) => p.state.rec))
+const minutes = reactive({ busy: false, page: null })
+let recMix = null
+let recorder = null
+let segmentTimer = null
+let transcript = []
+let uploads = Promise.resolve()
+const mime = () => ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((t) => MediaRecorder.isTypeSupported(t))
+function upload(blob) {
+  const body = new FormData()
+  body.append('projeto_id', props.projectId)
+  body.append('audio', blob, `trecho.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`)
+  uploads = uploads.then(() => api('/api/ai/transcribe/', { method: 'POST', body }))
+    .then(({ text }) => text && transcript.push(text))
+    .catch((e) => { error.value = e.message })
+}
+function segment() {
+  const chunks = []
+  recorder = new MediaRecorder(recMix.stream, { mimeType: mime() })
+  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data)
+  recorder.onstop = () => {
+    if (chunks.length) upload(new Blob(chunks, { type: recorder.mimeType }))
+    if (me.rec) segment()
+  }
+  recorder.start()
+  segmentTimer = setTimeout(() => recorder.state === 'recording' && recorder.stop(), SEGMENT_MS)
+}
+function startRec() {
+  recMix = audioCtx.createMediaStreamDestination()
+  Object.values(meters).forEach((m) => m.source.connect(recMix))
+  transcript = []
+  minutes.page = null
+  me.rec = true
+  shareState()
+  segment()
+}
+async function stopRec() {
+  me.rec = false
+  shareState()
+  clearTimeout(segmentTimer)
+  await new Promise((done) => { recorder.addEventListener('stop', done, { once: true }); recorder.state === 'recording' ? recorder.stop() : done() })
+  recMix = null
+  minutes.busy = true
+  await uploads
+  try {
+    const { items } = await api('/api/ai/minutes/', { method: 'POST', body: { projeto_id: props.projectId, transcricao: transcript.join('\n') } })
+    minutes.page = items[0]
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    minutes.busy = false
   }
 }
 
@@ -139,6 +198,7 @@ async function join() {
 }
 
 function leave(closeSocket = true) {
+  if (me.rec) stopRec() // sair no meio da gravação ainda gera a ata com o que foi gravado
   const socket = ws
   ws = null
   if (closeSocket && socket) {
@@ -153,7 +213,7 @@ function leave(closeSocket = true) {
   tracks.forEach((t) => t?.stop())
   tracks = [null, null, null]
   Object.assign(local, { cam: null, screen: null })
-  Object.assign(me, { mic: true, cam: false, screen: false })
+  Object.assign(me, { mic: true, cam: false, screen: false, rec: false })
   joined.value = false
   busy.value = false
 }
@@ -220,10 +280,14 @@ onUnmounted(() => leave())
         <button type="button" class="ctl" :class="{ off: !me.mic }" :aria-pressed="!me.mic" :title="me.mic ? 'Silenciar microfone' : 'Ativar microfone'" aria-label="Microfone" @click="toggleMic">{{ me.mic ? '🎙️' : '🔇' }}</button>
         <button type="button" class="ctl" :class="{ on: me.cam }" :aria-pressed="me.cam" :title="me.cam ? 'Desligar câmera' : 'Ligar câmera'" aria-label="Câmera" @click="toggleCam">📷</button>
         <button type="button" class="ctl" :class="{ on: me.screen }" :aria-pressed="me.screen" :title="me.screen ? 'Parar de compartilhar' : 'Compartilhar tela'" aria-label="Compartilhar tela" @click="toggleScreen">🖥️</button>
+        <button type="button" class="ctl" :class="{ rec: me.rec }" :disabled="minutes.busy || (anyoneRec && !me.rec)" :aria-pressed="me.rec" aria-label="Gravar ata da reunião" :title="me.rec ? 'Parar e gerar a ata' : 'Gravar a reunião e gerar a ata'" @click="me.rec ? stopRec() : startRec()">{{ me.rec ? '⏹ Ata' : '⏺ Ata' }}</button>
         <button type="button" class="leave" @click="leave()">Sair</button>
       </template>
     </div>
     <p v-if="error" class="err" role="alert">{{ error }}</p>
+    <p v-if="anyoneRec" class="recnote" role="status">🔴 Esta reunião está sendo gravada para gerar a ata do projeto.</p>
+    <p v-if="minutes.busy" class="recnote" role="status">Escrevendo a ata da reunião…</p>
+    <RouterLink v-if="minutes.page" class="recnote ok" :to="`/projetos/${minutes.page.project}/paginas/${minutes.page.id}`">📝 Ata salva: {{ minutes.page.title }}</RouterLink>
     <div v-if="joined" class="tiles">
       <figure class="tile me" :class="{ speaking: speaking.me }" title="Duplo clique: tela cheia" @dblclick="fullscreen">
         <video v-if="local.screen || local.cam" :srcObject.prop="local.screen || local.cam" autoplay muted playsinline />
@@ -253,6 +317,10 @@ onUnmounted(() => leave())
 .ctl.off { border-color: #f2a07a; }
 .leave { border-color: #c2410c; color: #f2a07a; }
 :is(.join, .leave, .ctl):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.recnote { margin: 0; font-size: 12.5px; color: #fca5a5; }
+.recnote.ok { color: var(--accent-soft, var(--accent)); text-decoration: none; }
+.ctl.rec { border-color: #ef4444; color: #fca5a5; }
+.ctl:disabled { opacity: 0.5; cursor: default; }
 .err { margin: 0; font-size: 12.5px; color: #f2a07a; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.4rem; }
 .tile { position: relative; display: grid; place-items: center; margin: 0; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); transition: border-color 0.15s, box-shadow 0.15s; }
