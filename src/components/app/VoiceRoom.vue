@@ -22,6 +22,26 @@ let ws = null
 let ice = []
 let tracks = [null, null, null]
 
+// Quem está falando: mede o volume de cada áudio (o meu e o de cada pessoa) e acende a borda do quadrado
+const speaking = reactive({}) // 'me' ou id da pessoa -> true/false
+const meters = {}
+let audioCtx = null
+let meterTimer = null
+function meter(id, stream) {
+  const analyser = audioCtx.createAnalyser()
+  analyser.fftSize = 512
+  audioCtx.createMediaStreamSource(stream).connect(analyser)
+  meters[id] = { analyser, data: new Uint8Array(analyser.fftSize) }
+}
+function measure() {
+  for (const [id, m] of Object.entries(meters)) {
+    m.analyser.getByteTimeDomainData(m.data)
+    let sum = 0
+    for (const v of m.data) sum += ((v - 128) / 128) ** 2
+    speaking[id] = Math.sqrt(sum / m.data.length) > 0.03 && (id !== 'me' || me.mic)
+  }
+}
+
 const send = (msg) => ws?.readyState === 1 && ws.send(JSON.stringify(msg))
 const shareState = () => send({ type: 'state', ...me })
 const person = (user) => ({ ...user, ...(member(user.id) || {}) })
@@ -33,7 +53,9 @@ function connection(id) {
   pc.onicecandidate = (e) => e.candidate && send({ type: 'signal', to: id, data: { candidate: e.candidate } })
   pc.ontrack = (e) => {
     const slot = pc.getTransceivers().indexOf(e.transceiver)
-    if (peers[id] && slot >= 0) peers[id].media[slot] = markRaw(new MediaStream([e.track]))
+    if (!peers[id] || slot < 0) return
+    peers[id].media[slot] = markRaw(new MediaStream([e.track]))
+    if (slot === 0) meter(id, peers[id].media[0])
   }
   return (pcs[id] = { pc, queue: [] })
 }
@@ -74,15 +96,21 @@ function dropPeer(id) {
   pcs[id]?.pc.close()
   delete pcs[id]
   delete peers[id]
+  delete meters[id]
+  delete speaking[id]
 }
 
 async function join() {
   if (busy.value || joined.value) return
   busy.value = true
   error.value = ''
+  audioCtx = new AudioContext() // criado no clique: sem um gesto o navegador deixa o áudio suspenso
   try {
     tracks[0] = (await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })).getAudioTracks()[0]
+    meter('me', new MediaStream([tracks[0]]))
+    meterTimer = setInterval(measure, 150)
   } catch (e) {
+    leave()
     error.value = e.name === 'NotAllowedError' ? 'Permita o microfone no navegador para entrar na sala.' : 'Nenhum microfone encontrado (ou ele está em uso por outro programa).'
     busy.value = false
     return
@@ -118,6 +146,10 @@ function leave(closeSocket = true) {
     socket.close()
   }
   Object.keys(pcs).forEach(dropPeer)
+  clearInterval(meterTimer)
+  Object.keys(meters).forEach((id) => { delete meters[id]; delete speaking[id] })
+  audioCtx?.close()
+  audioCtx = null
   tracks.forEach((t) => t?.stop())
   tracks = [null, null, null]
   Object.assign(local, { cam: null, screen: null })
@@ -193,12 +225,12 @@ onUnmounted(() => leave())
     </div>
     <p v-if="error" class="err" role="alert">{{ error }}</p>
     <div v-if="joined" class="tiles">
-      <figure class="tile me" title="Duplo clique: tela cheia" @dblclick="fullscreen">
+      <figure class="tile me" :class="{ speaking: speaking.me }" title="Duplo clique: tela cheia" @dblclick="fullscreen">
         <video v-if="local.screen || local.cam" :srcObject.prop="local.screen || local.cam" autoplay muted playsinline />
         <span v-else class="ava">Você</span>
         <figcaption>Você<span v-if="!me.mic"> · 🔇</span></figcaption>
       </figure>
-      <figure v-for="(p, id) in peers" :key="id" class="tile" title="Duplo clique: tela cheia" @dblclick="fullscreen">
+      <figure v-for="(p, id) in peers" :key="id" class="tile" :class="{ speaking: speaking[id] }" title="Duplo clique: tela cheia" @dblclick="fullscreen">
         <video v-if="(p.state.screen && p.media[2]) || (p.state.cam && p.media[1])" :srcObject.prop="p.state.screen && p.media[2] ? p.media[2] : p.media[1]" autoplay playsinline />
         <span v-else class="ava" :style="{ background: p.user.color }"><img v-if="p.user.avatar" :src="p.user.avatar" alt="" referrerpolicy="no-referrer" /><template v-else>{{ initials(p.user.name) }}</template></span>
         <audio v-if="p.media[0]" :srcObject.prop="p.media[0]" autoplay />
@@ -223,7 +255,8 @@ onUnmounted(() => leave())
 :is(.join, .leave, .ctl):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .err { margin: 0; font-size: 12.5px; color: #f2a07a; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.4rem; }
-.tile { position: relative; display: grid; place-items: center; margin: 0; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+.tile { position: relative; display: grid; place-items: center; margin: 0; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); transition: border-color 0.15s, box-shadow 0.15s; }
+.tile.speaking { border-color: #3ba55d; box-shadow: 0 0 0 2px #3ba55d; } /* falando, como no Discord */
 .tile video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 .ava { display: grid; place-items: center; width: 44px; height: 44px; overflow: hidden; border-radius: 50%; background: var(--accent); font-weight: 700; font-size: 14px; color: #000; }
 .me .ava { width: auto; padding: 0 0.6rem; border-radius: 999px; }
