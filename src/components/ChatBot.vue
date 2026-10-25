@@ -72,7 +72,7 @@ async function decide(action, ok) {
         <p v-if="!messages.length" class="muted small">Oi! Posso fazer por você o que você faria no site: produtos, perfil, conversas e tarefas, sempre dentro das suas permissões.</p>
         <p v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">{{ m.content }}</p>
         <div v-for="p in pending" :key="p.token" class="confirm">
-          <p>{{ p.summary }}?</p>
+          <p>{{ p.summary.includes('\n') ? p.summary : `${p.summary}?` }}</p>
           <div class="confirm-actions">
             <BaseButton small @click="decide(p, true)">Confirmar</BaseButton>
             <BaseButton small variant="ghost" @click="decide(p, false)">Cancelar</BaseButton>
@@ -104,7 +104,7 @@ async function decide(action, ok) {
 .msg.user { align-self: flex-end; background: var(--color-primary); color: var(--color-on-primary); border-bottom-right-radius: 4px; }
 .msg.assistant { align-self: flex-start; background: var(--color-surface-2); border-bottom-left-radius: 4px; }
 .confirm { align-self: stretch; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); }
-.confirm p { margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.confirm p { margin: 0 0 var(--space-2); overflow-wrap: anywhere; white-space: pre-line; }
 .confirm-actions { display: flex; gap: var(--space-2); }
 .panel .alert { margin: 0 var(--space-3); }
 .composer { display: flex; gap: var(--space-2); padding: var(--space-3); border-top: 1px solid var(--color-border); }

@@ -286,7 +286,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 mark { padding: 0 0.15rem; border-radius: 4px; background: var(--surface-2); color: var(--text); }
 mark.nvx { background: rgb(229 101 21 / 0.18); color: var(--accent-soft); }
 .confirm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; margin: 0.8rem 0 0 calc(30px + 0.6rem); padding: 0.6rem 0.8rem; border: 1px solid rgb(229 101 21 / 0.5); border-radius: 10px; background: var(--surface); }
-.confirm p { margin: 0; }
+.confirm p { margin: 0; white-space: pre-line; }
 .confirm div { display: flex; gap: 0.4rem; }
 .thinking { display: flex; align-items: center; gap: 0.6rem; margin: 0.8rem 0 0; color: var(--muted); }
 .ai-ava { background: var(--accent); }

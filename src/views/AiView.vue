@@ -101,7 +101,7 @@ async function decide(action, ok) {
           <div v-else class="msg assistant"><AiMarkdown :text="m.content" /><AiItems :items="m.items" /></div>
         </template>
         <div v-for="p in pending" :key="p.token" class="confirm">
-          <p>{{ p.summary }}?</p>
+          <p>{{ p.summary.includes('\n') ? p.summary : `${p.summary}?` }}</p>
           <div class="confirm__actions">
             <button type="button" class="btn btn--primary" @click="decide(p, true)">Confirmar</button>
             <button type="button" class="btn" @click="decide(p, false)">Cancelar</button>
@@ -192,7 +192,7 @@ async function decide(action, ok) {
 @keyframes dot { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
 
 .confirm { align-self: flex-start; max-width: 80%; padding: 0.75rem 0.85rem; border: 1px solid color-mix(in srgb, var(--ai-shark) 50%, transparent); border-radius: 14px; background: var(--ai-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-.confirm p { margin: 0 0 0.6rem; overflow-wrap: anywhere; }
+.confirm p { margin: 0 0 0.6rem; overflow-wrap: anywhere; white-space: pre-line; }
 .confirm__actions { display: flex; gap: 0.5rem; }
 .btn { padding: 0.4rem 0.9rem; border: 1px solid var(--ai-glass-line); border-radius: 8px; background: none; font-size: 13px; cursor: pointer; }
 .btn--primary { border-color: var(--ai-shark); background: var(--ai-shark); color: #000 !important; }
