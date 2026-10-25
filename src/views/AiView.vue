@@ -71,6 +71,32 @@ async function send(content = text.value.trim()) {
   }
 }
 
+// Arquivo anexado: o servidor lê o texto e a IA escreve um relatório, que vira página da wiki (applyItems)
+const fileInput = ref(null)
+async function analyze(e) {
+  const file = e.target.files[0]
+  e.target.value = ''
+  if (!file || loading.value) return
+  const prompt = text.value.trim()
+  messages.value.push({ role: 'user', content: `📎 ${file.name}${prompt ? ` — ${prompt}` : ''}` })
+  text.value = ''
+  error.value = ''
+  loading.value = true
+  animateLast(); scroll()
+  try {
+    const body = new FormData()
+    body.append('file', file)
+    body.append('prompt', prompt)
+    const { reply, items = [] } = await api('/api/ai/analyze/', { method: 'POST', body })
+    messages.value.push({ role: 'assistant', content: reply, items: applyItems(items) })
+  } catch (err) {
+    error.value = describe(err)
+  } finally {
+    loading.value = false
+    animateLast(); scroll()
+  }
+}
+
 async function decide(action, ok) {
   pending.value = pending.value.filter((p) => p !== action)
   error.value = ''
@@ -118,6 +144,8 @@ async function decide(action, ok) {
       <form class="composer" @submit.prevent="send()">
         <textarea v-model="text" rows="2" placeholder="Pergunte ou peça qualquer coisa à Novexo IA…" aria-label="Mensagem para a IA" maxlength="4000" @keydown.enter.exact.prevent="send()" />
         <div class="composer__bar">
+          <input ref="fileInput" type="file" accept=".pdf,.txt,.md" hidden @change="analyze" />
+          <button type="button" class="attach" :disabled="loading" title="Anexar PDF, .txt ou .md para gerar um relatório na wiki" aria-label="Anexar arquivo para relatório" @click="fileInput.click()"><AppIcon name="upload" :size="16" /></button>
           <span class="hint"><kbd>↵</kbd> enviar · <kbd>⇧</kbd><kbd>↵</kbd> nova linha</span>
           <button type="submit" class="send" :disabled="loading || !text.trim()" aria-label="Enviar"><AppIcon name="arrow" :size="16" /></button>
         </div>
@@ -173,6 +201,9 @@ async function decide(action, ok) {
 .composer textarea::placeholder { color: var(--ai-muted); }
 .composer__bar { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; }
 .hint { font-size: 12px; color: var(--ai-muted); }
+.attach { display: grid; place-items: center; width: 34px; height: 34px; margin-right: auto; padding: 0; border: 1px solid var(--ai-glass-line); border-radius: 10px; background: none; color: var(--ai-muted); cursor: pointer; transition: color 0.2s var(--ease), border-color 0.2s var(--ease); }
+.attach:hover:not(:disabled) { border-color: var(--ai-shark); color: var(--ai-text); }
+.attach:focus-visible { outline: 2px solid var(--ai-shark); outline-offset: 2px; }
 .hint kbd { margin: 0 1px; }
 .send { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; background: var(--ai-shark); color: #000; cursor: pointer; transition: background 0.2s var(--ease); }
 .send:hover:not(:disabled) { background: var(--ai-shark-soft); }
