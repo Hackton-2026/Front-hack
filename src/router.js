@@ -14,6 +14,7 @@ const router = createRouter({
     { path: '/inicio', component: () => import('./views/HomeView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Início', icon: 'home' } },
     { path: '/meu-trabalho', component: () => import('./views/MyWorkView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Seu trabalho', icon: 'mine' } },
     { path: '/rascunhos', component: () => import('./views/DraftsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Rascunhos', icon: 'draft' } },
+    { path: '/favoritos', component: () => import('./views/FavoritesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Favoritos', icon: 'star' } },
     { path: '/notas', component: () => import('./views/NotesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Notas', icon: 'note' } },
     { path: '/projetos', component: () => import('./views/ProjectsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Projetos', icon: 'folder' } },
     { path: '/projetos/:id', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Itens de trabalho', icon: 'items' } },
