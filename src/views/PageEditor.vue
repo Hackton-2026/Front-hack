@@ -8,11 +8,12 @@ import AppIcon from '../components/app/AppIcon.vue'
 
 const props = defineProps({ id: { type: String, required: true }, page: { type: String, required: true } })
 const router = useRouter()
-const { state, project, updateItem, removeItem, member } = useWorkspace()
+const { state, project, updateItem, removeItem, member, load } = useWorkspace()
 const { ui } = useUi()
 const p = computed(() => project(Number(props.id)))
 const pg = computed(() => state.pages.find((x) => x.id === Number(props.page)))
 const saving = ref('')
+const looking = ref(false)
 const body = ref(null)
 const root = ref(null)
 let timer
@@ -51,6 +52,11 @@ async function remove() {
 
 watch(() => [p.value, pg.value?.title], ([proj, title]) => (ui.crumb = proj ? `${proj.name} › ${title || 'Sem título'}` : 'Projeto não encontrado'), { immediate: true })
 onMounted(async () => {
+  if (!pg.value) {
+    looking.value = true
+    await load()
+    looking.value = false
+  }
   await nextTick()
   grow()
   if (!pg.value?.title) root.value?.querySelector('.title')?.focus()
@@ -76,6 +82,7 @@ onUnmounted(flush)
       <textarea ref="body" class="body anim" :value="pg.body" placeholder="Escreva aqui: objetivos, decisões, links, atas…" aria-label="Texto da página" :readonly="pg.archived" @input="edit('body', $event.target.value)" />
     </article>
   </div>
+  <div v-else-if="looking" class="pg-empty" role="status"><h2>Abrindo a página…</h2></div>
   <div v-else class="pg-empty"><h2>Essa página não existe mais.</h2><RouterLink :to="`/projetos/${id}/paginas`" class="pg-btn">Ver páginas</RouterLink></div>
 </template>
 
