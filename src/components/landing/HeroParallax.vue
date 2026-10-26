@@ -1,7 +1,4 @@
 <script setup>
-// Hero do Novexo (estrutura do supaste.com): céu → montanhas distantes → texto → montanha de trás → montanha da frente.
-// Parallax: cada camada sobe numa velocidade (céu/fundo 0.08, montanha de trás 0.22, da frente 0.42) enquanto o
-// hero está preso na tela; o texto desce e some atrás do cume.
 import { ref, onMounted, onUnmounted } from 'vue'
 import { gsap, prefersReducedMotion, revealTitleCharacters } from '../../utils/motion'
 import GooeyButton from '../GooeyButton.vue'
@@ -9,7 +6,6 @@ import hillFar from '../../assets/landing/hero-fundo.webp'
 import hillBack from '../../assets/landing/hero-tras.webp'
 import hillFront from '../../assets/landing/hero-frente.webp'
 
-// Título: linha sans pesada + linha serif itálica, animadas letra a letra
 const HERO_LINES = [
   { text: 'Planeje uma vez.', serif: false },
   { text: 'Entregue sempre.', serif: true },
@@ -37,7 +33,6 @@ onMounted(() => {
   addEventListener('scroll', onScroll, { passive: true })
   addEventListener('resize', onScroll)
   ctx = gsap.context(() => {
-    // cada letra sobe 10px saindo de blur(10px); depois texto, botão e notas descem de -30px
     revealTitleCharacters('.hero__char')
     gsap.from('.hero__lead, .hero__cta', { y: -30, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.08, delay: 1.6 })
   }, hero.value)
@@ -77,7 +72,6 @@ onUnmounted(() => {
 .hero { position: relative; height: 200vh; height: 200svh; }
 .hero__stick { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: #000; }
 .hero__sky, .hero__hill, .hero__inner { will-change: transform; }
-/* Céu de fim de tarde no tom da grama dourada: escuro no topo, laranja no meio, luz difusa no horizonte */
 .hero__sky {
   position: absolute;
   inset: 0 0 -12%;
@@ -91,9 +85,7 @@ onUnmounted(() => {
 .hero__hill.far { z-index: 1; mask-image: linear-gradient(180deg, transparent 0%, #000 55%); }
 .hero__hill.back { z-index: 3; }
 .hero__hill.front { z-index: 4; }
-.hero__hill.front img { translate: 0 -0.7%; } /* a crista fica ~3px acima da emenda da camada de trás */
-/* Base da montanha da frente funde com o preto do site; o chão preto embaixo cobre o espaço quando ela sobe */
-.hero__hill.front::after { content: ''; position: absolute; inset: 50% 0 0; background: linear-gradient(180deg, transparent, #000); }
+.hero__hill.front img { translate: 0 -0.7%; } .hero__hill.front::after { content: ''; position: absolute; inset: 50% 0 0; background: linear-gradient(180deg, transparent, #000); }
 .hero__hill.front::before { content: ''; position: absolute; top: calc(100% - 1px); left: 0; right: 0; height: 120vh; background: #000; }
 @media (max-width: 640px) { .hero__hill { top: 82svh; } }
 

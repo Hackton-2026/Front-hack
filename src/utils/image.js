@@ -1,9 +1,5 @@
-/**
- * Reduz e converte a imagem para WebP no navegador antes do upload.
- * Uma foto de celular de 5MB vira ~200KB: upload rápido e pouco espaço no servidor.
- */
 export async function compressImage(file, maxSide = 1600, quality = 0.85) {
-  const bitmap = await createImageBitmap(file) // já respeita a rotação EXIF
+  const bitmap = await createImageBitmap(file)
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(bitmap.width * scale)

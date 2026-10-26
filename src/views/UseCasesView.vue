@@ -1,5 +1,4 @@
 <script setup>
-// Casos de uso: para que tipo de time o Novexo serve, cada um com os recursos que de fato usa
 import { onMounted, onUnmounted } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'
@@ -30,7 +29,6 @@ const CASES = [
     tags: ['Notas', 'Rascunhos', 'Novexo IA'] },
 ]
 
-// Um dia com o Novexo: o mesmo time passando pelas partes do produto
 const DAY = [
   ['09:00', 'Começo do dia', 'Cada pessoa abre o Seu trabalho e vê só o que está com ela, ordenado por prazo.'],
   ['10:30', 'Pedido novo', 'No chat do projeto, alguém escreve “@novexo cria uma tarefa para revisar o contrato amanhã”. A tarefa aparece com responsável e prazo.'],

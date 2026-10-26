@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue'
 
-// Foto do usuário ou iniciais quando não tem foto
 const props = defineProps({ user: Object, size: { type: Number, default: 36 } })
 const initials = computed(() => {
   const u = props.user || {}

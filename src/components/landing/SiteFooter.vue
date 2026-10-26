@@ -1,5 +1,4 @@
 <script setup>
-// Rodapé (na linha da referência): foto de fundo, headline, e-mail em pílula de vidro e colunas de links
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
@@ -22,7 +21,6 @@ const LINKS = {
 }
 const footerLink = (label) => LINKS[label] || '/#topo'
 
-// Fora da conta: o e-mail abre o cadastro já preenchido. Logado: vira um atalho para o workspace.
 const { user } = useAuth()
 const router = useRouter()
 const email = ref('')
@@ -31,7 +29,6 @@ function startSignup() {
   const value = email.value.trim()
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { emailError.value = 'Digite um e-mail válido.'; return }
   emailError.value = ''
-  // vai no estado da navegação, não na URL: o e-mail não fica no histórico nem em logs
   router.push({ path: '/login', query: { modo: 'cadastro' }, state: { email: value } })
 }
 
@@ -40,7 +37,6 @@ let ctx
 onMounted(() => {
   if (prefersReducedMotion()) return
   ctx = gsap.context(() => {
-    // a foto aproxima devagar enquanto o rodapé entra na tela
     gsap.fromTo('.foot__photo', { scale: 1.18 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: root.value, start: 'top bottom', end: 'bottom bottom', scrub: true } })
     if (root.value.querySelector('.foot__transition')) {
       gsap.fromTo('.foot__transition', { y: 40, opacity: 0.45 }, {
@@ -94,23 +90,18 @@ onUnmounted(() => ctx?.revert())
 .foot { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; min-height: 100vh; min-height: 100svh; padding: clamp(6rem, 14vh, 9rem) clamp(1rem, 1.6vw, 1.5rem) 1.5rem; overflow: hidden; }
 .foot__bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; background: #1a0d05; }
 .foot__photo { width: 100%; height: 100%; object-fit: cover; object-position: 60% 45%; transform-origin: 78% 42%; }
-/* Puxa a foto para a paleta: laranja nos tons quentes, a água fria um pouco mais escura,
-   e o pé escurecido para as colunas de links ficarem legíveis */
 .foot__bg::before, .foot__bg::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
 .foot__bg::before { background: linear-gradient(180deg, #e56515 0%, #fba45c 45%, #2a1306 100%); mix-blend-mode: soft-light; opacity: 0.55; }
 .foot__bg::after {
   background:
-    /* continua o laranja do fim da seção de contato e dissolve na foto, sem corte reto */
     linear-gradient(180deg, #e56515 0%, rgb(229 101 21 / 0.85) 6%, rgb(196 82 13 / 0.45) 16%, rgb(120 48 8 / 0.15) 26%, transparent 36%),
     radial-gradient(ellipse 70% 45% at 50% 22%, rgb(0 0 0 / 0.45), transparent 70%),
     linear-gradient(180deg, rgb(10 5 2 / 0.35) 0%, transparent 28%, rgb(10 5 2 / 0.2) 55%, rgb(10 5 2 / 0.92) 100%);
 }
-/* A luz aparece antes da foto, dissolvendo a borda do rodapé no fundo preto. */
 .foot--blend {
   --foot-blend-height: clamp(18rem, 30vw, 26rem);
   padding-top: clamp(13rem, 23vw, 20rem);
-  background: var(--footer-transition-color, #000); /* a página pode dizer a cor de onde o degradê parte */
-}
+  background: var(--footer-transition-color, #000); }
 .foot--blend .foot__bg {
   -webkit-mask-image: linear-gradient(180deg,
     transparent 0%, rgb(0 0 0 / 0.04) 8%, rgb(0 0 0 / 0.18) 17%,

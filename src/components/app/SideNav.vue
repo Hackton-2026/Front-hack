@@ -1,7 +1,4 @@
 <script setup>
-// Barra lateral "Trabalho" do Plane: itens pessoais, Workspace (com o menu "Mais" e itens fixados),
-// projetos que abrem o menu do projeto (visão geral, itens, ciclos, módulos, visões, páginas) e "Experimente".
-// O que aparece é pessoal e fica salvo nas preferências (Personalizar navegação).
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
@@ -52,7 +49,6 @@ const route = useRoute()
 const router = useRouter()
 const { state, createProject, archiveProject } = useWorkspace()
 
-// selo do plano no rodapé: grátis → assinar; em teste → dias que faltam; pago → abre Planos e cobrança
 const plan = ref(null)
 api('/api/billing/').then((b) => (plan.value = b.subscription && { ...b.subscription, name: b.plans.find((p) => p.code === b.subscription.plan)?.name })).catch(() => {})
 const planBadge = computed(() => {
@@ -74,9 +70,8 @@ const sub = computed(() => SUB.filter((s) => !s.key || prefs.value.features[s.ke
 
 const moreOpen = ref(false)
 const customizing = ref(false)
-const menuFor = ref(null) // projeto com o menu "..." aberto
+const menuFor = ref(null)
 const menuPos = ref({ top: 0, left: 0 })
-// o menu abre ao lado da barra lateral (fora dela), na altura do "...", sem passar do fim da tela
 function toggleMenu(p, e) {
   if (menuFor.value === p.id) { menuFor.value = null; return }
   const r = e.currentTarget.getBoundingClientRect()
@@ -91,7 +86,6 @@ const projInput = ref(null)
 const openProjects = reactive(new Set())
 const reduced = prefersReducedMotion()
 
-// projeto da rota atual fica aberto no menu
 const deleting = ref(null)
 const currentProject = computed(() => (route.path.match(/^\/projetos\/(\d+)/) || [])[1])
 watch(currentProject, (id) => id && openProjects.add(Number(id)), { immediate: true })
@@ -104,10 +98,8 @@ function togglePin(key) {
   prefs.value.pinned = prefs.value.pinned.includes(key) ? prefs.value.pinned.filter((k) => k !== key) : [...prefs.value.pinned, key]
 }
 
-// Abrir/fechar seções e projetos: altura até o conteúdo e os itens descendo em cascata
 function onEnter(el, done) {
   if (reduced) return done()
-  // overflow só durante a animação: parado, ele cortaria o menu ⋯ dos projetos
   gsap.fromTo(el, { height: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', autoAlpha: 1, duration: 0.3, ease: 'power3.out', clearProps: 'overflow', onComplete: done })
   gsap.from(el.children, { x: -6, autoAlpha: 0, duration: 0.25, stagger: 0.03, ease: 'power2.out', delay: 0.05 })
 }
@@ -115,7 +107,6 @@ function onLeave(el, done) {
   if (reduced) return done()
   gsap.to(el, { height: 0, autoAlpha: 0, overflow: 'hidden', duration: 0.22, ease: 'power2.in', onComplete: done })
 }
-// Painel "Mais" desliza da borda da barra lateral
 function onMoreEnter(el, done) {
   if (reduced) return done()
   gsap.timeline({ onComplete: done })
@@ -176,7 +167,7 @@ function onKey(e) {
 watch(() => route.path, () => (moreOpen.value = false))
 onMounted(() => {
   addEventListener('click', onDocClick)
-  addEventListener('scroll', closeMenu, true) // rolou a barra ou a página: o menu ao lado ficaria solto
+  addEventListener('scroll', closeMenu, true)
   addEventListener('resize', closeMenu)
   addEventListener('keydown', onKey)
 })
@@ -349,7 +340,6 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .trial:hover { color: var(--accent-soft); }
 :is(.side__link, .new-btn, .trial, .add-p, .icon-btn, .side__label, .label-btn, .pmenu-btn):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 
-/* painel "Mais" e o diálogo ficam no body: repetem a paleta */
 .more, .custom { --surface: #181614; --surface-2: #211f1c; --line: #2e2b27; --line-strong: #3d3934; --text: #f2efea; --muted: #a29d95; --accent: #e56515; --accent-soft: #fba45c; --ease: cubic-bezier(0, 0, 0.2, 1); font: 400 14px/1.45 'Geist', 'Helvetica Neue', system-ui, sans-serif; color: var(--text); }
 .more { position: fixed; top: 49px; bottom: 0; left: 313px; z-index: 45; width: 300px; padding: 0.75rem; border-right: 1px solid var(--line); background: var(--surface); box-shadow: 18px 0 40px rgb(0 0 0 / 0.35); }
 .more__item { display: flex; align-items: center; border-radius: 6px; transition: background 0.2s var(--ease); }

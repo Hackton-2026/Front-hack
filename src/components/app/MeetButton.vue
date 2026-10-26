@@ -1,7 +1,4 @@
 <script setup>
-// Chamada no Google Meet a partir do chat do projeto. "Criar sala" pede ao Google (na conta Google da pessoa) uma sala nova
-// pela Meet API e devolve o link; se o Google recusar (API desativada no Google Cloud, permissão negada), dá para abrir o
-// Meet e colar o link. Emite "link" com o endereço da chamada: o chat manda como mensagem para o time.
 import { nextTick, ref } from 'vue'
 import { GOOGLE_CLIENT_ID } from '../../config'
 import { loadGoogle } from '../../utils/google'
@@ -16,12 +13,11 @@ const busy = ref(false)
 const note = ref('')
 const pasted = ref('')
 const pasteInput = ref(null)
-let token = null // { value, until }: o Google dá ~1h; reaproveita para não pedir permissão a cada chamada
+let token = null
 
 function toggle() {
   open.value = !open.value
   note.value = ''
-  // o script precisa estar pronto antes do clique em "Criar sala", senão o navegador bloqueia a janela de permissão
   if (open.value && GOOGLE_CLIENT_ID) loadGoogle().catch(() => {})
 }
 
@@ -61,7 +57,7 @@ function createRoom() {
       token = { value: resp.access_token, until: Date.now() + (Number(resp.expires_in) - 60) * 1000 }
       finish(resp.access_token)
     },
-    error_callback: () => fail('google'), // janela fechada ou bloqueada
+    error_callback: () => fail('google'),
   }).requestAccessToken()
 }
 function sendPasted() {
@@ -92,8 +88,7 @@ function sendPasted() {
 </template>
 
 <style scoped>
-.meet { position: static; } /* o painel se apoia na caixa de mensagem (position: relative), na largura dela */
-.meet__btn { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.35rem; height: 26px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease; }
+.meet { position: static; } .meet__btn { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.35rem; height: 26px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease; }
 .meet__btn:hover, .meet__btn[aria-expanded='true'] { border-color: var(--line-strong); color: var(--text); }
 .meet__pop { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 5; display: flex; flex-direction: column; gap: 0.55rem; padding: 0.85rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 14px 34px rgb(0 0 0 / 0.42); }
 .meet__pop strong { font-size: 13.5px; color: var(--text); }

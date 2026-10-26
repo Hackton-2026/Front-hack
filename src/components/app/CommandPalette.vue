@@ -1,5 +1,4 @@
 <script setup>
-// Busca e comandos (Ctrl K), na linha do "Search your workspace" do Plane e do Ctrl K do ClickUp
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'

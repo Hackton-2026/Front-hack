@@ -1,12 +1,11 @@
 <script setup>
-// Whiteboard: notas soltas que dá para arrastar. Ficam salvas na própria visão (config.notes).
 import { ref } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 
 const props = defineProps({ view: { type: Object, required: true } })
 const { updateItem, createTask } = useWorkspace()
 const COLORS = ['#f2c46d', '#fba45c', '#7fc47a', '#7cc4f2', '#e9a0d8']
-const notes = ref(JSON.parse(JSON.stringify(props.view.config?.notes || []))) // cópia: structuredClone não aceita o proxy do Vue
+const notes = ref(JSON.parse(JSON.stringify(props.view.config?.notes || [])))
 let timer
 const save = () => { clearTimeout(timer); timer = setTimeout(() => updateItem('view', props.view, { config: { ...props.view.config, notes: notes.value } }), 500) }
 function add() {

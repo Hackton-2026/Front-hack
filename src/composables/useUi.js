@@ -1,13 +1,12 @@
 import { reactive } from 'vue'
 
-// Estado das camadas globais da área logada: painel da tarefa, modal de nova tarefa, busca, título do topo e aviso
 const ui = reactive({
-  taskId: null, // tarefa aberta no painel lateral
-  creating: null, // null = fechado; objeto = campos pré-preenchidos (projeto, status, prazo...)
-  chat: null, // id do projeto com o chat aberto no painel ao lado
-  palette: false, // busca Ctrl K
-  crumb: '', // título dinâmico (ex.: nome do projeto); vazio = usa o meta.title da rota
-  message: '', // aviso rápido (erro ao salvar etc.)
+  taskId: null,
+  creating: null,
+  chat: null,
+  palette: false,
+  crumb: '',
+  message: '',
 })
 
 let timer

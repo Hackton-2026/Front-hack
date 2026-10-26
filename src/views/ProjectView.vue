@@ -1,6 +1,4 @@
 <script setup>
-// Itens de trabalho do projeto: atalhos (Lista, Kanban, Calendário, Gantt) e as visualizações fixadas, criadas
-// pelo "+ Visualização" (como no ClickUp). Também abre um ciclo, um módulo ou uma visão salva: aí mostra só as tarefas dele.
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
@@ -27,40 +25,36 @@ import ViewWhiteboard from '../components/app/views/ViewWhiteboard.vue'
 import ViewDoc from '../components/app/views/ViewDoc.vue'
 import ViewActivity from '../components/app/views/ViewActivity.vue'
 
-// atalhos fixos para as visualizações que todo projeto tem
 const VIEWS = [
   { id: 'list', label: 'Lista', icon: 'list' },
   { id: 'board', label: 'Kanban', icon: 'grid' },
   { id: 'calendar', label: 'Calendário', icon: 'calendar' },
   { id: 'gantt', label: 'Gantt', icon: 'chart' },
 ]
-const NO_FILTERS = ['doc', 'whiteboard', 'activity', 'form'] // layouts que não usam a busca nem o "Só minhas"
+const NO_FILTERS = ['doc', 'whiteboard', 'activity', 'form']
 const props = defineProps({ id: { type: String, required: true }, cycle: { type: String, default: '' }, module: { type: String, default: '' }, view: { type: String, default: '' } })
 const route = useRoute()
 const router = useRouter()
 const { state, STATUSES, PRIORITIES, project, member, isOverdue, tasksOf, progress, doneRatio, createItem, updateItem, removeItem } = useWorkspace()
 const { ui, newTask, openChat, closeChat } = useUi()
 const { complete } = useOnboarding()
-const pid = computed(() => Number(props.id)) // a rota traz texto; os ids da API são números
+const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
 const view = computed(() => VIEWS.find((v) => v.id === route.query.v)?.id || state.prefs.defaultView)
 const onlyMine = ref(false)
 const q = ref('')
 const tabs = ref(null)
 
-// visualizações salvas: a aberta (rota /visoes/:view) e as fixadas, que viram abas
 const saved = computed(() => props.view && state.views.find((x) => x.id === Number(props.view)))
-const kind = computed(() => saved.value?.type || view.value) // qual layout desenhar
+const kind = computed(() => saved.value?.type || view.value)
 const pinned = computed(() => (props.cycle || props.module ? [] : state.views
   .filter((v) => v.project === pid.value && v.is_pinned && (!v.is_private || v.owner === state.me))
   .sort((a, b) => a.order - b.order || a.id - b.id)))
 
-// até 6 abas à vista; o resto vai para "Mais" (a aberta sempre fica à vista)
 const MAX_TABS = 6
 const visible = computed(() => { const v = pinned.value.slice(0, MAX_TABS); return saved.value?.is_pinned && !v.includes(saved.value) ? [...v.slice(0, -1), saved.value] : v })
 const overflow = computed(() => pinned.value.filter((v) => !visible.value.includes(v)))
 
-// "+ Visualização"
 const menu = ref(null)
 const adding = ref(false)
 const findLayout = ref('')
@@ -80,7 +74,6 @@ const closeMenu = (e) => { if (adding.value && !menu.value?.contains(e.target)) 
 onMounted(() => addEventListener('pointerdown', closeMenu))
 onUnmounted(() => removeEventListener('pointerdown', closeMenu))
 
-// ações da aba salva aberta
 async function renameView() {
   const name = prompt('Nome da visualização', saved.value.name)?.trim()
   if (name) updateItem('view', saved.value, { name })
@@ -93,7 +86,6 @@ async function deleteView() {
   removeItem('view', v)
 }
 
-// recorte aberto: ciclo, módulo ou visão salva (filtros por status, prioridade, responsáveis e etiquetas)
 const scope = computed(() => {
   if (props.cycle) { const c = state.cycles.find((x) => x.id === Number(props.cycle)); return c && { kind: 'Ciclo', name: c.name, back: 'ciclos', match: (t) => t.cycle === c.id, defaults: { cycle: c.id } } }
   if (props.module) { const m = state.modules.find((x) => x.id === Number(props.module)); return m && { kind: 'Módulo', name: m.name, back: 'modulos', match: (t) => t.modules.includes(m.id), defaults: { modules: [m.id] } } }
@@ -107,9 +99,8 @@ const scope = computed(() => {
   return { kind: '', name: '', match: () => true, defaults: {} }
 })
 const scoped = computed(() => (scope.value ? tasksOf(pid.value).filter(scope.value.match) : []))
-const people = computed(() => p.value?.members || []) // quem participa do projeto
+const people = computed(() => p.value?.members || [])
 
-// barra de filtros: responsável, situação, prioridade e prazo ('' = todos)
 const f = ref({ who: '', status: '', priority: '', due: '' })
 const filtering = computed(() => Object.values(f.value).some(Boolean) || onlyMine.value || q.value)
 const clearFilters = () => { f.value = { who: '', status: '', priority: '', due: '' }; onlyMine.value = false; q.value = '' }
@@ -135,12 +126,10 @@ const add = () => newTask({ projectId: p.value.id, ...scope.value.defaults })
 
 watch([p, scope], ([v, s]) => (ui.crumb = !v ? 'Projeto não encontrado' : s?.kind ? `${v.name} › ${s.name}` : `${v.name} › Itens de trabalho`), { immediate: true })
 function setView(id) {
-  // sem ?v= a página cai na visão padrão (Ajustes > Preferências), então só some quando é ela
   const query = { ...route.query, v: id === state.prefs.defaultView ? undefined : id }
   props.view ? router.push({ path: `/projetos/${pid.value}`, query }) : router.replace({ query })
   if (id !== 'list') complete('view')
 }
-// indicador da aba desliza até a aba ativa
 async function moveInk(animate = true) {
   await nextTick()
   const el = tabs.value?.querySelector('[aria-selected="true"]')

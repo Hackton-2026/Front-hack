@@ -1,5 +1,4 @@
 <script setup>
-// Ícone do projeto (Flaticon UIcons). Sem ícone, mostra um quadradinho na cor do projeto.
 import '@flaticon/flaticon-uicons/css/regular/rounded.css'
 import { computed } from 'vue'
 import { iconClass } from './projectIcons'

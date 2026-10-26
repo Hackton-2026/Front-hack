@@ -1,16 +1,13 @@
 <script setup>
-// Lista com criar, editar e apagar ligada a um endpoint da API (times, clientes, webhooks, tokens...).
-// `fields`: [{ key, label, type, options?, required?, data? }]. data: true = o campo vai dentro de `data` (WorkspaceItem).
-// Tipos: text, email, url, date, textarea, select, task, hours (a API guarda minutos), members, multi, check; secret e readonly só aparecem na lista.
 import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '../../services/api'
 import { useWorkspace } from '../../composables/useWorkspace'
 import AppSelect from './AppSelect.vue'
 
 const props = defineProps({
-  path: { type: String, required: true }, // ex.: /api/items/
-  query: { type: String, default: '' }, // ex.: ?kind=customer
-  extra: { type: Object, default: () => ({}) }, // vai junto no POST (ex.: { kind: 'customer' })
+  path: { type: String, required: true },
+  query: { type: String, default: '' },
+  extra: { type: Object, default: () => ({}) },
   fields: { type: Array, required: true },
   noun: { type: String, default: 'item' },
   canWrite: { type: Boolean, default: true },
@@ -21,8 +18,8 @@ const { state, member } = useWorkspace()
 const rows = ref([])
 const error = ref('')
 const loading = ref(true)
-const editing = ref(null) // id da linha em edição; null = criando
-const revealed = ref('') // token recém-criado: aparece uma única vez
+const editing = ref(null)
+const revealed = ref('')
 const form = reactive({})
 const inputs = computed(() => props.fields.filter((f) => !['secret', 'readonly'].includes(f.type)))
 const taskOptions = computed(() => state.tasks.filter((x) => !x.draft).map((t) => ({ value: t.id, label: `${t.code ? `${t.code} · ` : ''}${t.title}` })))
@@ -56,7 +53,7 @@ async function fetchRows() {
     loading.value = false
   }
 }
-blank() // antes do primeiro render: os chips leem form[key].includes
+blank()
 onMounted(fetchRows)
 
 function edit(row) {
@@ -77,7 +74,7 @@ function body() {
     let v = form[f.key]
     if (f.type === 'hours') v = Math.round(Number(v) * 60)
     if (f.type === 'date' && !v) v = null
-    if ((v === '' || v === null) && !f.data) continue // opcional vazio: o backend usa o padrão do campo
+    if ((v === '' || v === null) && !f.data) continue
     ;(f.data ? data : out)[f.key] = v
   }
   if (props.fields.some((f) => f.data)) {
@@ -87,7 +84,6 @@ function body() {
   return out
 }
 async function submit() {
-  // o AppSelect não tem `required` nativo
   const missing = inputs.value.find((f) => f.required && ['select', 'task'].includes(f.type) && form[f.key] === '')
   if (missing) return (error.value = `Escolha ${missing.label.toLowerCase()}.`)
   error.value = ''

@@ -1,6 +1,4 @@
 <script setup>
-// Ajustes › WhatsApp: cada pessoa cadastra o próprio número e confirma com o código que chega pelo WhatsApp
-// (só número confirmado recebe o /whatsapp do chat). O admin do site conecta o número do Novexo lendo um QR.
 import { onMounted, onUnmounted, ref } from 'vue'
 import { api } from '../../services/api'
 
@@ -29,7 +27,6 @@ const sendCode = () => run(() => api('/api/whatsapp/me/', { method: 'POST', body
 const verify = () => run(async () => { await api('/api/whatsapp/me/verify/', { method: 'POST', body: { code: code.value } }); code.value = '' }, 'Número confirmado. Você vai receber o /whatsapp dos seus projetos.')
 const remove = () => run(() => api('/api/whatsapp/me/', { method: 'DELETE' }), 'Número removido.')
 
-// ---- admin do site: conectar o número do Novexo
 const STATUS = { ready: 'Conectado', qr_ready: 'Esperando ler o QR', initializing: 'Iniciando…', authenticating: 'Entrando…', created: 'Desconectado',
   disconnected: 'Desconectado', failed: 'Falhou', action_required: 'Precisa de ação no celular', not_created: 'Nunca conectado', unreachable: 'OpenWA fora do ar' }
 async function connect() {
@@ -39,7 +36,7 @@ async function connect() {
     try {
       qr.value = await api('/api/whatsapp/admin/qr/')
       if (qr.value.status === 'ready') { clearInterval(poll); qr.value = null; note.value = 'WhatsApp do Novexo conectado.'; load() }
-    } catch { /* tenta de novo */ }
+    } catch { }
   }, 3000)
 }
 const disconnect = () => run(() => api('/api/whatsapp/admin/logout/', { method: 'POST' }), 'Número do Novexo desconectado.')

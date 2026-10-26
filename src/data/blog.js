@@ -1,4 +1,3 @@
-// Conteúdo editorial inicial do blog. Datas e textos pertencem a esta edição local.
 export const BLOG_CATEGORIES = ['Todas', 'Produto', 'Guias', 'Produtividade', 'Equipes']
 
 export const BLOG_POSTS = [

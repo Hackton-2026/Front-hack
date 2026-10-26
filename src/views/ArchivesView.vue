@@ -1,6 +1,4 @@
 <script setup>
-// Arquivados (Plane → Archives): projetos arquivados, itens na lixeira e páginas arquivadas.
-// Busca, seleção e restaurar em massa; a data mostra há quanto tempo está parado.
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'

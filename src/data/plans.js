@@ -1,5 +1,3 @@
-// Fonte compartilhada da página de preços e da seção de planos da página inicial.
-// Os valores anuais são equivalentes mensais, cobrados por 12 meses de uma vez.
 export const PRICING_PLANS = [
   {
     id: 'gratis',
@@ -66,8 +64,6 @@ export const PRICING_PLANS = [
   },
 ]
 
-// A ordem dos valores acompanha PRICING_PLANS. Recursos herdados pelas linhas
-// “Tudo do …” também aparecem nas colunas dos planos seguintes.
 export const COMPARISON_GROUPS = [
   {
     title: 'Organização e colaboração',

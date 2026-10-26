@@ -1,5 +1,4 @@
 <script setup>
-// Painel: números do projeto (total, concluídas, atrasadas) e barras por status, prioridade e pessoa
 import { computed } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 

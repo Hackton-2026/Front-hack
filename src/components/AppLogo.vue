@@ -1,7 +1,6 @@
 <script setup>
 import { APP_NAME } from '../config'
 
-// Marca do app: um laço desenhado à mão + nome. Troque o <path> pelo logo do seu projeto.
 defineProps({
   showName: { type: Boolean, default: true },
   size: { type: Number, default: 22 },

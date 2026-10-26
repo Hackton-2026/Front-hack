@@ -1,6 +1,4 @@
 <script setup>
-// Logo oficial de uma marca (Simple Icons, versão fixa) na cor da marca. As marcas pretas usam a cor do texto,
-// para aparecer no tema escuro e no claro. O logo é máscara: a cor vem do CSS, não do arquivo.
 import { computed } from 'vue'
 
 const BRANDS = {

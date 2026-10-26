@@ -1,5 +1,3 @@
-// "Base de dados" da Wiki (menu + do Notion): as tarefas reais do Novexo em tabela, quadro, galeria, lista, calendário
-// ou linha do tempo, como HTML para o markdown. Cada tarefa leva data-task para abrir no painel ao clicar.
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 export const DB_VIEWS = { table: 'Tabela', board: 'Quadro', gallery: 'Galeria', list: 'Lista', calendar: 'Calendário', timeline: 'Linha do tempo' }
 
@@ -7,7 +5,6 @@ const iso = (d) => d.toISOString().slice(0, 10)
 const addDays = (s, n) => { const d = new Date(`${s}T12:00`); d.setDate(d.getDate() + n); return iso(d) }
 const short = (s) => new Date(`${s}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 
-// h: { STATUSES, PRIORITIES, code(t), project(id), member(id), today }
 export function dbView(view, tasks, title, h) {
   const st = (t) => h.STATUSES.find((s) => s.id === t.status) || h.STATUSES[0]
   const pr = (t) => h.PRIORITIES.find((p) => p.id === t.priority)

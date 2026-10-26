@@ -1,13 +1,11 @@
 <script setup>
-// Checklist de "Começar" (o Get started do Plane, que o ClickUp e a ShyDevs não têm):
-// marcar um passo desenha o check, pisca a linha e enche a barra; ao completar tudo, comemora.
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useOnboarding } from '../../composables/useOnboarding'
 
 const { STEPS, isDone, toggle, count, total } = useOnboarding()
 const root = ref(null)
-const shown = ref(count.value) // número que rola até o valor real
+const shown = ref(count.value)
 const reduced = prefersReducedMotion()
 
 function animateCheck(id, done) {
@@ -19,7 +17,7 @@ function animateCheck(id, done) {
       .fromTo(box, { scale: 0.7 }, { scale: 1, duration: 0.45, ease: 'back.out(2.2)' })
       .fromTo(path, { strokeDashoffset: 20 }, { strokeDashoffset: 0, duration: 0.35, ease: 'power2.out' }, 0.05)
       .fromTo(row, { '--flash': 1 }, { '--flash': 0, duration: 0.9, ease: 'power2.out' }, 0)
-      .set(path, { clearProps: 'strokeDashoffset' }) // devolve o controle ao CSS (.is-done)
+      .set(path, { clearProps: 'strokeDashoffset' })
   } else {
     gsap.set(path, { clearProps: 'strokeDashoffset' })
     gsap.fromTo(box, { scale: 0.85 }, { scale: 1, duration: 0.3, ease: 'power2.out' })
@@ -31,7 +29,6 @@ function onToggle(id) {
   animateCheck(id, isDone(id))
 }
 
-// barra de progresso (scale-line do Plane) e contador
 watch(count, async (n, old) => {
   const bar = root.value?.querySelector('.bar__fill')
   if (reduced || !bar) { shown.value = n; return }

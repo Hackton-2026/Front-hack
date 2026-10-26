@@ -2,7 +2,6 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 
-// Traço "feito à mão" que se desenha sozinho quando aparece na tela. Posicione com CSS no pai.
 const props = defineProps({
   delay: { type: Number, default: 0 },
   duration: { type: Number, default: 2.4 },

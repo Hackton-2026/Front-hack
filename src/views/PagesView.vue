@@ -1,5 +1,4 @@
 <script setup>
-// Páginas do Plane: abas Públicas / Privadas / Arquivadas, busca e ordem; "Adicionar página" abre o editor
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { staggerIn } from '../utils/motion'

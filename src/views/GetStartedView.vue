@@ -1,5 +1,4 @@
 <script setup>
-// "Começar": a primeira página depois do login (base: Get started do Plane, na paleta do Novexo)
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { useAuth } from '../composables/useAuth'
@@ -26,14 +25,12 @@ onMounted(() => {
   if (prefersReducedMotion()) return
   ctx = gsap.context(() => {
     const scroller = root.value.closest('.main__scroll')
-    // saudação palavra a palavra, depois subtítulo e o card do plano, que pisca a borda uma vez
     gsap.timeline({ defaults: { ease: 'power3.out' } })
       .from('.hello__word', { y: 14, autoAlpha: 0, filter: 'blur(6px)', duration: 0.6, stagger: 0.06, delay: 0.25 })
       .from('.hello__sub', { y: 10, autoAlpha: 0, duration: 0.5 }, '-=0.35')
       .from('.trial', { y: 10, autoAlpha: 0, duration: 0.5 }, '-=0.3')
       .fromTo('.trial', { boxShadow: '0 0 0 2px rgb(229 101 21 / 0.9)' }, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0)', duration: 1.2, ease: 'power2.out' })
       .from('.trial__icon', { rotation: -45, scale: 0.6, duration: 0.6, ease: 'back.out(2)' }, '<-0.2')
-    // seções de baixo aparecem quando entram na área visível (o scroll é o do conteúdo, não o da janela)
     gsap.utils.toArray('.reveal').forEach((el) => {
       gsap.from(el, { y: 16, autoAlpha: 0, duration: 0.6, scrollTrigger: { trigger: el, scroller, start: 'top 92%', once: true } })
     })

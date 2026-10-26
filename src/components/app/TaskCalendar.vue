@@ -1,6 +1,4 @@
 <script setup>
-// Calendário do mês (a "Calendar view" do ClickUp): arrastar a tarefa para outro dia muda o prazo,
-// o painel "Sem data" alimenta o calendário e clicar num dia cria uma tarefa com aquele prazo.
 import { computed, nextTick, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
@@ -39,7 +37,6 @@ const days = computed(() => {
 })
 const undated = computed(() => props.tasks.filter((t) => !t.due && t.status !== 'done'))
 
-// Mês anterior/próximo: a grade sai para um lado e entra pelo outro
 async function shift(dir) {
   const go = () => { const d = new Date(cursor.value); d.setMonth(d.getMonth() + dir); cursor.value = d }
   if (prefersReducedMotion()) return go()

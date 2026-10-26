@@ -1,6 +1,4 @@
 <script setup>
-// Rascunhos: caixa de entrada pessoal de ideias. Captura rápida com #etiqueta !prioridade e data, grupos por idade
-// (o que está esquecido aparece), projeto sugerido e publicação em massa. Rascunhos não aparecem para o time.
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { parseQuick } from '../utils/quick'
@@ -29,7 +27,6 @@ const list = computed(() => drafts.value
 const GROUPS = [['today', 'Hoje', (a) => a < 1], ['week', 'Esta semana', (a) => a >= 1 && a <= 7], ['old', 'Esquecidos há mais de uma semana', (a) => a > 7]]
 const groups = computed(() => GROUPS.map(([id, label, test]) => ({ id, label, items: list.value.filter((d) => test(ageDays(d))) })).filter((g) => g.items.length))
 
-// projeto sugerido: o que tem mais tarefas com as mesmas etiquetas; sem etiqueta, o primeiro projeto
 function suggest(d) {
   let best = null, score = 0
   for (const p of state.projects) {

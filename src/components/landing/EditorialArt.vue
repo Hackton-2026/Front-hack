@@ -7,7 +7,6 @@ const props = defineProps({
   lines: { type: Array, default: () => [] },
   animated: Boolean,
 })
-// O loop só roda com o card na tela; fora dela as animações ficam pausadas.
 const root = ref(null)
 const visible = ref(false)
 let observer
@@ -47,26 +46,21 @@ onUnmounted(() => observer?.disconnect())
 .editorial-art--notes { background: #593722; }.notes-shapes { position: absolute; inset: 23% 13% auto; display: flex; }.notes-shapes > span { position: relative; display: block; width: 140px; height: 125px; padding: 20px; transform: rotate(-12deg); background: #ded3b9; box-shadow: 0 12px 20px #0003; color: #423320; font-size: 10px; }.notes-shapes > span:last-child { background: #e18b4b; transform: rotate(9deg) translate(-20px, 12px); }.notes-shapes em { font: italic 24px var(--font-serif); }.notes-shapes b { position: absolute; bottom: 10px; right: 14px; font-size: 23px; font-weight: 400; }
 @media (max-width: 760px) { .art-caption { font-size: 25px; }.editorial-art { padding: 20px; }.art-caption { left: 20px; bottom: 20px; } }
 @media (min-width: 761px) and (max-width: 1050px) { .editorial-art { padding: 17px; }.art-caption { left: 17px; bottom: 17px; font-size: 23px; } }
-/* Mini motion dos cards do blog: só transform/opacity, cada loop termina no estado em que começa. */
 .motion { display: none; }
 .editorial-art--animated:not(.is-visible) * { animation-play-state: paused !important; }
 @media (prefers-reduced-motion: no-preference) {
   .editorial-art--animated .motion { display: block; }
-  /* orbit: um satélite percorre a órbita e passa atrás do planeta */
   .orbit-sat { position: absolute; inset: 15%; transform: rotate(-35deg) scaleX(1.3); }
   .orbit-sat > i { position: absolute; inset: 0; animation: art-spin 8s linear infinite; }
   .orbit-sat > i::before { content: ''; position: absolute; top: -4px; left: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: #ffe0b6; box-shadow: 0 0 10px #ffe0b6aa; }
-  /* calendar: o destaque caminha pelos dias da semana */
   .editorial-art--animated .calendar-shape > div:nth-child(2) { position: relative; isolation: isolate; }
   .editorial-art--animated .calendar-shape > div:nth-child(2) > span:nth-child(3) { background: none; color: inherit; }
   .cal-dot { position: absolute; z-index: -1; top: 0; left: 0; width: calc((100% - 24px) / 5); height: 100%; border-radius: 50%; background: #e56515; animation: cal-walk 8s var(--ease, ease) infinite; }
-  /* tasks: o último item é marcado como feito */
   .editorial-art--animated .task-shapes > span:last-child > i { display: grid; }
   .editorial-art--animated .task-shapes > span:last-child > i > * { grid-area: 1 / 1; }
   .editorial-art--animated .task-shapes > span:last-child > i > :first-child { animation: task-circle 6s ease infinite; }
   .task-tick { animation: task-tick 6s ease infinite; }
   .editorial-art--animated .task-shapes b { animation: task-nudge 6s ease infinite; }
-  /* team: avatares respiram em sequência e alguém está digitando */
   .editorial-art--animated .team-shapes > span { --y: 0px; animation: team-bob 6s ease-in-out infinite; }
   .editorial-art--animated .team-shapes > span:nth-child(2) { --y: -10px; animation-delay: -2s; }
   .editorial-art--animated .team-shapes > span:nth-child(3) { --y: 10px; animation-delay: -4s; }
@@ -74,18 +68,14 @@ onUnmounted(() => observer?.disconnect())
   .team-bubble > i { width: 5px; height: 5px; border-radius: 50%; background: #605b4f; animation: team-dot 1.5s ease-in-out infinite; }
   .team-bubble > i:nth-child(2) { animation-delay: .2s; }
   .team-bubble > i:nth-child(3) { animation-delay: .4s; }
-  /* board: um cartão avança de coluna em coluna */
   .editorial-art--animated .board-shapes > div:nth-child(2) { position: relative; }
   .editorial-art--animated .board-shapes > div:nth-child(odd) > span:nth-of-type(2) { opacity: 0; }
   .board-mover { position: absolute; width: 100%; box-shadow: 0 8px 16px #0005; animation: board-move 8s var(--ease, ease) infinite; }
-  /* wiki: as linhas da página vão sendo escritas */
   .editorial-art--animated .wiki-shapes i { transform-origin: 0 50%; animation: wiki-line 8s ease infinite; }
   .editorial-art--animated .wiki-shapes i:nth-of-type(2) { animation-delay: -7.6s; }
   .editorial-art--animated .wiki-shapes i:nth-of-type(3) { animation-delay: -7.2s; }
-  /* focus: ondas calmas saindo do centro */
   .focus-ripple { position: absolute; inset: 30%; border: 1px solid #e56515; border-radius: 50%; animation: focus-ripple 6s ease-out infinite; }
   .focus-ripple + .focus-ripple { animation-delay: -3s; }
-  /* notes: as notas flutuam e o rascunho ainda está sendo escrito */
   .editorial-art--animated .notes-shapes > span { --r: -12deg; --tx: 0px; --ty: 0px; animation: notes-float 7s ease-in-out infinite; }
   .editorial-art--animated .notes-shapes > span:last-child { --r: 9deg; --tx: -20px; --ty: 12px; animation-delay: -3.5s; }
   .editorial-art--animated .notes-caret { display: inline-block; width: 1.5px; height: 18px; margin-left: 3px; vertical-align: -3px; background: currentColor; animation: notes-caret 1.2s steps(1) infinite; }

@@ -1,4 +1,3 @@
-// Ícones de traço 24x24 da área logada (stroke="currentColor")
 export const ICON = {
   work: 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 16.5h7 M16.5 13v7',
   wiki: 'M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1z M12 6v14',
@@ -25,7 +24,6 @@ export const ICON = {
   user: 'M12 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8 M4 21c0-4 4-6 8-6s8 2 8 6',
   chat: 'M4 5h16v11H9l-5 4z',
   keyboard: 'M3 6h18v12H3z M7 10h.01 M11 10h.01 M15 10h.01 M7 14h10',
-  // menu do projeto e "Mais" (desenhos no estilo do Plane)
   sliders: 'M4 6h10 M18 6h2 M16 4v4 M4 12h4 M12 12h8 M10 10v4 M4 18h12 M20 18h0 M18 16v4',
   newitem: 'M12 4H5v15h14v-7 M15 5l4 4 M10 14l1-4 7-7 3 3-7 7z',
   overview: 'M4 4h16v16H4z M8 15l3-3 2 2 3-4',

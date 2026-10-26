@@ -1,5 +1,3 @@
-// Planos da landing e do checkout (os preços e códigos batem com os Plan do backend; o servidor recalcula o valor cobrado).
-// shortcut: planos fixos no front; quando o backend expuser /api/billing/ sem login, buscar de lá
 export const PLANS = [
   { code: 'free', name: 'Grátis', desc: 'Para organizar a vida e projetos pessoais.', month: 0, year: 0, cta: 'Começar grátis',
     features: ['Tarefas e listas ilimitadas', 'Até 3 quadros', '100 MB de armazenamento', 'Apps web e celular'] },

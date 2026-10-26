@@ -1,6 +1,4 @@
 <script setup>
-// Notas (os Stickies do Plane, em página inteira): fixar no topo, buscar, filtrar por cor e por #etiqueta,
-// e transformar a nota em rascunho de tarefa. Ficam só para você.
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { useNotes } from '../composables/useOnboarding'
@@ -44,7 +42,6 @@ async function pin(n, el) {
   await nextTick()
   if (!reduced) gsap.fromTo(root.value.querySelector(`[data-note="${n.id}"]`), { y: -10, autoAlpha: 0.4 }, { y: 0, autoAlpha: 1, duration: 0.4, ease: 'power3.out' })
 }
-// primeira linha vira o título do rascunho; o resto, a descrição
 function toDraft(n) {
   const [first, ...rest] = n.text.trim().split('\n')
   if (!first) { toast('Escreva algo na nota antes.'); return }

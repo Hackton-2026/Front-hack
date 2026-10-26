@@ -1,5 +1,4 @@
 <script setup>
-// Anel de progresso dos ciclos e módulos (como no Plane): enche com GSAP quando o valor muda
 import { onMounted, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 

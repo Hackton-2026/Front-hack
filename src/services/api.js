@@ -1,6 +1,5 @@
 import { API_URL } from '../config'
 
-// Tokens JWT ficam no localStorage para sobreviver ao F5
 export const tokens = {
   get access() { return localStorage.getItem('access') },
   get refresh() { return localStorage.getItem('refresh') },
@@ -14,7 +13,6 @@ export const tokens = {
   },
 }
 
-// Transforma o erro do DRF ({detail} ou {campo: [msgs]}) em texto legível
 function errorText(data) {
   if (!data) return 'Não foi possível falar com o servidor.'
   if (typeof data === 'string') return data
@@ -33,13 +31,8 @@ async function refreshAccess() {
   return true
 }
 
-/**
- * Chamada à API. `body` pode ser objeto (vira JSON) ou FormData (upload de arquivo).
- * Em 401 tenta renovar o token uma vez; se não der, desloga.
- * Erros viram `throw new Error(mensagem legível)` com `.data` e `.status`.
- */
 export async function api(path, { method = 'GET', body, auth = true, headers: extra = {} } = {}, retry = true) {
-  const headers = { ...extra } // ex.: Idempotency-Key do checkout
+  const headers = { ...extra }
   if (auth && tokens.access) headers.Authorization = `Bearer ${tokens.access}`
   const isForm = body instanceof FormData
   if (body && !isForm) headers['Content-Type'] = 'application/json'
@@ -66,7 +59,6 @@ export async function api(path, { method = 'GET', body, auth = true, headers: ex
   return data
 }
 
-// Monta um FormData ignorando undefined; null vira "" (o DRF entende como "remover" em campos de imagem)
 export function toFormData(obj) {
   const fd = new FormData()
   for (const [key, value] of Object.entries(obj)) {
@@ -75,7 +67,6 @@ export function toFormData(obj) {
   return fd
 }
 
-// Valor de um campo de imagem para envio: File = nova foto, null = remover, URL atual = não envia
 export const imageField = (value) => (typeof value === 'string' ? undefined : value)
 
 export function wsUrl(path) {

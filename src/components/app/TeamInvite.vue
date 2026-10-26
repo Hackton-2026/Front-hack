@@ -1,6 +1,4 @@
 <script setup>
-// "Traga seu time" do Começar: convida alguém para um PROJETO (o workspace é pessoal).
-// Usa a mesma API da página de membros do projeto; quem é convidado aceita entrando com o e-mail.
 import { computed, nextTick, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
@@ -15,9 +13,9 @@ const { complete } = useOnboarding()
 const email = ref('')
 const error = ref('')
 const sending = ref(false)
-const invited = ref([]) // { email, project }
+const invited = ref([])
 const list = ref(null)
-const mine = computed(() => state.projects.filter((p) => p.my_permission === 'full')) // só dá para convidar onde você tem permissão total
+const mine = computed(() => state.projects.filter((p) => p.my_permission === 'full'))
 const projectId = ref(null)
 watch(mine, (ps) => { if (!ps.some((p) => p.id === projectId.value)) projectId.value = ps[0]?.id ?? null }, { immediate: true })
 

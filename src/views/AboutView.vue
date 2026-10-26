@@ -1,5 +1,4 @@
 <script setup>
-// Sobre: a história do projeto (o que foi construído, na ordem) e os princípios que guiam as decisões do produto
 import { onMounted, onUnmounted } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'

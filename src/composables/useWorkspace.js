@@ -3,9 +3,6 @@ import { api } from '../services/api'
 import { useUi } from './useUi'
 import { PROJECT_ICONS } from '../components/app/projectIcons'
 
-// Dados da área logada. Projetos, tarefas (com checklist e etiquetas), membros, atividade e caixa de entrada
-// vêm da API do Back-hack (/api/...). Rascunhos, wiki e preferências são pessoais e ficam no navegador.
-// As mudanças aparecem na hora (otimista) e são enviadas em seguida; se o servidor recusar, voltam atrás.
 
 export const STATUSES = [
   { id: 'todo', name: 'Pendente', group: 'not_started', color: '#919599' },
@@ -37,15 +34,12 @@ const localDefaults = () => ({
     weekStart: 0, theme: 'dark', density: 'comfortable',
     accent: '#e56515', contrast: false, calm: false, showIds: true, handCursor: true, shortcuts: true, defaultView: 'list', defaultPriority: '', assignMe: true,
     notify: { assigned: true, mention: true, due: true, status: true, done: false, digest: false, followOwn: true },
-    // barra lateral (pessoal, como no Plane): o que aparece, o que está fixado do "Mais" e o que tem estrela
     nav: { drafts: true, mine: true, notes: true },
     pinned: [],
     features: { cycles: true, modules: true, views: true, pages: true },
-    // Wiki (como no Plane): coleções de páginas e etiquetas das páginas
     wiki: { collections: [{ id: 'geral', name: 'Minhas páginas' }], labels: [] },
     stars: [],
     open: { workspace: true, projects: true, try: true },
-    // Home: links rápidos e o que a pessoa abriu por último (kind:id)
     quicklinks: [
       { id: 'q1', title: 'Guia de início', url: '/comecar', at: new Date().toISOString() },
       { id: 'q2', title: 'Sua wiki', url: '/wiki', at: new Date().toISOString() },
@@ -67,7 +61,6 @@ export const UPDATE_STATES = [
   { id: 'at_risk', name: 'Em risco', color: '#f2c46d' },
   { id: 'off_track', name: 'Atrasado', color: '#ff5b4d' },
 ]
-// capas da visão geral do projeto (gradientes na paleta do Novexo)
 export const COVERS = [
   'radial-gradient(120% 140% at 15% 20%, #e56515 0%, #5a1d05 45%, #0f0e0d 100%)',
   'linear-gradient(120deg, #fba45c 0%, #e56515 40%, #2a1408 100%)',
@@ -81,7 +74,7 @@ function readLocal() {
     const data = JSON.parse(localStorage.getItem(LOCAL_KEY))
     const d = localDefaults()
     if (data) return { ...d, ...data, prefs: { ...d.prefs, ...data.prefs, notify: { ...d.prefs.notify, ...data.prefs?.notify } } }
-  } catch { /* nada salvo */ }
+  } catch { }
   return localDefaults()
 }
 const local = readLocal()
@@ -94,12 +87,12 @@ const state = reactive({
   isAdmin: false,
   workspaceName: '',
   slug: '',
-  settings: {}, // seções de Workspace.settings (general, governance, products, identity, schedule, integrations)
-  members: [], // do workspace (que é pessoal: normalmente só você)
-  people: [], // todo mundo dos seus projetos (os seus e os compartilhados com você): nomes, cores e fotos
-  invites: [], // convites para projetos que você recebeu e ainda não respondeu
+  settings: {},
+  members: [],
+  people: [],
+  invites: [],
   projects: [],
-  tasks: [...local.drafts], // rascunhos locais + tarefas da API
+  tasks: [...local.drafts],
   activity: [],
   inbox: [],
   cycles: [],
@@ -110,12 +103,10 @@ const state = reactive({
   prefs: local.prefs,
 })
 
-// Só a parte pessoal vai para o navegador
 watch(() => [state.tasks.filter((t) => t.draft), state.docs, state.prefs], ([drafts, docs, prefs]) => {
-  try { localStorage.setItem(LOCAL_KEY, JSON.stringify({ drafts, docs, prefs })) } catch { /* modo privado */ }
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify({ drafts, docs, prefs })) } catch { }
 }, { deep: true })
 
-// ---- tradução entre o formato da API e o do front
 const fromApi = (t) => ({
   id: t.id, number: t.number, code: t.code, projectId: t.project, title: t.title, description: t.description, status: t.status,
   priority: t.priority, assignees: t.assignees, due: t.due, start: t.start, parent: t.parent, creator: t.creator, tags: t.tags, checklist: t.checklist, completionNote: t.completion_note,
@@ -138,7 +129,6 @@ async function load() {
   state.loading = true
   state.error = ''
   try {
-    // o workspace vem antes: no primeiro acesso é essa chamada que cria ele (as outras em paralelo disputariam a criação)
     const ws = await api('/api/workspace/')
     const [projects, tasks, activity, inbox, cycles, modules, pages, views, invites] = await Promise.all(
       ['projects', 'tasks', 'activity', 'inbox', 'cycles', 'modules', 'pages', 'views', 'invites'].map((r) => api(`/api/${r}/`)),
@@ -155,7 +145,6 @@ async function load() {
   }
 }
 
-// Depois de mudar algo, o histórico e a caixa de entrada vêm de novo (os signals do backend escrevem neles)
 let refreshTimer
 function refreshFeed() {
   clearTimeout(refreshTimer)
@@ -165,17 +154,16 @@ function refreshFeed() {
       state.activity = activity.map(fromActivity)
       state.inbox = inbox
       state.invites = invites
-    } catch { /* tenta de novo na próxima mudança */ }
+    } catch { }
   }, 300)
 }
 
 const fail = (e) => useUi().toast(e.message || 'Não foi possível salvar. Tente de novo.')
-const queues = new Map() // fila de PATCHes por tarefa
+const queues = new Map()
 
 export function useWorkspace() {
   const project = (id) => state.projects.find((p) => p.id === id)
   const member = (id) => state.people.find((m) => m.id === id) || state.members.find((m) => m.id === id)
-  // quem participa do projeto (pode ser responsável). Sem projeto: todo mundo dos seus projetos
   const peopleOf = (projectId) => {
     const ids = project(projectId)?.members
     return ids ? ids.map(member).filter(Boolean) : state.people
@@ -187,9 +175,8 @@ export function useWorkspace() {
   const mine = computed(() => state.tasks.filter((t) => !t.draft && t.assignees.includes(state.me)))
   const drafts = computed(() => state.tasks.filter((t) => t.draft))
   const isOverdue = (t) => t.due && t.status !== 'done' && t.due < day(0)
-  const unread = computed(() => state.inbox.filter((n) => !n.read).length + state.invites.length) // convites pendentes também contam
+  const unread = computed(() => state.inbox.filter((n) => !n.read).length + state.invites.length)
 
-  // Cria na hora com id temporário; quando a API responde, a mesma tarefa ganha o id e o código reais
   function createTask(fields) {
     const task = reactive({
       id: uid(), number: null, code: '', projectId: null, title: '', status: 'todo', priority: '', assignees: [state.me], due: null, start: null, parent: null, creator: state.me, tags: [], cycle: null, modules: [],
@@ -213,9 +200,7 @@ export function useWorkspace() {
       fail(e)
     }
   }
-  // Devolve true se salvou; em erro desfaz a mudança, mostra o aviso e devolve a mensagem
   async function updateTask(task, fields) {
-    // rascunho publicado = cria a tarefa de verdade na API
     if (task.draft) {
       Object.assign(task, fields, { updatedAt: new Date().toISOString() })
       if (fields.draft === false && task.projectId) save(task)
@@ -223,8 +208,7 @@ export function useWorkspace() {
     }
     const before = Object.fromEntries(Object.keys(fields).map((k) => [k, structuredClone(toRaw(task[k]) ?? null)]))
     Object.assign(task, fields, { updatedAt: new Date().toISOString() })
-    if (typeof task.id !== 'number') return true // ainda criando: a criação leva os campos atuais
-    // as mudanças de uma mesma tarefa vão uma de cada vez, na ordem (senão a resposta antiga sobrescreve a nova)
+    if (typeof task.id !== 'number') return true
     const run = async () => {
       try {
         const data = await api(`/api/tasks/${task.id}/`, { method: 'PATCH', body: toApi(fields) })
@@ -254,7 +238,6 @@ export function useWorkspace() {
   }
   async function createProject(name, color = '#e56515') {
     try {
-      // projeto novo nasce com um ícone sorteado (dá para trocar na visão geral)
       const icon = PROJECT_ICONS[Math.floor(Math.random() * PROJECT_ICONS.length)]
       const p = await api('/api/projects/', { method: 'POST', body: { name, color, icon } })
       state.projects.push(p)
@@ -265,7 +248,6 @@ export function useWorkspace() {
       return null
     }
   }
-  // Projeto: edição otimista (nome, descrição, ícone, capa); volta atrás se o servidor recusar
   async function updateProject(p, fields) {
     const before = Object.fromEntries(Object.keys(fields).map((k) => [k, p[k]]))
     Object.assign(p, fields)
@@ -291,7 +273,6 @@ export function useWorkspace() {
   }
   const projectActivity = async (id) => (await api(`/api/activity/?project=${id}`)).map(fromActivity)
 
-  // Ciclos, módulos, páginas e visões: mesma receita (cria, edita otimista, apaga)
   async function createItem(kind, body) {
     try {
       const item = await api(`/api/${KINDS[kind]}/`, { method: 'POST', body })
@@ -320,7 +301,6 @@ export function useWorkspace() {
     list.splice(i, 1)
     try {
       await api(`/api/${KINDS[kind]}/${item.id}/`, { method: 'DELETE' })
-      // o servidor tira a tarefa do ciclo / módulo apagado; aqui também
       if (kind === 'cycle') state.tasks.forEach((t) => t.cycle === item.id && (t.cycle = null))
       if (kind === 'module') state.tasks.forEach((t) => t.modules?.includes(item.id) && (t.modules = t.modules.filter((m) => m !== item.id)))
     } catch (e) {
@@ -328,7 +308,6 @@ export function useWorkspace() {
       fail(e)
     }
   }
-  // Arquivados e lixeira
   const archivedProjects = () => api('/api/projects/?archived=1')
   const trashedTasks = async () => (await api('/api/tasks/?trash=1')).map(fromApi)
   async function restoreProject(p) {
@@ -343,7 +322,6 @@ export function useWorkspace() {
       return false
     }
   }
-  // hard: exclui de vez (tarefas, ciclos, páginas e chat juntos); sem ele, só arquiva
   async function archiveProject(p, hard = false) {
     try {
       await api(`/api/projects/${p.id}/${hard ? '?hard=1' : ''}`, { method: 'DELETE' })
@@ -366,21 +344,17 @@ export function useWorkspace() {
       return false
     }
   }
-  // estrela pessoal (fica no navegador): kind:id
   const starred = (kind, id) => state.prefs.stars.includes(`${kind}:${id}`)
   function toggleStar(kind, id) {
     const key = `${kind}:${id}`
     state.prefs.stars = starred(kind, id) ? state.prefs.stars.filter((s) => s !== key) : [...state.prefs.stars, key]
   }
-  // recentes da Home: o último aberto vai para o topo (máx. 20)
   function touchRecent(kind, id) {
     const key = `${kind}:${id}`
     state.prefs.recents = [{ key, at: new Date().toISOString() }, ...state.prefs.recents.filter((r) => r.key !== key)].slice(0, 20)
   }
-  // progresso de um grupo de tarefas (ciclo, módulo)
   const doneRatio = (list) => (list.length ? list.filter((t) => t.status === 'done').length / list.length : 0)
 
-  // PATCH {name?, slug?, settings?: {seção: {...}}} (só admin). Devolve true se salvou.
   async function saveWorkspace(body) {
     try {
       const ws = await api('/api/workspace/', { method: 'PATCH', body })
@@ -409,11 +383,11 @@ export function useWorkspace() {
   }
   async function markRead(n) {
     n.read = true
-    try { await api(`/api/inbox/${n.id}/`, { method: 'PATCH', body: { read: true } }) } catch { /* fica lida só aqui */ }
+    try { await api(`/api/inbox/${n.id}/`, { method: 'PATCH', body: { read: true } }) } catch { }
   }
   async function markAllRead() {
     state.inbox.forEach((n) => (n.read = true))
-    try { await api('/api/inbox/read-all/', { method: 'POST' }) } catch { /* fica lida só aqui */ }
+    try { await api('/api/inbox/read-all/', { method: 'POST' }) } catch { }
   }
   const taskActivity = async (id) => (await api(`/api/activity/?task=${id}`)).map(fromActivity)
   const taskComments = (id) => api(`/api/tasks/${id}/comments/`)
@@ -427,12 +401,10 @@ export function useWorkspace() {
     const list = tasksOf(projectId)
     return list.length ? list.filter((t) => t.status === 'done').length / list.length : 0
   }
-  // ---- pessoas do projeto e convites (o workspace é seu; convites são para projetos)
   const projectMembers = (pid) => api(`/api/projects/${pid}/members/`)
   const inviteToProject = (pid, email, permission) => api(`/api/projects/${pid}/invitations/`, { method: 'POST', body: { email, permission } })
   const cancelInvite = (pid, inviteId) => api(`/api/projects/${pid}/invitations/${inviteId}/`, { method: 'DELETE' })
   const setProjectPermission = (pid, userId, permission) => api(`/api/projects/${pid}/members/${userId}/`, { method: 'PATCH', body: { permission } })
-  // Cargo da pessoa no projeto ("Desenvolvedor"...). Atualiza na hora o mapa de cargos do projeto (usado para atribuir por cargo)
   async function setProjectRole(pid, userId, title) {
     const res = await api(`/api/projects/${pid}/members/${userId}/`, { method: 'PATCH', body: { title } })
     const p = project(pid)
@@ -444,7 +416,6 @@ export function useWorkspace() {
     }
     return res.title
   }
-  // Cargos do projeto com quem tem cada um: [{ title, ids }], para "atribuir a todos os Desenvolvedores"
   const rolesOf = (pid) => {
     const groups = {}
     for (const [id, title] of Object.entries(project(pid)?.titles || {})) (groups[title] ||= []).push(Number(id))
@@ -453,7 +424,6 @@ export function useWorkspace() {
   async function removeProjectMember(pid, userId) {
     await api(`/api/projects/${pid}/members/${userId}/`, { method: 'DELETE' })
     if (userId === state.me) {
-      // saiu do projeto: ele e as tarefas dele somem daqui
       state.projects = state.projects.filter((p) => p.id !== pid)
       state.tasks = state.tasks.filter((t) => t.draft || t.projectId !== pid)
     } else {
@@ -466,14 +436,13 @@ export function useWorkspace() {
     const res = await api(`/api/invites/${encodeURIComponent(token)}/accept/`, { method: 'POST' })
     state.invites = state.invites.filter((i) => i.token !== token)
     state.loaded = false
-    await load() // o projeto novo, as tarefas dele e as pessoas entram de uma vez
+    await load()
     return res
   }
   async function declineInvite(token) {
     await api(`/api/invites/${encodeURIComponent(token)}/decline/`, { method: 'POST' })
     state.invites = state.invites.filter((i) => i.token !== token)
   }
-  // ---- chat do projeto
   const projectMessages = (pid, after) => api(`/api/projects/${pid}/messages/${after ? `?after=${after}` : ''}`)
   const sendProjectMessage = (pid, body) => api(`/api/projects/${pid}/messages/`, { method: 'POST', body: { body } })
 

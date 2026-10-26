@@ -1,6 +1,4 @@
 <script setup>
-// Favoritos: tudo o que tem estrela (projetos, visões, páginas, módulos, ciclos e tarefas) num lugar só.
-// Filtra por tipo, reordena (a ordem vale para todo lugar que lista favoritos) e sugere o que você abre muito.
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { staggerIn } from '../utils/motion'
@@ -15,7 +13,6 @@ const { openTask } = useUi()
 const root = ref(null)
 const kind = ref('')
 
-// "tipo:id" → o que mostrar e para onde ir; some se o item não existe mais
 function resolve(key) {
   const [k, raw] = key.split(':')
   const id = Number(raw)
@@ -34,7 +31,6 @@ const shown = computed(() => all.value.filter((f) => !kind.value || f.kind === k
 const suggestions = computed(() => state.prefs.recents.map((r) => r.key).filter((k) => !state.prefs.stars.includes(k)).map(resolve).filter(Boolean).slice(0, 4))
 const unstar = (f) => { const [k, id] = f.key.split(':'); toggleStar(k, Number(id)) }
 const star = (f) => { const [k, id] = f.key.split(':'); if (!starred(k, Number(id))) toggleStar(k, Number(id)) }
-// mover na lista de estrelas (a ordem salva é a de prefs.stars)
 function move(f, dir) {
   const stars = [...state.prefs.stars]
   const i = stars.indexOf(f.key), j = i + dir

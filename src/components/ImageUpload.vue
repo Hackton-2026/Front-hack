@@ -2,15 +2,11 @@
 import { ref, watch } from 'vue'
 import { compressImage } from '../utils/image'
 
-/**
- * Upload de imagem com preview, clique ou arrastar-e-soltar, e compressão no navegador.
- * v-model: string (URL atual vinda da API) | File (nova imagem) | null (sem imagem / remover)
- */
 const model = defineModel()
 const props = defineProps({
-  maxSide: { type: Number, default: 1600 }, // maior lado em px depois de reduzir
-  round: Boolean, // formato de avatar
-  ratio: { type: String, default: '4 / 3' }, // proporção da área (ex.: '1', '16 / 9')
+  maxSide: { type: Number, default: 1600 },
+  round: Boolean,
+  ratio: { type: String, default: '4 / 3' },
   label: { type: String, default: 'Clique ou arraste uma imagem' },
 })
 
@@ -23,7 +19,7 @@ watch(model, (value, _, onCleanup) => {
   if (!(value instanceof File)) return (preview.value = value || null)
   const url = URL.createObjectURL(value)
   preview.value = url
-  onCleanup(() => URL.revokeObjectURL(url)) // libera memória ao trocar/desmontar
+  onCleanup(() => URL.revokeObjectURL(url))
 }, { immediate: true })
 
 async function pick(file) {
@@ -44,7 +40,7 @@ function onDrop(e) {
 
 function onChange(e) {
   pick(e.target.files[0])
-  e.target.value = '' // permite escolher o mesmo arquivo de novo
+  e.target.value = ''
 }
 </script>
 

@@ -3,14 +3,11 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin'
 
 gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin)
-// Anima pelo relógio real: se a aba travar ou ficar em segundo plano, o conteúdo aparece no tempo certo
 gsap.ticker.lagSmoothing(0)
 
 export { gsap }
-// data-calm = "Modo de desempenho" ligado nos Ajustes
 export const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.calm === 'on'
 
-// Mesma entrada de letras na página inicial, no blog e no Como funciona.
 export function revealTitleCharacters(targets) {
   return gsap.from(targets, {
     y: 10,
@@ -24,13 +21,6 @@ export function revealTitleCharacters(targets) {
   })
 }
 
-/**
- * v-reveal            → o elemento aparece suave ao entrar na tela
- * v-reveal.stagger    → os filhos aparecem em cascata
- * v-reveal.now        → anima ao montar (sem esperar o scroll), bom para o topo da página
- * v-reveal="0.2"      → atraso em segundos
- * v-reveal="{ now: cond, delay }" → o .now decidido em tempo de execução (o mesmo componente no topo de uma página e no meio de outra)
- */
 export const vReveal = {
   mounted(el, { modifiers, value }) {
     if (prefersReducedMotion()) return
@@ -46,7 +36,7 @@ export const vReveal = {
       duration: 1.2,
       ease: 'expo.out',
       stagger: 0.12,
-      clearProps: 'filter,transform', // tira blur/transform ao terminar, para não pesar no hover dos cards
+      clearProps: 'filter,transform',
       delay: Number(value) || 0,
       scrollTrigger: modifiers.now ? undefined : { trigger: el, start: 'top 88%', once: true },
     })
@@ -57,7 +47,6 @@ export const vReveal = {
   },
 }
 
-// Lista entrando em cascata (linhas de ciclos, módulos, páginas…)
 export function staggerIn(targets, opts = {}) {
   if (prefersReducedMotion() || !targets?.length) return
   gsap.fromTo(targets, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4, stagger: 0.035, ease: 'power2.out', clearProps: 'transform,opacity,visibility', ...opts })

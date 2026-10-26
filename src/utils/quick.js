@@ -1,5 +1,3 @@
-// Captura rápida: "Revisar copy #marketing !alta amanhã" → { title, tags, priority, due }.
-// Datas: hoje, amanhã, dd/mm (ano atual, ou o próximo se a data já passou).
 const PRIORITY = { urgente: 'urgent', alta: 'high', normal: 'normal', baixa: 'low' }
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 

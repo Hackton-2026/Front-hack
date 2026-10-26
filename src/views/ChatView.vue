@@ -20,7 +20,6 @@ const error = ref('')
 const list = ref()
 let socket = null
 
-// username -> usuário (para mostrar foto/nome na lista)
 const byUsername = computed(() => Object.fromEntries(users.value.map((u) => [u.username, u])))
 const others = computed(() => users.value.filter((u) => u.id !== user.value.id))
 const otherIn = (conv) => conv.participants.find((p) => p !== user.value.username) || user.value.username
@@ -54,12 +53,11 @@ watch(() => props.id, async (id) => {
   messages.value = []
   if (!id) return
   try {
-    // Histórico primeiro (isso também renova o token se precisar), depois o WebSocket
     messages.value = await api(`/api/chat/conversations/${id}/messages/`)
   } catch (e) {
     return (error.value = e.message)
   }
-  if (id !== props.id) return // trocou de conversa enquanto carregava
+  if (id !== props.id) return
   scrollDown()
   const ws = new WebSocket(wsUrl(`/ws/chat/${id}/`))
   ws.onopen = () => (online.value = true)

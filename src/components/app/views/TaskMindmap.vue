@@ -1,5 +1,4 @@
 <script setup>
-// Mapa mental: o projeto no centro, um ramo por status e as tarefas como folhas
 import { computed } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 import { useUi } from '../../../composables/useUi'

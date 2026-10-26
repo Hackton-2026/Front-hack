@@ -5,7 +5,6 @@ import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
 
-// Datas das atualizações obtidas no histórico de integração da dev.
 const formatDate = (date) =>
   new Intl.DateTimeFormat('pt-BR', {
     day: 'numeric',

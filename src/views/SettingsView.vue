@@ -1,6 +1,4 @@
 <script setup>
-// Ajustes no molde das settings do Plane e do ClickUp. Preferências pessoais ficam no navegador;
-// o resto é do workspace e vai para a API (/api/workspace/ settings, membros, times, itens, horas, webhooks e tokens).
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
@@ -49,7 +47,6 @@ const ROLE_NAMES = { owner: 'Dono', ...Object.fromEntries(ROLES) }
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['pages', 'Páginas']]
 
-// Formulários das telas de lista (SettingsList)
 const opts = (pairs) => pairs.map(([value, label]) => ({ value, label }))
 const LISTS = {
   teams: { path: '/api/teams/', noun: 'time', admin: true, fields: [
@@ -102,12 +99,12 @@ const LISTS = {
 const { user, updateMe, logout } = useAuth()
 const { state, PRIORITIES, STATUSES, project, member, saveWorkspace, updateProject, archiveProject, createTask, updateTask, clearLocal, load } = useWorkspace()
 const route = useRoute()
-const tab = ref(route.query.tab || 'profile') // o menu da conta abre direto em Perfil ou Preferências
+const tab = ref(route.query.tab || 'profile')
 watch(() => route.query.tab, (t) => { if (t) tab.value = t })
 const panel = ref(null)
 const status = ref('')
 const deleting = ref(null)
-const confirm2 = ref('') // ação perigosa esperando o segundo clique
+const confirm2 = ref('')
 const isAdmin = computed(() => state.isAdmin)
 const myRole = computed(() => state.members.find((m) => m.id === state.me)?.role)
 const canWrite = computed(() => !['guest', 'limited'].includes(myRole.value))
@@ -126,7 +123,6 @@ const twice = (key, run) => {
   run()
 }
 
-// ---- Seções de Workspace.settings (só admin muda; cada mudança é um PATCH mesclado no backend)
 const section = (name, defaults) => computed(() => ({ ...defaults, ...(state.settings[name] || {}) }))
 const general = section('general', { size: '', timezone: 'America/Sao_Paulo' })
 const governance = section('governance', { createProjects: 'member', membersInvite: true, guestsSeeAll: false, deleteTasks: 'admin', publicPages: false })
@@ -143,7 +139,6 @@ const SECTION_TOGGLES = {
   ],
 }
 
-// ---- Perfil
 const profile = reactive({ first_name: user.value?.first_name || '', email: user.value?.email || '' })
 async function saveProfile() {
   if (!user.value) { status.value = 'Entre na sua conta para editar o perfil.'; return }
@@ -154,7 +149,6 @@ async function saveProfile() {
     status.value = e.message
   }
 }
-// ---- foto de perfil: salva na hora e aparece nos avatares do app inteiro (quem entra pelo Google já vem com a foto de lá)
 const photoInput = ref(null)
 const photoBusy = ref(false)
 const initials = computed(() => (user.value?.first_name || user.value?.username || '?').slice(0, 2).toUpperCase())
@@ -163,7 +157,7 @@ async function setPhoto(file) {
   photoBusy.value = true
   try {
     await updateMe(toFormData({ avatar: file ? await compressImage(file, 512) : null }))
-    load() // os avatares de projetos, chat e tarefas vêm do workspace
+    load()
     status.value = file ? 'Foto atualizada.' : 'Foto removida.'
   } catch (e) {
     status.value = e.message
@@ -172,15 +166,13 @@ async function setPhoto(file) {
   }
 }
 
-// ---- Notificações do navegador (a permissão é do navegador)
 const permission = ref(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
 const enableBrowser = async () => (permission.value = await Notification.requestPermission())
 const testBrowser = () => new Notification('Novexo', { body: 'Notificação de teste: está tudo certo por aqui.' })
 
-// ---- Celular (push pelo Firebase): cada aparelho ativa o seu; os avisos da caixa de entrada chegam mesmo com o site fechado
 const push = reactive({ on: !!savedToken(), server: null, devices: [], busy: false, msg: '' })
 async function loadDevices() {
-  try { Object.assign(push, (({ enabled, devices }) => ({ server: enabled, devices }))(await api('/api/devices/'))) } catch { /* fica sem a lista */ }
+  try { Object.assign(push, (({ enabled, devices }) => ({ server: enabled, devices }))(await api('/api/devices/'))) } catch { }
 }
 async function pushAction(fn, done) {
   push.busy = true
@@ -200,13 +192,10 @@ const turnPushOn = () => pushAction(enablePush, 'Ativado neste aparelho.')
 const turnPushOff = () => pushAction(disablePush, 'Desativado neste aparelho.')
 const testPush = () => pushAction(() => api('/api/devices/test/', { method: 'POST' }), 'Teste enviado. Deve chegar em alguns segundos.')
 
-// ---- Geral
 const slugInput = ref('')
 watch(() => state.slug, (s) => (slugInput.value = s), { immediate: true })
 const origin = location.origin
 
-// ---- Planos
-// O pagamento é na página de checkout (/checkout, Pix ou cartão pelo app billing); aqui ficam o plano, os botões e o histórico.
 const billing = ref(null)
 const payments = ref([])
 const yearly = ref(false)
@@ -217,7 +206,6 @@ async function loadBilling() {
     payments.value = list
   } catch (e) { status.value = e.message }
 }
-// aberto direto na aba (link "?tab=billing", a volta do checkout): o watch do tab só roda quando a aba muda
 if (tab.value === 'billing') loadBilling()
 if (tab.value === 'notify') loadDevices()
 const price = (cents) => (cents == null ? 'Sob consulta' : cents === 0 ? 'Grátis' : `R$ ${(cents / 100).toLocaleString('pt-BR')}/membro/mês`)
@@ -229,7 +217,6 @@ const checkoutLink = (p) => `/checkout?plano=${p.code}&ciclo=${yearly.value ? 'a
 const brl = (cents) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const PAY_STATUS = { approved: 'ok', pending: 'wait', rejected: 'bad', expired: 'bad', canceled: 'bad' }
 
-// ---- Cronograma
 const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 const dailyHours = computed(() => Math.max(0, (toMin(schedule.value.end) - toMin(schedule.value.start)) / 60))
 const fmtHours = (h) => `${Number.isInteger(h) ? h : h.toFixed(1)}h`
@@ -242,7 +229,6 @@ function addHoliday() {
 }
 const fmtDate = (d) => new Date(`${String(d).slice(0, 10)}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 
-// ---- Identidade
 const newDomain = ref('')
 function addDomain() {
   const d = newDomain.value.trim().toLowerCase().replace(/^@/, '')
@@ -251,12 +237,10 @@ function addDomain() {
   newDomain.value = ''
 }
 
-// ---- Projetos
 const projectId = ref(null)
 const proj = computed(() => project(projectId.value) || state.projects[0])
 const setFeature = (key) => (state.prefs.features[key] = !state.prefs.features[key])
 
-// ---- Etiquetas (renomear/apagar passa por todas as tarefas)
 const tags = computed(() => {
   const counts = {}
   state.tasks.filter((t) => !t.draft).forEach((t) => t.tags.forEach((tag) => (counts[tag] = (counts[tag] || 0) + 1)))
@@ -269,7 +253,6 @@ function renameTag(from, e) {
 }
 const removeTag = (tag) => state.tasks.filter((t) => !t.draft && t.tags.includes(tag)).forEach((t) => updateTask(t, { tags: t.tags.filter((x) => x !== tag) }))
 
-// ---- Exportar
 function download(name, text, type) {
   const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([text], { type })), download: name })
   a.click()
@@ -290,7 +273,6 @@ function exportCsv() {
   status.value = 'Planilha baixada.'
 }
 
-// ---- Importar tarefas de CSV (o mesmo formato do Exportar; colunas pelo nome do cabeçalho)
 const importProject = ref('')
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase()
 const byName = (list, v) => list.find((x) => norm(x.name) === norm(v) || x.id === norm(v))?.id
@@ -337,7 +319,6 @@ async function onImport(e) {
         <h2>{{ TITLES[tab] }}</h2>
         <p v-if="!isAdmin && ['general', 'billing', 'identity', 'governance', 'schedule', 'wiki', 'ai', 'webhooks'].includes(tab)" class="hint">Só administradores mudam esta seção.</p>
 
-        <!-- ================= Minha conta ================= -->
         <template v-if="tab === 'profile'">
           <form class="form" @submit.prevent="saveProfile">
             <div v-if="user" class="photo">
@@ -439,7 +420,6 @@ async function onImport(e) {
           </ul>
         </template>
 
-        <!-- ================= Administração ================= -->
         <template v-else-if="tab === 'general'">
           <div class="form cols">
             <label>Nome do workspace <input :value="state.workspaceName" :disabled="!isAdmin" @change="saveWorkspace({ name: $event.target.value })" /></label>
@@ -456,7 +436,6 @@ async function onImport(e) {
         </template>
 
         <template v-else-if="tab === 'members'">
-          <!-- O workspace é pessoal: pessoas entram em PROJETOS, por convite, na página "Membros" de cada projeto -->
           <p class="hint">Seu workspace é só seu: notas, wiki e rascunhos ficam com você. Para trabalhar junto, convide pessoas para um <strong>projeto</strong>; elas veem só aquele projeto.</p>
           <ul class="rows">
             <li v-for="m in state.people" :key="m.id">
@@ -604,7 +583,6 @@ async function onImport(e) {
           </fieldset>
         </template>
 
-        <!-- ================= Produtos ================= -->
         <template v-else-if="tab === 'wiki' || tab === 'ai'">
           <ul class="toggles">
             <template v-if="tab === 'wiki'">
@@ -618,7 +596,6 @@ async function onImport(e) {
           </ul>
         </template>
 
-        <!-- ================= Recursos ================= -->
         <template v-else-if="tab === 'projects'">
           <p v-if="!proj" class="hint">Nenhum projeto ainda. <RouterLink to="/projetos" class="link">Criar projeto</RouterLink></p>
           <template v-else>
@@ -678,7 +655,6 @@ async function onImport(e) {
 .page { box-sizing: border-box; display: flex; flex-direction: column; gap: 1rem; max-width: 68rem; height: 100%; padding: 1.25rem 1.5rem; }
 h1 { margin: 0; font: 650 1.375rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); }
 .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-/* categorias e conteúdo rolam cada um no seu espaço, a página fica parada */
 .tabs, .panel { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
 .tabs { padding-right: 0.25rem; scrollbar-width: thin; }
 @media (max-width: 760px) {

@@ -1,5 +1,4 @@
 <script setup>
-// Status: confere de verdade, do navegador de quem abre a página, as rotas públicas da API (sem login)
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'
@@ -9,10 +8,9 @@ import GooeyButton from '../components/GooeyButton.vue'
 import { API_URL } from '../config'
 import { vReveal } from '../utils/motion'
 
-const EVERY = 30 // segundos entre uma checagem e outra
-const SLOW_MS = 1500 // acima disso a rota conta como lenta
+const EVERY = 30
+const SLOW_MS = 1500
 
-// ok(resp, json): a rota respondeu como esperado. /api/health/ diz se a API e o banco (contas, login) estão de pé.
 const CHECKS = reactive([
   { id: 'api', name: 'API', what: 'Projetos, tarefas, wiki e chat', path: '/api/payments/config/', ok: (r) => r.ok },
   { id: 'auth', name: 'Login e cadastro', what: 'Entrar, criar conta e renovar a sessão', path: '/api/health/', ok: (r, j) => r.ok && j?.database === true },

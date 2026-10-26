@@ -1,5 +1,4 @@
 <script setup>
-// Home (como a do Plane): saudação com data e hora, card da Novexo IA, links rápidos e recentes
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
@@ -39,7 +38,6 @@ const ago = (iso) => {
   return `há ${d} ${d === 1 ? 'dia' : 'dias'}`
 }
 
-// ---- links rápidos (pessoais, no navegador)
 const adding = ref(false)
 const link = reactive({ title: '', url: '' })
 const linkErr = ref('')
@@ -66,7 +64,6 @@ function saveLink() {
 }
 const removeLink = (l) => (state.prefs.quicklinks = state.prefs.quicklinks.filter((x) => x.id !== l.id))
 
-// ---- recentes: o que foi aberto por último (tarefas, projetos, páginas)
 const filter = ref('all')
 const FILTERS = [
   { value: 'all', label: 'Todos' },
@@ -81,7 +78,6 @@ const recents = computed(() => {
     const item = kind === 'task' ? state.tasks.find((t) => t.id === id) : kind === 'project' ? project(id) : state.pages.find((p) => p.id === id)
     return item && { kind, item, at: r.at, key: r.key }
   }).filter(Boolean)
-  // primeiro acesso: mostra as tarefas mexidas por último
   const base = list.length ? list : state.tasks.filter((t) => !t.draft).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 6).map((t) => ({ kind: 'task', item: t, at: t.updatedAt, key: `task:${t.id}` }))
   return base.filter((r) => filter.value === 'all' || r.kind === filter.value).slice(0, 10)
 })
@@ -91,7 +87,6 @@ function openRecent(r) {
   else router.push(`/projetos/${r.item.project}/paginas/${r.item.id}`)
 }
 
-// GSAP: entrada em cascata e o cursor da ilustração indo de "Perguntar" para "Construir" em loop
 let tl
 onMounted(() => {
   clock = setInterval(() => (now.value = new Date()), 30000)
@@ -215,7 +210,6 @@ h2 { margin: 0; font: 600 15px/1.3 'Geist', system-ui, sans-serif; color: #d6d1c
 .btn.primary { border-color: var(--accent); background: var(--accent); color: #140700; }
 .btn.primary:hover { background: var(--accent-soft); }
 
-/* card da IA */
 .ai { display: grid; grid-template-columns: minmax(0, 17rem) 1fr; align-items: center; gap: 2rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .mock { position: relative; display: flex; flex-direction: column; gap: 0.4rem; height: 8.5rem; padding: 0.9rem 1rem 0.9rem 3rem; overflow: hidden; border-radius: 8px; background: linear-gradient(160deg, #1f1c19, #141210); font-size: 11.5px; color: var(--muted); }
 .mock__ws { align-self: flex-start; display: inline-flex; gap: 0.3rem; padding: 0.15rem 0.45rem; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--text); }
@@ -229,7 +223,6 @@ h2 { margin: 0; font: 600 15px/1.3 'Geist', system-ui, sans-serif; color: #d6d1c
 .ai__text h3 { margin: 0 0 0.45rem; font: 600 1.15rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .ai__text p { margin: 0 0 1rem; color: #cfc9c0; line-height: 1.55; }
 
-/* links rápidos */
 .ql-form { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .ql-form input { flex: 1 1 12rem; height: 34px; padding: 0 0.65rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--bg); font: inherit; color: var(--text); outline: none; }
 .ql-form input:focus { border-color: var(--accent); }
@@ -246,7 +239,6 @@ h2 { margin: 0; font: 600 15px/1.3 'Geist', system-ui, sans-serif; color: #d6d1c
 .ql:hover .ql__x, .ql__x:focus-visible { opacity: 1; }
 .ql__x:hover { color: var(--text); }
 
-/* recentes */
 .recs { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .rec { display: flex; align-items: center; gap: 0.75rem; border-radius: 7px; transition: background 0.2s var(--ease); }
 .rec:hover { background: var(--surface); }

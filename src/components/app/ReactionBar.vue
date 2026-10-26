@@ -1,5 +1,4 @@
 <script setup>
-// Reações com emoji (tarefa e comentários): clicar liga/desliga a sua
 import { nextTick, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'

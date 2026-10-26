@@ -1,6 +1,5 @@
 import { formatBRL } from './plans.js'
 
-// Faixas ilustrativas do configurador. Não substituem a proposta Enterprise.
 export const CUSTOM_PLAN_RESOURCES = [
   { id: 'automation', icon: 'bolt', name: 'Automações', from: 100, detail: 'Planejamento dos fluxos e das ações recorrentes do time.' },
   { id: 'dashboards', icon: 'chart-pie-alt', name: 'Metas e painéis', from: 150, detail: 'Visão dos projetos, indicadores e objetivos da equipe.' },
@@ -35,7 +34,6 @@ export function getCustomPlanPreview(value) {
     return {
       ...resource,
       included,
-      // As barras mostram a evolução ilustrativa do escopo, não cotas contratadas.
       level: included ? Math.round(20 + 80 * (budget - resource.from) / (500 - resource.from)) : 0,
     }
   })

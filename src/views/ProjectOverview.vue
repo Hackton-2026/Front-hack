@@ -1,6 +1,4 @@
 <script setup>
-// Visão geral do projeto (Plane): capa, ícone, nome e descrição editáveis, atalhos para as partes do projeto
-// e o painel lateral com Propriedades, Atualizações (no prazo / em risco / atrasado) e Atividade.
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { COVERS, UPDATE_STATES, useWorkspace } from '../composables/useWorkspace'
@@ -46,7 +44,6 @@ const ago = (iso) => {
   return m < 1 ? 'agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
-// materiais de apoio: links para documentos, pastas, Figma, repositório...
 const materials = ref([])
 const newLink = reactive({ url: '', name: '', open: false, error: '' })
 const canEdit = computed(() => ['edit', 'full'].includes(p.value?.my_permission))
@@ -84,7 +81,6 @@ function changeCover() {
   save({ cover: (p.value.cover + 1) % COVERS.length })
   if (!prefersReducedMotion()) gsap.fromTo(root.value.querySelector('.cover'), { filter: 'brightness(1.5)' }, { filter: 'brightness(1)', duration: 0.6, ease: 'power2.out' })
 }
-// cor do ícone e do projeto (aparece na barra lateral, nos cards e no Kanban)
 const COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3fb8a5', '#4fb0c6', '#6c8cff', '#a77bf3', '#e86fa8', '#ff5b4d', '#cdcdcb', '#919599']
 function pick(e) {
   picking.value = false
@@ -98,7 +94,6 @@ async function post() {
   feed.value.unshift(a)
 }
 
-// painel lateral abre/fecha deslizando
 async function togglePanel() {
   panel.value = !panel.value
   await nextTick()
@@ -269,7 +264,6 @@ onMounted(async () => {
 .desc::placeholder { color: #5d5851; }
 .name:focus-visible, .desc:focus-visible { box-shadow: 0 0 0 1px var(--line-strong); }
 .sec { margin: 1.5rem 0 0.4rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font: 600 1.05rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
-/* materiais de apoio */
 .sec-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1.5rem 0 0.4rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
 .sec-row .sec { margin: 0; padding: 0; border: 0; }
 .add-link { display: inline-flex; align-items: center; gap: 0.35rem; height: 28px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
@@ -293,9 +287,7 @@ onMounted(async () => {
 .link { min-height: 4.25rem; }
 .link__icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 17px; line-height: 1; }
 .link__icon i::before, .link__go::before { display: block; line-height: 1; }
-.link__text strong, .link__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* uma linha só: os cartões ficam todos da mesma altura */
-.link__text, .cycle span { display: flex; flex-direction: column; min-width: 0; } /* só o texto: a caixa do ícone também é span */
-.link small, .cycle small { font-size: 12.5px; color: var(--muted); }
+.link__text strong, .link__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .link__text, .cycle span { display: flex; flex-direction: column; min-width: 0; } .link small, .cycle small { font-size: 12.5px; color: var(--muted); }
 .link__go { flex-shrink: 0; margin-left: auto; font-size: 16px; color: var(--muted); transition: translate 0.25s var(--ease), color 0.2s var(--ease); }
 .link:hover .link__go { translate: 3px 0; color: var(--text); }
 .side { position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; gap: 1rem; max-height: calc(100vh - 97px); overflow-y: auto; padding: 1rem 1.1rem; border-left: 1px solid var(--line); }

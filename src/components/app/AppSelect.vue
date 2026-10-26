@@ -1,23 +1,17 @@
 <script setup>
-// Dropdown do app (no lugar do <select> nativo, que no Windows abre uma lista branca e destoa do tema).
-// v-model com o valor da opção (número continua número). options: [{ value, label, color?, hint?, disabled? }]
-// ou só textos. Teclado: ↑ ↓ Home End navegam, Enter/Espaço escolhem, Esc fecha, letras pulam para a opção.
-// A lista vai para a raiz do app (.app, onde moram as cores do tema claro/escuro) com position: fixed, para não ser
-// cortada por painéis com rolagem. Fora da área logada vai para o <body>.
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import AppIcon from './AppIcon.vue'
 
-// dois nós na raiz (botão + lista no Teleport): aria-label, class e id vão para o botão
 defineOptions({ inheritAttrs: false })
 
 const props = defineProps({
   modelValue: { type: [String, Number, Boolean, null], default: null },
   options: { type: Array, required: true },
   placeholder: { type: String, default: 'Escolher' },
-  size: { type: String, default: 'md' }, // sm | md
+  size: { type: String, default: 'md' },
   disabled: Boolean,
-  block: Boolean, // ocupa a largura toda
-  ghost: Boolean, // sem borda até passar o mouse (barras de propriedades)
+  block: Boolean,
+  ghost: Boolean,
 })
 const emit = defineEmits(['update:modelValue', 'change'])
 
@@ -44,7 +38,6 @@ async function show() {
   active.value = Math.max(0, opts.value.findIndex((o) => o.value === props.modelValue))
   open.value = true
   await nextTick()
-  // a lista pode ficar mais larga que o botão (textos de ajuda): puxa de volta para dentro da tela
   const lw = list.value?.offsetWidth || 0
   const left = parseFloat(pos.value.left)
   if (left + lw > innerWidth - 8) pos.value = { ...pos.value, left: `${Math.max(8, innerWidth - lw - 8)}px` }
@@ -88,7 +81,6 @@ function onKey(e) {
     if (j >= 0) { active.value = j; list.value?.children[j]?.scrollIntoView({ block: 'nearest' }) }
   }
 }
-// fecha ao clicar fora, rolar ou redimensionar (a lista é fixa na tela)
 const outside = (e) => { if (!btn.value?.contains(e.target) && !list.value?.contains(e.target)) hide(false) }
 const close = (e) => { if (!list.value?.contains(e.target)) hide(false) }
 watch(open, (v) => {
@@ -141,7 +133,6 @@ onBeforeUnmount(() => (open.value = false))
 .sel__dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; }
 </style>
 
-<!-- A lista mora na raiz do app (Teleport): estilo sem scoped, com prefixo próprio -->
 <style>
 .sel-list { position: fixed; z-index: 1000; width: max-content; max-width: min(320px, calc(100vw - 16px)); max-height: 300px; margin: 0; padding: 4px; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); box-shadow: 0 14px 34px rgb(0 0 0 / 0.42); list-style: none; font-size: 13px; color: var(--text); animation: sel-in 0.12s ease-out; }
 .sel-list li { display: flex; align-items: center; gap: 0.5rem; min-height: 30px; padding: 0.3rem 0.55rem; border-radius: 6px; cursor: pointer; }

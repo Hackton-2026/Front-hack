@@ -1,6 +1,4 @@
 <script setup>
-// Nav no padrão do leonardo.ai: header fixo e transparente, menu centralizado, megamenus que se cruzam (fade + sobe 20px),
-// camada "glossy" com blur que aparece quando o conteúdo passa por baixo, botões gooey e menu hambúrguer no mobile
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
@@ -8,7 +6,7 @@ import AccountMenu from '../app/AccountMenu.vue'
 import { useAuth } from '../../composables/useAuth'
 import { MENU, ICONS, PRODUCT_LINKS } from './navData'
 
-const { user } = useAuth() // logado: troca "Entrar" por Workspace + foto
+const { user } = useAuth()
 const active = ref(null)
 const scrolled = ref(false)
 const mobileOpen = ref(false)
@@ -116,7 +114,6 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
       </button>
     </div>
 
-    <!-- Megamenus: todos montados, só o ativo fica visível (assim um some enquanto o outro entra) -->
     <div
       v-for="item in MENU.filter((m) => m.columns)"
       :id="`mm-${item.id}`"
@@ -172,7 +169,6 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
       </div>
     </div>
 
-    <!-- Menu mobile -->
     <div class="mob" :class="{ 'is-open': mobileOpen }" :inert="!mobileOpen" data-lenis-prevent>
       <div class="mob__list">
         <div v-for="item in MENU" :key="item.id" class="mob__item">
@@ -268,8 +264,6 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
   opacity: 1;
 }
 
-/* A barra fica acima dos megamenus (senão o painel aberto cobre os links e não dá para trocar
-   de categoria), mas o espaço vazio dela deixa o mouse passar para o painel embaixo. */
 .nav__bar {
   position: relative;
   z-index: 80;
@@ -347,7 +341,6 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 }
 
 .nav__actions { display: none; align-items: center; gap: 0.75rem; }
-/* foto do usuário logado: anel fino que acende no hover */
 .nav__me { display: grid; border-radius: 50%; box-shadow: 0 0 0 2px rgb(255 255 255 / 0.18); transition: box-shadow 0.25s, transform 0.25s; }
 .nav__me:hover { box-shadow: 0 0 0 2px var(--lp-orange-soft); transform: scale(1.05); }
 .nav__me:focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 3px; }
@@ -355,14 +348,12 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 @media (min-width: 640px) { .nav__actions { display: flex; } }
 @media (max-width: 1099px) { .nav__actions { margin-left: auto; margin-right: 0.75rem; } }
 
-/* ----- Megamenu ----- */
 .mm {
   position: fixed;
   left: 50%;
   top: 26px;
   z-index: 60;
   padding-top: 1.5rem;
-  /* centraliza no transform (e não com translate: o minificador do build apagava o translate quando havia transform) */
   transform: translate(-50%, 20px);
   opacity: 0;
   visibility: hidden;
@@ -394,8 +385,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
   flex-wrap: wrap;
   gap: 2.5rem 4rem;
   width: max-content;
-  max-width: calc(100vw - 2rem); /* entre 1100 e ~1200px de tela o painel mais largo não cabia */
-  padding: 2.5rem 3.5rem;
+  max-width: calc(100vw - 2rem); padding: 2.5rem 3.5rem;
   border-radius: 12px;
   background: #111111;
   color: rgb(255 255 255 / 0.5);
@@ -445,7 +435,6 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
   font: 400 0.875rem/1.3 var(--lp-sans);
 }
 
-/* Título que "rola" pra cima no hover: duas cópias empilhadas, o wrapper sobe 100% */
 .roll {
   position: relative;
   display: block;
@@ -510,7 +499,6 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 .mm__art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transform: scale(1.45); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
 .mm__feature:hover .mm__art { transform: scale(1.52); }
 .mm__feature::after { content: ''; position: absolute; inset: 40% 0 0; z-index: -1; background: linear-gradient(transparent, rgb(0 0 0 / 0.9)); }
-/* Passar o mouse num item apaga um pouco os outros, para destacar o que está sob o cursor */
 .mm__item, .mm__plain, .mm__feature { transition: opacity 0.25s; }
 .mm__panel:has(:is(.mm__item, .mm__plain, .mm__feature):is(:hover, :focus-visible)) :is(.mm__item, .mm__plain, .mm__feature):not(:hover, :focus-visible) { opacity: 0.35; }
 .mm__feature-title { font: 600 1.125rem/1.2 var(--lp-sans); }
@@ -529,7 +517,6 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
   color: #000;
 }
 
-/* ----- Hambúrguer (3 linhas → X) ----- */
 .burger {
   position: relative;
   z-index: 2;

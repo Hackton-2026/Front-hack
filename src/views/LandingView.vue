@@ -1,5 +1,4 @@
 <script setup>
-// Landing do Novexo: só monta as seções na ordem e guarda a paleta (o smooth scroll é global, em useSmoothScroll)
 import '../assets/landing.css'
 import SiteNav from '../components/landing/SiteNav.vue'
 import HeroParallax from '../components/landing/HeroParallax.vue'
@@ -22,7 +21,6 @@ import SiteFooter from '../components/landing/SiteFooter.vue'
 
 <style scoped>
 .lp {
-  /* Paleta "Clockwork" das referências + preto do leonardo.ai */
   --lp-orange: #e56515;
   --footer-transition-color: var(--lp-orange);
   --lp-orange-soft: #fba45c;

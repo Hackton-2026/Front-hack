@@ -1,5 +1,4 @@
 <script setup>
-// Módulos do Plane: lista (ou grade) com progresso, datas, situação, líder e estrela; abre os itens do módulo
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { staggerIn } from '../utils/motion'
@@ -31,7 +30,6 @@ const range = (m) => (m.start_date && m.due_date ? `${fmt(m.start_date)} – ${f
 const list = computed(() => {
   const all = state.modules.filter((m) => m.project === pid.value && (!q.value || m.name.toLowerCase().includes(q.value.toLowerCase())))
   const by = { name: (a, b) => a.name.localeCompare(b.name), progress: (a, b) => doneRatio(tasksOf(b)) - doneRatio(tasksOf(a)), due: (a, b) => (a.due_date || '9').localeCompare(b.due_date || '9'), created: (a, b) => b.created_at.localeCompare(a.created_at) }
-  // com estrela primeiro, como no Plane
   return all.sort((a, b) => Number(starred('module', b.id)) - Number(starred('module', a.id)) || by[sort.value](a, b))
 })
 

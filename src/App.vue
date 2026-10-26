@@ -10,7 +10,6 @@ import { useSmoothScroll } from './composables/useSmoothScroll'
 const { user } = useAuth()
 useSmoothScroll()
 const router = useRouter()
-// Deslogou (botão Sair ou token expirado) em página privada → volta pro login
 watch(user, (u) => {
   if (!u && router.currentRoute.value.meta.auth) router.push('/login')
 })
@@ -18,7 +17,6 @@ watch(user, (u) => {
 
 <template>
   <RouterView v-if="$route.meta.bare" />
-  <!-- Área logada do Novexo: a casca fica montada e só o conteúdo troca entre as rotas -->
   <AppShell v-else-if="$route.meta.app"><RouterView /></AppShell>
   <template v-else>
     <AppNav />

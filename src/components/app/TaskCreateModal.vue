@@ -1,5 +1,4 @@
 <script setup>
-// Modal "Nova tarefa" (o "New work item" do Plane / "Create task" do ClickUp). Sem projeto vira rascunho.
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
@@ -16,8 +15,8 @@ const form = reactive({})
 const error = ref('')
 const box = ref(null)
 const titleInput = ref(null)
-const asDraft = ref(false) // aberto pelos Rascunhos: "Criar rascunho / Descartar / Salvar em rascunhos"
-const more = ref(false) // "Criar mais": depois de salvar, limpa o título e deixa o modal aberto
+const asDraft = ref(false)
+const more = ref(false)
 
 watch(() => ui.creating, async (defaults) => {
   if (!defaults) return
@@ -31,7 +30,6 @@ watch(() => ui.creating, async (defaults) => {
   if (!prefersReducedMotion()) gsap.fromTo(box.value, { scale: 0.96, y: 10, autoAlpha: 0 }, { scale: 1, y: 0, autoAlpha: 1, duration: 0.3, ease: 'power3.out' })
 })
 
-// trocou de projeto: tira quem não participa do projeto novo (o servidor recusaria a tarefa)
 watch(() => form.projectId, (pid) => {
   if (!pid || !form.assignees) return
   const allowed = new Set(peopleOf(pid).map((m) => m.id))
@@ -40,7 +38,6 @@ watch(() => form.projectId, (pid) => {
 function toggleMember(id) {
   form.assignees = form.assignees.includes(id) ? form.assignees.filter((a) => a !== id) : [...form.assignees, id]
 }
-// atribuir por cargo: marca todo mundo do cargo; se já estavam todos, tira todos
 const roles = computed(() => (form.projectId ? rolesOf(form.projectId) : []))
 const roleOn = (r) => r.ids.every((id) => form.assignees?.includes(id))
 function toggleRole(r) {

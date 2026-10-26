@@ -1,7 +1,4 @@
 <script setup>
-// Análises do workspace (Plane → Analytics): itens por status, prioridade e pessoa, e criados x concluídos
-// no período (7/14/30 dias), KPIs com variação contra o período anterior, tempo de ciclo, etiquetas em alta
-// e frases-resumo geradas dos números. Filtra por projeto.
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -22,7 +19,6 @@ const byPerson = computed(() => state.people.map((m) => {
 }).filter((m) => m.open + m.done).sort((a, b) => b.open + b.done - (a.open + a.done)))
 const maxOf = (list, f) => Math.max(1, ...list.map(f))
 
-// KPIs do período contra o período anterior de mesmo tamanho
 const doneAt = (t) => (t.completedAt || t.updatedAt).slice(0, 10)
 const inRange = (d, from, to) => d >= day(from) && d <= day(to)
 function period(back) {
@@ -51,7 +47,6 @@ const topTags = computed(() => {
   tasks.value.filter((t) => inRange(t.createdAt.slice(0, 10), 1 - span.value, 0)).forEach((t) => t.tags.forEach((g) => { n[g] = (n[g] || 0) + 1 }))
   return Object.entries(n).sort((a, b) => b[1] - a[1]).slice(0, 6)
 })
-// frases curtas tiradas dos próprios números
 const insights = computed(() => {
   const [c, d, , l] = kpis.value, out = []
   if (c.v || d.v) out.push(d.v >= c.v ? `O time concluiu ${d.v} e criou ${c.v}: a fila está diminuindo.` : `Entraram ${c.v - d.v} itens a mais do que saíram: a fila está crescendo.`)
@@ -64,7 +59,6 @@ const insights = computed(() => {
 })
 const deltaClass = (k) => (!k.d || !k.good ? '' : k.d * k.good > 0 ? 'up' : 'down')
 
-// criados x concluídos por dia
 const W = 1000, H = 220, PAD = { l: 30, r: 28, t: 10, b: 26 }
 const days = computed(() => Array.from({ length: span.value }, (_, i) => day(i - span.value + 1)))
 const series = computed(() => {

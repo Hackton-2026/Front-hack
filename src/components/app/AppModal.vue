@@ -1,5 +1,4 @@
 <script setup>
-// Janela de formulário da área logada (criar ciclo, módulo, visão…). Fecha com Esc ou clicando fora.
 import { nextTick, onUnmounted, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import AppIcon from './AppIcon.vue'

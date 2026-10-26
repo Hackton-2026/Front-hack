@@ -1,35 +1,28 @@
 <script setup>
-// Um recurso da landing: texto de um lado e o motion design do outro (como os blocos do leonardo.ai).
-// O motion é um vídeo exportado do projeto video-intro (1100×948, fundo preto, cartão com cantos redondos já no vídeo),
-// então aqui ele não ganha borda nem fundo: encosta no preto da página. Até o bloco aparecer inteiro na tela ele fica
-// parado no primeiro quadro (preload="auto" já carrega esse quadro); aí toca mudo e, ao terminar, espera 2 s e recomeça.
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import GooeyButton from '../GooeyButton.vue'
 import { prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
 
-const { user } = useAuth() // logado: "Começar agora" vai direto para o workspace, como o botão da nav
+const { user } = useAuth()
 
 const props = defineProps({
-  feature: { type: Object, required: true }, // { id, title, text, more, motion, poster }
-  reverse: Boolean, // motion à esquerda e texto à direita
+  feature: { type: Object, required: true },
+  reverse: Boolean,
 })
 
 const video = ref(null)
-const parado = prefersReducedMotion() // quem desligou animações no sistema vê só o primeiro quadro
+const parado = prefersReducedMotion()
 
-// Só começa depois de o motion ficar 0,5 s seguido inteiro na tela (≥ 95% dele visível, ou ocupando quase a altura
-// toda da janela quando ele é maior que ela). Confere a posição a cada 150 ms em vez de esperar avisos do
-// IntersectionObserver, que só chegam quando ele cruza uma marca (rolando devagar dá para ficar inteiro sem aviso).
 const ESPERA = 500
-const PAUSA_FIM = 2000 // terminou: fica no último quadro esse tempo e recomeça do início
+const PAUSA_FIM = 2000
 let checagem = 0
 let recomeco = 0
 let inteiroDesde = 0
-let jaComecou = false // já começou desde que apareceu: daqui em diante quem manda é o recomeço depois do fim
+let jaComecou = false
 let naTela = false
 
-const play = () => video.value?.play().catch(() => {}) // autoplay bloqueado: fica no primeiro quadro
+const play = () => video.value?.play().catch(() => {})
 function sair() {
   clearTimeout(recomeco)
   naTela = false
@@ -52,7 +45,7 @@ function conferir() {
   if (!el) return
   const r = el.getBoundingClientRect()
   const visivel = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)
-  if (visivel <= 0) { // saiu da tela: volta para o 1º quadro e espera aparecer de novo
+  if (visivel <= 0) {
     if (naTela) sair()
     return
   }
@@ -65,7 +58,7 @@ function conferir() {
 }
 onMounted(() => {
   if (!video.value) return
-  video.value.muted = true // garante o autoplay mudo mesmo se o atributo não chegar no elemento
+  video.value.muted = true
   checagem = setInterval(conferir, 150)
 })
 onBeforeUnmount(() => { clearInterval(checagem); clearTimeout(recomeco) })
@@ -102,7 +95,6 @@ onBeforeUnmount(() => { clearInterval(checagem); clearTimeout(recomeco) })
 </template>
 
 <style scoped>
-/* proporção do leonardo.ai: o texto ocupa ~1/3 numa borda, o motion ~metade na outra e sobra um vão grande no meio */
 .feat {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
@@ -124,8 +116,6 @@ onBeforeUnmount(() => { clearInterval(checagem); clearTimeout(recomeco) })
 .feat__actions { display: flex; flex-wrap: wrap; gap: 0.875rem; margin-top: clamp(1rem, 2vw, 2rem); }
 .feat__actions :deep(.gb__btn) { min-height: clamp(3.25rem, 3.6vw, 3.75rem); padding-inline: clamp(1.5rem, 1.8vw, 2rem); font-size: clamp(1rem, 1.05vw, 1.125rem); }
 
-/* o motion: mesma proporção do vídeo do video-intro, sem borda (o cartão redondo já vem desenhado no vídeo) */
-/* 5% menor que a coluna, encostado na borda de fora (direita; esquerda nos blocos invertidos) */
 .feat__media { position: relative; width: 95%; justify-self: end; aspect-ratio: 1100 / 948; }
 .feat--reverse .feat__media { justify-self: start; }
 .feat__video { display: block; width: 100%; height: 100%; object-fit: cover; background: #000; }

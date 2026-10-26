@@ -1,7 +1,5 @@
 import { computed, ref, watch } from 'vue'
 
-// Checklist de "Começar" (o Get started do Plane). Estado global, salvo no navegador.
-// shortcut: só no front; quando a API existir, guardar por usuário no backend
 export const STEPS = [
   { id: 'project', title: 'Criar um projeto', hint: 'Um espaço para as tarefas de uma área ou cliente.' },
   { id: 'task', title: 'Criar uma tarefa', hint: 'Dê um título, um responsável e um prazo.' },
@@ -18,13 +16,12 @@ const read = (key, fallback) => {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback }
 }
 const save = (key, value) => {
-  try { localStorage.setItem(key, JSON.stringify(value)) } catch { /* modo privado: segue só na memória */ }
+  try { localStorage.setItem(key, JSON.stringify(value)) } catch { }
 }
 
 const done = ref(read(KEY, []))
 watch(done, (v) => save(KEY, v), { deep: true })
 
-// Notas rápidas (os Stickies do Plane)
 const NOTES_KEY = 'novexo:notes'
 const notes = ref(read(NOTES_KEY, []))
 watch(notes, (v) => save(NOTES_KEY, v), { deep: true })

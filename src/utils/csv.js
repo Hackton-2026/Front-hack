@@ -1,7 +1,6 @@
-// CSV simples (aspas duplas escapam vírgula, quebra de linha e aspas). O separador é , ou ; (Excel em português usa ;).
 export function toCsv(rows) {
   const cell = (v) => `"${String(v ?? '').replaceAll('"', '""')}"`
-  return '﻿' + rows.map((r) => r.map(cell).join(',')).join('\n') // BOM: o Excel lê os acentos certo
+  return '﻿' + rows.map((r) => r.map(cell).join(',')).join('\n')
 }
 
 export function parseCsv(text) {

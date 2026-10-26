@@ -1,7 +1,5 @@
 import { gsap } from './motion'
 
-// Animações apenas nas páginas públicas. O matchMedia reverte os efeitos
-// se a pessoa ativar movimento reduzido enquanto a página estiver aberta.
 export const vTutorialMotion = {
   mounted(root) {
     const media = gsap.matchMedia()
@@ -109,7 +107,6 @@ export const vTutorialMotion = {
         })
       }
 
-      // O brilho acompanha o mouse; não interfere nos controles de vídeos reais.
       const cleanups = []
       if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
         root.querySelectorAll('.video-placeholder').forEach((card) => {

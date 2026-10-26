@@ -1,5 +1,4 @@
 <script setup>
-// Card de contato (estrutura do card do remote.com, na paleta laranja)
 import { ref, onMounted, onUnmounted } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import GooeyButton from '../GooeyButton.vue'

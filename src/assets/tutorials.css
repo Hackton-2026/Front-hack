@@ -1,7 +1,5 @@
-/* Visual compartilhado pelas páginas públicas de tutoriais e soluções. */
 .tutorial-page[class] {
-  --footer-transition-color: #000; /* o fundo que as páginas usam: o rodapé começa dessa cor e vira a foto */
-  --tutorial-line: rgb(255 255 255 / 0.12);
+  --footer-transition-color: #000; --tutorial-line: rgb(255 255 255 / 0.12);
   --tutorial-muted: #ada39a;
   --tutorial-accent: #ffb77f;
   background: #000;
@@ -40,7 +38,6 @@
   color: var(--tutorial-muted);
 }
 
-/* Texto à esquerda e vídeo à direita, mantendo a ordem de leitura do HTML. */
 .tutorial-page main.guide > section:not(.update-entry) {
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
@@ -165,7 +162,6 @@
   background: #c06f3210;
 }
 
-/* O print completo da IA precisa de mais espaço para continuar legível. */
 .tutorial-page.ai-guide main.guide > section {
   grid-template-columns: 1fr;
   gap: 36px;
@@ -289,7 +285,6 @@
   }
 }
 
-/* As linhas aparecem progressivamente na entrada de cada etapa. */
 .tutorial-page main.guide > section {
   position: relative;
 }

@@ -2,8 +2,6 @@ export const CUSTOM_PLAN_PATH = '/precos/personalizado'
 
 let pendingEntries = 0
 
-// Mantém este fluxo nos botões Enterprise e permite recarregar a entrada atual.
-// É controle de navegação, sem servir de autorização para dados privados.
 export async function openCustomPlan(router) {
   pendingEntries++
   try {

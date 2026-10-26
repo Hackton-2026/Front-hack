@@ -1,15 +1,8 @@
 <script setup>
-// Fundo da Novexo IA: o oceano em ASCII do stackedlol/ascii-sharks (tubarões, cardumes, reage ao mouse e a cliques).
-// A biblioteca só desenha em tons de cinza sobre preto, então a cor da marca vem de um filtro CSS (--ai-shark-filter).
-// shortcut: o repositório não tem licença; antes de publicar o site, pedir uma licença ao autor ou trocar o fundo.
 import { onMounted, onUnmounted, ref } from 'vue'
 import { OceanEngine, paintGrid } from 'ascii-sharks'
 
-// A biblioteca usa células de no mínimo 8px. Ela simula um canvas SCALE vezes maior e o desenho
-// é reduzido na mesma proporção: células de ~5px, com o mesmo número de pixels no canvas.
 const SCALE = 2.5
-// O tamanho dos tubarões é contado em células: com células menores, SIZE compensa para não encolherem.
-// O primeiro é o maior; os outros vêm menores (como no demo da biblioteca)
 const SIZE = 2.35
 const SHARKS = [
   { kind: 'hammerhead', size: 1 * SIZE },
@@ -18,25 +11,21 @@ const SHARKS = [
   { kind: 'tiger', size: 0.8 * SIZE },
   { kind: 'classic', size: 0.75 * SIZE },
 ]
-const SPEED = 0.55 // 1 = velocidade original da biblioteca
-const WAKE = 0.09 // energia extra que a cauda deixa na água (ondas mais fortes)
-const WAKE_FADE = 0.55 // 1 = ondas somem no tempo original; menor = duram mais
-const GRID_ALPHA = 0.35 // grade de fundo mais apagada que a original
-const DARKEN = 0.4 // tema claro: pontos e ondas escurecidos para aparecer no fundo claro
-const SPREAD = 0.4 // tubarões se afastam quando as cabeças ficam a menos disso (fração do menor lado da tela)
-const MARGIN = 0.1 // começam a virar antes de chegar na borda (fração do menor lado da tela)
-const NUDGE = 1.6 // quanto esses dois empurrões viram o tubarão (radianos por segundo, no máximo)
+const SPEED = 0.55
+const WAKE = 0.09
+const WAKE_FADE = 0.55
+const GRID_ALPHA = 0.35
+const DARKEN = 0.4
+const SPREAD = 0.4
+const MARGIN = 0.1
+const NUDGE = 1.6
 
 const canvas = ref(null)
 let engine
-let light = false // tema claro da página (Ajustes › Aparência), conferido a cada quadro
+let light = false
 onMounted(() => {
-  // A biblioteca pede o canvas opaco ({ alpha: false }), que fica preto atrás dos tubarões no tema claro. O navegador
-  // devolve sempre o primeiro contexto criado, então pedindo antes (transparente) o fundo vem da página
   canvas.value.getContext('2d')
   engine = new OceanEngine(canvas.value, SHARKS)
-  // shortcut: sobrescreve métodos internos (resize, toLocal, paintBackground, render, step, depositWake, diffuse) do commit fixado no package.json;
-  // ao atualizar a biblioteca, conferir se esses nomes ainda existem
   const { renderer, world } = engine
   engine.resize = function () {
     const rect = canvas.value.getBoundingClientRect()
@@ -51,7 +40,6 @@ onMounted(() => {
     const p = toLocal(e)
     return { ...p, x: p.x * SCALE, y: p.y * SCALE }
   }
-  // Fundo transparente (a cor vem da página, sem passar pelo filtro laranja), só com a grade
   renderer.paintBackground = function () {
     const g = this.bg.getContext('2d')
     g.setTransform(1, 0, 0, 1, 0, 0)
@@ -61,7 +49,6 @@ onMounted(() => {
     paintGrid(g, this.width, this.height, this.cw, this.ch, this.dpr)
     g.globalAlpha = 1
     if (light) {
-      // a grade sai branca da biblioteca: no tema claro, repinta as mesmas linhas de escuro
       g.setTransform(1, 0, 0, 1, 0, 0)
       g.globalCompositeOperation = 'source-in'
       g.fillStyle = '#000'
@@ -69,9 +56,6 @@ onMounted(() => {
       g.globalCompositeOperation = 'source-over'
     }
   }
-  // A biblioteca apaga o quadro anterior pintando o fundo preto por cima; transparente, é preciso limpar antes
-  // Ondas, cardumes e grade vêm em cores claras (feitas para brilhar no preto); depois do filtro viram um laranja quase
-  // branco que some no tema claro. No claro, as mesmas cores escurecidas (DARKEN) viram um laranja forte.
   const darken = (c) => c.replace(/rgba\((\d+),(\d+),(\d+),/, (_, r, g, b) => `rgba(${[r, g, b].map((v) => Math.round(v * DARKEN)).join(',')},`)
   const palettes = {
     dark: { dotStyles: renderer.dotStyles, fishStyles: renderer.fishStyles },
@@ -89,11 +73,6 @@ onMounted(() => {
     renderer.ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
     render(w, dt)
   }
-  // O mundo é SCALE vezes maior, então tudo andaria SCALE vezes mais devagar na tela enquanto a cauda bate
-  // no ritmo normal (fica "balançando" no lugar). O tempo roda SCALE vezes mais rápido e a batida
-  // da cauda (phase) volta ao ritmo original.
-  // A biblioteca só separa tubarões quase encostados e só vira de volta com o focinho já fora da tela:
-  // antes do passo dela, cada um vira um pouco para longe dos outros e da borda
   const spread = (dt) => {
     const { sharks, width: W, height: H } = world
     const side = Math.min(W, H)
@@ -119,7 +98,7 @@ onMounted(() => {
       const strength = Math.min(1, Math.hypot(px, py))
       if (strength < 1e-3) continue
       let diff = Math.atan2(py, px) - sh.heading
-      diff = Math.atan2(Math.sin(diff), Math.cos(diff)) // menor ângulo, entre -π e π
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff))
       const max = NUDGE * strength * dt
       sh.heading += Math.max(-max, Math.min(max, diff))
     }
@@ -133,7 +112,6 @@ onMounted(() => {
     world.sharks.forEach((s, i) => { s.phase = sharkPhase[i] + (s.phase - sharkPhase[i]) / SCALE })
     if (world.fish.length === fishPhase.length) world.fish.forEach((f, i) => { f.phase = fishPhase[i] + (f.phase - fishPhase[i]) / SCALE })
   }
-  // Ondas: além do rastro da biblioteca, a cauda (últimos pontos do corpo) deixa mais energia num raio maior
   const deposit = renderer.depositWake.bind(renderer)
   renderer.depositWake = (w) => {
     deposit(w)
@@ -145,8 +123,6 @@ onMounted(() => {
   const diffuse = renderer.diffuse.bind(renderer)
   renderer.diffuse = (dt) => diffuse(dt * WAKE_FADE)
   engine.resize()
-  // a biblioteca só espalha os bichos na primeira medida (ainda no tamanho normal); sem isso todos ficam
-  // nadando em volta do centro antigo, no canto de cima à esquerda
   world.seed()
 })
 onUnmounted(() => engine?.destroy())
@@ -162,8 +138,7 @@ onUnmounted(() => engine?.destroy())
   inset: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* a biblioteca escuta o mouse na janela, então o chat continua clicável */
-  font-family: 'Geist Mono', ui-monospace, monospace;
+  pointer-events: none; font-family: 'Geist Mono', ui-monospace, monospace;
   filter: var(--ai-shark-filter, none);
 }
 </style>

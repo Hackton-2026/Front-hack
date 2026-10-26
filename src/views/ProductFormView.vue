@@ -7,7 +7,6 @@ import BaseInput from '../components/BaseInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import ImageUpload from '../components/ImageUpload.vue'
 
-// Sem id = criar; com id (rota /editar/:id) = editar
 const props = defineProps({ id: String })
 const router = useRouter()
 

@@ -1,4 +1,3 @@
-// Script do Google Identity Services (login com Google e permissões para Meet). Carrega uma vez só.
 let loading
 export function loadGoogle() {
   if (window.google?.accounts) return Promise.resolve()

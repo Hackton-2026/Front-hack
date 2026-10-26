@@ -1,9 +1,8 @@
 import { ref } from 'vue'
 import { api, tokens } from '../services/api'
 
-// Estado global (fora da função = compartilhado por todos os componentes)
 const user = ref(null)
-const ready = ref(false) // true depois da 1ª checagem do token
+const ready = ref(false)
 
 async function loadMe() {
   try {
@@ -30,10 +29,9 @@ async function loginWithGoogle(credential) {
 
 async function register(data) {
   await api('/api/auth/register/', { method: 'POST', body: data, auth: false })
-  await login(data.email, data.password) // o login aceita e-mail
+  await login(data.email, data.password)
 }
 
-// Recebe um FormData (para mandar foto junto) ou objeto
 async function updateMe(body) {
   user.value = await api('/api/auth/me/', { method: 'PATCH', body })
 }

@@ -3,7 +3,6 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import FlaticonIcon from '../FlaticonIcon.vue'
 import { prefersReducedMotion } from '../../utils/motion'
 
-// kind: 'project' (passo 01), 'checklist' (passo 02) ou 'wiki' (passo 04)
 defineProps({ kind: { type: String, required: true } })
 
 const root = ref(null)
@@ -12,7 +11,6 @@ const still = ref(false)
 let observer
 
 onMounted(() => {
-  // Movimento reduzido: fica no quadro final, sem loop.
   still.value = prefersReducedMotion()
   if (still.value) return
   observer = new IntersectionObserver(([entry]) => { running.value = entry.isIntersecting })
@@ -66,7 +64,6 @@ const checklist = ['Conferir os títulos', 'Ajustar a mensagem principal', 'Envi
 </template>
 
 <style scoped>
-/* Os estilos base são o quadro final; as animações partem do vazio e voltam a ele (loop sem corte). */
 .step-motion { --cycle: 7s; display: grid; place-items: center; min-height: 172px; margin: 28px 0; padding: 26px 22px; border: 1px solid #ffffff1f; border-radius: 8px; background: radial-gradient(120% 90% at 85% 0%, #e5651514, transparent 60%), #0e0e0d; overflow: hidden; color: #e5e1dc; font-family: var(--lp-sans); }
 .step-motion * { animation-duration: var(--cycle); animation-iteration-count: infinite; animation-timing-function: cubic-bezier(.65, 0, .35, 1); animation-fill-mode: both; animation-play-state: paused; }
 .step-motion.is-running * { animation-play-state: running; }
@@ -76,7 +73,6 @@ const checklist = ['Conferir os títulos', 'Ajustar a mensagem principal', 'Envi
 .sm-meter { display: block; height: 3px; border-radius: 3px; background: #ffffff14; overflow: hidden; }
 .sm-meter b { display: block; height: 100%; background: var(--lp-orange); transform-origin: left; }
 
-/* 01 · um projeto nasce no espaço */
 .sm-projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: min(100%, 470px); }
 .sm-tile { position: relative; display: flex; flex-direction: column; gap: 9px; min-height: 118px; padding: 14px; border: 1px solid #ffffff14; border-radius: 7px; background: #161615; }
 .sm-tile--old { color: #77716b; }
@@ -98,7 +94,6 @@ const checklist = ['Conferir os títulos', 'Ajustar a mensagem principal', 'Envi
 @keyframes sm-pop { 0%, 42% { opacity: 0; transform: scale(.4); } 49%, 100% { opacity: 1; transform: scale(1); } }
 @keyframes sm-meter-third { 0%, 54% { transform: scaleX(0); } 70%, 100% { transform: scaleX(.34); } }
 
-/* 02 · o checklist da tarefa avança */
 .sm-task { width: min(100%, 380px); padding: 16px 18px 18px; border: 1px solid #ffffff1a; border-radius: 7px; background: #1c1c1a; }
 .sm-task__head { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
 .sm-task__head strong { flex: 1; font-size: 12px; font-weight: 500; color: #f5f2ee; }
@@ -123,7 +118,6 @@ const checklist = ['Conferir os títulos', 'Ajustar a mensagem principal', 'Envi
 @keyframes sm-status { 0%, 56% { opacity: 0; } 62%, 85% { opacity: 1; } 93%, 100% { opacity: 0; } }
 @keyframes sm-meter-steps { 0%, 13% { transform: scaleX(0); } 18%, 30% { transform: scaleX(.334); } 35%, 47% { transform: scaleX(.667); } 52%, 85% { opacity: 1; transform: scaleX(1); } 93% { opacity: 0; transform: scaleX(1); } 94% { opacity: 0; transform: scaleX(0); } 100% { opacity: 1; transform: scaleX(0); } }
 
-/* 04 · a wiki ganha texto e se liga à tarefa */
 .sm-wiki { display: grid; grid-template-columns: minmax(0, 1.25fr) 42px minmax(0, 1fr); align-items: center; width: min(100%, 520px); }
 .sm-page { display: flex; flex-direction: column; gap: 9px; padding: 16px; border: 1px solid #ffffff1a; border-radius: 7px; background: #1c1c1a; }
 .sm-page__head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; color: var(--lp-orange-soft); }

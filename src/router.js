@@ -47,7 +47,6 @@ const router = createRouter({
       component: () => import('./views/IntegracoesTutorial.vue'),
       meta: { bare: true },
     },
-    // meta.bare = página sem a navbar do app (o login tem layout próprio)
     { path: '/', component: () => import('./views/LandingView.vue'), meta: { bare: true } },
     { path: '/produto/quadros', component: () => import('./views/QuadrosTutorial.vue'), meta: { bare: true } },
     { path: '/produto/calendario', component: () => import('./views/CalendarioTutorial.vue'), meta: { bare: true } },
@@ -57,7 +56,6 @@ const router = createRouter({
     { path: '/precos', alias: '/pricing', component: () => import('./views/PricingView.vue'), meta: { bare: true } },
     { path: CUSTOM_PLAN_PATH, component: () => import('./views/CustomPlanView.vue'), meta: { bare: true }, beforeEnter: () => canEnterCustomPlan() || { path: '/precos', hash: '#enterprise', replace: true } },
     { path: '/contato', alias: '/contact-us', component: () => import('./views/ContactView.vue'), meta: { bare: true } },
-    // páginas institucionais (links do rodapé)
     { path: '/casos-de-uso', component: () => import('./views/UseCasesView.vue'), meta: { bare: true } },
     { path: '/seguranca', alias: '/security', component: () => import('./views/SecurityView.vue'), meta: { bare: true } },
     { path: '/docs', alias: '/documentacao', component: () => import('./views/DocsView.vue'), meta: { bare: true } },
@@ -67,10 +65,9 @@ const router = createRouter({
     { path: '/blog/como-funciona', alias: '/como-funciona', component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },
     { path: '/blog/:slug', component: () => import('./views/BlogArticleView.vue'), meta: { bare: true } },
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
-    { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true } }, // pagamento dos planos
-    { path: '/entrar/:token', component: () => import('./views/JoinView.vue'), props: true, meta: { bare: true } }, // link de convite (sem login)
-    { path: '/verificar-email', component: () => import('./views/VerifyEmailView.vue'), meta: { bare: true } }, // link do e-mail de verificação
-    // Área logada do Novexo: meta.app = renderiza dentro da AppShell (App.vue); area marca o item do trilho
+    { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true } },
+    { path: '/entrar/:token', component: () => import('./views/JoinView.vue'), props: true, meta: { bare: true } },
+    { path: '/verificar-email', component: () => import('./views/VerifyEmailView.vue'), meta: { bare: true } },
     { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Começar', icon: 'rocket' } },
     { path: '/inicio', component: () => import('./views/HomeView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Início', icon: 'home' } },
     { path: '/meu-trabalho', component: () => import('./views/MyWorkView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Seu trabalho', icon: 'mine' } },
@@ -79,7 +76,6 @@ const router = createRouter({
     { path: '/notas', component: () => import('./views/NotesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Notas', icon: 'note' } },
     { path: '/projetos', component: () => import('./views/ProjectsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Projetos', icon: 'folder' } },
     { path: '/projetos/:id', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Itens de trabalho', icon: 'items' } },
-    // Menu do projeto do Plane: visão geral, itens, ciclos, módulos, visões e páginas
     { path: '/projetos/:id/visao-geral', component: () => import('./views/ProjectOverview.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Visão geral', icon: 'overview' } },
     { path: '/projetos/:id/ciclos', component: () => import('./views/CyclesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Ciclos', icon: 'cycle' } },
     { path: '/projetos/:id/ciclos/:cycle', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Ciclo', icon: 'cycle' } },
@@ -88,9 +84,7 @@ const router = createRouter({
     { path: '/projetos/:id/visoes/:view', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Visão', icon: 'layers' } },
     { path: '/projetos/:id/paginas', component: () => import('./views/PagesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Páginas', icon: 'page' } },
     { path: '/projetos/:id/paginas/:page', component: () => import('./views/PageEditor.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Página', icon: 'page' } },
-    // Pessoas do projeto: convites e chat (com a Novexo IA via @novexo)
     { path: '/projetos/:id/membros', component: () => import('./views/ProjectMembers.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Membros', icon: 'user' } },
-    // o chat do projeto é um painel ao lado: o link só abre o painel (e fica na página onde a pessoa estava)
     {
       path: '/projetos/:id/chat',
       redirect: (to) => {
@@ -99,7 +93,6 @@ const router = createRouter({
       },
     },
     { path: '/convite/:token', component: () => import('./views/InviteView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Convite', icon: 'user' } },
-    // "Mais" do workspace
     { path: '/ciclos', component: () => import('./views/CyclesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Ciclos ativos', icon: 'cycle' } },
     { path: '/analises', component: () => import('./views/AnalyticsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Análises', icon: 'chart' } },
     { path: '/arquivados', component: () => import('./views/ArchivesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Arquivados', icon: 'archive' } },
@@ -132,7 +125,6 @@ const router = createRouter({
   ],
 })
 
-// meta.auth = só logado; meta.guest = só deslogado (ex.: tela de login)
 router.beforeEach(async (to) => {
   const { user, ready, init } = useAuth()
   if (!ready.value) await init()

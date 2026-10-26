@@ -1,13 +1,11 @@
 <script setup>
-// Formulário da Novexo IA (como o request_user_input do Codex): aparece abaixo da resposta quando a IA precisa de
-// detalhes antes de agir. Opções para marcar, "Outra" para escrever, e as respostas viram a próxima mensagem.
 import { computed, reactive } from 'vue'
 
 const props = defineProps({ form: { type: Object, required: true }, disabled: Boolean })
 const emit = defineEmits(['answer'])
 const qs = computed(() => props.form.questions)
-const picked = reactive(props.form.questions.map(() => [])) // opções marcadas por pergunta
-const other = reactive(props.form.questions.map(() => '')) // "Outra" escrita por pergunta
+const picked = reactive(props.form.questions.map(() => []))
+const other = reactive(props.form.questions.map(() => ''))
 const uid = Math.random().toString(36).slice(2, 8)
 
 const answerOf = (i) => [...picked[i], other[i].trim()].filter(Boolean).join(', ')
@@ -76,7 +74,6 @@ legend { float: left; width: 100%; margin-bottom: 0.2rem; padding: 0; font-size:
 .opt input[type='radio'], .opt input[type='checkbox'] { appearance: none; box-sizing: border-box; flex: 0 0 16px; width: 16px; height: 16px; margin: 0; padding: 0; border: 1.5px solid var(--line-strong); border-radius: 50%; background: none; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; }
 .opt input[type='checkbox'] { border-radius: 4px; }
 .opt input:checked { border-color: var(--text); }
-/* sem ::after (pseudo-elementos em input não são confiáveis): o ponto e o quadrado cheio vêm do fundo */
 .opt input[type='radio']:checked { background: var(--text); box-shadow: inset 0 0 0 3px var(--surface); }
 .opt input[type='checkbox']:checked { background: var(--text); box-shadow: inset 0 0 0 2.5px var(--surface); }
 .opt:hover input:not(:checked) { border-color: var(--muted); }

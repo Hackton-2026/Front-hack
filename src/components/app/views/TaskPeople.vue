@@ -1,5 +1,4 @@
 <script setup>
-// Carga de trabalho (tarefas abertas por pessoa em cada dia da semana) e Equipe (o que cada pessoa tem aberto)
 import { computed } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 import { useUi } from '../../../composables/useUi'
@@ -8,10 +7,10 @@ import StatusBadge from '../StatusBadge.vue'
 const props = defineProps({ tasks: { type: Array, required: true }, team: Boolean })
 const { state, day, isOverdue, code } = useWorkspace()
 const { openTask } = useUi()
-const LIMIT = 3 // acima disso o dia fica sobrecarregado
+const LIMIT = 3
 const open = computed(() => props.tasks.filter((t) => t.status !== 'done'))
 const week = computed(() => {
-  const offset = (new Date().getDay() + 6) % 7 // segunda-feira desta semana
+  const offset = (new Date().getDay() + 6) % 7
   return Array.from({ length: 7 }, (_, i) => day(i - offset))
 })
 const people = computed(() => [

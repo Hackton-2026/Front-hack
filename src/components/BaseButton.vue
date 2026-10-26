@@ -1,11 +1,10 @@
 <script setup>
-// variant: primary | secondary | danger | ghost. `to` vira link do router.
 defineProps({
   variant: { type: String, default: 'primary' },
   to: { type: [String, Object], default: null },
   loading: Boolean,
   disabled: Boolean,
-  block: Boolean, // largura total
+  block: Boolean,
   small: Boolean,
   type: { type: String, default: 'button' },
 })

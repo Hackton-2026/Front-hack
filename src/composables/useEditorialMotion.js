@@ -4,10 +4,8 @@ import { SplitText } from 'gsap/SplitText'
 import { Flip } from 'gsap/Flip'
 import { gsap, prefersReducedMotion, revealTitleCharacters } from '../utils/motion'
 
-// Este módulo só é carregado pelas páginas editoriais.
 gsap.registerPlugin(SplitText, Flip)
 
-/** Movimento compartilhado pelo blog e pelo guia, sem alterar a rolagem nativa. */
 export function useEditorialMotion(root, { page, items } = {}) {
   let mounted = false
   let media
@@ -64,7 +62,6 @@ export function useEditorialMotion(root, { page, items } = {}) {
       reveal([cover], cover, { y: 32, duration: 1, stagger: 0 })
       reveal(select(isBlog ? '.news-feature__content > *' : '.article-cover__words > *, .article-cover__demo'), cover, { y: 18, stagger: 0.09 })
 
-      // A foto se move dentro da moldura, sem deslocar o conteúdo.
       if (context.conditions.desktop) {
         gsap.fromTo(select(isBlog ? '.news-feature__photo' : '.article-cover__photo'),
           { scale: 1.1, yPercent: -3 },
@@ -93,7 +90,6 @@ export function useEditorialMotion(root, { page, items } = {}) {
       reveal(select('.explore-section__head, .explore-card'), explore, { y: 28, stagger: 0.12 })
     }
 
-    // As interações também são rastreadas pelo contexto e limpas ao sair.
     context.add('openAnswer', details => {
       const answer = details.querySelector('p')
       if (answer) gsap.fromTo(answer, { y: 8, autoAlpha: 0 }, {
@@ -113,7 +109,6 @@ export function useEditorialMotion(root, { page, items } = {}) {
     gridMedia.add('(prefers-reduced-motion: no-preference)', context => {
       const cards = [...root.value.querySelectorAll('.news-grid > .blog-card')]
       const existing = cards.filter(card => revealedCards.has(card))
-      // Só as cartas já reveladas mudam de posição; as novas têm sua entrada.
       if (previousState && existing.length) {
         Flip.from(previousState, {
           targets: existing, duration: 0.55, ease: 'power3.inOut',
@@ -142,7 +137,6 @@ export function useEditorialMotion(root, { page, items } = {}) {
   }
 
   if (items) {
-    // Captura antes do patch Vue e mede depois que a nova grade está pronta.
     watch(items, () => {
       if (!mounted) return
       const version = ++gridVersion

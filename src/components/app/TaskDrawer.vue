@@ -1,6 +1,4 @@
 <script setup>
-// Painel da tarefa (o "peek" do item de trabalho do Plane): propriedades em linha, subitens, detalhes,
-// estrutura do projeto, votos, inscrição, reações, relações, links/anexos e as abas de atividade/comentários. Tudo editável na hora.
 import { computed, nextTick, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
@@ -29,13 +27,11 @@ const newSub = ref('')
 const addingSub = ref(false)
 const confirmDelete = ref(false)
 const reduced = prefersReducedMotion()
-// ---- animações (GSAP); nada anima com "reduzir movimento" ou o Modo de desempenho
 const motion = () => !prefersReducedMotion()
 const pop = (el) => motion() && el && gsap.fromTo(el, { scale: 0.82 }, { scale: 1, duration: 0.4, ease: 'back.out(3)' })
 const enter = (els, opts = {}) => motion() && els?.length && gsap.fromTo(els, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.3, stagger: 0.035, ease: 'power2.out', clearProps: 'transform', ...opts })
 const q = (sel) => panel.value?.querySelectorAll(sel)
 
-// Histórico e comentários vêm da API (os signals do backend registram cada mudança)
 const activity = ref([])
 const comments = ref([])
 const tab = ref('all')
@@ -51,11 +47,10 @@ async function loadFeed() {
   try {
     const [a, c, p] = await Promise.all([taskActivity(id), taskComments(id), api(`/api/tasks/${id}/panel/`)])
     if (task.value?.id === id) { activity.value = a; comments.value = c; panelData.value = p }
-  } catch { /* mantém o que tinha */ }
+  } catch { }
 }
 watch(() => [ui.taskId, task.value?.updatedAt], loadFeed)
 
-// abas como no Plane: Tudo, Atividade, Comentários, Atualizações, Transição (mudanças de estado) e Histórico (campos alterados)
 const TABS = [['all', 'Tudo'], ['activity', 'Atividade'], ['comments', 'Comentários'], ['updates', 'Atualizações'], ['transition', 'Transição'], ['history', 'Histórico']]
 const UPDATE_STATES = [['on_track', 'No prazo', '#7fc47a'], ['at_risk', 'Em risco', '#f2c46d'], ['off_track', 'Atrasada', '#ff5b4d']]
 const newest = ref(false)
@@ -66,7 +61,6 @@ const feed = computed(() => [
   ...comments.value.filter(showComment).map((c) => ({ key: `c${c.id}`, at: c.created_at, comment: c })),
 ].sort((x, y) => (newest.value ? -1 : 1) * x.at.localeCompare(y.at)))
 
-// votos, inscrição, reações, relações e anexos: cada ação devolve o painel atualizado
 async function act(path, body, method = 'POST') {
   try {
     panelData.value = await api(`/api/tasks/${task.value.id}/${path}`, { method, body })
@@ -89,7 +83,7 @@ const relationGroups = computed(() => {
   }
   return Object.entries(groups)
 })
-const adding = ref('') // sub | dep | rel | link | page
+const adding = ref('')
 const rel = ref({ kind: 'blocks', task: '' })
 const link = ref({ url: '', name: '' })
 const relationOptions = computed(() => state.tasks.filter((t) => !t.draft && typeof t.id === 'number' && t.id !== task.value.id))
@@ -114,7 +108,7 @@ async function uploadFile(file) {
   const fd = new FormData()
   fd.append('file', file)
   if (!(await act('attachments/', fd))) return null
-  return panelData.value.attachments[0] // a mais nova vem primeiro
+  return panelData.value.attachments[0]
 }
 async function onAttach(e) {
   const file = e.target.files[0]
@@ -124,7 +118,6 @@ async function onAttach(e) {
 const size = (b) => (b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : b > 1024 ? `${Math.round(b / 1024)} KB` : b ? `${b} B` : '')
 const ICON_OF = { image: 'image', video: 'image', link: 'link', file: 'doc' }
 
-// título com contador e indicador de salvamento, como no Plane
 const saving = ref('')
 const titleLen = ref(0)
 watch(() => task.value?.title, (t) => (titleLen.value = t?.length || 0), { immediate: true })
@@ -133,7 +126,6 @@ watch(adding, async (v) => {
   await nextTick()
   if (v && motion()) gsap.from(q('.inline, form.add'), { height: 0, autoAlpha: 0, duration: 0.3, ease: 'power2.out', clearProps: 'height' })
 })
-// entra só o que é novo (relação, anexo, comentário); a primeira carga já vem com a abertura do painel
 watch(() => [panelData.value.relations.length, panelData.value.attachments.length, comments.value.length], async (now, before) => {
   if (!before || now.every((n, i) => n <= before[i])) return
   await nextTick()
@@ -148,7 +140,6 @@ const saveDesc = () => desc.value !== task.value.description && set({ descriptio
 
 const subitems = computed(() => state.tasks.filter((t) => t.parent === task.value?.id && !t.draft))
 const parent = computed(() => state.tasks.find((t) => t.id === task.value?.parent))
-// pai possível: mesmo projeto, nem ela mesma nem uma filha (o backend barra o resto do ciclo)
 const parentOptions = computed(() => state.tasks.filter((t) => t.projectId === task.value.projectId && !t.draft && typeof t.id === 'number' && t.id !== task.value.id && t.parent !== task.value.id))
 const doneItems = computed(() => task.value?.checklist.filter((i) => i.done).length || 0)
 const when = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -183,7 +174,6 @@ async function set(fields) {
   saving.value = ok === false ? '' : 'Salvo'
   return ok
 }
-// Quem não é admin precisa da nota de conclusão (regra da ShyDevs, validada no backend)
 function setStatus(id) {
   if (id === 'done' && !state.isAdmin && !task.value.draft) { needNote.value = true; return }
   set({ status: id })
@@ -197,20 +187,18 @@ function toggleMember(id) {
   const a = task.value.assignees
   set({ assignees: a.includes(id) ? a.filter((x) => x !== id) : [...a, id] })
 }
-// atribuir por cargo: marca todo mundo do cargo; se já estavam todos, tira todos
 const roles = computed(() => (task.value?.projectId ? rolesOf(task.value.projectId) : []))
 const roleOn = (r) => r.ids.every((id) => task.value.assignees.includes(id))
 function toggleRole(r) {
   const a = task.value.assignees
   set({ assignees: roleOn(r) ? a.filter((id) => !r.ids.includes(id)) : [...new Set([...a, ...r.ids])] })
 }
-// "Adicionar ao Google Agenda": abre o Google Agenda com o evento preenchido (do início, ou do prazo, até o prazo)
 const ymd = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
 const gcalUrl = computed(() => {
   const t = task.value
   if (!t?.due) return ''
   const end = new Date(`${t.due}T12:00`)
-  end.setDate(end.getDate() + 1) // evento de dia inteiro: o fim é o dia seguinte
+  end.setDate(end.getDate() + 1)
   const start = (t.start && t.start <= t.due ? t.start : t.due).replaceAll('-', '')
   const details = `${t.description ? `${t.description.slice(0, 800)}
 
@@ -219,7 +207,6 @@ const gcalUrl = computed(() => {
 })
 const titleOf = (id) => state.projects.find((p) => p.id === task.value?.projectId)?.titles?.[id]
 
-// opções dos dropdowns
 const statusOptions = computed(() => STATUSES.map((s) => ({ value: s.id, label: s.name, color: s.color })))
 const priorityOptions = computed(() => [{ value: '', label: 'Sem prioridade', color: 'var(--line-strong)' }, ...PRIORITIES.map((p) => ({ value: p.id, label: p.name, color: p.color }))])
 const relKindOptions = computed(() => (adding.value === 'dep'
@@ -237,7 +224,6 @@ function addItem() {
 }
 function toggleItem(item, el) {
   item.done = !item.done
-  // marcar uma etapa com a tarefa pendente já inicia a tarefa: a regra é do backend e o status volta na resposta
   set({ checklist: [...task.value.checklist] })
   if (item.done && !reduced) gsap.fromTo(el, { scale: 0.7 }, { scale: 1, duration: 0.4, ease: 'back.out(2.4)' })
 }
@@ -304,7 +290,6 @@ async function copyCode() {
     toast('Código copiado.')
   } catch { toast('Não deu para copiar.') }
 }
-// mudou de projeto: só ficam como responsáveis as pessoas que participam do projeto novo
 function moveTo(projectId) {
   const allowed = new Set(peopleOf(projectId).map((m) => m.id))
   set({ projectId, assignees: task.value.assignees.filter((id) => !projectId || allowed.has(id)) })
@@ -367,7 +352,6 @@ function destroy() {
           <span class="count" :class="{ full: titleLen >= 200 }">{{ titleLen }}/200</span>
         </div>
 
-        <!-- a linha de propriedades do Plane: estado, prioridade, responsáveis, início e prazo -->
         <div class="bar sec">
           <div class="cell" title="Status"><AppSelect ghost block size="sm" :model-value="task.status" :options="statusOptions" aria-label="Status" @change="setStatus" /></div>
           <div class="cell" title="Prioridade"><AppSelect ghost block size="sm" :model-value="task.priority" :options="priorityOptions" aria-label="Prioridade" @change="(v) => set({ priority: v })" /></div>
@@ -401,7 +385,6 @@ function destroy() {
           </div>
         </div>
 
-        <!-- ações do Plane: subitem, dependência, relação, link, anexo e página -->
         <div v-if="saved" class="actions sec" role="toolbar" aria-label="Ações">
           <button type="button" :aria-pressed="adding === 'sub'" @click="openAdd('sub')"><AppIcon name="plus" :size="13" />Subitem</button>
           <button type="button" :aria-pressed="adding === 'dep'" @click="openAdd('dep')"><AppIcon name="layers" :size="13" />Dependência</button>
@@ -541,7 +524,6 @@ function destroy() {
                   <MdEditor v-model="editBody" :rows="2" :upload="uploadFile" @commit="(how) => how === 'submit' && saveEdit(f.comment)" />
                   <div><button type="button" class="ghost" @click="editingId = null">Cancelar</button><button type="submit" class="done-btn">Salvar</button></div>
                 </form>
-                <!-- eslint-disable-next-line vue/no-v-html -- render() escapa o texto antes de montar o HTML -->
                 <div v-else class="c-body" v-html="render(f.comment.body)" />
                 <ReactionBar :reactions="f.comment.reactions || []" @toggle="(e) => commentAction(f.comment, 'react/', { emoji: e })" />
               </template>
@@ -586,8 +568,7 @@ function destroy() {
 .parent-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.6rem; padding: 0; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .parent-link:hover { color: var(--accent-soft); }
 .title { display: block; width: 100%; margin-top: 0.5rem; padding: 0; border: 0; background: none; font: 600 1.375rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); resize: none; field-sizing: content; outline: none; }
-.bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); border-block: 1px solid var(--line); position: relative; z-index: 6; } /* acima das seções seguintes (a animação de entrada cria camadas), senão elas cobrem o menu de responsáveis */
-.cell { display: flex; align-items: center; gap: 0.3rem; min-width: 0; padding: 0.35rem 0.5rem; color: var(--muted); }
+.bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); border-block: 1px solid var(--line); position: relative; z-index: 6; } .cell { display: flex; align-items: center; gap: 0.3rem; min-width: 0; padding: 0.35rem 0.5rem; color: var(--muted); }
 .cell + .cell { border-left: 1px solid var(--line); }
 .cell input { flex: 1; min-width: 0; padding: 0 0.2rem; }
 .cell__btn { display: flex; flex: 1; align-items: center; gap: 0.4rem; min-width: 0; height: 30px; padding: 0 0.2rem; border: 0; border-radius: 6px; background: none; font-size: 13px; color: var(--text); cursor: pointer; }
@@ -604,8 +585,7 @@ input[type='date']:focus, .desc:focus, .add input:focus, .tag-input:focus, .comm
 .menu__n { margin-left: 0.15rem; font-size: 11.5px; color: var(--muted); }
 .menu__who { display: flex; flex-direction: column; min-width: 0; }
 .menu__who small { font-size: 11.5px; color: var(--muted); }
-.inline :deep(.grow) { flex: 1; min-width: 9rem; } /* a classe vai para o botão do AppSelect, fora do escopo deste componente */
-.chips { flex-wrap: wrap; }
+.inline :deep(.grow) { flex: 1; min-width: 9rem; } .chips { flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12px; cursor: pointer; }
 .chip.is-on { border-color: var(--accent); background: rgb(229 101 21 / 0.14); }
 .dot { width: 8px; height: 8px; border-radius: 50%; }

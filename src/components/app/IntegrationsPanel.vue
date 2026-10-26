@@ -1,5 +1,4 @@
 <script setup>
-// Ajustes > Integrações: o que já funciona sem instalar nada (GitHub, Google Agenda, Google Meet) e o que vem depois.
 import { computed, onMounted, ref } from 'vue'
 import { api } from '../../services/api'
 import { useWorkspace } from '../../composables/useWorkspace'
@@ -12,12 +11,11 @@ const SOON = [['GitLab', 'gitlab'], ['Slack', 'slack'], ['Google Drive', 'google
 const { state, load } = useWorkspace()
 const { toast } = useUi()
 
-// ---- GitHub: repositório vira projeto, issues abertas viram tarefas
 const repo = ref('')
 const token = ref('')
-const target = ref(null) // null = projeto novo
+const target = ref(null)
 const importing = ref(false)
-const ghMsg = ref(null) // { ok, text, project? }
+const ghMsg = ref(null)
 const targets = computed(() => [{ value: null, label: 'Criar um projeto novo' }, ...state.projects.filter((p) => ['edit', 'full'].includes(p.my_permission)).map((p) => ({ value: p.id, label: `Completar ${p.name}`, color: p.color }))])
 async function importRepo() {
   if (!repo.value.trim()) return
@@ -36,8 +34,7 @@ async function importRepo() {
   }
 }
 
-// ---- Google Agenda: link secreto (.ics) com as minhas tarefas que têm prazo
-const cal = ref(null) // { url, webcal }
+const cal = ref(null)
 const local = computed(() => cal.value && /\/\/(localhost|127\.0\.0\.1)[:/]/.test(cal.value.url))
 const googleUrl = computed(() => cal.value && `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(cal.value.webcal)}`)
 async function loadCal(reset = false) {
@@ -52,7 +49,6 @@ onMounted(() => loadCal())
 
 <template>
   <div class="integrations">
-    <!-- GitHub -->
     <section class="card">
       <header><span class="logo"><BrandIcon name="github" :size="18" /></span><div><h3>GitHub</h3><p>Traga um repositório como projeto: cada issue aberta vira uma tarefa, com as etiquetas e o link de volta para o GitHub.</p></div></header>
       <form class="gh" @submit.prevent="importRepo">
@@ -67,7 +63,6 @@ onMounted(() => loadCal())
       <p class="hint">Repositório público funciona sem token (o GitHub deixa 60 consultas por hora). Importar de novo só traz as issues novas. O token não fica salvo.</p>
     </section>
 
-    <!-- Google Agenda -->
     <section class="card">
       <header><span class="logo"><BrandIcon name="googlecalendar" :size="18" /></span><div><h3>Google Agenda</h3><p>Suas tarefas com prazo aparecem no Google Agenda (ou Apple e Outlook) e atualizam sozinhas.</p></div></header>
       <template v-if="cal">
@@ -86,7 +81,6 @@ onMounted(() => loadCal())
       <p v-else class="hint">Carregando…</p>
     </section>
 
-    <!-- Google Meet -->
     <section class="card">
       <header><span class="logo"><BrandIcon name="googlemeet" :size="18" /></span><div><h3>Google Meet</h3><p>No chat de cada projeto tem o botão de chamada: cria uma sala do Meet e manda o link para o time entrar com um clique.</p></div></header>
     </section>

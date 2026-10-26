@@ -1,6 +1,4 @@
 <script setup>
-// Editor de texto da tarefa e dos comentários (como o do Plane, em Markdown): barra de formatação, Editar/Visualizar,
-// imagem e anexo enviados para a tarefa, checklist clicável e "Mostrar tudo" em texto longo.
 import { computed, nextTick, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { render, toggleCheck } from '../../utils/markdown'
@@ -9,8 +7,8 @@ const props = defineProps({
   modelValue: { type: String, default: '' },
   placeholder: { type: String, default: '' },
   rows: { type: Number, default: 4 },
-  upload: { type: Function, default: null }, // async (file) => { url, name, kind }
-  view: Boolean, // começa em Visualizar
+  upload: { type: Function, default: null },
+  view: Boolean,
   collapsible: Boolean,
 })
 const emit = defineEmits(['update:modelValue', 'commit'])
@@ -26,7 +24,6 @@ const busy = ref(false)
 const long = computed(() => props.collapsible && props.modelValue.length > 600)
 const html = computed(() => render(props.modelValue))
 const root = ref(null)
-// troca Editar/Visualizar e abrir o "Mostrar tudo" com uma transição curta
 watch(mode, async () => {
   await nextTick()
   if (!prefersReducedMotion()) gsap.fromTo(root.value?.querySelector('textarea, .md-ed__view'), { autoAlpha: 0, y: 4 }, { autoAlpha: 1, y: 0, duration: 0.25, ease: 'power2.out' })
@@ -45,7 +42,7 @@ function format([, , before, after]) {
   const el = area.value
   const { selectionStart: a, selectionEnd: b, value } = el
   const lineStart = value.lastIndexOf('\n', a - 1) + 1
-  const block = !after // prefixo de linha
+  const block = !after
   emit('update:modelValue', block ? value.slice(0, lineStart) + before + value.slice(lineStart) : value.slice(0, a) + before + value.slice(a, b) + after + value.slice(b))
   nextTick(() => { el.focus(); const pos = b + before.length; el.setSelectionRange(pos, pos) })
 }
@@ -86,7 +83,6 @@ defineExpose({ edit: () => { mode.value = 'edit'; nextTick(() => area.value?.foc
     </div>
     <textarea v-if="mode === 'edit'" ref="area" :value="modelValue" :rows="rows" :placeholder="placeholder" aria-label="Texto" @input="emit('update:modelValue', $event.target.value)" @blur="emit('commit')" @keydown.ctrl.enter="emit('commit', 'submit')" @keydown.meta.enter="emit('commit', 'submit')" />
     <template v-else>
-      <!-- eslint-disable-next-line vue/no-v-html -- render() escapa o texto antes de montar o HTML -->
       <div class="md-ed__view" :class="{ clamp: long && !expanded }" @click="onPreviewClick" @dblclick="mode = 'edit'" v-html="html || `<p class='md-ed__empty'>${placeholder}</p>`" />
       <button v-if="long" type="button" class="md-ed__more" @click="expanded = !expanded">{{ expanded ? 'Mostrar menos' : 'Mostrar tudo' }}</button>
     </template>

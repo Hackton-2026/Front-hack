@@ -1,5 +1,4 @@
 <script setup>
-// Formulário: um pedido preenchido aqui vira tarefa no projeto
 import { reactive, ref } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 import AppSelect from '../AppSelect.vue'

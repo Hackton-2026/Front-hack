@@ -32,7 +32,6 @@ async function submit() {
 <template>
   <form class="narrow card stack" @submit.prevent="submit">
     <h1>Meu perfil</h1>
-    <!-- Avatar reduzido para 512px: foto de perfil não precisa de mais -->
     <ImageUpload v-model="form.avatar" round :max-side="512" label="Adicionar foto" />
     <div class="two-cols">
       <BaseInput v-model="form.first_name" label="Nome" />

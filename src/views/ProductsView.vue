@@ -8,7 +8,6 @@ import ProductCard from '../components/ProductCard.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseInput from '../components/BaseInput.vue'
 
-// Mesma tela para "todos" (público) e "meus" (mine=true)
 const props = defineProps({ mine: Boolean })
 const { user } = useAuth()
 const router = useRouter()
@@ -36,7 +35,6 @@ async function load() {
 }
 watch(() => props.mine, load, { immediate: true })
 
-// O assistente de IA avisa quando cria/edita produtos
 window.addEventListener('products:changed', load)
 onUnmounted(() => window.removeEventListener('products:changed', load))
 

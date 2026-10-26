@@ -1,5 +1,4 @@
 <script setup>
-// Atividade: o histórico do projeto (o que os signals do backend registram)
 import { onMounted, ref } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 

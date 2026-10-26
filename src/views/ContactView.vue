@@ -48,7 +48,6 @@ function prepareEmail(event) {
     ...(commercial.value ? [`Empresa: ${fields.company}`, `Tamanho do time: ${fields.size || 'Não informado'}`] : []),
     '', fields.message,
   ].join('\n')
-  // Não há endpoint de contato: o usuário revisa e envia pelo seu cliente de e-mail.
   window.location.href = `mailto:contato@novexo.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   prepared.value = true
 }

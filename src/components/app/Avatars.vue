@@ -24,5 +24,4 @@ const initials = (name) => name.split(' ').map((w) => w[0]).slice(0, 2).join('')
 .av { overflow: hidden; }
 .av img { width: 100%; height: 100%; object-fit: cover; }
 .av.more { background: var(--surface-2); color: var(--muted); }
-.av.none { border: 1.5px dashed var(--line-strong); background: none; } /* "none", não "empty": o tema global tem um .empty com padding grande */
-</style>
+.av.none { border: 1.5px dashed var(--line-strong); background: none; } </style>

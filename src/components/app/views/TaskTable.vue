@@ -1,5 +1,4 @@
 <script setup>
-// Tabela: uma planilha das tarefas, ordenável pelo cabeçalho e editável na própria célula
 import { computed, ref } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 import { useUi } from '../../../composables/useUi'

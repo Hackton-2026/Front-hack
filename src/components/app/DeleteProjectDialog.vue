@@ -1,5 +1,4 @@
 <script setup>
-// Confirmação antes de excluir um projeto de vez (só o dono), com a opção de só arquivar.
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkspace } from '../../composables/useWorkspace'

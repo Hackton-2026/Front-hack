@@ -1,5 +1,4 @@
 <script setup>
-// Documento: uma página do projeto aberta ao lado das tarefas. A página escolhida fica na visão (config.page).
 import { computed, ref } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 import AppSelect from '../AppSelect.vue'

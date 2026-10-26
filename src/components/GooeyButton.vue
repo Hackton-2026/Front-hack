@@ -1,22 +1,17 @@
 <script setup>
-// Botão universal do Novexo: porte do GooeyCanvas + borda animada do leonardo.ai (mesma base do portfolio).
-// No hover, um canvas 2D desenha uma elipse que sobe de baixo, se achata e cobre o botão;
-// o progresso vai de 0→1 em 1.2s (entrada) e 1→0 em 1.08s (saída), easing cúbico de saída.
-// Uso: <GooeyButton to="/login">, <GooeyButton href="#planos">, <GooeyButton type="submit">.
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
 defineOptions({ inheritAttrs: false })
 const props = defineProps({
-  variant: { type: String, default: 'primary' }, // primary | secondary | dark
-  size: { type: String, default: 'md' }, // md | lg
+  variant: { type: String, default: 'primary' },
+  size: { type: String, default: 'md' },
   to: { type: [String, Object], default: null },
   type: { type: String, default: 'button' },
   disabled: Boolean,
-  block: Boolean, // largura total
+  block: Boolean,
 })
 
-// class e style ficam no wrapper; href, aria-*, eventos... vão para o botão
 const attrs = useAttrs()
 const btnAttrs = computed(() => {
   const { class: _c, style: _s, ...rest } = attrs
@@ -26,7 +21,6 @@ const btnAttrs = computed(() => {
 })
 const tag = computed(() => (props.to ? RouterLink : attrs.href ? 'a' : 'button'))
 
-// fill = elipse; bg = fundo pintado no canvas (null = transparente, só a elipse aparece)
 const COLORS = {
   primary: { fill: '#e56515', bg: '#f8f8f8' },
   secondary: { fill: '#f8f8f8', bg: null },
@@ -85,7 +79,7 @@ const pointerLeave = () => canHover && leave()
 let resizeObs
 onMounted(() => {
   draw()
-  resizeObs = new ResizeObserver(draw) // o botão muda de tamanho (block, texto que troca)
+  resizeObs = new ResizeObserver(draw)
   resizeObs.observe(canvas.value.parentElement)
   if (props.variant === 'secondary' && ring.value && !reduced) {
     const spin = () => {

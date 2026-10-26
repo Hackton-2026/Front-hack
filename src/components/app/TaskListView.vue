@@ -1,5 +1,4 @@
 <script setup>
-// Visualização em Lista (a "List view" do ClickUp): grupos por status, recolhíveis, com adição rápida na linha
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'

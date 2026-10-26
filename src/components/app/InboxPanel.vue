@@ -1,5 +1,4 @@
 <script setup>
-// Caixa de entrada: o histórico do workspace com marcação de lido (a "Inbox" do ClickUp e do Plane)
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
@@ -13,7 +12,6 @@ const { openTask, openChat, toast } = useUi()
 const router = useRouter()
 const PERM = { view: 'ver', comment: 'comentar', edit: 'editar', full: 'acesso total' }
 const answering = ref(null)
-// convites para projetos que chegaram para você
 async function answer(inv, ok) {
   answering.value = inv.token
   try {

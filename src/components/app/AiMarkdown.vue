@@ -1,6 +1,4 @@
 <script setup>
-// Resposta da Novexo IA em Markdown (títulos, listas, negrito, código, citação). Usa o mesmo renderizador
-// da wiki, que escapa o texto antes: HTML vindo da IA nunca vira HTML de verdade.
 import { computed } from 'vue'
 import { render } from '../../utils/markdown'
 

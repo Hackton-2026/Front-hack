@@ -1,7 +1,4 @@
 <script setup>
-// Chat do projeto, num painel ao lado da tela (abre por cima de qualquer página do app): todo mundo que participa
-// conversa aqui. @novexo chama a Novexo IA, que responde agindo como quem chamou (com as permissões dessa pessoa);
-// @usuario avisa a pessoa na caixa de entrada (e no celular). Mensagens novas chegam a cada poucos segundos.
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { api } from '../services/api'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -24,15 +21,15 @@ const p = computed(() => project(pid.value))
 const messages = ref([])
 const text = ref('')
 const sending = ref(false)
-const thinking = ref(false) // a IA está respondendo
+const thinking = ref(false)
 const error = ref('')
-const pending = ref([]) // ações sensíveis que a IA pediu para quem chamou
-const form = ref(null) // formulário da IA só para quem chamou; as respostas voltam como "@novexo ..."
+const pending = ref([])
+const form = ref(null)
 let asked = 0
 const list = ref(null)
 const input = ref(null)
 let timer
-let generation = 0 // trocou de projeto: respostas atrasadas do projeto anterior são ignoradas
+let generation = 0
 
 const lastId = () => messages.value.at(-1)?.id
 const callsAi = computed(() => /@novexo\b/i.test(text.value))
@@ -59,7 +56,7 @@ async function poll() {
   try {
     const items = await projectMessages(pid.value, lastId())
     if (gen === generation) add(items)
-  } catch { /* tenta de novo no próximo ciclo */ }
+  } catch { }
 }
 async function start() {
   generation++
@@ -84,8 +81,7 @@ watch(pid, start)
 onMounted(() => { start(); document.addEventListener('visibilitychange', poll) })
 onUnmounted(() => { generation++; clearInterval(timer); document.removeEventListener('visibilitychange', poll) })
 
-// @menções: quem participa do projeto (e a IA). Enquanto a palavra antes do cursor começa com @, aparece a lista.
-const mention = ref(null) // { query, start } enquanto digita uma @menção
+const mention = ref(null)
 const pick = ref(0)
 const people = computed(() => [
   { id: 'novexo', username: 'novexo', name: 'Novexo IA', ai: true },
@@ -121,7 +117,6 @@ function onKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
 }
 
-// answer: resposta ao formulário da IA (vai como "@novexo ..."); raw: mensagem pronta (ex.: link da chamada)
 async function send(answer, raw) {
   const body = raw ?? (typeof answer === 'string' ? `@novexo ${answer}` : text.value.trim())
   if (!body || sending.value) return
@@ -141,16 +136,15 @@ async function send(answer, raw) {
     asked++
     if (form.value) scrollDown(true)
     if (res.ai_error) error.value = `A Novexo IA não respondeu: ${res.ai_error}`
-    if (res.changed) load() // a IA mudou tarefas: o resto do app atualiza
+    if (res.changed) load()
   } catch (e) {
-    error.value = e.message // a mensagem continua na caixa para tentar de novo
+    error.value = e.message
   } finally {
     sending.value = false
     thinking.value = false
     input.value?.focus()
   }
 }
-// /whatsapp manda a mensagem pelo WhatsApp para quem participa e confirmou o número (Ajustes › WhatsApp)
 const callsWhatsapp = computed(() => /^\/(whatsapp|whatsap|whatzap|zap)\b/i.test(text.value.trim()))
 function whatsapp() {
   if (!callsWhatsapp.value) text.value = `/whatsapp ${text.value.trimStart()}`
@@ -172,10 +166,8 @@ async function decide(action, ok) {
   }
 }
 
-// @menções destacadas e **negrito** (a IA às vezes usa). O texto continua escapado pelo Vue: só separamos em pedaços.
 const parts = (body) => body.split(/(\*\*[^*\n]+\*\*|@[\wÀ-ÿ.-]+)/g).filter(Boolean)
   .map((t) => (t.startsWith('**') && t.endsWith('**') && t.length > 4 ? { t: t.slice(2, -2), bold: true } : { t, at: t.startsWith('@') }))
-// link do Meet numa mensagem vira um card "Entrar na chamada"
 const MEET = /https:\/\/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/
 const meetOf = (body) => body.match(MEET)
 const startCall = (link) => send(null, `Chamada no Google Meet: ${link}`)
@@ -268,8 +260,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 .mentions li.alone { display: block; margin-top: 0.2rem; padding: 0.5rem; border-top: 1px solid var(--line); border-radius: 0; font-size: 12.5px; color: var(--muted); cursor: default; }
 .mentions li.alone a { margin-left: 0.25rem; color: var(--text); }
 .mentions .ava { width: 22px; height: 22px; font-size: 9px; }
-.empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin: auto; max-width: 26rem; padding: 0; border: 0; text-align: center; color: var(--muted); } /* o tema global tem um .empty tracejado */
-.empty strong { color: var(--text); font-size: 15px; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin: auto; max-width: 26rem; padding: 0; border: 0; text-align: center; color: var(--muted); } .empty strong { color: var(--text); font-size: 15px; }
 .empty p { margin: 0; line-height: 1.55; }
 .empty code { padding: 0.05rem 0.3rem; border-radius: 4px; background: var(--surface-2); color: var(--accent-soft); }
 .spark { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; background: rgb(229 101 21 / 0.16); color: var(--accent-soft); }
@@ -316,7 +307,6 @@ mark.nvx { background: rgb(229 101 21 / 0.18); color: var(--accent-soft); }
 .send { flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; background: var(--accent); color: #000; cursor: pointer; }
 .send:disabled { background: var(--surface-2); color: var(--muted); cursor: default; }
 :is(.mention, .send, .x, .people):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-/* o chat também abre num painel estreito ao lado: quem decide é a largura do próprio campo, não a da janela */
 @container (max-width: 470px) { .hint { display: none; } .send { margin-left: auto; } }
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; } }
 .msg.sys { justify-content: center; margin: 0.7rem 0 0; padding-left: 0; }

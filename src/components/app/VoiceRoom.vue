@@ -1,7 +1,4 @@
 <script setup>
-// Sala de voz do projeto: áudio, câmera e tela vão direto entre os navegadores (WebRTC, cada um com cada um; bom até ~6 pessoas).
-// O servidor (/ws/projects/:id/voice/) só diz quem está na sala e repassa a sinalização. Cada conexão nasce com 3 canais
-// fixos (microfone, câmera, tela): ligar câmera ou tela só troca a faixa do canal, sem renegociar.
 import { computed, markRaw, onUnmounted, reactive, ref } from 'vue'
 import { api, wsUrl } from '../../services/api'
 import { useWorkspace } from '../../composables/useWorkspace'
@@ -10,20 +7,19 @@ import AppIcon from './AppIcon.vue'
 const props = defineProps({ projectId: { type: Number, required: true } })
 const { member } = useWorkspace()
 
-const SLOTS = ['audio', 'video', 'video'] // 0 microfone, 1 câmera, 2 tela
+const SLOTS = ['audio', 'video', 'video']
 const joined = ref(false)
 const busy = ref(false)
 const error = ref('')
 const me = reactive({ mic: true, cam: false, screen: false, rec: false })
-const local = reactive({ cam: null, screen: null }) // pré-visualização
-const peers = reactive({}) // id -> { user, state, media: [audio, cam, screen] }
-const pcs = {} // id -> { pc, queue } (fora do reactive: objetos nativos do navegador)
+const local = reactive({ cam: null, screen: null })
+const peers = reactive({})
+const pcs = {}
 let ws = null
 let ice = []
 let tracks = [null, null, null]
 
-// Quem está falando: mede o volume de cada áudio (o meu e o de cada pessoa) e acende a borda do quadrado
-const speaking = reactive({}) // 'me' ou id da pessoa -> true/false
+const speaking = reactive({})
 const meters = {}
 let audioCtx = null
 let meterTimer = null
@@ -32,7 +28,7 @@ function meter(id, stream) {
   analyser.fftSize = 512
   const source = audioCtx.createMediaStreamSource(stream)
   source.connect(analyser)
-  if (recMix) source.connect(recMix) // entrou alguém durante a gravação da ata
+  if (recMix) source.connect(recMix)
   meters[id] = { analyser, source, data: new Uint8Array(analyser.fftSize) }
 }
 function measure() {
@@ -44,8 +40,6 @@ function measure() {
   }
 }
 
-// Ata da reunião: grava o áudio da sala inteira (eu + todo mundo) em trechos de ~2 min; cada trecho vira texto no Whisper
-// do Groq e, no fim, a IA escreve a ata como página do projeto. Todo mundo da sala vê o aviso de gravação.
 const SEGMENT_MS = 120000
 const anyoneRec = computed(() => me.rec || Object.values(peers).some((p) => p.state.rec))
 const minutes = reactive({ busy: false, page: null })
@@ -118,14 +112,13 @@ function connection(id) {
   }
   return (pcs[id] = { pc, queue: [] })
 }
-// Coloca as minhas faixas atuais (ou nada) nos 3 canais de uma conexão
 const attach = (pc) => pc.getTransceivers().forEach((t, i) => { t.direction = 'sendrecv'; t.sender.replaceTrack(tracks[i]) })
 const everyone = (fn) => Object.values(pcs).forEach(({ pc }) => fn(pc))
 async function flush(c) {
   for (const candidate of c.queue.splice(0)) await c.pc.addIceCandidate(candidate).catch(() => {})
 }
 
-async function call(id) { // quem acabou de entrar liga para quem já estava
+async function call(id) {
   const { pc } = connection(id)
   SLOTS.forEach((kind) => pc.addTransceiver(kind, { direction: 'sendrecv' }))
   attach(pc)
@@ -163,7 +156,7 @@ async function join() {
   if (busy.value || joined.value) return
   busy.value = true
   error.value = ''
-  audioCtx = new AudioContext() // criado no clique: sem um gesto o navegador deixa o áudio suspenso
+  audioCtx = new AudioContext()
   try {
     tracks[0] = (await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })).getAudioTracks()[0]
     meter('me', new MediaStream([tracks[0]]))
@@ -198,11 +191,11 @@ async function join() {
 }
 
 function leave(closeSocket = true) {
-  if (me.rec) stopRec() // sair no meio da gravação ainda gera a ata com o que foi gravado
+  if (me.rec) stopRec()
   const socket = ws
   ws = null
   if (closeSocket && socket) {
-    socket.onclose = null // saída pedida pela pessoa não é "a conexão caiu"
+    socket.onclose = null
     socket.close()
   }
   Object.keys(pcs).forEach(dropPeer)
@@ -259,12 +252,12 @@ async function toggleScreen() {
   try {
     const stream = await navigator.mediaDevices.getDisplayMedia({ video: true })
     const track = stream.getVideoTracks()[0]
-    track.onended = stopScreen // "Parar de compartilhar" do próprio navegador
+    track.onended = stopScreen
     await setSlot(2, track)
     local.screen = markRaw(stream)
     me.screen = true
     shareState()
-  } catch { /* a pessoa cancelou a escolha da tela */ }
+  } catch { }
 }
 
 const fullscreen = (e) => e.currentTarget.requestFullscreen?.()
@@ -324,8 +317,7 @@ onUnmounted(() => leave())
 .err { margin: 0; font-size: 12.5px; color: #f2a07a; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.4rem; }
 .tile { position: relative; display: grid; place-items: center; margin: 0; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); transition: border-color 0.15s, box-shadow 0.15s; }
-.tile.speaking { border-color: #3ba55d; box-shadow: 0 0 0 2px #3ba55d; } /* falando, como no Discord */
-.tile video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.tile.speaking { border-color: #3ba55d; box-shadow: 0 0 0 2px #3ba55d; } .tile video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 .ava { display: grid; place-items: center; width: 44px; height: 44px; overflow: hidden; border-radius: 50%; background: var(--accent); font-weight: 700; font-size: 14px; color: #000; }
 .me .ava { width: auto; padding: 0 0.6rem; border-radius: 999px; }
 .ava img { width: 100%; height: 100%; object-fit: cover; }

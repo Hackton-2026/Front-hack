@@ -5,7 +5,6 @@ import { gsap, revealTitleCharacters } from '../utils/motion'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
-/** Entradas e interações da página de preços, limitadas ao seu próprio DOM. */
 export function usePricingMotion(root, yearly) {
   let mounted = false
   let media
@@ -53,7 +52,6 @@ export function usePricingMotion(root, yearly) {
       if (lead.length) intro.from(lead, {}, 0.45)
       if (billing.length) intro.from(billing, { y: 12 }, 0.6)
 
-      // A entrada fica no artigo; a superfície interna continua livre para o hover CSS.
       select('.price-card, [data-pricing-reveal]').forEach(element => {
         const card = element.matches('.price-card')
         if (!card && (element.closest('.price-card') || element.querySelector('.price-card, [data-pricing-reveal]'))) return
@@ -65,7 +63,6 @@ export function usePricingMotion(root, yearly) {
         })
       })
 
-      // context.add também rastreia os tweens criados depois de interações Vue.
       context.add('prices', () => {
         const prices = select('.pricing-price__value')
         if (!prices.length) return

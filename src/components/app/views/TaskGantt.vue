@@ -1,7 +1,4 @@
 <script setup>
-// Gantt (uma linha por tarefa) e Linha do tempo (agrupada por pessoa), no jeito do Linear/Plane: cabeçalho com mês e dias,
-// fim de semana sombreado, linha de "hoje", zoom por dia ou semana. A barra vai do início (ou da criação) até o prazo,
-// mostra o progresso do checklist e fica vermelha se atrasou. Arrastar a barra move as datas; arrastar a ponta muda o prazo.
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 import { useUi } from '../../../composables/useUi'
@@ -11,7 +8,7 @@ const props = defineProps({ tasks: { type: Array, required: true }, byPerson: Bo
 const { STATUSES, member, code, today, isOverdue, updateTask } = useWorkspace()
 const { openTask } = useUi()
 const DAY = 864e5
-const ZOOM = { day: 36, week: 14 } // largura de um dia em px
+const ZOOM = { day: 36, week: 14 }
 const zoom = ref('day')
 const w = computed(() => ZOOM[zoom.value])
 
@@ -24,7 +21,6 @@ const span = (t) => {
 const dated = computed(() => props.tasks.filter((t) => t.due))
 const undated = computed(() => props.tasks.filter((t) => !t.due))
 
-// de uma semana antes do primeiro item até duas depois do último (sempre incluindo hoje)
 const range = computed(() => {
   const now = toDay(today())
   const all = dated.value.flatMap((t) => Object.values(span(t)))
@@ -58,8 +54,7 @@ const status = (t) => STATUSES.find((s) => s.id === t.status) || STATUSES[0]
 const progress = (t) => (t.status === 'done' ? 1 : t.checklist?.length ? t.checklist.filter((i) => i.done).length / t.checklist.length : 0)
 const fmt = (ms) => new Date(ms).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 
-// ---- arrastar: mover a barra inteira (início e prazo) ou só a ponta direita (prazo). Encaixa em dias.
-const drag = ref(null) // { t, mode, x0, start, end, delta }
+const drag = ref(null)
 function grab(e, t, mode) {
   if (e.button !== 0) return
   const s = span(t)
@@ -75,7 +70,7 @@ function slide(e) {
 function drop(t) {
   const d = drag.value
   drag.value = null
-  if (!d?.moved) return openTask(t) // clique simples abre a tarefa
+  if (!d?.moved) return openTask(t)
   if (!d.delta) return
   const due = d.end + d.delta * DAY
   if (d.mode === 'move') updateTask(t, { start: iso(d.start + d.delta * DAY), due: iso(due) })
@@ -89,7 +84,6 @@ const live = (t) => {
   return { start, end }
 }
 
-// abre já mostrando hoje
 const scroller = ref(null)
 function goToday(smooth = true) {
   scroller.value?.scrollTo({ left: Math.max(0, todayX.value - scroller.value.clientWidth / 3), behavior: smooth ? 'smooth' : 'auto' })
@@ -112,7 +106,6 @@ watch(zoom, () => nextTick(() => goToday(false)))
     <p v-if="!dated.length" class="empty">Nenhuma tarefa com prazo. Dê um prazo às tarefas para elas aparecerem aqui.</p>
     <div v-else ref="scroller" class="scroll">
       <div class="grid" :style="{ gridTemplateColumns: `16rem ${width}px` }">
-        <!-- cabeçalho: mês em cima, dias embaixo -->
         <div class="corner">{{ byPerson ? 'Pessoa / tarefa' : 'Tarefa' }}</div>
         <div class="head">
           <div class="months"><span v-for="m in months" :key="m.key" :style="{ width: `${m.n * w}px` }"><b>{{ m.label }}</b></span></div>
@@ -173,14 +166,11 @@ watch(zoom, () => nextTick(() => goToday(false)))
 .scroll { overflow: auto; max-height: 70vh; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .grid { display: grid; min-width: max-content; font-size: 12.5px; }
 
-/* cabeçalho fixo no topo; a coluna das tarefas fixa à esquerda */
 .corner { position: sticky; top: 0; left: 0; z-index: 4; display: flex; align-items: flex-end; padding: 0 0.85rem 0.55rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); font-size: 11.5px; font-weight: 500; color: var(--muted); }
 .head { position: sticky; top: 0; z-index: 3; border-bottom: 1px solid var(--line); background: var(--surface); }
 .months { display: flex; height: 26px; }
-.months span { flex-shrink: 0; overflow: clip; padding: 0.4rem 0.6rem 0; border-left: 1px solid var(--line); font-size: 11.5px; font-weight: 600; color: var(--text); white-space: nowrap; } /* clip, não hidden: hidden quebraria o sticky do nome */
-.months span:first-child { border-left: 0; }
-.months b { position: sticky; left: calc(16rem + 0.6rem); font-weight: inherit; } /* o nome do mês acompanha a rolagem */
-.days { display: flex; height: 30px; }
+.months span { flex-shrink: 0; overflow: clip; padding: 0.4rem 0.6rem 0; border-left: 1px solid var(--line); font-size: 11.5px; font-weight: 600; color: var(--text); white-space: nowrap; } .months span:first-child { border-left: 0; }
+.months b { position: sticky; left: calc(16rem + 0.6rem); font-weight: inherit; } .days { display: flex; height: 30px; }
 .days span { display: flex; flex-shrink: 0; flex-direction: column; align-items: center; justify-content: center; width: var(--w); font: 500 11.5px/1.15 'Geist Mono', monospace; color: var(--muted); }
 .days small { font-size: 9px; opacity: 0.7; }
 .days .we { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
@@ -196,7 +186,6 @@ watch(zoom, () => nextTick(() => goToday(false)))
 .code { flex-shrink: 0; font: 500 11px/1 'Geist Mono', monospace; color: var(--muted); }
 .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* trilho: linhas finas por dia (ou por semana no zoom) e fim de semana sombreado */
 .track {
   position: relative; height: 40px; border-bottom: 1px solid var(--line);
   background-image: repeating-linear-gradient(90deg, transparent 0 calc(var(--w) - 1px), color-mix(in srgb, var(--line) 55%, transparent) calc(var(--w) - 1px) var(--w));

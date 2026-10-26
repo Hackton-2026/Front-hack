@@ -1,6 +1,4 @@
 <script setup>
-// Projetos: saúde de cada um (no prazo, em risco, atrasado), ciclo atual, próximo prazo e quem participa.
-// Busca, filtros, ordenação, estrela e duas formas de ver: cartões ou tabela.
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'

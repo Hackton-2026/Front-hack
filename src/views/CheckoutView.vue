@@ -1,7 +1,4 @@
 <script setup>
-// Checkout dos planos (/checkout?plano=business&ciclo=anual): resumo no visual dos cards da landing + pagamento por Pix ou cartão.
-// O valor cobrado é sempre recalculado no servidor. Cartão: no modo de teste o número fica só neste navegador (vai só
-// bandeira + 4 últimos dígitos); com Mercado Pago, quem coleta o cartão é o formulário dele (Card Payment Brick).
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import QRCode from 'qrcode'
@@ -16,7 +13,7 @@ const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
 
-const PAID = PLANS.filter((p) => p.month) // só os que se paga por aqui
+const PAID = PLANS.filter((p) => p.month)
 const planCode = ref(PAID.some((p) => p.code === route.query.plano) ? route.query.plano : 'business')
 const yearly = ref(route.query.ciclo !== 'mensal')
 const seats = ref(1)
@@ -27,13 +24,11 @@ const fullYear = computed(() => plan.value.month * 100 * seats.value * 12)
 const saving = computed(() => (yearly.value ? fullYear.value - total.value : 0))
 watch([planCode, yearly], () => router.replace({ query: { plano: planCode.value, ciclo: yearly.value ? 'anual' : 'mensal' } }))
 
-// ---- configuração (teste ou Mercado Pago)
 const cfg = ref({ test_mode: true, public_key: null, max_installments: 12, max_seats: 500 })
 onMounted(async () => {
-  try { cfg.value = await api('/api/payments/config/', { auth: false }) } catch { /* fica no modo de teste */ }
+  try { cfg.value = await api('/api/payments/config/', { auth: false }) } catch { }
 })
 
-// ---- quem paga
 const payer = ref({ name: [user.value?.first_name, user.value?.last_name].filter(Boolean).join(' '), email: user.value?.email || '', document: '' })
 const touched = ref({})
 const payerErrors = computed(() => ({
@@ -43,12 +38,11 @@ const payerErrors = computed(() => ({
 }))
 const payerOk = computed(() => !Object.values(payerErrors.value).some(Boolean))
 
-// ---- método
 const method = ref('pix')
 const busy = ref(false)
 const error = ref('')
-const payment = ref(null) // pagamento atual (Pix pendente) ou finalizado
-const done = ref(null) // pagamento aprovado
+const payment = ref(null)
+const done = ref(null)
 let attemptKey = null
 const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
 
@@ -57,7 +51,7 @@ async function pay(kind, card) {
   if (!payerOk.value || busy.value) { if (!payerOk.value) error.value = 'Confira os dados de quem paga.'; return }
   busy.value = true
   error.value = ''
-  attemptKey ||= newKey() // a mesma tentativa repetida (rede caiu, clique duplo) não cobra duas vezes
+  attemptKey ||= newKey()
   try {
     const p = await api('/api/payments/checkout/', {
       method: 'POST',
@@ -68,7 +62,7 @@ async function pay(kind, card) {
     handle(p)
   } catch (e) {
     error.value = e.status === 403 ? e.message : e.status === 429 ? 'Muitas tentativas seguidas. Espere um minuto.' : e.message
-    if (e.status && e.status < 500) attemptKey = null // erro de validação: a próxima tentativa é outra
+    if (e.status && e.status < 500) attemptKey = null
   } finally {
     busy.value = false
   }
@@ -80,7 +74,6 @@ function handle(p) {
   if (p.method === 'pix' && p.status === 'pending') startPix(p)
 }
 
-// ---- Pix
 const qr = ref('')
 const copied = ref(false)
 const left = ref(0)
@@ -102,7 +95,7 @@ async function checkPix() {
     payment.value = p
     if (p.status === 'approved') { stopPix(); success(p) }
     else if (p.status !== 'pending') { stopPix(); error.value = p.status === 'expired' ? 'O Pix venceu. Gere outro para continuar.' : p.failure_reason || 'Pagamento não concluído.' }
-  } catch { /* tenta de novo */ }
+  } catch { }
 }
 async function simulate() {
   busy.value = true
@@ -114,7 +107,6 @@ async function copyPix() {
 const clock = computed(() => `${String(Math.floor(left.value / 60)).padStart(2, '0')}:${String(left.value % 60).padStart(2, '0')}`)
 function resetPix() { stopPix(); payment.value = null; qr.value = ''; error.value = '' }
 
-// ---- Cartão (formulário de teste; com Mercado Pago, o Brick dele)
 const card = ref({ number: '', name: '', exp: '', cvv: '', installments: 1 })
 const flipped = ref(false)
 const brand = computed(() => brandOf(card.value.number))
@@ -136,12 +128,10 @@ function payCard() {
   cardTouched.value = { number: true, name: true, exp: true, cvv: true }
   if (Object.values(cardErrors.value).some(Boolean)) { error.value = 'Confira os dados do cartão.'; return }
   const d = digits(card.value.number)
-  // modo de teste: só bandeira + 4 últimos dígitos saem daqui (o número inteiro nunca vai para o servidor)
   pay('card', { token: `test_${brand.value.id}_${d.slice(-4)}`, installments: card.value.installments })
 }
 watch(yearly, () => { if (!yearly.value) card.value.installments = 1 })
 
-// Mercado Pago (quando o backend tem as chaves): o Brick coleta e tokeniza o cartão no navegador
 const brickBox = ref(null)
 let brick
 async function mountBrick() {
@@ -164,11 +154,9 @@ async function mountBrick() {
   })
 }
 watch([method, () => cfg.value.public_key], mountBrick)
-watch(total, () => { brick?.unmount?.(); brick = null; mountBrick() }) // o valor mudou: o Brick precisa do novo
+watch(total, () => { brick?.unmount?.(); brick = null; mountBrick() })
 
-// ---- sucesso
 const successBox = ref(null)
-// Aprovado: mostra o recibo por alguns segundos e já abre o workspace (dá para ir antes no botão)
 const REDIRECT_MS = 4000
 let leave
 async function success(p) {
@@ -186,7 +174,6 @@ async function success(p) {
 const goWorkspace = () => { clearTimeout(leave); router.push('/inicio') }
 const stayHere = () => clearTimeout(leave)
 
-// ---- entrada
 const root = ref(null)
 onMounted(() => {
   if (prefersReducedMotion()) return
@@ -203,7 +190,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
       <RouterLink to="/#planos" class="back">← Voltar aos planos</RouterLink>
     </header>
 
-    <!-- Sucesso -->
     <section v-if="done" ref="successBox" class="ok-wrap" aria-live="polite">
       <div class="ok">
         <span class="ok__badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ok__tick" d="M5 12.5l4.5 4.5L19 7.5" /></svg>Pagamento aprovado</span>
@@ -225,7 +211,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
     </section>
 
     <main v-else class="grid">
-      <!-- Resumo -->
       <aside class="summary">
         <p class="eyebrow reveal">Seu plano</p>
         <h1 class="title reveal">Falta pouco para o seu time voar.</h1>
@@ -277,7 +262,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
         <p class="trust reveal"><span>Cancele quando quiser</span><span>Recibo por e-mail</span><span>Dados protegidos</span></p>
       </aside>
 
-      <!-- Pagamento -->
       <section class="pay reveal" aria-labelledby="pay-title">
         <h2 id="pay-title" class="pay__title">Pagamento</h2>
         <p v-if="cfg.test_mode" class="test">
@@ -305,7 +289,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
             </button>
           </div>
 
-          <!-- Pix -->
           <div v-if="method === 'pix'" class="panel">
             <template v-if="payment?.method === 'pix' && payment.status === 'pending'">
               <div class="pix">
@@ -329,7 +312,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
             </template>
           </div>
 
-          <!-- Cartão -->
           <div v-else class="panel">
             <div v-if="cfg.public_key" id="mp-card-brick" ref="brickBox" class="brick" />
             <template v-else>
@@ -395,7 +377,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(1.5rem, 4vw, 3.5rem); max-width: 76rem; margin: 1rem auto 0; align-items: start; }
 @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
 
-/* ---- resumo */
 .eyebrow { margin: 0; font: 600 0.75rem/1 var(--lp-sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--lp-orange-soft); }
 .title { margin: 0.75rem 0 1.5rem; color: var(--lp-white); font: 900 clamp(2rem, 4.4vw, 3.25rem)/0.95 var(--lp-display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; }
 .pick { display: inline-flex; gap: 0.4rem; margin-bottom: 1.25rem; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: #0b0b0b; }
@@ -444,7 +425,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 .trust { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin: 1.25rem 0 0; padding: 0 0.25rem; font-size: 0.8125rem; color: var(--lp-grey); }
 .trust span::before { content: '✓ '; color: var(--lp-orange); }
 
-/* ---- pagamento */
 .pay { position: relative; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: 18px; background: #111111; }
 .pay__title { margin: 0 0 1rem; color: var(--lp-white); font: 800 1.35rem/1 var(--lp-display); text-transform: uppercase; }
 .test { margin: 0 0 1.25rem; padding: 0.75rem 0.9rem; border: 1px dashed rgb(251 164 92 / 0.5); border-radius: 10px; background: rgb(229 101 21 / 0.08); font-size: 0.8125rem; line-height: 1.5; color: rgb(248 248 248 / 0.8); }
@@ -494,7 +474,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 .pix__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
 .link { border: 0; background: none; font: 500 0.875rem/1 var(--lp-sans); color: rgb(248 248 248 / 0.6); text-decoration: underline; cursor: pointer; }
 
-/* cartão 3D */
 .cc { position: relative; width: min(100%, 340px); aspect-ratio: 1.586; margin: 0.25rem auto 0.5rem; perspective: 1000px; }
 .cc__face { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 1.1rem 1.25rem; border-radius: 16px; backface-visibility: hidden; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); background: radial-gradient(120% 140% at 10% 0%, #fba45c 0%, #e56515 35%, #5a1d05 75%, #1a0d05 100%); box-shadow: 0 30px 60px -30px rgb(229 101 21 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.25); color: #fff; overflow: hidden; }
 .cc__face::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.18) 45%, transparent 60%); }
@@ -514,7 +493,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 .error { margin: 0; padding: 0.75rem 0.9rem; border: 1px solid rgb(255 91 77 / 0.45); border-radius: 10px; background: rgb(255 91 77 / 0.1); font-size: 0.875rem; color: #ffb4ab; }
 .fine { margin: 0; font-size: 0.75rem; line-height: 1.5; color: var(--lp-grey); }
 
-/* ---- sucesso */
 .ok-wrap { display: grid; place-items: center; min-height: calc(100vh - 160px); padding: 2rem 0 4rem; }
 .ok { display: flex; flex-direction: column; align-items: flex-start; gap: 1.25rem; width: min(100%, 30rem); padding: clamp(1.5rem, 4vw, 2.25rem); border: 1px solid var(--line); border-radius: 18px; background: #111111; }
 .ok__badge { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.35rem 0.75rem 0.35rem 0.5rem; border: 1px solid var(--line); border-radius: 999px; font-size: 0.8125rem; font-weight: 500; color: var(--lp-white); }

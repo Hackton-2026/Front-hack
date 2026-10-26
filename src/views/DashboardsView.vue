@@ -1,6 +1,4 @@
 <script setup>
-// Painéis (Plane → Dashboards): blocos que você escolhe e reordena (salvos nas suas preferências): progresso dos
-// projetos, prazos da semana, carga por pessoa, ciclos ativos e atividade recente.
 import { computed, onMounted, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -14,7 +12,6 @@ const { openTask } = useUi()
 const root = ref(null)
 const editing = ref(false)
 const WIDGETS = { projects: 'Progresso dos projetos', due: 'Prazos dos próximos 7 dias', load: 'Carga por pessoa', cycles: 'Ciclos ativos', activity: 'Atividade recente' }
-// shortcut: layout salvo só neste navegador (prefs locais), passar para o backend se o time quiser painéis compartilhados
 state.prefs.dash ||= { order: Object.keys(WIDGETS), hidden: [] }
 const dash = state.prefs.dash
 Object.keys(WIDGETS).forEach((k) => dash.order.includes(k) || dash.order.push(k))
@@ -49,7 +46,6 @@ onMounted(() => {
   const nums = root.value.querySelectorAll('.kpi b')
   if (prefersReducedMotion()) return
   gsap.from(root.value.querySelectorAll('.card, .kpi'), { y: 14, autoAlpha: 0, duration: 0.5, stagger: 0.06, ease: 'power3.out' })
-  // números contam do zero
   nums.forEach((el) => {
     const end = Number(el.textContent)
     const n = { v: 0 }

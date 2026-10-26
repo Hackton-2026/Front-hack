@@ -1,6 +1,4 @@
 <script setup>
-// Abrir o link de um convite (/convite/<token>): mostra o projeto e quem convidou, e a pessoa aceita ou recusa.
-// Só aceita quem está logado com o e-mail do convite; com outra conta, oferece trocar de conta.
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
@@ -19,7 +17,7 @@ const PERM = { view: 'ver', comment: 'comentar', edit: 'editar', full: 'acesso t
 const inv = ref(null)
 const error = ref('')
 const busy = ref(false)
-const done = ref('') // declined
+const done = ref('')
 
 async function fetchInvite() {
   error.value = ''

@@ -1,5 +1,4 @@
 <script setup>
-// "Turbine seu workspace": conectar integrações (só marca como conectada; a conexão real vem com a API)
 import { ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useOnboarding } from '../../composables/useOnboarding'

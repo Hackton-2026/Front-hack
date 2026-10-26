@@ -1,7 +1,4 @@
-// Ajudantes do checkout: bandeira, Luhn, máscaras e CPF. A validação de verdade é do servidor e do provedor;
-// aqui é só para avisar a pessoa antes de enviar.
 
-// Ordem importa: Elo e Hipercard começam com dígitos que também parecem Visa/Master
 const BRANDS = [
   { id: 'elo', label: 'Elo', re: /^(4011|4312|4389|4514|4576|5041|5066|5067|509|6277|6362|6363|650|6516|6550)/, groups: [4, 4, 4, 4], cvv: 3 },
   { id: 'hipercard', label: 'Hipercard', re: /^(606282|3841)/, groups: [4, 4, 4, 4], cvv: 3 },

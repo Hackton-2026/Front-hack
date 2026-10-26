@@ -1,5 +1,4 @@
 <script setup>
-// Segurança: só o que o sistema faz de verdade (cada item tem o código por trás) e, à parte, o que ainda não faz
 import { onMounted, onUnmounted } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'

@@ -1,5 +1,4 @@
 <script setup>
-// Link do e-mail de verificação (/verificar-email?token=…): confirma na hora, com ou sem login, no visual do convite.
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../services/api'
@@ -7,7 +6,7 @@ import { useAuth } from '../composables/useAuth'
 
 const route = useRoute()
 const { user, init, loadMe } = useAuth()
-const state = ref('loading') // loading | ok | error
+const state = ref('loading')
 const message = ref('')
 const email = ref('')
 const sent = ref(false)
@@ -27,7 +26,7 @@ onMounted(async () => {
     const r = await api('/api/auth/verify-email/', { method: 'POST', body: { token: route.query.token || '' }, auth: false })
     email.value = r.email
     state.value = 'ok'
-    if (user.value) await loadMe() // o aviso de "confirme seu e-mail" some na hora
+    if (user.value) await loadMe()
   } catch (e) {
     message.value = e.message
     state.value = 'error'

@@ -1,6 +1,3 @@
-// Conteúdo dos megamenus (mesma estrutura do nav do leonardo.ai: grupos com ícone + título + descrição, e um card em destaque)
-// Ícones: traço 24x24, desenhados com stroke="currentColor"
-// Cards em destaque: cartazes do Patronato Nacional del Turismo (1929-1936), acervo The Museum of Tourism via Google Arts & Culture
 import elche from '../../assets/landing/nav/elche.webp'
 import malaga from '../../assets/landing/nav/malaga.webp'
 import salamanca from '../../assets/landing/nav/salamanca.webp'
@@ -105,7 +102,6 @@ export const MENU = [
   { id: 'contato', label: 'Contato', href: '/contato' },
 ]
 
-// Rotas públicas de apresentação dos recursos.
 export const PRODUCT_LINKS = {
   Engenharia: '/solucoes/engenharia',
   Agências: '/solucoes/agencias',

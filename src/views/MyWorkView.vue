@@ -1,6 +1,4 @@
 <script setup>
-// Seu trabalho: o que é seu em todos os projetos. Números pessoais, carga da semana, abas (atribuídas, criadas
-// por mim, concluídas) e a lista agrupada por quando vence; também em quadro ou linha do tempo.
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -31,14 +29,12 @@ const STATS = computed(() => [
   ['Para hoje', open.value.filter((t) => t.due === day(0)).length, 'calendar', 'accent'],
   ['Concluídas em 7 dias', finished.value.length, 'check', 'good'],
 ])
-// carga da semana: tarefas abertas com prazo em cada dia (segunda a domingo)
 const week = computed(() => {
   const offset = (new Date().getDay() + 6) % 7
   return Array.from({ length: 7 }, (_, i) => { const d = day(i - offset); return { d, n: open.value.filter((t) => t.due === d).length, today: d === day(0) } })
 })
 const maxDay = computed(() => Math.max(3, ...week.value.map((w) => w.n)))
 
-// grupos por quando vence
 const endOfWeek = computed(() => week.value[6].d)
 const BUCKETS = [
   ['late', 'Atrasadas', (t) => isOverdue(t)],

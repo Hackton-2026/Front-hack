@@ -1,14 +1,11 @@
 <script setup>
-// Menu de blocos da Wiki (o "+" e o "/" do Notion): blocos básicos, mídia, base de dados e blocos avançados.
-// Escolher um bloco emite "insert" com o markdown dele (%c% marca onde o cursor fica). Alguns pedem um passo a mais:
-// link, imagem, página, projeto ou texto do botão.
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { compressImage } from '../../utils/image'
 import { DB_VIEWS } from '../../utils/dbviews'
 import { useWorkspace } from '../../composables/useWorkspace'
 import BrandIcon from './BrandIcon.vue'
 
-const props = defineProps({ query: { type: String, default: null }, docId: { type: String, default: '' } }) // query: texto depois do "/" (null = aberto pelo +)
+const props = defineProps({ query: { type: String, default: null }, docId: { type: String, default: '' } })
 const emit = defineEmits(['insert', 'page', 'close'])
 const { state } = useWorkspace()
 
@@ -79,7 +76,7 @@ const flat = computed(() => groups.value.flatMap(([, items]) => items))
 const active = ref(0)
 watch(q, () => (active.value = 0))
 
-const step = ref(null) // { block, ... }
+const step = ref(null)
 const value = ref('')
 const err = ref('')
 const box = ref(null)
@@ -101,7 +98,6 @@ function submitUrl() {
 async function upload(e) {
   const file = e.target.files?.[0]
   if (!file) return
-  // shortcut: a imagem vira data URL dentro da página (fica no navegador, ~100KB cada); usar o upload do backend quando a wiki for para a API
   const small = await compressImage(file, 1000, 0.75)
   const data = await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(small) })
   emit('insert', `![${file.name.replace(/\.[^.]+$/, '').replace(/[[\]]/g, '')}](${data})\n%c%`)
@@ -113,7 +109,6 @@ function submitText() {
   if (t) emit('insert', `@[button](${t})\n%c%`)
 }
 
-// teclado (o "/" deixa o foco no texto; a página repassa as teclas para cá)
 function key(e) {
   if (step.value) { if (e.key === 'Escape') { step.value = null; return true } return false }
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { active.value = (active.value + (e.key === 'ArrowDown' ? 1 : -1) + flat.value.length) % Math.max(1, flat.value.length); scrollActive(); return true }
@@ -123,7 +118,6 @@ function key(e) {
 }
 const scrollActive = () => nextTick(() => box.value?.querySelector('.it.on')?.scrollIntoView({ block: 'nearest' }))
 defineExpose({ key, empty: computed(() => !flat.value.length) })
-// clicar fora fecha (no próximo clique, para não pegar o clique que abriu o menu)
 const outside = (e) => { if (!box.value?.contains(e.target)) emit('close') }
 onMounted(() => {
   if (props.query === null) box.value?.querySelector('.search')?.focus()

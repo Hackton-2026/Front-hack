@@ -1,5 +1,4 @@
 <script setup>
-// Galeria: cada tarefa vira um cartão
 import { useWorkspace } from '../../../composables/useWorkspace'
 import { useUi } from '../../../composables/useUi'
 import StatusBadge from '../StatusBadge.vue'

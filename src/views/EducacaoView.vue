@@ -5,8 +5,6 @@ import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
 
-// Adicione o caminho do vídeo em `video` quando a gravação estiver pronta.
-// Os vídeos tocam mudos e em loop, sem controles.
 const steps = [
   {
     title: 'Crie um projeto para o curso',

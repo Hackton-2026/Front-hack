@@ -1,7 +1,4 @@
 <script setup>
-// Quadro kanban (Board do ClickUp + Projects do GitHub): arrastar o card troca o status; o GSAP Flip anima a reorganização.
-// Como no GitHub: descrição e limite (WIP) por coluna, colunas recolhíveis, raias (agrupar por), campos visíveis,
-// etiquetas coloridas e barra de subtarefas no card. As escolhas ficam nas suas preferências.
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { Flip } from 'gsap/Flip'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
@@ -34,7 +31,6 @@ const visible = computed(() => STATUSES.filter((s) => !cfg.hideEmpty || props.ta
 const cols = computed(() => visible.value.map((s) => ({ ...s, tasks: props.tasks.filter((t) => t.status === s.id), collapsed: cfg.collapsed.includes(s.id), limit: cfg.limits[s.id] || 0 })))
 const template = computed(() => cols.value.map((c) => (c.collapsed ? '2.6rem' : 'minmax(16.5rem, 1fr)')).join(' '))
 
-// raias: o card cai na raia do campo escolhido; soltar numa raia de prioridade também muda a prioridade
 const lanes = computed(() => {
   if (cfg.group === 'priority') return [...PRIORITIES, { id: '', name: 'Sem prioridade', color: '#5d5851' }].map((p) => ({ id: p.id, label: p.name, color: p.color, has: (t) => (t.priority || '') === p.id, patch: { priority: p.id } }))
   if (cfg.group === 'assignee') {
@@ -55,9 +51,6 @@ const cycleName = (t) => t.cycle && state.cycles.find((c) => c.id === t.cycle)?.
 const prio = (id) => PRIORITIES.find((p) => p.id === id)
 const late = (c) => c.tasks.filter(isOverdue).length
 
-// Muda os dados e anima as posições antigas → novas de todos os cards.
-// Sem "absolute": os cards continuam no fluxo (com absolute, a resposta do servidor no meio da animação deixava
-// cards soltos e as colunas encolhiam). Uma animação nova termina a anterior antes de começar.
 let flip
 async function withFlip(change) {
   flip?.progress(1)
@@ -85,7 +78,6 @@ function onDrop(status, lane) {
     if (el && !reduced) gsap.fromTo(el, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0.9)' }, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0)', duration: 1, delay: 0.3 })
   })
 }
-// Teclado: mover para a coluna vizinha sem arrastar
 function moveBy(task, dir) {
   const i = STATUSES.findIndex((s) => s.id === task.status) + dir
   if (STATUSES[i]) withFlip(() => updateTask(task, { status: STATUSES[i].id }))

@@ -15,8 +15,6 @@ const tasks = ref([
 ])
 const columns = [{ id: 'todo', title: 'A fazer' }, { id: 'doing', title: 'Em andamento' }, { id: 'done', title: 'Concluído' }]
 const completed = computed(() => tasks.value.filter(task => task.status === 'done').length)
-// O card desliza até a coluna nova (GSAP Flip) e a altura do quadro acompanha, em vez de pular de uma vez
-// quando uma coluna ganha ou perde um card.
 const root = ref(null)
 async function advance(task) {
   const el = root.value
@@ -29,13 +27,10 @@ async function advance(task) {
   el.style.height = ''
   await nextTick()
   const depois = el.offsetHeight
-  // o Vue recria o card na coluna nova: o Flip casa o antigo com o novo pelo data-flip-id
   Flip.from(estado, { targets: el.querySelectorAll('[data-flip-id]'), duration: 0.75, ease: 'power3.inOut' })
   if (antes !== depois) gsap.fromTo(el, { height: antes }, { height: depois, duration: 0.75, ease: 'power3.inOut', clearProps: 'height' })
 }
 
-// Enquanto ninguém mexe, o quadro anda sozinho: em andamento → concluído, a fazer → em andamento,
-// e a entrega mais antiga volta para "a fazer". Assim o ciclo nunca trava. Para de vez no primeiro toque.
 const touched = ref(false)
 let visible = false
 let step = 0

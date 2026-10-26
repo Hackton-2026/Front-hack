@@ -1,6 +1,4 @@
 <script setup>
-// Link de convite (/entrar/<código>): qualquer pessoa abre, vê o projeto e entra. Sem conta, cria (ou entra) e volta
-// para cá com ?entrar=1, que já faz a entrada sozinha e abre o projeto.
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../services/api'
@@ -20,14 +18,14 @@ const PERM = { view: 'ver as tarefas, páginas e o chat', comment: 'ver e coment
 const info = ref(null)
 const error = ref('')
 const busy = ref(false)
-const back = `/entrar/${props.token}?entrar=1` // volta do login/cadastro já entrando
+const back = `/entrar/${props.token}?entrar=1`
 
 async function join() {
   busy.value = true
   error.value = ''
   try {
     const r = await api(`/api/invite-links/${encodeURIComponent(props.token)}/`, { method: 'POST' })
-    await load() // o projeto novo aparece na barra lateral
+    await load()
     toast(r.joined ? `Você entrou no projeto ${r.project_name}.` : `Você já participa de ${r.project_name}.`)
     router.replace(`/projetos/${r.project}/visao-geral`)
   } catch (e) {

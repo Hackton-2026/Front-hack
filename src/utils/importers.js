@@ -1,6 +1,3 @@
-// Importar páginas para a Wiki (como o "Importar" do Notion): texto e Markdown, HTML, CSV, Word (.docx),
-// exportação do Notion (.zip com .md e .csv) e Evernote (.enex). Tudo no navegador, sem dependência.
-// Cada arquivo vira { title, body } em markdown.
 import { parseCsv } from './csv'
 
 export const IMPORT_KINDS = [
@@ -13,9 +10,8 @@ export const IMPORT_KINDS = [
 ]
 
 const dec = new TextDecoder()
-const baseName = (n) => n.split('/').pop().replace(/\.[^.]+$/, '').replace(/\s+[0-9a-f]{32}$/i, '').trim() || 'Sem título' // Notion põe um id no fim do nome
+const baseName = (n) => n.split('/').pop().replace(/\.[^.]+$/, '').replace(/\s+[0-9a-f]{32}$/i, '').trim() || 'Sem título'
 
-// ---- zip (só o que precisamos: ler os arquivos; deflate pelo DecompressionStream do navegador)
 export async function unzip(buf) {
   const v = new DataView(buf)
   let end = buf.byteLength - 22
@@ -41,7 +37,6 @@ export async function unzip(buf) {
   return files
 }
 
-// ---- HTML → markdown (títulos, parágrafos, listas, links, imagens, negrito/itálico, código, citação, tabelas)
 export function htmlToMd(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html')
   const inl = (n) => [...n.childNodes].map((c) => {
@@ -69,7 +64,7 @@ export function htmlToMd(html) {
       else if (t === 'ul' || t === 'ol') {
         [...c.children].filter((li) => li.tagName === 'LI').forEach((li, k) => {
           const box = li.querySelector(':scope > input[type=checkbox]')
-          const own = li.cloneNode(true) // só o texto do item, sem as sublistas
+          const own = li.cloneNode(true)
           own.querySelectorAll('ul,ol').forEach((x) => x.remove())
           const text = inl(own).trim()
           out.push(`${'  '.repeat(depth)}${box ? `- [${box.checked ? 'x' : ' '}] ` : t === 'ol' ? `${k + 1}. ` : '- '}${text}`)
@@ -101,7 +96,6 @@ export function csvToMd(text) {
   return [`| ${pad(rows[0]).join(' | ')} |`, `|${Array(n).fill('---').join('|')}|`, ...rows.slice(1).map((r) => `| ${pad(r).join(' | ')} |`)].join('\n')
 }
 
-// ---- Word: document.xml → markdown (títulos pelo estilo, listas, negrito/itálico, tabelas)
 export async function docxToMd(buf) {
   const files = await unzip(buf)
   const xml = files.get('word/document.xml')
@@ -122,7 +116,7 @@ export async function docxToMd(buf) {
     const style = (attr(pr, 'pStyle') || '').toLowerCase()
     const text = runs(p)
     if (!text) return ''
-    const h = style.match(/^(?:heading|t[ií]tulo|ttulo)(\d)/) // o Word em português chama de "Ttulo1"
+    const h = style.match(/^(?:heading|t[ií]tulo|ttulo)(\d)/)
     if (h) return `${'#'.repeat(Math.min(3, Number(h[1])))} ${text}`
     if (style === 'title') return `# ${text}`
     if (pr && kids(pr, 'numPr').length) return `- ${text}`
@@ -142,11 +136,9 @@ export async function docxToMd(buf) {
 
 const fromMd = (name, text) => {
   const h = text.match(/^# (.+)$/m)
-  // o título do Notion vem no "# " da primeira linha: ele vira o título e sai do corpo
   return h && text.trimStart().startsWith(h[0]) ? { title: h[1].trim(), body: text.trimStart().slice(h[0].length).trim() } : { title: baseName(name), body: text.trim() }
 }
 
-// Lê os arquivos escolhidos e devolve as páginas
 export async function importFiles(files) {
   const pages = []
   for (const f of files) {
@@ -173,7 +165,7 @@ async function fromZip(buf, depth = 0) {
     if (ext === 'md') pages.push(fromMd(name, dec.decode(data)))
     else if (ext === 'csv' && !name.endsWith('_all.csv')) pages.push({ title: baseName(name), body: csvToMd(dec.decode(data)) })
     else if (ext === 'html') { const r = htmlToMd(dec.decode(data)); pages.push({ title: r.title || baseName(name), body: r.body }) }
-    else if (ext === 'zip' && depth < 2) pages.push(...(await fromZip(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength), depth + 1))) // o Notion às vezes põe um zip dentro do outro
+    else if (ext === 'zip' && depth < 2) pages.push(...(await fromZip(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength), depth + 1)))
   }
   if (!pages.length) throw new Error('O .zip não tem páginas em Markdown, CSV ou HTML.')
   return pages

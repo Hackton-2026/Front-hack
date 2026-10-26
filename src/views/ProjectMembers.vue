@@ -1,6 +1,4 @@
 <script setup>
-// Pessoas do projeto: quem participa, com qual permissão, e convites pendentes. Convites são para o PROJETO:
-// quem entra vê as tarefas, páginas e o chat deste projeto, e nunca o resto do seu workspace.
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -26,12 +24,12 @@ const ui = useUi()
 
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
-const data = ref(null) // { members, invitations, can_manage, my_permission }
+const data = ref(null)
 const email = ref('')
 const permission = ref('edit')
 const sending = ref(false)
 const error = ref('')
-const confirming = ref(null) // id de quem está para ser removido (ou 'me' para sair)
+const confirming = ref(null)
 const busy = ref(null)
 
 async function refresh() {
@@ -89,8 +87,7 @@ async function run(key, fn, done) {
 }
 const cancel = (inv) => run(`inv-${inv.id}`, () => cancelInvite(pid.value, inv.id), refresh)
 
-// Link de convite: qualquer pessoa com ele cria a conta (ou entra) e já cai no projeto
-const link = ref(null) // { token, permission, uses } ou null
+const link = ref(null)
 const linkUrl = computed(() => link.value && `${location.origin}/entrar/${link.value.token}`)
 const linkApi = (opts) => api(`/api/projects/${pid.value}/invite-link/`, opts)
 watch(() => data.value?.can_manage, async (can) => { link.value = can ? await linkApi().catch(() => null) : null }, { immediate: true })
@@ -107,7 +104,7 @@ async function copyLink() {
 const changePerm = (m, perm) => run(`perm-${m.id}`, () => setProjectPermission(pid.value, m.id, perm), refresh)
 const remove = (m) => run(`rm-${m.id}`, () => removeProjectMember(pid.value, m.id), async () => { await refresh(); load() })
 async function leave() {
-  const name = p.value?.name // depois de sair o projeto some da lista
+  const name = p.value?.name
   await run('me', () => removeProjectMember(pid.value, state.me))
   if (!error.value) {
     ui.toast(name ? `Você saiu do projeto ${name}.` : 'Você saiu do projeto.')
@@ -116,9 +113,8 @@ async function leave() {
 }
 const me = computed(() => data.value?.members.find((m) => m.id === state.me))
 
-// ---- cargo: quem tem permissão total muda o de todos; cada pessoa, o próprio
 const canRole = (m) => data.value?.can_manage || m.id === state.me
-const editingRole = ref(null) // id de quem está com o cargo em edição
+const editingRole = ref(null)
 const roleDraft = ref('')
 const roleList = computed(() => {
   const used = data.value?.members.map((m) => m.title).filter(Boolean) || []
@@ -275,7 +271,6 @@ h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--text); }
 .you { font-weight: 400; color: var(--muted); }
 .actions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 .perm { font-size: 12.5px; color: var(--muted); }
-/* cargo */
 .role { flex-shrink: 0; max-width: 11rem; overflow: hidden; height: 26px; padding: 0 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2); font-size: 12.5px; color: var(--text); text-overflow: ellipsis; white-space: nowrap; cursor: pointer; transition: border-color 0.15s ease; }
 .role:hover:not(:disabled) { border-color: var(--muted); }
 .role.empty { border-style: dashed; background: none; color: var(--muted); }

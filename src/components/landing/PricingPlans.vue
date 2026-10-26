@@ -4,9 +4,7 @@ import GooeyButton from '../GooeyButton.vue'
 import { PLANS } from './plans'
 import { openCustomPlan } from '../../utils/customPlanEntry'
 
-// v-model:yearly opcional: a página Preços usa o mesmo período na tabela comparativa; a landing fica com o estado local
 const yearly = defineModel('yearly', { default: true })
-// hero: a seção é o topo da página (Preços), então anima ao abrir em vez de esperar o scroll
 defineProps({ hero: Boolean })
 const router = useRouter()
 </script>

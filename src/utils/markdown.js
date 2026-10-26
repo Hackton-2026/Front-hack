@@ -1,9 +1,3 @@
-// Markdown simples da Wiki e das tarefas (sem dependência): títulos, negrito, itálico, sublinhado (++x++), imagem, código, listas, checklist,
-// citação, divisória, tabelas e links. O texto é escapado antes, então HTML digitado não vira HTML de verdade.
-// Blocos do Notion (menu + da Wiki):
-//   :::toggle Título / :::toggle ## Título · :::callout 💡 · :::columns (colunas separadas por |||) … fecham com :::
-//   @[video](url) @[audio](url) @[file](url) @[bookmark](url) @[embed](url) @[map](endereço) · [toc] · $$ … $$ (equação) · [[id-da-página|Título]]
-//   @[db:board](all) @[button](texto) @[breadcrumb]() @[sync](id) vêm de ctx.embed(tipo, arg), que devolve HTML pronto (ou nada)
 export const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 export const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
@@ -19,7 +13,6 @@ function inline(s, ctx = {}) {
     .replace(/\[\[([\w-]+)\|([^\]]*)\]\]/g, (_, id, t) => `<a href="?doc=${id}" class="md-page" data-doc="${id}">📄 ${ctx.docTitle?.(id) ? esc(ctx.docTitle(id)) : t || 'Sem título'}</a>`)
 }
 
-// Títulos do documento (para o sumário)
 export const outline = (md) => md.split('\n').map((l) => l.match(/^(#{1,3}) (.+)/)).filter(Boolean).map(([, h, t]) => ({ level: h.length, text: t.trim(), id: slug(t) }))
 
 const https = (u) => /^https:\/\/[^\s"<>]+$/.test(u)
@@ -29,7 +22,6 @@ function video(u) {
   const src = yt ? `https://www.youtube-nocookie.com/embed/${yt[1]}` : vimeo ? `https://player.vimeo.com/video/${vimeo[1]}` : ''
   return src ? `<div class="md-video"><iframe src="${src}" title="Vídeo" loading="lazy" allowfullscreen></iframe></div>` : `<video class="md-media" src="${esc(u)}" controls preload="metadata"></video>`
 }
-// Integrações (embeds do Notion): o link do serviço vira o endereço de incorporar dele; outro site entra como está
 const EMBEDS = [
   ['Google Drive', /^https:\/\/docs\.google\.com\/(document|spreadsheets|presentation|forms)\/d\/([\w-]+)/, (m) => `https://docs.google.com/${m[1]}/d/${m[2]}/${m[1] === 'forms' ? 'viewform?embedded=true' : 'preview'}`],
   ['Google Drive', /^https:\/\/drive\.google\.com\/file\/d\/([\w-]+)/, (m) => `https://drive.google.com/file/d/${m[1]}/preview`],
@@ -46,14 +38,12 @@ const EMBEDS = [
 function embed(u) {
   const host = esc(new URL(u).hostname.replace(/^www\./, ''))
   const gist = u.match(/^https:\/\/gist\.github\.com\/([\w-]+)\/([\da-f]+)/)
-  // Gist só existe como <script>: roda num iframe isolado (sem acesso à página)
   if (gist) return `<div class="md-embed"><iframe sandbox="allow-scripts allow-popups" title="GitHub Gist" srcdoc="${esc(`<base target="_blank"><style>body{margin:0}</style><script src="https://gist.github.com/${gist[1]}/${gist[2]}.js"></script>`)}"></iframe><a href="${esc(u)}" target="_blank" rel="noopener">GitHub Gist ↗</a></div>`
   const hit = EMBEDS.map(([name, re, to]) => { const m = u.match(re); return m && [name, to(m, u)] }).find(Boolean)
   const [name, src] = hit || [host, u]
   return `<div class="md-embed"><iframe src="${esc(src)}" title="${esc(name)}" loading="lazy" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"></iframe><a href="${esc(u)}" target="_blank" rel="noopener">${esc(name)} ↗</a></div>`
 }
 
-// Blocos @[tipo](arg) que não dependem do resto do site
 function media(kind, arg) {
   if (kind === 'map') return arg.trim() ? `<div class="md-embed"><iframe src="https://maps.google.com/maps?q=${encodeURIComponent(arg)}&output=embed" title="Mapa" loading="lazy"></iframe><a href="https://maps.google.com/maps?q=${encodeURIComponent(arg)}" target="_blank" rel="noopener">Google Maps ↗</a></div>` : '<p class="md-empty">Escreva um endereço em @[map](…)</p>'
   if (!https(arg)) return `<p class="md-empty">Cole um link https:// em @[${esc(kind)}](…)</p>`
@@ -66,11 +56,10 @@ function media(kind, arg) {
   return `<a class="md-bookmark" href="${esc(arg)}" target="_blank" rel="noopener"><strong>${host}</strong><small>${esc(arg)}</small></a>`
 }
 
-// base: número da primeira linha (para o checklist marcar a linha certa mesmo dentro de toggle/colunas)
 export function render(md, ctx = {}, base = 0) {
   const lines = md.split('\n')
   const out = []
-  let list = null // 'ul' | 'ol'
+  let list = null
   const close = () => { if (list) { out.push(`</${list}>`); list = null } }
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
@@ -89,7 +78,6 @@ export function render(md, ctx = {}, base = 0) {
       out.push(`<div class="md-math" data-tex="${esc(tex.join('\n'))}">${esc(tex.join('\n'))}</div>`)
       continue
     }
-    // blocos com conteúdo dentro (aceitam outros :::), fecham no ::: do mesmo nível
     let m = line.match(/^:::(toggle|callout|columns)\s*(.*)$/)
     if (m) {
       close()
@@ -128,7 +116,6 @@ export function render(md, ctx = {}, base = 0) {
       out.push(`<nav class="md-toc">${items.length ? items.map((h) => `<a href="#${h.id}" style="--l:${h.level}">${esc(h.text)}</a>`).join('') : '<span>Adicione títulos para montar o sumário.</span>'}</nav>`)
       continue
     }
-    // tabela: linhas seguidas começando com "|"; a 2ª linha "|---|---|" separa o cabeçalho
     if (line.trim().startsWith('|') && line.trim() !== '|||') {
       close()
       const rows = []
@@ -156,5 +143,4 @@ export function render(md, ctx = {}, base = 0) {
   return out.join('\n')
 }
 
-// Marca/desmarca o item de checklist da linha `index`
 export const toggleCheck = (md, index) => md.split('\n').map((l, i) => (i === index ? l.replace(/\[( |x)\]/i, (_, c) => (c.trim() ? '[ ]' : '[x]')) : l)).join('\n')

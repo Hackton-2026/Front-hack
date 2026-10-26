@@ -1,5 +1,4 @@
 <script setup>
-// Documentação da API pública (a mesma que o app usa). Exemplos e rotas conferidos no Back-hack: urls.py de cada app.
 import { onMounted, onUnmounted } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'
@@ -10,7 +9,7 @@ import FlaticonIcon from '../components/FlaticonIcon.vue'
 import { API_URL } from '../config'
 import { vReveal } from '../utils/motion'
 
-const BASE = `${API_URL || window.location.origin}/api` // sem VITE_API_URL a API está no mesmo endereço do site
+const BASE = `${API_URL || window.location.origin}/api`
 
 const TOC = [['comecar', 'Começar'], ['autenticacao', 'Autenticação'], ['referencia', 'Referência'], ['limites', 'Limites e erros'], ['webhooks', 'Webhooks']]
 

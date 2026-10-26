@@ -4,11 +4,10 @@ import { api } from '../services/api'
 import { useAuth } from '../composables/useAuth'
 import BaseButton from './BaseButton.vue'
 
-// Mini chatbot flutuante: manda o histórico para /api/ai/chat/ e mostra a resposta da IA
 const { loadMe } = useAuth()
 const open = ref(false)
-const messages = ref([]) // { role: 'user' | 'assistant', content }
-const pending = ref([]) // ações sensíveis que a IA pediu e só rodam se a pessoa clicar em Confirmar
+const messages = ref([])
+const pending = ref([])
 const text = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -37,7 +36,6 @@ async function send() {
   }
 }
 
-// A IA mudou algo: recarrega o usuário logado e avisa as telas de produtos
 function refresh() {
   loadMe()
   window.dispatchEvent(new Event('products:changed'))

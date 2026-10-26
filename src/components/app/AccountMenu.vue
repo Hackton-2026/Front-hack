@@ -1,6 +1,4 @@
 <script setup>
-// Menu da conta (foto no canto de cima): cartão do perfil, Ajustes, Preferências e Sair. Usado no app e na barra do site,
-// por isso traz cores de reserva para quando as variáveis da área logada não existem (landing).
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'

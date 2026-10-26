@@ -1,5 +1,3 @@
-// Tipos de visualização do "+ Visualização" (como no ClickUp). type = View.type no backend.
-// soon: aparece no menu, mas ainda não dá para criar.
 export const LAYOUTS = [
   { type: 'list', label: 'Lista', desc: 'Tarefas em linhas, com status e prazo', icon: 'list', group: 'popular' },
   { type: 'gantt', label: 'Gantt', desc: 'Duração e prazos numa linha do tempo', icon: 'chart', group: 'popular' },

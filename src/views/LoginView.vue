@@ -1,6 +1,4 @@
 <script setup>
-// Login e cadastro na estrutura da tela de login do remote.com: formulário escuro à esquerda,
-// painel com arte e headline à direita (some no celular).
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
@@ -14,20 +12,17 @@ const { toast } = useUi()
 const route = useRoute()
 const router = useRouter()
 
-// /login?modo=cadastro abre direto no cadastro
 const isRegister = computed(() => route.query.modo === 'cadastro')
 const toggleMode = () => {
   error.value = ''
   router.replace({ query: { ...route.query, modo: isRegister.value ? undefined : 'cadastro' } })
 }
 
-// o e-mail digitado no rodapé do site chega pelo estado da navegação (não pela URL)
 const form = reactive({ first_name: '', email: String(history.state?.email || ''), password: '', whatsapp: '' })
 const showPassword = ref(false)
 const error = ref('')
 const loading = ref(false)
 
-// Roda a ação e, dando certo, vai pra página que o usuário tentou abrir
 async function run(action) {
   error.value = ''
   loading.value = true
@@ -35,7 +30,6 @@ async function run(action) {
     const to = await action()
     router.push(to || route.query.next || '/comecar')
   } catch (e) {
-    // erros de campo do DRF ({password: [...]}) sem o nome técnico do campo na frente
     const fields = e.data && !e.data.detail && typeof e.data === 'object' ? Object.values(e.data).flat() : null
     error.value = fields ? fields.join('\n') : e.message
   } finally {
@@ -43,7 +37,6 @@ async function run(action) {
   }
 }
 
-// WhatsApp é opcional: a conta é criada mesmo se o código não puder ser enviado; a confirmação fica em Ajustes › WhatsApp
 async function signUp() {
   const { whatsapp, ...data } = form
   await register(data)
@@ -179,7 +172,6 @@ h1 { margin: 1.75rem 0 0.75rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend
 .divider { display: flex; align-items: center; gap: 1rem; width: 100%; margin: 1.75rem 0 1.25rem; font-size: 0.8125rem; color: var(--muted); }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
-/* Painel da direita: blocos de luz em tons da paleta, no lugar dos cubos do remote */
 .art { position: sticky; top: 0.5rem; height: calc(100svh - 0.5rem); margin: 0.5rem 0 0 0; overflow: hidden; border-radius: 16px 0 0 0; background: var(--orange-soft); }
 .art__shapes {
   position: absolute;
@@ -201,7 +193,6 @@ h1 { margin: 1.75rem 0 0.75rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend
 }
 .art__shapes::before { top: 8%; right: 6%; background: linear-gradient(135deg, #fff4d6, #ffc46b 55%, #ff8a7a); opacity: 0.9; }
 .art__shapes::after { bottom: 10%; left: 18%; background: linear-gradient(135deg, #ffe0ea, #fba45c 50%, #e56515); opacity: 0.75; }
-/* mini motion: os dois blocos flutuam e giram de leve em ritmos diferentes, e uma luz rosada passeia por cima */
 .art__glow { position: absolute; top: -15%; left: -15%; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgb(255 228 238 / 0.85), transparent 65%); mix-blend-mode: soft-light; pointer-events: none; }
 @media (prefers-reduced-motion: no-preference) {
   .art__shapes::before { animation: art-flutua-a 14s ease-in-out infinite alternate; }

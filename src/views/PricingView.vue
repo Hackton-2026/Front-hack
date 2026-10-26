@@ -125,7 +125,6 @@ onUnmounted(() => { document.title = previousTitle })
 .pricing-skip:focus { transform: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .pricing-comparison, .pricing-detail, .pricing-enterprise { scroll-margin-top: 115px; }
-/* a seção de planos é a mesma da landing; aqui o espaço de cima já vem do .pricing-main */
 .pricing-main > .plans { padding: 0; scroll-margin-top: 115px; }
 .pricing-compare-link { display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; margin: 27px auto 0; color: #aca297; font-size: 12px; text-decoration: none; }
 .pricing-compare-link:hover { color: var(--lp-orange-soft); }

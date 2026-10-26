@@ -1,5 +1,4 @@
 <script setup>
-// Card genérico de item. As ações (editar, excluir, conversar…) entram pelo slot "actions".
 defineProps({ product: { type: Object, required: true } })
 </script>
 

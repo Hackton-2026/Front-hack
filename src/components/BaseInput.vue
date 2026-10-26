@@ -1,5 +1,4 @@
 <script setup>
-// Input com label. Use textarea="true" para texto longo. Demais atributos (type, required…) passam direto.
 defineOptions({ inheritAttrs: false })
 defineProps({ label: String, textarea: Boolean })
 const model = defineModel()

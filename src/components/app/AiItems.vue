@@ -1,6 +1,4 @@
 <script setup>
-// Cards do que a Novexo IA criou ou mudou (tarefas, páginas, projetos, ciclos e módulos), logo abaixo da resposta.
-// Tarefa abre no painel lateral sem sair da conversa; página e wiki abrem no lugar delas.
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
@@ -14,7 +12,7 @@ const taskOf = (it) => state.tasks.find((t) => t.id === it.id)
 async function open(it) {
   let task = taskOf(it)
   if (!task) {
-    await load() // a IA acabou de criar: traz a tarefa antes de abrir
+    await load()
     task = taskOf(it)
   }
   if (task) openTask(task)

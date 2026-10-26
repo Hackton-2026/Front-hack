@@ -1,6 +1,4 @@
 <script setup>
-// Casca da área logada (estrutura do app do Plane): trilho de ícones, barra lateral recolhível, topo com busca,
-// progresso do "Começar", caixa de entrada e ajuda. Fica montada entre as rotas; só o conteúdo troca.
 import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
@@ -27,7 +25,6 @@ const { user } = useAuth()
 const { count, total } = useOnboarding()
 const { state, unread, load, refreshFeed, touchRecent } = useWorkspace()
 
-// Aparência "Auto" segue o sistema
 const lightQuery = matchMedia('(prefers-color-scheme: light)')
 const systemLight = ref(lightQuery.matches)
 const onScheme = (e) => (systemLight.value = e.matches)
@@ -35,11 +32,9 @@ lightQuery.addEventListener('change', onScheme)
 onUnmounted(() => lightQuery.removeEventListener('change', onScheme))
 const light = computed(() => state.prefs.theme === 'light' || (state.prefs.theme === 'auto' && systemLight.value))
 watchEffect(() => (document.documentElement.dataset.calm = state.prefs.calm ? 'on' : ''))
-// link copiado da tarefa (?task=ID) abre o painel dela
 watch(() => [route.query.task, state.loaded], ([id]) => { if (id && state.tasks.some((t) => t.id === Number(id))) ui.taskId = Number(id) }, { immediate: true })
 const { ui, newTask } = useUi()
 const photo = computed(() => state.people.find((m) => m.id === state.me)?.avatar || user.value?.avatar || '')
-// e-mail ainda não confirmado: aviso no topo com "reenviar" (fechar esconde só nesta visita)
 const hideVerify = ref(false)
 const resending = ref(false)
 async function resendVerify() {
@@ -60,7 +55,6 @@ const RAIL = [
   { icon: 'wiki', label: 'Wiki', to: '/wiki', area: 'wiki' },
   { icon: 'ai', label: 'IA', to: '/ia', area: 'ai' },
 ]
-// Wiki e IA somem do trilho quando desligadas em Ajustes > Produtos
 const rail = computed(() => RAIL.filter((r) => state.settings.products?.[r.area] !== false))
 
 const root = ref(null)
@@ -86,7 +80,6 @@ function toggleSidebar() {
   }
 }
 
-// Atalhos globais: Ctrl K busca, N nova tarefa (fora de campos de texto), Esc fecha os painéis
 function onKey(e) {
   const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable
   if (!state.prefs.shortcuts && e.key !== 'Escape') return
@@ -98,19 +91,16 @@ function onClick(e) {
   if (!e.target.closest('.pop')) { inboxOpen.value = false; helpOpen.value = false}
 }
 
-// Troca de página: o título volta para o da rota e o conteúdo entra subindo 10px (fade-in-up do Plane).
-// Só o caminho conta: trocar a aba ?v= de um projeto não é troca de página.
 watch(() => route.path, async () => {
   ui.crumb = ''
   inboxOpen.value = false
   if (reduced) return
   await nextTick()
   const page = root.value?.querySelector('.main__scroll > *')
-  if (page) gsap.fromTo(page, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }) // só opacidade: a página nova pode focar um campo
+  if (page) gsap.fromTo(page, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' })
   root.value.querySelector('.main__scroll').scrollTop = 0
 })
 
-// guarda o que foi aberto para os "Recentes" da Home
 watch(() => ui.taskId, (id) => typeof id === 'number' && touchRecent('task', id))
 watch(() => route.path, (path) => {
   const m = path.match(/^\/projetos\/(\d+)(?:\/paginas\/(\d+))?/)
@@ -118,11 +108,9 @@ watch(() => route.path, (path) => {
 }, { immediate: true })
 
 let ctx
-// menções e avisos de outras pessoas chegam sem recarregar a página
 const inboxTimer = setInterval(() => !document.hidden && state.loaded && refreshFeed(), 30000)
 onMounted(() => {
   load()
-  // push chegou com o site aberto: vira aviso rápido e a caixa de entrada atualiza
   onForegroundPush((data) => { useUi().toast(data.body ? `${data.title}: ${data.body}` : data.title); refreshFeed() })
   addEventListener('keydown', onKey)
   addEventListener('click', onClick)
@@ -197,7 +185,6 @@ onUnmounted(() => {
       <NotesDock class="rail__dock" />
     </nav>
 
-    <!-- Ajustes têm o próprio menu e a IA ocupa a tela toda: a barra "Trabalho" some (v-show guarda a largura do recolher) -->
     <aside v-show="!noSide" ref="sidebar" class="side" :aria-hidden="collapsed" :inert="collapsed">
       <div class="side__inner"><SideNav @collapse="toggleSidebar" /></div>
     </aside>
@@ -231,7 +218,6 @@ onUnmounted(() => {
 
 <style scoped>
 .app {
-  /* Paleta do Novexo no tema escuro da área logada (neutros quentes + laranja da marca) */
   --bg: #0f0e0d;
   --surface: #181614;
   --surface-2: #211f1c;
@@ -271,8 +257,6 @@ onUnmounted(() => {
 .app :deep(button) { font: inherit; color: inherit; }
 kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radius: 4px; font: 500 11px/1.3 'Geist Mono', monospace; color: var(--muted); }
 
-/* ---- topo ---- */
-/* camada própria acima do conteúdo: sem isso uma página posicionada (ex.: Novexo IA) cobre os painéis de atalhos e caixa de entrada */
 .top { grid-area: top; position: relative; z-index: 70; display: flex; align-items: center; gap: 1rem; padding: 0 0.75rem 0 1rem; }
 .ws { display: flex; align-items: center; gap: 0.6rem; padding: 0.3rem 0.5rem; border-radius: 6px; color: var(--text); text-decoration: none; transition: background 0.2s var(--ease); }
 .ws:hover { background: var(--surface-2); }
@@ -299,24 +283,20 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .help a { color: var(--accent-soft); text-decoration: none; }
 :is(.ws, .icon-btn, .rail__item, .progress-btn, .expand, .search, .avatar):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 
-/* ---- trilho ---- */
 .rail { grid-area: rail; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 0 0.75rem; }
 .rail__item { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; width: 56px; padding: 0.4rem 0; font-size: 11px; color: var(--muted); text-decoration: none; }
 .rail__icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
 .rail__item:hover .rail__icon { background: var(--surface-2); color: var(--text); }
 .rail__item.is-active { color: var(--text); }
 .rail__item.is-active .rail__icon { background: var(--surface-2); color: var(--accent-soft); }
-/* Volta para a landing: fica sempre cinza (é uma saída, não uma área) */
 .rail__sep { width: 24px; height: 1px; margin: 0.4rem 0; background: var(--line); }
 .rail__dock { margin-top: auto; }
 
-/* ---- barra lateral ---- */
 .side { grid-area: side; width: 248px; overflow: hidden; border: 1px solid var(--line); border-width: 1px 1px 0 1px; border-radius: 10px 0 0 0; background: var(--surface); }
 .app.is-collapsed .side { border-color: transparent; }
 .side__inner { display: flex; flex-direction: column; gap: 1rem; width: 248px; height: 100%; padding: 0.75rem; overflow-y: auto; }
 .expand { position: fixed; left: 72px; top: 58px; z-index: 5; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--muted); cursor: pointer; }
 
-/* ---- conteúdo ---- */
 .main { grid-area: main; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-top: 1px solid var(--line); background: var(--bg); }
 .verify { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0; padding: 0.55rem 1.5rem; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); font-size: 13px; color: var(--text); }
 .verify strong { font-weight: 600; overflow-wrap: anywhere; }

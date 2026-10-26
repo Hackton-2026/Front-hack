@@ -8,7 +8,7 @@ import UserAvatar from './UserAvatar.vue'
 import BaseButton from './BaseButton.vue'
 
 const { user, logout } = useAuth()
-const open = ref(false) // menu no celular
+const open = ref(false)
 const route = useRoute()
 watch(() => route.fullPath, () => (open.value = false))
 </script>

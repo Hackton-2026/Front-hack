@@ -1,6 +1,4 @@
 <script setup>
-// Novexo IA: conversa com /api/ai/chat/. A IA age pelo usuário (tarefas, comentários, perfil...)
-// com as permissões dele; ações sensíveis voltam em "pending" e só rodam se a pessoa clicar em Confirmar.
 import { nextTick, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../utils/motion'
 import { api } from '../services/api'
@@ -16,9 +14,7 @@ import AiQuestions from '../components/app/AiQuestions.vue'
 const SUGGESTIONS = ['O que está atrasado e quem é o responsável?', 'Resuma minhas tarefas desta semana', 'Crie uma tarefa para revisar o contrato amanhã', 'Coloque minha próxima tarefa em andamento']
 const { user, loadMe } = useAuth()
 const { load, state, createDoc } = useWorkspace()
-// A wiki é pessoal e fica neste navegador: vai junto como contexto para a IA poder consultar (o servidor trata como dados)
 const wikiContext = () => state.docs.filter((d) => !d.archived).map((d) => ({ title: d.title, body: d.body }))
-// Páginas de wiki que a IA criou: quem cria de verdade é o front (a wiki mora aqui)
 function applyItems(items = []) {
   for (const it of items) {
     if (it.type === 'wiki' && !it.docId) it.docId = createDoc({ title: it.title, body: it.body || '' }).id
@@ -28,8 +24,8 @@ function applyItems(items = []) {
 const { complete } = useOnboarding()
 const messages = ref([])
 const pending = ref([])
-const form = ref(null) // formulário da IA (abaixo da resposta dela); as respostas viram a próxima mensagem
-let asked = 0 // muda a cada formulário: ele começa limpo
+const form = ref(null)
+let asked = 0
 const text = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -41,7 +37,6 @@ async function animateLast() {
   const el = list.value?.lastElementChild
   if (el && !prefersReducedMotion()) gsap.from(el, { y: 10, autoAlpha: 0, duration: 0.35, ease: 'power2.out' })
 }
-// A IA mudou algo: recarrega tarefas e perfil para as outras telas já mostrarem
 const refresh = () => { load(); loadMe() }
 const describe = (e) => (e.status === 401 ? 'Entre na sua conta para usar a IA.' : e.status === 503 ? 'A IA não está configurada no servidor (falta a GROQ_API_KEY no backend).' : e.message)
 
@@ -71,7 +66,6 @@ async function send(content = text.value.trim()) {
   }
 }
 
-// Arquivo anexado: o servidor lê o texto e a IA escreve um relatório, que vira página da wiki (applyItems)
 const fileInput = ref(null)
 async function analyze(e) {
   const file = e.target.files[0]
@@ -159,10 +153,7 @@ async function decide(action, ok) {
 
 <style scoped>
 .ai {
-  /* Tokens da página: fundo igual ao das outras telas (--bg). Quando o tema claro existir, é só trocar
-     --ai-bg/--ai-text e --ai-shark-filter (os tubarões saem em cinza; o filtro pinta de laranja). */
   --ai-bg: var(--bg);
-  /* tira as cores da biblioteca e pinta tudo num laranja só, bem alaranjado */
   --ai-shark-filter: grayscale(1) sepia(1) saturate(9) hue-rotate(-24deg) brightness(1.15);
   --ai-text: var(--text);
   --ai-muted: var(--muted);
@@ -179,8 +170,6 @@ async function decide(action, ok) {
   background: var(--ai-bg);
   color: var(--ai-text);
 }
-/* Escurece o centro para o texto ficar legível por cima dos tubarões */
-/* tema claro (Ajustes › Aparência): vidro claro em vez de escuro */
 :global(.app.is-light .ai) { --ai-glass: rgb(255 255 255 / 0.72); --ai-glass-line: rgb(0 0 0 / 0.1); }
 :global(.app.is-light .ai .error) { color: #9a3d06; }
 .veil { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 42% 38% at 50% 50%, color-mix(in srgb, var(--ai-bg) 88%, transparent), transparent 100%); }
@@ -188,8 +177,7 @@ async function decide(action, ok) {
 
 .msgs, .dock { position: relative; z-index: 1; width: 100%; max-width: 46rem; margin: 0 auto; padding: 0 1.5rem; }
 .msgs { flex: 0 0 0; display: flex; flex-direction: column; gap: 0.6rem; overflow-y: auto; scrollbar-width: none; }
-.msgs::-webkit-scrollbar { display: none; } /* rola com a roda/dedo, sem a barra */
-.has-chat .msgs { flex: 1; padding-top: 2rem; padding-bottom: 1rem; }
+.msgs::-webkit-scrollbar { display: none; } .has-chat .msgs { flex: 1; padding-top: 2rem; padding-bottom: 1rem; }
 .dock { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1.25rem; padding-bottom: 1.25rem; }
 .has-chat .dock { flex: 0 0 auto; }
 

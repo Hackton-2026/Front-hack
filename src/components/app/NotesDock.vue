@@ -1,6 +1,4 @@
 <script setup>
-// Notas rápidas (os Stickies do Plane): o botão abre um dial vertical (notas, nova, fechar)
-// e o painel mostra as notas, editáveis na hora e salvas no navegador.
 import { nextTick, onUnmounted, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 import { useNotes } from '../../composables/useOnboarding'

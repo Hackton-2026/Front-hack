@@ -1,9 +1,4 @@
 <script setup>
-// Wiki pessoal (o workspace é seu): coleções, subpáginas, favoritas e arquivadas, etiquetas,
-// para escrever com o time existem as Páginas de cada projeto, que quem participa do projeto vê.
-// (Antes havia páginas "privadas" x "do time"; agora toda página é sua e fica numa coleção.)
-// editor em Markdown com visualização, sumário, histórico de versões e ações da página.
-// shortcut: as páginas ainda ficam neste navegador (state.docs); passar para a API quando a Wiki tiver endpoint
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
@@ -34,7 +29,6 @@ const { state, createDoc, createTask, code, project, member, today, STATUSES, PR
 const { complete } = useOnboarding()
 const { toast, openTask } = useUi()
 
-// Páginas e ajustes antigos ganham os campos novos
 state.prefs.wiki ||= { collections: [{ id: 'geral', name: 'Minhas páginas' }], labels: [] }
 const wiki = state.prefs.wiki
 if (!wiki.collections.length) wiki.collections.push({ id: 'geral', name: 'Minhas páginas' })
@@ -45,7 +39,7 @@ for (const d of state.docs) for (const [k, v] of Object.entries(DOC_DEFAULTS)) i
 const activeId = ref(route.query.doc || null)
 const q = ref('')
 const labelFilter = ref('')
-const mode = ref('edit') // edit | view
+const mode = ref('edit')
 const expanded = ref(new Set())
 const editor = ref(null)
 const area = ref(null)
@@ -57,12 +51,11 @@ const showVersions = ref(false)
 const doc = computed(() => state.docs.find((d) => d.id === activeId.value))
 const byId = (id) => state.docs.find((d) => d.id === id)
 const children = (id) => state.docs.filter((d) => d.parentId === id && !d.archived)
-const descendants = (id) => state.docs.filter((d) => d.parentId === id).flatMap((c) => [c, ...descendants(c.id)]) // inclui arquivadas: restaurar traz tudo de volta
+const descendants = (id) => state.docs.filter((d) => d.parentId === id).flatMap((c) => [c, ...descendants(c.id)])
 const label = (id) => wiki.labels.find((l) => l.id === id)
 const matches = (d) => (!q.value || `${d.title} ${d.body}`.toLowerCase().includes(q.value.toLowerCase())) && (!labelFilter.value || d.labels.includes(labelFilter.value))
 const filtering = computed(() => !!(q.value || labelFilter.value))
 
-// Árvore achatada (página + profundidade); com busca ou etiqueta vira lista simples
 function tree(list, parentId = null, depth = 0) {
   if (filtering.value) return list.filter(matches).map((d) => ({ d, depth: 0 }))
   return list.filter((d) => d.parentId === parentId || (parentId === null && !list.some((p) => p.id === d.parentId)))
@@ -70,7 +63,6 @@ function tree(list, parentId = null, depth = 0) {
 }
 const live = computed(() => state.docs.filter((d) => !d.archived))
 const sections = computed(() => [
-  // página de coleção apagada (ou antiga, sem coleção) cai na primeira coleção, para nunca sumir da lista
   ...wiki.collections.map((c, i) => ({ key: c.id, name: c.name, collection: c,
     rows: tree(live.value.filter((d) => d.collectionId === c.id || (i === 0 && !wiki.collections.some((x) => x.id === d.collectionId)))) })),
   { key: 'archived', name: 'Arquivadas', rows: state.docs.filter((d) => d.archived && matches(d)).map((d) => ({ d, depth: 0 })) },
@@ -82,7 +74,6 @@ const crumbs = computed(() => {
   for (let p = doc.value && byId(doc.value.parentId); p; p = byId(p.parentId)) out.unshift(p)
   return out
 })
-// blocos que dependem do resto do site (base de dados, botão, navegação, bloco sincronizado)
 function ctx(seen = new Set()) {
   return {
     docTitle: (id) => byId(id)?.title,
@@ -98,7 +89,6 @@ function ctx(seen = new Set()) {
         const d = byId(arg)
         if (!d) return '<p class="md-empty">A página deste bloco sincronizado não existe mais.</p>'
         if (seen.has(arg)) return '<p class="md-empty">Bloco sincronizado apontando para ele mesmo.</p>'
-        // as caixas de seleção são da outra página: aqui ficam só para ver
         return `<div class="md-sync"><a href="?doc=${d.id}" data-doc="${d.id}">⟳ ${esc(d.title || 'Sem título')}</a>${render(d.body, ctx(new Set([...seen, arg]))).replace(/ data-line="\d+"/g, ' disabled')}</div>`
       }
       return undefined
@@ -114,7 +104,6 @@ const hello = computed(() => {
   return `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}${user.value?.first_name ? `, ${user.value.first_name}` : ''}`
 })
 
-// ---- abrir e criar
 async function open(id) {
   activeId.value = id
   confirmDel.value = false
@@ -135,7 +124,6 @@ async function create(fields = {}) {
 }
 const createIn = (section) => create({ collectionId: section.key })
 
-// ---- salvar e versões (uma foto a cada 2 min de edição, até 20)
 let timer
 function touch() {
   const d = doc.value
@@ -150,18 +138,17 @@ function touch() {
 }
 function restore(v) {
   const d = doc.value
-  d.versions.unshift({ at: new Date().toISOString(), title: d.title, body: d.body }) // guarda o atual antes de voltar
+  d.versions.unshift({ at: new Date().toISOString(), title: d.title, body: d.body })
   Object.assign(d, { title: v.title, body: v.body, updatedAt: new Date().toISOString() })
   toast('Versão restaurada.')
 }
 
-// ---- editor
 function format([, before, after]) {
   const el = area.value
   if (!el || doc.value.locked) return
   const { selectionStart: a, selectionEnd: b, value } = el
   const lineStart = value.lastIndexOf('\n', a - 1) + 1
-  const block = !after && !before.startsWith('\n') // prefixo de linha (título, lista, citação)
+  const block = !after && !before.startsWith('\n')
   doc.value.body = block
     ? value.slice(0, lineStart) + before + value.slice(lineStart)
     : value.slice(0, a) + before + value.slice(a, b) + after + value.slice(b)
@@ -182,7 +169,6 @@ function onPreviewClick(e) {
 }
 const jump = (id) => document.getElementById(id)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
 watch(activeId, () => { saved.value = ''; menu.value = null; mode.value = doc.value?.locked ? 'view' : 'edit' })
-// equações ($$ … $$): o KaTeX só carrega quando a página tem uma
 watch([html, mode], async () => {
   await nextTick()
   const els = editor.value?.querySelectorAll('.md-math') || []
@@ -191,10 +177,8 @@ watch([html, mode], async () => {
   els.forEach((el) => katex.render(el.dataset.tex, el, { displayMode: true, throwOnError: false }))
 }, { immediate: true })
 
-// ---- menu de blocos (o + e o / do Notion)
-const menu = ref(null) // { query: texto depois do / (null = aberto pelo +), from: posição do /, top }
+const menu = ref(null)
 const blockMenu = ref(null)
-// altura do cursor dentro do textarea (cópia invisível com o mesmo texto até o cursor)
 function caretTop(el, pos) {
   const cs = getComputedStyle(el)
   const m = document.createElement('div')
@@ -208,8 +192,7 @@ function caretTop(el, pos) {
   m.remove()
   return el.offsetTop + top - el.scrollTop + 4
 }
-// + ao passar o mouse na linha (como no Notion): onde começa e a altura de cada linha, com quebra automática
-const hoverLine = ref(null) // { i, top, h }
+const hoverLine = ref(null)
 let boxes = null
 let boxesKey = ''
 function lineBoxes(el) {
@@ -234,7 +217,6 @@ function onHover(e) {
   const i = list.findIndex((b) => y < b.top + b.h)
   hoverLine.value = i < 0 || y < 0 ? null : { i, top: el.offsetTop + list[i].top, h: list[i].h }
 }
-// linha vazia: o bloco entra nela; com texto: abre uma linha nova embaixo
 async function addBelow(i) {
   const el = area.value
   const lines = doc.value.body.split('\n')
@@ -259,12 +241,10 @@ function onType() {
   if (m) menu.value = { query: m[1], from: el.selectionStart - m[1].length - 1, top: menu.value?.query != null ? menu.value.top : caretTop(el, el.selectionStart) }
   else if (menu.value?.query != null) menu.value = null
 }
-// sai do texto sem ir para o menu (ex.: o passo de colar link) fecha o menu do /
 const onAreaBlur = () => setTimeout(() => { if (menu.value?.query != null && !document.activeElement?.closest('.bm')) menu.value = null })
 function onAreaKey(e) {
   if (menu.value?.query != null && blockMenu.value?.key(e)) e.preventDefault()
 }
-// põe o bloco: linha vazia vira o bloco; senão, ele entra na linha de baixo. %c% é onde o cursor fica
 function insertBlock(snippet) {
   const el = area.value
   let v = doc.value.body
@@ -289,7 +269,6 @@ function newSubpage() {
   toast('Subpágina criada. Abra pelo link ou pela árvore ao lado.')
 }
 
-// ---- etiquetas
 function addLabel() {
   const name = newLabel.value.trim()
   if (!name) return
@@ -305,7 +284,6 @@ function deleteLabel(id) {
   if (labelFilter.value === id) labelFilter.value = ''
 }
 
-// ---- coleções
 function addCollection() {
   const name = prompt('Nome da coleção')?.trim()
   if (name) wiki.collections.push({ id: `col-${Date.now().toString(36)}`, name })
@@ -319,7 +297,6 @@ function removeCollection(c) {
   wiki.collections.splice(wiki.collections.indexOf(c), 1)
 }
 
-// ---- importar (como o Notion): cada arquivo vira uma página na primeira coleção
 const importing = ref(false)
 const importBusy = ref(false)
 async function importPick(e) {
@@ -341,20 +318,19 @@ async function importPick(e) {
   }
 }
 
-// ---- ações da página
 function duplicate() {
-  const { id, versions, createdAt, updatedAt, ...rest } = JSON.parse(JSON.stringify(doc.value)) // structuredClone não aceita o proxy do Vue
+  const { id, versions, createdAt, updatedAt, ...rest } = JSON.parse(JSON.stringify(doc.value))
   create({ ...rest, title: `${rest.title} (cópia)`, favorite: false, locked: false })
 }
 function setArchived(on) {
   for (const d of [doc.value, ...descendants(doc.value.id)]) d.archived = on
-  if (!on && doc.value.parentId && byId(doc.value.parentId)?.archived) doc.value.parentId = null // pai continua arquivado: sobe para a raiz
+  if (!on && doc.value.parentId && byId(doc.value.parentId)?.archived) doc.value.parentId = null
   toast(on ? 'Página arquivada (com as subpáginas).' : 'Página restaurada.')
 }
 function remove() {
   if (!confirmDel.value) { confirmDel.value = true; return }
   const d = doc.value
-  state.docs.filter((c) => c.parentId === d.id).forEach((c) => (c.parentId = d.parentId)) // subpáginas sobem um nível
+  state.docs.filter((c) => c.parentId === d.id).forEach((c) => (c.parentId = d.parentId))
   state.docs.splice(state.docs.indexOf(d), 1)
   open(null)
 }
@@ -437,7 +413,6 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
       <button type="button" class="add-col" @click="addCollection"><AppIcon name="plus" :size="13" /> Nova coleção</button>
     </aside>
 
-    <!-- ================= página ================= -->
     <div v-if="doc" class="page" :class="{ wide: doc.fullWidth }">
       <article ref="editor" class="editor">
         <header class="bar">
@@ -502,7 +477,6 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
             <BlockMenu v-if="menu" ref="blockMenu" :query="menu.query" :doc-id="doc.id" :style="{ top: `${menu.top}px` }" @insert="insertBlock" @page="newSubpage" @close="menu = null" />
           </div>
         </template>
-        <!-- eslint-disable-next-line vue/no-v-html -- render() escapa o texto antes de montar o HTML -->
         <div v-else class="md" @click="onPreviewClick" v-html="html || '<p class=&quot;muted&quot;>Página vazia.</p>'" />
 
         <section v-if="children(doc.id).length" class="subs">
@@ -527,7 +501,6 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
       </aside>
     </div>
 
-    <!-- ================= início da wiki ================= -->
     <div v-else class="home-page">
       <h1>{{ hello }}</h1>
       <p class="muted">Sua base de conhecimento pessoal: ideias, anotações, specs e decisões. Para escrever junto com o time, use as Páginas de um projeto.</p>

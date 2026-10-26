@@ -1,6 +1,4 @@
 <script setup>
-// Ciclos do Plane: abas Ativo / Próximos / Concluídos, o ciclo ativo com o resumo por grupo de status e o
-// gráfico de burn-down. Sem projeto na rota (/ciclos) mostra os ciclos ativos de todos os projetos.
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
@@ -37,7 +35,6 @@ const fmt = (d) => new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day: '2-
 const range = (c) => `${fmt(c.start_date)} – ${fmt(c.end_date)}, ${c.end_date.slice(0, 4)}`
 const daysBetween = (a, b) => Math.round((new Date(`${b}T12:00`) - new Date(`${a}T12:00`)) / 864e5)
 
-// Resumo do ciclo: quanto falta, quanto já devia faltar hoje (linha ideal) e os grupos de status
 function summary(c) {
   const list = tasksOf(c)
   const scope = list.length
@@ -53,7 +50,6 @@ function summary(c) {
   }
 }
 
-// Burn-down: itens pendentes por dia (um item conta como feito no dia em que foi concluído)
 const W = 560, H = 220, PAD = { l: 34, r: 32, t: 12, b: 28 }
 function chart(c) {
   const list = tasksOf(c)
@@ -79,11 +75,9 @@ function chart(c) {
   }
 }
 
-// ---- criar / editar
 const editing = ref(null)
 const form = reactive({ name: '', description: '', start_date: '', end_date: '', project: null })
 const err = ref('')
-// próximo ciclo: começa no dia seguinte ao fim do último do projeto e dura o mesmo tanto
 function openNext() {
   const projectId = pid.value || state.projects[0]?.id
   const last = state.cycles.filter((c) => c.project === projectId).sort((a, b) => b.end_date.localeCompare(a.end_date))[0]
@@ -96,7 +90,6 @@ function openNext() {
   const n = state.cycles.filter((c) => c.project === projectId).length + 1
   Object.assign(form, { name: `Ciclo ${n}`, start_date: iso(start), end_date: iso(end), project: projectId })
 }
-// linha do tempo: todos os ciclos (do projeto, ou de todos) de 2 semanas atrás até 6 semanas à frente
 const TL = { from: day(-14), days: 56 }
 const timeline = computed(() => state.cycles.filter((c) => (!pid.value || c.project === pid.value) && c.end_date >= TL.from && c.start_date <= day(TL.days - 14))
   .sort((a, b) => a.start_date.localeCompare(b.start_date))
@@ -106,7 +99,6 @@ const timeline = computed(() => state.cycles.filter((c) => (!pid.value || c.proj
   }))
 const todayPos = (daysBetween(TL.from, today()) / TL.days) * 100
 const daysLeft = (c) => Math.max(0, daysBetween(today(), c.end_date))
-// carga por pessoa dentro do ciclo (itens abertos)
 const loadOf = (c) => {
   const open = tasksOf(c).filter((t) => t.status !== 'done')
   return [...new Set(open.flatMap((t) => t.assignees))].map((id) => ({ id, n: open.filter((t) => t.assignees.includes(id)).length })).sort((a, b) => b.n - a.n)
@@ -124,7 +116,7 @@ async function save() {
   const ok = editing.value === 'new' ? await createItem('cycle', body) : await updateItem('cycle', editing.value, body)
   if (!ok) return
   editing.value = null
-  tab.value = phase(body) // mostra a aba onde o ciclo foi parar
+  tab.value = phase(body)
 }
 async function remove(c) {
   menu.value = null
@@ -132,7 +124,6 @@ async function remove(c) {
 }
 const open = (c) => router.push(`/projetos/${c.project}/ciclos/${c.id}`)
 
-// GSAP: linhas entram em cascata e a linha do burn-down se desenha
 async function animate() {
   await nextTick()
   if (!root.value) return

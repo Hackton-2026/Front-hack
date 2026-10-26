@@ -1,8 +1,5 @@
 import { api } from './api'
 
-// Push no celular e no computador pelo Firebase Cloud Messaging. Este aparelho pede permissão, ganha um token do
-// Firebase e manda para o backend (/api/devices/); dali em diante todo aviso da caixa de entrada vira notificação.
-// Sem as variáveis VITE_FIREBASE_* no .env, o recurso aparece como "não configurado".
 const env = import.meta.env
 const CONFIG = {
   apiKey: env.VITE_FIREBASE_API_KEY,
@@ -35,7 +32,6 @@ function platform() {
 
 export const savedToken = () => { try { return localStorage.getItem(TOKEN_KEY) } catch { return null } }
 
-// Liga o push neste aparelho. Devolve o token (ou lança um erro com mensagem para mostrar)
 export async function enablePush() {
   if (!pushSupported) throw new Error('Este navegador não recebe notificações push. No iPhone, adicione o Novexo à Tela de Início primeiro.')
   if (!pushConfigured) throw new Error('Push não configurado: faltam as variáveis VITE_FIREBASE_* no .env do front.')
@@ -44,7 +40,7 @@ export async function enablePush() {
   const { fcm, instance } = await firebase()
   const token = await fcm.getToken(instance, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration })
   await api('/api/devices/', { method: 'POST', body: { token, platform: platform() } })
-  try { localStorage.setItem(TOKEN_KEY, token) } catch { /* modo privado */ }
+  try { localStorage.setItem(TOKEN_KEY, token) } catch { }
   return token
 }
 
@@ -52,14 +48,13 @@ export async function disablePush() {
   const token = savedToken()
   if (!token) return
   await api('/api/devices/', { method: 'DELETE', body: { token } })
-  try { localStorage.removeItem(TOKEN_KEY) } catch { /* modo privado */ }
+  try { localStorage.removeItem(TOKEN_KEY) } catch { }
   if (pushConfigured) {
     const { fcm, instance } = await firebase()
     await fcm.deleteToken(instance).catch(() => {})
   }
 }
 
-// Com o Novexo aberto o Firebase não mostra notificação: entrega aqui (o app mostra como aviso rápido)
 export async function onForegroundPush(handler) {
   if (!pushConfigured || !pushSupported || !savedToken()) return
   const { fcm, instance } = await firebase()

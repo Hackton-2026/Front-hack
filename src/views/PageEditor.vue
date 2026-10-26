@@ -1,5 +1,4 @@
 <script setup>
-// Editor de página: título grande e texto livre, salvando sozinho meio segundo depois de parar de digitar
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap, prefersReducedMotion } from '../utils/motion'
@@ -13,7 +12,7 @@ const { state, project, updateItem, removeItem, member } = useWorkspace()
 const { ui } = useUi()
 const p = computed(() => project(Number(props.id)))
 const pg = computed(() => state.pages.find((x) => x.id === Number(props.page)))
-const saving = ref('') // '', 'saving', 'saved'
+const saving = ref('')
 const body = ref(null)
 const root = ref(null)
 let timer
@@ -55,9 +54,9 @@ onMounted(async () => {
   await nextTick()
   grow()
   if (!pg.value?.title) root.value?.querySelector('.title')?.focus()
-  if (!prefersReducedMotion() && root.value) gsap.from(root.value.querySelectorAll('.anim'), { y: 12, opacity: 0, duration: 0.5, stagger: 0.07, ease: 'power3.out' }) // opacity (não autoAlpha): o título precisa aceitar foco já
+  if (!prefersReducedMotion() && root.value) gsap.from(root.value.querySelectorAll('.anim'), { y: 12, opacity: 0, duration: 0.5, stagger: 0.07, ease: 'power3.out' })
 })
-onUnmounted(flush) // sair da página salva o que faltava
+onUnmounted(flush)
 </script>
 
 <template>
