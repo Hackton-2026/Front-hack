@@ -8,10 +8,8 @@ import AppIcon from './AppIcon.vue'
 import StatusBadge from './StatusBadge.vue'
 
 const PAGES = [
-  { label: 'Início', to: '/inicio', icon: 'home' },
   { label: 'Seu trabalho', to: '/meu-trabalho', icon: 'mine' },
   { label: 'Projetos', to: '/projetos', icon: 'folder' },
-  { label: 'Rascunhos', to: '/rascunhos', icon: 'draft' },
   { label: 'Notas', to: '/notas', icon: 'note' },
   { label: 'Documentos', to: '/wiki', icon: 'wiki' },
   { label: 'Novexo IA', to: '/ia', icon: 'ai' },

@@ -13,13 +13,11 @@ import { api } from '../../services/api'
 
 const emit = defineEmits(['collapse'])
 const PERSONAL = [
-  { key: null, icon: 'home', label: 'Início', to: '/inicio' },
-  { key: 'drafts', icon: 'draft', label: 'Rascunhos', to: '/rascunhos' },
   { key: 'mine', icon: 'mine', label: 'Seu trabalho', to: '/meu-trabalho' },
   { key: 'notes', icon: 'note', label: 'Notas', to: '/notas' },
   { key: 'favorites', icon: 'star', label: 'Favoritos', to: '/favoritos' },
 ]
-const MORE = [
+const WORKSPACE = [
   { key: 'analytics', icon: 'chart', label: 'Análises', to: '/analises' },
   { key: 'archives', icon: 'archive', label: 'Arquivados', to: '/arquivados' },
   { key: 'dashboards', icon: 'dashboard', label: 'Painéis', to: '/paineis' },
@@ -61,10 +59,8 @@ const { newTask, toast } = useUi()
 const { complete } = useOnboarding()
 const prefs = computed(() => state.prefs)
 const personal = computed(() => PERSONAL.filter((n) => !n.key || prefs.value.nav[n.key] !== false))
-const pinned = computed(() => MORE.filter((m) => prefs.value.pinned.includes(m.key)))
 const sub = computed(() => SUB.filter((s) => !s.key || prefs.value.features[s.key]))
 
-const moreOpen = ref(false)
 const customizing = ref(false)
 const menuFor = ref(null)
 const menuPos = ref({ top: 0, left: 0 })
@@ -90,9 +86,6 @@ const base = (p) => `/projetos/${p.id}`
 const subActive = (p, s) => route.path === base(p) + s.path || (s.path && route.path.startsWith(`${base(p)}${s.path}/`))
 const toggleProject = (p) => (openProjects.has(p.id) ? openProjects.delete(p.id) : openProjects.add(p.id))
 const toggleSection = (k) => (prefs.value.open[k] = !prefs.value.open[k])
-function togglePin(key) {
-  prefs.value.pinned = prefs.value.pinned.includes(key) ? prefs.value.pinned.filter((k) => k !== key) : [...prefs.value.pinned, key]
-}
 
 function onEnter(el, done) {
   if (reduced) return done()
@@ -102,16 +95,6 @@ function onEnter(el, done) {
 function onLeave(el, done) {
   if (reduced) return done()
   gsap.to(el, { height: 0, autoAlpha: 0, overflow: 'hidden', duration: 0.22, ease: 'power2.in', onComplete: done })
-}
-function onMoreEnter(el, done) {
-  if (reduced) return done()
-  gsap.timeline({ onComplete: done })
-    .fromTo(el, { x: -14, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 0.3, ease: 'power3.out' })
-    .from(el.querySelectorAll('.more__item'), { x: -8, autoAlpha: 0, duration: 0.25, stagger: 0.04, ease: 'power2.out' }, '-=0.15')
-}
-function onMoreLeave(el, done) {
-  if (reduced) return done()
-  gsap.to(el, { x: -10, autoAlpha: 0, duration: 0.18, ease: 'power2.in', onComplete: done })
 }
 const dialog = ref(null)
 watch(customizing, async (v) => {
@@ -151,16 +134,13 @@ async function archive(p) {
 }
 
 function onDocClick(e) {
-  if (!e.target.closest('.more, .more-btn')) moreOpen.value = false
   if (!e.target.closest('.pmenu, .pmenu-btn')) menuFor.value = null
 }
 function onKey(e) {
   if (e.key !== 'Escape') return
-  moreOpen.value = false
   customizing.value = false
   menuFor.value = null
 }
-watch(() => route.path, () => (moreOpen.value = false))
 onMounted(() => {
   addEventListener('click', onDocClick)
   addEventListener('scroll', closeMenu, true)
@@ -194,8 +174,7 @@ onUnmounted(() => {
     <Transition :css="false" @enter="onEnter" @leave="onLeave">
       <div v-if="prefs.open.workspace" class="sect">
         <RouterLink to="/projetos" class="side__link" exact-active-class="router-link-active"><AppIcon name="folder" :size="17" />Projetos</RouterLink>
-        <RouterLink v-for="m in pinned" :key="m.key" :to="m.to" class="side__link"><AppIcon :name="m.icon" :size="17" />{{ m.label }}</RouterLink>
-        <button type="button" class="side__link more-btn" :aria-expanded="moreOpen" @click="moreOpen = !moreOpen"><AppIcon name="more" :size="17" />{{ moreOpen ? 'Ocultar' : 'Mais' }}</button>
+        <RouterLink v-for="m in WORKSPACE" :key="m.key" :to="m.to" class="side__link"><AppIcon :name="m.icon" :size="17" />{{ m.label }}</RouterLink>
       </div>
     </Transition>
   </div>
@@ -252,29 +231,16 @@ onUnmounted(() => {
   <RouterLink v-if="planBadge" :to="planBadge.to" class="trial">{{ planBadge.text }}</RouterLink>
 
   <Teleport to="body">
-    <Transition :css="false" @enter="onMoreEnter" @leave="onMoreLeave">
-      <nav v-if="moreOpen" class="more" aria-label="Mais do workspace">
-        <div v-for="m in MORE" :key="m.key" class="more__item">
-          <RouterLink :to="m.to" @click="moreOpen = false"><AppIcon :name="m.icon" :size="17" />{{ m.label }}</RouterLink>
-          <button type="button" class="pin" :class="{ 'is-on': prefs.pinned.includes(m.key) }" :aria-pressed="prefs.pinned.includes(m.key)" :aria-label="`${prefs.pinned.includes(m.key) ? 'Desafixar' : 'Fixar'} ${m.label} na barra lateral`" @click="togglePin(m.key)"><AppIcon name="pin" :size="14" /></button>
-        </div>
-      </nav>
-    </Transition>
-
     <div v-if="customizing" class="overlay" @click.self="customizing = false">
       <section ref="dialog" class="custom" role="dialog" aria-modal="true" aria-labelledby="custom-title">
         <header>
           <h2 id="custom-title">Personalizar navegação</h2>
           <button type="button" class="icon-btn sm" aria-label="Fechar" @click="customizing = false"><AppIcon name="close" :size="16" /></button>
         </header>
-        <p class="lead">Os itens marcados ficam sempre na barra lateral. Os outros continuam no menu Mais. Isso vale só para você.</p>
+        <p class="lead">Os itens marcados aparecem na barra lateral. Isso vale só para você.</p>
         <fieldset>
           <legend>Pessoal</legend>
           <label v-for="n in PERSONAL.filter((x) => x.key)" :key="n.key"><input type="checkbox" :checked="prefs.nav[n.key] !== false" @change="prefs.nav[n.key] = $event.target.checked" /><AppIcon :name="n.icon" :size="15" />{{ n.label }}</label>
-        </fieldset>
-        <fieldset>
-          <legend>Workspace</legend>
-          <label v-for="m in MORE" :key="m.key"><input type="checkbox" :checked="prefs.pinned.includes(m.key)" @change="togglePin(m.key)" /><AppIcon :name="m.icon" :size="15" />{{ m.label }}</label>
         </fieldset>
         <fieldset>
           <legend>Projetos</legend>
@@ -305,7 +271,7 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .add-p { display: grid; place-items: center; width: 20px; height: 20px; margin-left: 0.4rem; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--muted); cursor: pointer; }
 .add-p:hover { background: var(--surface-2); color: var(--text); }
 .side__link { position: relative; display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.4rem 0.5rem; border: 0; border-radius: 6px; background: none; color: var(--text); text-decoration: none; text-align: left; white-space: nowrap; cursor: pointer; transition: background 0.2s var(--ease); }
-.side__link:hover, .side__link[aria-expanded='true'].more-btn { background: var(--surface-2); }
+.side__link:hover { background: var(--surface-2); }
 .side__link.router-link-active:not(.proj__btn), .side__link.is-active { background: var(--surface-2); }
 .side__link.router-link-active:not(.sub__link)::before, .side__link.is-active::before { content: ''; position: absolute; left: 0; top: 25%; bottom: 25%; width: 2px; border-radius: 2px; background: var(--accent); }
 .side__link :deep(.app-icon) { color: var(--muted); }
@@ -336,16 +302,7 @@ button.side__label:hover, .label-btn:hover { color: var(--text); }
 .trial:hover { color: var(--accent-soft); }
 :is(.side__link, .new-btn, .trial, .add-p, .icon-btn, .side__label, .label-btn, .pmenu-btn):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 
-.more, .custom { --surface: #181614; --surface-2: #211f1c; --line: #2e2b27; --line-strong: #3d3934; --text: #f2efea; --muted: #a29d95; --accent: #e56515; --accent-soft: #fba45c; --ease: cubic-bezier(0, 0, 0.2, 1); font: 400 14px/1.45 'Geist', 'Helvetica Neue', system-ui, sans-serif; color: var(--text); }
-.more { position: fixed; top: 49px; bottom: 0; left: 313px; z-index: 45; width: 300px; padding: 0.75rem; border-right: 1px solid var(--line); background: var(--surface); box-shadow: 18px 0 40px rgb(0 0 0 / 0.35); }
-.more__item { display: flex; align-items: center; border-radius: 6px; transition: background 0.2s var(--ease); }
-.more__item:hover { background: var(--surface-2); }
-.more__item a { display: flex; flex: 1; align-items: center; gap: 0.6rem; padding: 0.45rem 0.55rem; font-weight: 500; color: var(--text); text-decoration: none; }
-.more__item :deep(.app-icon) { color: var(--muted); }
-.pin { display: grid; place-items: center; width: 26px; height: 26px; margin-right: 4px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; }
-.pin:hover { color: var(--text); }
-.pin.is-on { color: var(--accent-soft); }
-.pin.is-on :deep(.app-icon) { fill: currentColor; }
+.custom { --surface: #181614; --surface-2: #211f1c; --line: #2e2b27; --line-strong: #3d3934; --text: #f2efea; --muted: #a29d95; --accent: #e56515; --accent-soft: #fba45c; --ease: cubic-bezier(0, 0, 0.2, 1); font: 400 14px/1.45 'Geist', 'Helvetica Neue', system-ui, sans-serif; color: var(--text); }
 .overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 1rem; background: rgb(0 0 0 / 0.55); }
 .custom { display: flex; flex-direction: column; gap: 1rem; width: min(34rem, 100%); max-height: calc(100vh - 2rem); overflow-y: auto; padding: 1.25rem 1.4rem 1.4rem; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); box-shadow: 0 30px 70px rgb(0 0 0 / 0.55); }
 .custom header { display: flex; align-items: center; justify-content: space-between; }
@@ -357,5 +314,4 @@ fieldset label { display: flex; align-items: center; gap: 0.6rem; padding: 0.45r
 fieldset label:hover { background: var(--surface-2); }
 fieldset input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
 fieldset :deep(.app-icon) { color: var(--muted); }
-@media (max-width: 860px) { .more { left: 64px; } }
 </style>

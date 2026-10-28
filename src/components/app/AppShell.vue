@@ -51,7 +51,7 @@ async function resendVerify() {
 const title = computed(() => ui.crumb || route.meta.title || '')
 
 const RAIL = [
-  { icon: 'work', label: 'Trabalho', to: '/inicio', area: 'work' },
+  { icon: 'work', label: 'Trabalho', to: '/projetos', area: 'work' },
   { icon: 'wiki', label: 'Documentos', to: '/wiki', area: 'wiki' },
   { icon: 'ai', label: 'IA', to: '/ia', area: 'ai' },
 ]
@@ -138,7 +138,7 @@ onUnmounted(() => {
     :style="{ '--accent': state.prefs.accent }"
   >
     <header class="top">
-      <RouterLink to="/inicio" class="ws">
+      <RouterLink to="/projetos" class="ws">
         <span class="ws__badge">NV</span>
         <span class="ws__name">{{ state.workspaceName }}</span>
       </RouterLink>
