@@ -15,6 +15,7 @@ export const LAYOUTS = [
   { type: 'workload', label: 'Carga de trabalho', desc: 'Quanto cada pessoa tem na semana', icon: 'sliders', group: 'more' },
   { type: 'mindmap', label: 'Mapa mental', desc: 'Projeto, status e tarefas em árvore', icon: 'module', group: 'more' },
   { type: 'team', label: 'Equipe', desc: 'O que cada pessoa está fazendo', icon: 'user', group: 'more' },
+  { type: 'cycles', label: 'Ciclos', desc: 'Sprints com os itens de trabalho de cada um', icon: 'cycle', group: 'more' },
   { type: 'map', label: 'Mapa', desc: 'Tarefas por endereço', icon: 'globe', group: 'more', soon: true },
 ]
 export const layout = (type) => LAYOUTS.find((l) => l.type === type) || LAYOUTS[0]

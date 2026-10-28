@@ -24,6 +24,7 @@ import TaskMindmap from '../components/app/views/TaskMindmap.vue'
 import ViewWhiteboard from '../components/app/views/ViewWhiteboard.vue'
 import ViewDoc from '../components/app/views/ViewDoc.vue'
 import ViewActivity from '../components/app/views/ViewActivity.vue'
+import CyclesView from './CyclesView.vue'
 
 const VIEWS = [
   { id: 'list', label: 'Lista', icon: 'list' },
@@ -31,7 +32,7 @@ const VIEWS = [
   { id: 'calendar', label: 'Calendário', icon: 'calendar' },
   { id: 'gantt', label: 'Gantt', icon: 'chart' },
 ]
-const NO_FILTERS = ['doc', 'whiteboard', 'activity', 'form']
+const NO_FILTERS = ['doc', 'whiteboard', 'activity', 'form', 'cycles']
 const props = defineProps({ id: { type: String, required: true }, cycle: { type: String, default: '' }, module: { type: String, default: '' }, view: { type: String, default: '' } })
 const route = useRoute()
 const router = useRouter()
@@ -223,6 +224,7 @@ onMounted(() => moveInk(false))
     <ViewWhiteboard v-else-if="kind === 'whiteboard' && saved" :key="saved.id" :view="saved" />
     <ViewDoc v-else-if="kind === 'doc' && saved" :view="saved" />
     <ViewActivity v-else-if="kind === 'activity'" :project-id="p.id" />
+    <CyclesView v-else-if="kind === 'cycles'" :id="String(p.id)" />
     <TaskListView v-else :tasks="tasks" :project-id="p.id" :defaults="scope.defaults" />
   </div>
   <div v-else class="missing">

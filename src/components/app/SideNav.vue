@@ -20,7 +20,6 @@ const PERSONAL = [
   { key: 'favorites', icon: 'star', label: 'Favoritos', to: '/favoritos' },
 ]
 const MORE = [
-  { key: 'cycles', icon: 'cycle', label: 'Ciclos', to: '/ciclos' },
   { key: 'analytics', icon: 'chart', label: 'Análises', to: '/analises' },
   { key: 'archives', icon: 'archive', label: 'Arquivados', to: '/arquivados' },
   { key: 'dashboards', icon: 'dashboard', label: 'Painéis', to: '/paineis' },
@@ -28,7 +27,6 @@ const MORE = [
 const SUB = [
   { key: null, icon: 'overview', label: 'Visão geral', path: '/visao-geral' },
   { key: null, icon: 'items', label: 'Itens de trabalho', path: '' },
-  { key: 'cycles', icon: 'cycle', label: 'Ciclos', path: '/ciclos' },
   { key: 'modules', icon: 'module', label: 'Módulos', path: '/modulos' },
   { key: 'pages', icon: 'page', label: 'Páginas', path: '/paginas' },
   { key: null, icon: 'chat', label: 'Chat', path: '/chat' },
@@ -36,11 +34,9 @@ const SUB = [
 ]
 const TRY = [
   { brand: 'github', label: 'Conectar ao GitHub', to: '/ajustes?tab=integrations' },
-  { brand: 'slack', label: 'Conectar ao Slack', to: '/comecar' },
   { icon: 'ai', label: 'Experimente a Novexo IA', to: '/ia' },
 ]
 const FEATURES = [
-  { key: 'cycles', label: 'Ciclos' },
   { key: 'modules', label: 'Módulos' },
   { key: 'pages', label: 'Páginas' },
 ]
