@@ -8,7 +8,7 @@ import FlaticonIcon from '../components/FlaticonIcon.vue'
 const steps = [
   {
     title: 'Registre o processo da equipe',
-    text: 'Descreva as etapas e os critérios de conclusão nas Páginas de um projeto. Por exemplo: recebimento de um pedido, conferência, execução e revisão.',
+    text: 'Descreva as etapas e os critérios de conclusão nos Documentos do projeto. Por exemplo: recebimento de um pedido, conferência, execução e revisão.',
     caption: 'Documentar um processo da empresa',
     video: '/tutoriais/operacoes/passo-1.mp4',
   },

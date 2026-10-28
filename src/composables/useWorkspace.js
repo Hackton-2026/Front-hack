@@ -443,8 +443,9 @@ export function useWorkspace() {
     await api(`/api/invites/${encodeURIComponent(token)}/decline/`, { method: 'POST' })
     state.invites = state.invites.filter((i) => i.token !== token)
   }
-  const projectMessages = (pid, after) => api(`/api/projects/${pid}/messages/${after ? `?after=${after}` : ''}`)
-  const sendProjectMessage = (pid, body) => api(`/api/projects/${pid}/messages/`, { method: 'POST', body: { body } })
+  // peer = id de quem participa do projeto: conversa individual; vazio = chat geral
+  const projectMessages = (pid, after, peer) => api(`/api/projects/${pid}/messages/?${new URLSearchParams({ ...(after && { after }), ...(peer && { with: peer }) })}`)
+  const sendProjectMessage = (pid, body, peer) => api(`/api/projects/${pid}/messages/`, { method: 'POST', body: peer ? { body, to: peer } : { body } })
 
   function clearLocal() {
     state.tasks = state.tasks.filter((t) => !t.draft)

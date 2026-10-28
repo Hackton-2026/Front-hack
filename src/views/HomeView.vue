@@ -69,7 +69,7 @@ const FILTERS = [
   { value: 'all', label: 'Todos' },
   { value: 'task', label: 'Itens de trabalho' },
   { value: 'project', label: 'Projetos' },
-  { value: 'page', label: 'Páginas' },
+  { value: 'page', label: 'Documentos' },
 ]
 const recents = computed(() => {
   const list = state.prefs.recents.map((r) => {

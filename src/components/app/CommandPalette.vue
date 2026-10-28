@@ -13,7 +13,7 @@ const PAGES = [
   { label: 'Projetos', to: '/projetos', icon: 'folder' },
   { label: 'Rascunhos', to: '/rascunhos', icon: 'draft' },
   { label: 'Notas', to: '/notas', icon: 'note' },
-  { label: 'Wiki', to: '/wiki', icon: 'wiki' },
+  { label: 'Documentos', to: '/wiki', icon: 'wiki' },
   { label: 'Novexo IA', to: '/ia', icon: 'ai' },
   { label: 'Ajustes', to: '/ajustes', icon: 'settings' },
   { label: 'Começar', to: '/comecar', icon: 'rocket' },

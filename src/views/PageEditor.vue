@@ -83,7 +83,7 @@ onUnmounted(flush)
     </article>
   </div>
   <div v-else-if="looking" class="pg-empty" role="status"><h2>Abrindo a página…</h2></div>
-  <div v-else class="pg-empty"><h2>Essa página não existe mais.</h2><RouterLink :to="`/projetos/${id}/paginas`" class="pg-btn">Ver páginas</RouterLink></div>
+  <div v-else class="pg-empty"><h2>Essa página não existe mais.</h2><RouterLink :to="`/projetos/${id}/paginas`" class="pg-btn">Ver documentos do projeto</RouterLink></div>
 </template>
 
 <style scoped>

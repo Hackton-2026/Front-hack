@@ -14,7 +14,7 @@ const steps = [
   },
   {
     title: 'Reúna os materiais e as datas',
-    text: 'Inclua links de materiais na descrição das tarefas e registre orientações nas Páginas do projeto. Defina os prazos das atividades e consulte o Calendário.',
+    text: 'Inclua links de materiais na descrição das tarefas e registre orientações nos Documentos do projeto. Defina os prazos das atividades e consulte o Calendário.',
     caption: 'Reunir materiais e datas das atividades',
     video: '/tutoriais/educacao/passo-2.mp4',
   },

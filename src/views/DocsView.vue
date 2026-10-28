@@ -21,7 +21,7 @@ const ENDPOINTS = [
   ['PATCH', '/tasks/ID/', 'Muda só os campos enviados.'],
   ['POST', '/tasks/ID/comments/', 'Comenta numa tarefa.'],
   ['GET', '/cycles/ · /modules/', 'Ciclos (start_date, end_date) e módulos (state, lead, due_date).'],
-  ['GET', '/pages/', 'Páginas da wiki dos projetos.'],
+  ['GET', '/pages/', 'Documentos dos projetos.'],
   ['GET', '/inbox/', 'Suas notificações.'],
   ['POST', '/ai/chat/', 'Fala com a Novexo IA: messages [{role, content}]. Ela age com as suas permissões.'],
 ]

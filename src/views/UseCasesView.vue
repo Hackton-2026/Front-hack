@@ -20,7 +20,7 @@ const CASES = [
     tags: ['Prazos', 'WhatsApp', 'Calendário'] },
   { icon: 'graduation-cap', title: 'Escolas e cursos', to: '/solucoes/educacao',
     text: 'Cada turma vira um projeto e cada trabalho, uma tarefa. O conteúdo da disciplina mora na wiki.',
-    tags: ['Wiki', 'Projetos', 'Chat do projeto'] },
+    tags: ['Documentos', 'Projetos', 'Chat do projeto'] },
   { icon: 'palette', title: 'Design e criação', to: '/solucoes/design',
     text: 'Pedidos chegam como tarefas, as revisões ficam nos comentários e o quadro mostra o que está em aprovação.',
     tags: ['Quadros', 'Comentários', 'Visões salvas'] },

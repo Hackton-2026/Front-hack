@@ -10,7 +10,7 @@ const { toast } = useUi()
 const TABS = [
   { id: 'projects', label: 'Projetos' },
   { id: 'tasks', label: 'Itens apagados' },
-  { id: 'pages', label: 'Páginas' },
+  { id: 'pages', label: 'Documentos do projeto' },
 ]
 const tab = ref('projects')
 const projects = ref([])

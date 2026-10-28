@@ -51,7 +51,7 @@ async function animate() {
   staggerIn(root.value?.querySelectorAll('.pg-row'))
 }
 watch([tab, () => props.id], animate)
-watch(p, (v) => (ui.crumb = v ? `${v.name} › Páginas` : 'Projeto não encontrado'), { immediate: true })
+watch(p, (v) => (ui.crumb = v ? `${v.name} › Documentos do projeto` : 'Projeto não encontrado'), { immediate: true })
 const onDoc = (e) => !e.target.closest('.menu-wrap') && (menu.value = null)
 onMounted(() => { animate(); addEventListener('click', onDoc) })
 onUnmounted(() => removeEventListener('click', onDoc))
@@ -60,7 +60,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
 <template>
   <div v-if="p" ref="root" class="pg">
     <div class="pg-bar">
-      <div class="pg-tabs" role="tablist" aria-label="Páginas">
+      <div class="pg-tabs" role="tablist" aria-label="Documentos do projeto">
         <button v-for="t in TABS" :key="t.id" type="button" role="tab" :aria-selected="tab === t.id" @click="tab = t.id">{{ t.label }}<span class="n">{{ mine.filter((pg) => inTab(pg, t.id)).length }}</span></button>
       </div>
       <div class="pg-bar__right">

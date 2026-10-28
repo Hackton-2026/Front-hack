@@ -358,15 +358,15 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 
 <template>
   <div class="wiki">
-    <aside class="list" aria-label="Páginas da wiki">
+    <aside class="list" aria-label="Documentos">
       <div class="list__head">
-        <strong>Wiki</strong>
+        <strong>Documentos</strong>
         <span class="head-btns">
           <button type="button" class="new-page" title="Importar páginas" aria-label="Importar páginas" @click="importing = true"><AppIcon name="upload" :size="13" /></button>
           <button type="button" class="new-page" title="Nova página" @click="create()"><AppIcon name="plus" :size="13" /> Nova</button>
         </span>
       </div>
-      <AppModal :open="importing" title="Importar para a Wiki" @close="importing = false">
+      <AppModal :open="importing" title="Importar para Documentos" @close="importing = false">
         <p class="imp-hint">Cada arquivo vira uma página em “{{ wiki.collections[0].name }}”. Dá para escolher vários de uma vez.</p>
         <div class="imp-grid">
           <label v-for="k in IMPORT_KINDS" :key="k.id" class="imp" :class="{ busy: importBusy }">
@@ -503,7 +503,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 
     <div v-else class="home-page">
       <h1>{{ hello }}</h1>
-      <p class="muted">Sua base de conhecimento pessoal: ideias, anotações, specs e decisões. Para escrever junto com o time, use as Páginas de um projeto.</p>
+      <p class="muted">Sua base de conhecimento pessoal: ideias, anotações, specs e decisões. Para escrever junto com o time, use os Documentos do projeto.</p>
       <div class="home-actions">
         <button type="button" class="new" @click="create()"><AppIcon name="plus" :size="14" /> Nova página</button>
         <RouterLink to="/notas" class="link">Suas notas rápidas</RouterLink>

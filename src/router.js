@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from './composables/useAuth'
-import { useUi } from './composables/useUi'
 import { CUSTOM_PLAN_PATH, canEnterCustomPlan } from './utils/customPlanEntry'
 
 const router = createRouter({
@@ -82,22 +81,16 @@ const router = createRouter({
     { path: '/projetos/:id/modulos', component: () => import('./views/ModulesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Módulos', icon: 'module' } },
     { path: '/projetos/:id/modulos/:module', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Módulo', icon: 'module' } },
     { path: '/projetos/:id/visoes/:view', component: () => import('./views/ProjectView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Visão', icon: 'layers' } },
-    { path: '/projetos/:id/paginas', component: () => import('./views/PagesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Páginas', icon: 'page' } },
+    { path: '/projetos/:id/paginas', component: () => import('./views/PagesView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Documentos do projeto', icon: 'page' } },
     { path: '/projetos/:id/paginas/:page', component: () => import('./views/PageEditor.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Página', icon: 'page' } },
     { path: '/projetos/:id/membros', component: () => import('./views/ProjectMembers.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Membros', icon: 'user' } },
-    {
-      path: '/projetos/:id/chat',
-      redirect: (to) => {
-        useUi().openChat(to.params.id)
-        return `/projetos/${to.params.id}`
-      },
-    },
+    { path: '/projetos/:id/chat', component: () => import('./views/ProjectChat.vue'), props: (to) => ({ id: to.params.id, page: true }), meta: { app: true, auth: true, area: 'work', title: 'Chat', icon: 'chat' } },
     { path: '/convite/:token', component: () => import('./views/InviteView.vue'), props: true, meta: { app: true, auth: true, area: 'work', title: 'Convite', icon: 'user' } },
     { path: '/ciclos', component: () => import('./views/CyclesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Ciclos ativos', icon: 'cycle' } },
     { path: '/analises', component: () => import('./views/AnalyticsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Análises', icon: 'chart' } },
     { path: '/arquivados', component: () => import('./views/ArchivesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Arquivados', icon: 'archive' } },
     { path: '/paineis', component: () => import('./views/DashboardsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Painéis', icon: 'dashboard' } },
-    { path: '/wiki', component: () => import('./views/WikiView.vue'), meta: { app: true, auth: true, area: 'wiki', title: 'Wiki', icon: 'wiki' } },
+    { path: '/wiki', component: () => import('./views/WikiView.vue'), meta: { app: true, auth: true, area: 'wiki', title: 'Documentos', icon: 'wiki' } },
     { path: '/ia', component: () => import('./views/AiView.vue'), meta: { app: true, auth: true, area: 'ai', title: 'Novexo IA', icon: 'ai' } },
     { path: '/ajustes', component: () => import('./views/SettingsView.vue'), meta: { app: true, auth: true, area: 'settings', title: 'Ajustes', icon: 'settings' } },
     { path: '/explorar', component: () => import('./views/ProductsView.vue') },

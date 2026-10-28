@@ -28,7 +28,7 @@ const SUB = [
   { key: null, icon: 'overview', label: 'Visão geral', path: '/visao-geral' },
   { key: null, icon: 'items', label: 'Itens de trabalho', path: '' },
   { key: 'modules', icon: 'module', label: 'Módulos', path: '/modulos' },
-  { key: 'pages', icon: 'page', label: 'Páginas', path: '/paginas' },
+  { key: 'pages', icon: 'page', label: 'Documentos do projeto', path: '/paginas' },
   { key: null, icon: 'chat', label: 'Chat', path: '/chat' },
   { key: null, icon: 'user', label: 'Membros', path: '/membros' },
 ]
@@ -38,7 +38,7 @@ const TRY = [
 ]
 const FEATURES = [
   { key: 'modules', label: 'Módulos' },
-  { key: 'pages', label: 'Páginas' },
+  { key: 'pages', label: 'Documentos do projeto' },
 ]
 
 const route = useRoute()

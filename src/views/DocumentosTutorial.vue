@@ -7,9 +7,9 @@ import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 const steps = [
   {
-    title: 'Abra a Wiki',
-    text: 'Clique em Wiki na barra lateral. Na tela inicial, use Nova página para criar um documento ou selecione uma página existente.',
-    caption: 'Abrir a Wiki e criar uma página',
+    title: 'Abra Documentos',
+    text: 'Clique em Documentos na barra lateral. Na tela inicial, use Nova página para criar um documento ou selecione uma página existente.',
+    caption: 'Abrir Documentos e criar uma página',
     video: '/tutoriais/documentos/passo-1.mp4',
   },
   {
@@ -34,8 +34,8 @@ const steps = [
       <header class="intro">
         <h1>Como criar<br /><em>documentos</em></h1>
         <p>
-          Use a Wiki para guardar anotações e referências pessoais. Para escrever com o time, use as
-          Páginas de um projeto.
+          Use Documentos para guardar anotações e referências pessoais. Para escrever com o time, use os
+          Documentos do projeto.
         </p>
       </header>
 
@@ -80,11 +80,11 @@ const steps = [
 
       <div class="guide-end">
         <p>
-          A Wiki é pessoal. Para compartilhar o conteúdo com o time, abra um projeto e acesse
-          Páginas no menu dele.
+          Documentos é pessoal. Para compartilhar o conteúdo com o time, abra um projeto e acesse
+          Documentos do projeto no menu dele.
         </p>
         <GooeyButton to="/wiki" size="lg"
-          >Abrir a Wiki <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
+          >Abrir Documentos <FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton
         >
       </div>
     </main>

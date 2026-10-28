@@ -18,7 +18,7 @@ import DeleteProjectDialog from '../components/app/DeleteProjectDialog.vue'
 const GROUPS = [
   { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações'], ['whatsapp', 'WhatsApp']] },
   { label: 'Administração', tabs: [['general', 'Geral'], ['members', 'Pessoas'], ['billing', 'Planos e cobrança'], ['import', 'Importar'], ['export', 'Exportar'], ['worklogs', 'Registros de horas'], ['identity', 'Identidade'], ['governance', 'Governança'], ['schedule', 'Cronograma de trabalho']] },
-  { label: 'Produtos', tabs: [['wiki', 'Wiki'], ['ai', 'Novexo IA']] },
+  { label: 'Produtos', tabs: [['wiki', 'Documentos'], ['ai', 'Novexo IA']] },
   { label: 'Recursos', tabs: [['projects', 'Projetos'], ['teams', 'Times'], ['initiatives', 'Iniciativas'], ['customers', 'Clientes'], ['templates', 'Modelos'], ['tags', 'Etiquetas'], ['integrations', 'Integrações'], ['releases', 'Lançamentos']] },
   { label: 'Desenvolvedores', tabs: [['webhooks', 'Webhooks'], ['tokens', 'Tokens de API']] },
 ]
@@ -45,7 +45,7 @@ const VIEWS = [['list', 'Lista'], ['board', 'Quadro'], ['calendar', 'Calendário
 const ROLES = [['admin', 'Admin'], ['member', 'Membro'], ['limited', 'Membro limitado'], ['guest', 'Convidado']]
 const ROLE_NAMES = { owner: 'Dono', ...Object.fromEntries(ROLES) }
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['pages', 'Páginas']]
+const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['pages', 'Documentos do projeto']]
 
 const opts = (pairs) => pairs.map(([value, label]) => ({ value, label }))
 const LISTS = {
@@ -132,7 +132,7 @@ const schedule = section('schedule', { days: [1, 2, 3, 4, 5], start: '09:00', en
 const setSetting = (name, key, value) => saveWorkspace({ settings: { [name]: { [key]: value } } })
 const SECTION_TOGGLES = {
   governance: [
-    ['publicPages', 'Permitir páginas públicas', 'Páginas da wiki e dos projetos com link aberto.'],
+    ['publicPages', 'Permitir páginas públicas', 'Documentos e documentos do projeto com link aberto.'],
   ],
   identity: [
     ['googleOnly', 'Exigir login com Google', 'Desliga o login com senha para este workspace.'],
@@ -586,7 +586,7 @@ async function onImport(e) {
         <template v-else-if="tab === 'wiki' || tab === 'ai'">
           <ul class="toggles">
             <template v-if="tab === 'wiki'">
-              <li><span>Wiki ligada<small>Documentos do time em Wiki, no trilho da esquerda.</small></span><button type="button" role="switch" class="switch" :aria-checked="products.wiki" aria-label="Wiki ligada" :disabled="!isAdmin" @click="setSetting('products', 'wiki', !products.wiki)"><span /></button></li>
+              <li><span>Documentos ligados<small>Seus documentos no trilho da esquerda.</small></span><button type="button" role="switch" class="switch" :aria-checked="products.wiki" aria-label="Wiki ligada" :disabled="!isAdmin" @click="setSetting('products', 'wiki', !products.wiki)"><span /></button></li>
               <li><span>Links públicos de documentos<small>Permite compartilhar um documento com quem não está no workspace.</small></span><button type="button" role="switch" class="switch" :aria-checked="products.wikiPublic" aria-label="Links públicos" :disabled="!isAdmin" @click="setSetting('products', 'wikiPublic', !products.wikiPublic)"><span /></button></li>
             </template>
             <template v-else>

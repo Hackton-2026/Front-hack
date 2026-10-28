@@ -52,7 +52,7 @@ const title = computed(() => ui.crumb || route.meta.title || '')
 
 const RAIL = [
   { icon: 'work', label: 'Trabalho', to: '/inicio', area: 'work' },
-  { icon: 'wiki', label: 'Wiki', to: '/wiki', area: 'wiki' },
+  { icon: 'wiki', label: 'Documentos', to: '/wiki', area: 'wiki' },
   { icon: 'ai', label: 'IA', to: '/ia', area: 'ai' },
 ]
 const rail = computed(() => RAIL.filter((r) => state.settings.products?.[r.area] !== false))
@@ -209,7 +209,7 @@ onUnmounted(() => {
     </main>
 
     <Transition name="toast"><p v-if="ui.message" class="toast" role="alert">{{ ui.message }}</p></Transition>
-    <ProjectChat v-if="ui.chat && state.loaded" :id="ui.chat" />
+    <ProjectChat v-if="ui.chat && state.loaded && route.path !== `/projetos/${ui.chat}/chat`" :id="ui.chat" />
     <TaskDrawer />
     <TaskCreateModal />
     <CommandPalette />

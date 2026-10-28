@@ -143,7 +143,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
     </div>
 
     <div class="body">
-      <p class="lead">Quem participa vê as tarefas, as páginas e o chat <strong>deste projeto</strong>. O seu workspace, os outros projetos, notas e wiki continuam só seus.</p>
+      <p class="lead">Quem participa vê as tarefas, as páginas e o chat <strong>deste projeto</strong>. O seu workspace, os outros projetos, notas e documentos continuam só seus.</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
 
       <form v-if="data?.can_manage" class="invite card" novalidate @submit.prevent="invite">

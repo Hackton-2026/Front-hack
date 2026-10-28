@@ -12,13 +12,14 @@ import MeetButton from '../components/app/MeetButton.vue'
 import VoiceRoom from '../components/app/VoiceRoom.vue'
 
 const POLL_MS = 3000
-const props = defineProps({ id: { type: [String, Number], required: true } })
+const props = defineProps({ id: { type: [String, Number], required: true }, page: Boolean })
 const { state, project, projectMessages, sendProjectMessage, load } = useWorkspace()
 const ui = useUi()
 
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
 const messages = ref([])
+const peer = ref(null)
 const text = ref('')
 const sending = ref(false)
 const thinking = ref(false)
@@ -54,7 +55,7 @@ async function poll() {
   const gen = generation
   if (document.hidden) return
   try {
-    const items = await projectMessages(pid.value, lastId())
+    const items = await projectMessages(pid.value, lastId(), peer.value?.id)
     if (gen === generation) add(items)
   } catch { }
 }
@@ -67,7 +68,7 @@ async function start() {
   form.value = null
   error.value = ''
   try {
-    const items = await projectMessages(pid.value)
+    const items = await projectMessages(pid.value, null, peer.value?.id)
     if (gen !== generation) return
     messages.value = items
     scrollDown(false)
@@ -77,18 +78,17 @@ async function start() {
   }
   timer = setInterval(poll, POLL_MS)
 }
-watch(pid, start)
+watch(pid, () => { peer.value = null; start() })
+watch(peer, start)
 onMounted(() => { start(); document.addEventListener('visibilitychange', poll) })
 onUnmounted(() => { generation++; clearInterval(timer); document.removeEventListener('visibilitychange', poll) })
 
 const mention = ref(null)
 const pick = ref(0)
-const people = computed(() => [
-  { id: 'novexo', username: 'novexo', name: 'Novexo IA', ai: true },
-  ...state.people.filter((x) => p.value?.members?.includes(x.id) && x.id !== state.me),
-])
+const members = computed(() => state.people.filter((x) => p.value?.members?.includes(x.id) && x.id !== state.me))
+const people = computed(() => [{ id: 'novexo', username: 'novexo', name: 'Novexo IA', ai: true }, ...members.value])
 const matches = computed(() => {
-  if (!mention.value) return []
+  if (!mention.value || peer.value) return []
   const q = mention.value.query.toLowerCase()
   return people.value.filter((x) => x.username.toLowerCase().startsWith(q) || x.name.toLowerCase().split(' ').some((w) => w.startsWith(q))).slice(0, 6)
 })
@@ -127,7 +127,7 @@ async function send(answer, raw) {
   form.value = null
   const gen = generation
   try {
-    const res = await sendProjectMessage(pid.value, body)
+    const res = await sendProjectMessage(pid.value, body, peer.value?.id)
     if (typeof answer !== 'string' && raw == null) text.value = ''
     if (gen !== generation) return
     add(res.messages)
@@ -178,19 +178,35 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 </script>
 
 <template>
-  <aside class="chat" role="complementary" :aria-label="`Chat de ${p?.name || 'projeto'}`" @keydown.esc="ui.closeChat()">
+  <aside class="chat" :class="{ page }" :role="page ? undefined : 'complementary'" :aria-label="`Chat de ${p?.name || 'projeto'}`" @keydown.esc="page || ui.closeChat()">
+    <nav v-if="page" class="rooms" aria-label="Conversas">
+      <p class="rooms__label">Conversas</p>
+      <button type="button" class="room" :aria-current="!peer" @click="peer = null">
+        <span class="ava room__ic"><AppIcon name="chat" :size="14" /></span>
+        <span class="room__txt"><strong>Geral</strong><small>Todo mundo do projeto</small></span>
+      </button>
+      <p v-if="members.length" class="rooms__label">Participantes</p>
+      <button v-for="x in members" :key="x.id" type="button" class="room" :aria-current="peer?.id === x.id" @click="peer = x">
+        <span class="ava" :style="{ background: x.color }"><img referrerpolicy="no-referrer" v-if="x.avatar" :src="x.avatar" alt="" /><template v-else>{{ initials(x.name) }}</template></span>
+        <span class="room__txt"><strong>{{ x.name }}</strong><small>@{{ x.username }}</small></span>
+      </button>
+      <p v-if="!members.length" class="rooms__alone">Só você participa. <RouterLink :to="`/projetos/${pid}/membros`">Chamar participantes</RouterLink></p>
+    </nav>
+    <div class="pane">
     <div class="head">
-      <strong class="title"><AppIcon name="chat" :size="16" /><span>{{ p?.name || 'Chat do projeto' }}</span></strong>
-      <RouterLink :to="`/projetos/${pid}/membros`" class="people" :title="`Quem participa de ${p?.name || 'projeto'}`"><AppIcon name="user" :size="14" />{{ p?.members?.length || 1 }}</RouterLink>
-      <button type="button" class="x" aria-label="Fechar chat" @click="ui.closeChat()"><AppIcon name="close" :size="16" /></button>
+      <strong class="title"><AppIcon name="chat" :size="16" /><span>{{ peer ? peer.name : page ? 'Geral' : p?.name || 'Chat do projeto' }}</span></strong>
+      <RouterLink v-if="!peer" :to="`/projetos/${pid}/membros`" class="people" :title="`Quem participa de ${p?.name || 'projeto'}`"><AppIcon name="user" :size="14" />{{ p?.members?.length || 1 }}</RouterLink>
+      <RouterLink v-if="!page" :to="`/projetos/${pid}/chat`" class="x" aria-label="Abrir em página inteira" title="Abrir em página inteira"><AppIcon name="expand" :size="15" /></RouterLink>
+      <button v-if="!page" type="button" class="x" aria-label="Fechar chat" @click="ui.closeChat()"><AppIcon name="close" :size="16" /></button>
     </div>
-    <VoiceRoom :key="pid" :project-id="pid" />
+    <VoiceRoom v-if="!peer" :key="pid" :project-id="pid" />
 
     <div ref="list" class="msgs" aria-live="polite">
       <div v-if="!messages.length && !error" class="empty">
         <span class="spark"><AppIcon name="chat" :size="22" /></span>
-        <strong>Comece a conversa de {{ p?.name || 'projeto' }}</strong>
-        <p>Todo mundo do projeto vê estas mensagens. <code>@novexo</code> chama a IA, <code>@nome</code> avisa a pessoa e <code>/whatsapp</code> manda pelo WhatsApp.</p>
+        <template v-if="peer"><strong>Comece a conversa com {{ peer.name }}</strong><p>Só vocês dois veem estas mensagens.</p></template>
+        <template v-else><strong>Comece a conversa de {{ p?.name || 'projeto' }}</strong>
+        <p>Todo mundo do projeto vê estas mensagens. <code>@novexo</code> chama a IA, <code>@nome</code> avisa a pessoa e <code>/whatsapp</code> manda pelo WhatsApp.</p></template>
       </div>
       <article v-for="(m, i) in messages" :key="m.id" class="msg" :class="{ me: mine(m), ai: m.is_ai, sys: m.is_system, cont: sameAuthor(i) && !m.is_system }">
         <p v-if="m.is_system" class="sys__txt"><AppIcon name="chat" :size="13" />{{ m.body }}</p>
@@ -230,21 +246,45 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
           <RouterLink :to="`/projetos/${pid}/membros`" @mousedown.prevent @click="mention = null">Chamar participantes</RouterLink>
         </li>
       </ul>
-      <textarea ref="input" v-model="text" rows="1" maxlength="4000" placeholder="Mensagem… (@ menciona, /whatsapp manda no zap)" aria-label="Mensagem para o chat do projeto"
+      <textarea ref="input" v-model="text" rows="1" maxlength="4000" :placeholder="peer ? `Mensagem para ${peer.name}…` : 'Mensagem… (@ menciona, /whatsapp manda no zap)'" :aria-label="peer ? `Mensagem para ${peer.name}` : 'Mensagem para o chat do projeto'"
         role="combobox" :aria-expanded="matches.length > 0" aria-autocomplete="list" @input="track" @click="track" @keydown="onKey" @blur="mention = null" />
       <div class="bar">
+        <template v-if="!peer">
         <button type="button" class="mention" :class="{ on: callsAi }" :aria-pressed="callsAi" title="Chamar a Novexo IA" @click="mentionAi"><AppIcon name="ai" :size="14" />@novexo</button>
         <button type="button" class="mention" :class="{ on: callsWhatsapp }" :aria-pressed="callsWhatsapp" title="Mandar pelo WhatsApp para quem participa" @click="whatsapp"><AppIcon name="chat" :size="14" />/whatsapp</button>
+        </template>
         <MeetButton @link="startCall" />
         <span class="hint"><kbd>↵</kbd> enviar · <kbd>⇧</kbd><kbd>↵</kbd> linha</span>
         <button type="submit" class="send" :disabled="sending || !text.trim()" aria-label="Enviar"><AppIcon name="arrow" :size="16" /></button>
       </div>
     </form>
+    </div>
   </aside>
 </template>
 
 <style scoped>
 .chat { position: fixed; z-index: 65; top: 52px; right: 10px; bottom: 10px; display: flex; flex-direction: column; width: min(25rem, calc(100vw - 20px)); border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg); box-shadow: -20px 20px 60px rgb(0 0 0 / 0.45); overflow: hidden; }
+.pane { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.chat.page { position: static; z-index: auto; flex-direction: row; width: auto; height: calc(100% - 3rem); margin: 1.5rem; box-shadow: none; }
+.rooms { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; width: 16rem; padding: 0.6rem; overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface); }
+.rooms__label { margin: 0.6rem 0.4rem 0.3rem; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.rooms__label:first-child { margin-top: 0.2rem; }
+.room { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.5rem; border: 0; border-radius: 7px; background: none; text-align: left; color: var(--text); cursor: pointer; }
+.room:hover, .room[aria-current='true'] { background: var(--surface-2); }
+.room:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: -2px; }
+.room__ic { background: var(--surface-2); color: var(--accent-soft); }
+.room[aria-current='true'] .room__ic { background: var(--bg); }
+.room__txt { display: flex; flex-direction: column; min-width: 0; }
+.room__txt strong { overflow: hidden; font-size: 13.5px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.room__txt small { overflow: hidden; font-size: 11.5px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.rooms__alone { margin: 0.4rem; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.rooms__alone a { color: var(--text); }
+@media (max-width: 720px) {
+  .chat.page { flex-direction: column; margin: 0.75rem; height: calc(100% - 1.5rem); }
+  .rooms { flex-direction: row; width: auto; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .rooms__label, .room__txt small, .rooms__alone { display: none; }
+  .room { flex-shrink: 0; }
+}
 .head { display: flex; align-items: center; gap: 0.4rem; height: 48px; padding: 0 0.5rem 0 0.9rem; border-bottom: 1px solid var(--line); }
 .title { display: inline-flex; flex: 1; align-items: center; gap: 0.45rem; min-width: 0; font-weight: 600; }
 .title span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

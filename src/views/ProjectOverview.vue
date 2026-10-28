@@ -33,7 +33,7 @@ const LINKS = computed(() => [
   { icon: 'fi-rr-list-check', label: 'Itens de trabalho', n: tasks.value.length, to: '', hint: 'as tarefas do time' },
   { icon: 'fi-rr-refresh', label: 'Ciclos', n: cycles.value.length, to: '/ciclos', hint: 'sprints com começo e fim', key: 'cycles' },
   { icon: 'fi-rr-apps', label: 'Módulos', n: state.modules.filter((m) => m.project === pid.value).length, to: '/modulos', hint: 'partes do projeto', key: 'modules' },
-  { icon: 'fi-rr-document', label: 'Páginas', n: state.pages.filter((x) => x.project === pid.value && !x.archived).length, to: '/paginas', hint: 'documentos e decisões', key: 'pages' },
+  { icon: 'fi-rr-document', label: 'Documentos do projeto', n: state.pages.filter((x) => x.project === pid.value && !x.archived).length, to: '/paginas', hint: 'documentos e decisões', key: 'pages' },
   { icon: 'fi-rr-comment-alt', label: 'Chat', n: 'Converse', to: '/chat', hint: 'com o time e com a @novexo' },
   { icon: 'fi-rr-users-alt', label: 'Membros', n: p.value?.members?.length || 1, to: '/membros', hint: p.value?.my_permission === 'full' ? 'convide pessoas' : 'quem participa' },
 ].filter((l) => !l.key || state.prefs.features[l.key]))
@@ -77,9 +77,24 @@ function grow() {
 async function save(fields) {
   if (await updateProject(p.value, fields)) refresh()
 }
-function changeCover() {
-  save({ cover: (p.value.cover + 1) % COVERS.length })
-  if (!prefersReducedMotion()) gsap.fromTo(root.value.querySelector('.cover'), { filter: 'brightness(1.5)' }, { filter: 'brightness(1)', duration: 0.6, ease: 'power2.out' })
+const coverInput = ref(null)
+const uploadingCover = ref(false)
+async function uploadCover(e) {
+  const file = e.target.files[0]
+  e.target.value = ''
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) { toast('A imagem deve ter no máximo 5MB.'); return }
+  const body = new FormData()
+  body.append('cover_image', file)
+  uploadingCover.value = true
+  try {
+    Object.assign(p.value, await api(`/api/projects/${p.value.id}/`, { method: 'PATCH', body }))
+    if (!prefersReducedMotion()) gsap.fromTo(root.value.querySelector('.cover'), { filter: 'brightness(1.5)' }, { filter: 'brightness(1)', duration: 0.6, ease: 'power2.out' })
+  } catch (err) {
+    toast(err.message)
+  } finally {
+    uploadingCover.value = false
+  }
 }
 const COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3fb8a5', '#4fb0c6', '#6c8cff', '#a77bf3', '#e86fa8', '#ff5b4d', '#cdcdcb', '#919599']
 function pick(e) {
@@ -121,9 +136,13 @@ onMounted(async () => {
 <template>
   <div v-if="p" ref="root" class="ov" :class="{ 'has-panel': panel }">
     <div class="main">
-      <div class="cover" :style="{ background: COVERS[p.cover % COVERS.length] }">
+      <div class="cover" :style="{ background: p.cover_image ? `center / cover no-repeat url(${JSON.stringify(p.cover_image)})` : COVERS[p.cover % COVERS.length] }">
         <div class="cover__btns">
-          <button v-if="state.isAdmin" type="button" class="cover__btn" @click="changeCover"><AppIcon name="image" :size="14" />Trocar capa</button>
+          <template v-if="state.isAdmin">
+            <input ref="coverInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden @change="uploadCover" />
+            <button type="button" class="cover__btn" :disabled="uploadingCover" @click="coverInput.click()"><AppIcon name="upload" :size="14" />{{ uploadingCover ? 'Enviando…' : p.cover_image ? 'Trocar capa' : 'Enviar capa' }}</button>
+            <button v-if="p.cover_image" type="button" class="cover__btn" @click="save({ cover_image: null })"><AppIcon name="trash" :size="14" />Remover</button>
+          </template>
           <button type="button" class="cover__btn" :aria-pressed="panel" :aria-label="panel ? 'Fechar painel' : 'Abrir painel'" :title="panel ? 'Fechar painel' : 'Abrir painel'" @click="togglePanel"><AppIcon name="sidebar" :size="15" /></button>
         </div>
       </div>

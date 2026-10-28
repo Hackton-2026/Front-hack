@@ -42,6 +42,7 @@ const ago = (iso) => {
 function go(n) {
   markRead(n)
   if (n.kind === 'chat_mention' && n.project) { openChat(n.project); emit('close'); return }
+  if (n.kind === 'chat_dm' && n.project) { router.push(`/projetos/${n.project}/chat`); emit('close'); return }
   const task = state.tasks.find((t) => t.id === n.task)
   if (task) { openTask(task); emit('close') }
 }

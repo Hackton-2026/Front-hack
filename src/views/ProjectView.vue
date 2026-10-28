@@ -61,9 +61,11 @@ const adding = ref(false)
 const findLayout = ref('')
 const asPrivate = ref(false)
 const asPinned = ref(true)
+// Um de cada tipo por projeto: as abas fixas também contam
+const taken = computed(() => new Set([...VIEWS.map((v) => v.id), ...state.views.filter((v) => v.project === pid.value && (!v.is_private || v.owner === state.me)).map((v) => v.type)]))
 const shown = (group) => LAYOUTS.filter((l) => l.group === group && (!findLayout.value || `${l.label} ${l.desc}`.toLowerCase().includes(findLayout.value.toLowerCase())))
 async function addView(l) {
-  if (l.soon) return
+  if (l.soon || taken.value.has(l.type)) return
   const v = await createItem('view', { project: pid.value, name: l.label, type: l.type, is_private: asPrivate.value, is_pinned: asPinned.value, order: pinned.value.length, config: {} })
   if (!v) return
   adding.value = false
@@ -80,11 +82,12 @@ async function renameView() {
   if (name) updateItem('view', saved.value, { name })
 }
 const togglePin = () => updateItem('view', saved.value, { is_pinned: !saved.value.is_pinned })
-async function deleteView() {
-  if (!confirm(`Apagar a visualização "${saved.value.name}"?`)) return
-  const v = saved.value
-  router.push(`/projetos/${pid.value}`)
+function dropView(v) {
+  if (v === saved.value) router.push(`/projetos/${pid.value}`)
   removeItem('view', v)
+}
+async function deleteView() {
+  if (confirm(`Apagar a visualização "${saved.value.name}"?`)) dropView(saved.value)
 }
 
 const scope = computed(() => {
@@ -167,9 +170,12 @@ onMounted(() => moveInk(false))
       <div ref="tabs" class="tabs" role="tablist" aria-label="Visualização">
         <span class="ink" aria-hidden="true" />
         <button v-for="v in VIEWS" :key="v.id" type="button" role="tab" :aria-selected="!props.view && view === v.id" @click="setView(v.id)"><AppIcon :name="v.icon" :size="13" />{{ v.label }}</button>
-        <RouterLink v-for="v in visible" :key="v.id" :to="`/projetos/${p.id}/visoes/${v.id}`" role="tab" class="tab-link" :aria-selected="saved?.id === v.id">
-          <AppIcon :name="layout(v.type).icon" :size="13" />{{ v.name }}<AppIcon v-if="v.is_private" name="lock" :size="11" />
-        </RouterLink>
+        <template v-for="v in visible" :key="v.id">
+          <RouterLink :to="`/projetos/${p.id}/visoes/${v.id}`" role="tab" class="tab-link" :aria-selected="saved?.id === v.id">
+            <AppIcon :name="layout(v.type).icon" :size="13" />{{ v.name }}<AppIcon v-if="v.is_private" name="lock" :size="11" />
+          </RouterLink>
+          <button type="button" class="tab-x" :aria-label="`Apagar a visualização ${v.name}`" :title="`Apagar ${v.name}`" @click="dropView(v)"><AppIcon name="close" :size="11" /></button>
+        </template>
         <details v-if="overflow.length" class="more">
           <summary>Mais {{ overflow.length }}</summary>
           <div class="more__box">
@@ -183,9 +189,9 @@ onMounted(() => moveInk(false))
             <template v-for="[group, title] in [['popular', 'Popular'], ['more', 'Mais visualizações']]" :key="group">
               <p v-if="shown(group).length" class="add-group">{{ title }}</p>
               <div class="add-grid">
-                <button v-for="l in shown(group)" :key="l.type" type="button" class="add-item" :disabled="l.soon" @click="addView(l)">
+                <button v-for="l in shown(group)" :key="l.type" type="button" class="add-item" :disabled="l.soon || taken.has(l.type)" @click="addView(l)">
                   <span class="add-ico"><AppIcon :name="l.icon" :size="16" /></span>
-                  <span><strong>{{ l.label }}</strong><small>{{ l.soon ? 'Em breve' : l.desc }}</small></span>
+                  <span><strong>{{ l.label }}</strong><small>{{ l.soon ? 'Em breve' : taken.has(l.type) ? 'Já existe neste projeto' : l.desc }}</small></span>
                 </button>
               </div>
             </template>
@@ -260,6 +266,8 @@ h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spac
 .tabs > button, .tab-link { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.55rem 0.7rem; border: 0; background: none; font-weight: 500; font-size: 13.5px; color: var(--muted); text-decoration: none; cursor: pointer; transition: color 0.2s var(--ease); }
 .tabs > button[aria-selected='true'], .tabs > button:hover, .tab-link[aria-selected='true'], .tab-link:hover { color: var(--text); }
 :is(.tabs > button, .tab-link, .add-btn, .add-item, .view-actions button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: -2px; border-radius: 6px; }
+.tabs > .tab-x { margin-left: -0.55rem; padding: 0.25rem; border-radius: 4px; color: var(--muted); opacity: 0.6; }
+.tabs > .tab-x:hover { opacity: 1; color: #ff8a80; background: var(--surface-2); }
 .add-view { position: relative; }
 .more { position: relative; }
 .more summary { padding: 0.55rem 0.6rem; font-size: 13px; color: var(--muted); list-style: none; cursor: pointer; }
