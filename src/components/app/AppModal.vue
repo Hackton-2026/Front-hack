@@ -62,6 +62,6 @@ footer { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25
 .box :deep(.chips) { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .box :deep(.chip) { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .box :deep(.chip.is-on) { border-color: var(--accent); background: rgb(229 101 21 / 0.14); color: var(--text); }
-.box :deep(.err) { margin: 0; font-size: 12.5px; color: #ff8a7a; }
+.box :deep(.err) { margin: 0; font-size: 12.5px; color: var(--danger, #ff8a80); }
 .box :deep(:focus-visible) { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>

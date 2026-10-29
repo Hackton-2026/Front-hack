@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '../../services/api'
 import { useWorkspace } from '../../composables/useWorkspace'
+import { useUi } from '../../composables/useUi'
 import AppSelect from './AppSelect.vue'
 
 const props = defineProps({
@@ -102,7 +103,7 @@ async function submit() {
   }
 }
 async function remove(row) {
-  if (!confirm(`Apagar este ${props.noun}?`)) return
+  if (!(await useUi().confirmAsk(`Apagar este ${props.noun}?`))) return
   try {
     await api(`${props.path}${row.id}/`, { method: 'DELETE' })
     rows.value = rows.value.filter((r) => r !== row)
@@ -177,7 +178,7 @@ defineExpose({ rows })
 .sl__chips button { padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .sl__chips button[aria-pressed='true'] { border-color: var(--accent); color: var(--text); background: color-mix(in srgb, var(--accent) 18%, transparent); }
 .sl__actions { display: flex; align-items: center; gap: 0.75rem; }
-.sl__save { height: 32px; padding: 0 0.85rem; border: 0; border-radius: 6px; background: var(--accent); font-size: 13px; font-weight: 500; color: #fff; cursor: pointer; }
+.sl__save { height: 32px; padding: 0 0.85rem; border: 0; border-radius: 6px; background: var(--accent); font-size: 13px; font-weight: 500; color: #140700; cursor: pointer; }
 .sl__table { display: flex; flex-direction: column; overflow-x: auto; font-size: 13px; }
 .sl__row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(7rem, 1fr); gap: 0.75rem; align-items: center; padding: 0.45rem 0.25rem; border-top: 1px solid var(--line); }
 .sl__row > span { min-width: 0; overflow-wrap: anywhere; }
@@ -186,10 +187,10 @@ defineExpose({ rows })
 .sl__row-actions { display: flex; justify-content: flex-end; gap: 0.75rem; }
 .sl__token { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0; padding: 0.6rem 0.75rem; border: 1px solid var(--accent); border-radius: 8px; font-size: 13px; }
 .sl__token code { padding: 0.15rem 0.4rem; border-radius: 4px; background: var(--bg); font-size: 12px; overflow-wrap: anywhere; }
-.sl__error { margin: 0; font-size: 12.5px; color: #ff8a80; }
+.sl__error { margin: 0; font-size: 12.5px; color: var(--danger, #ff8a80); }
 .hint { margin: 0; font-size: 12px; color: var(--muted); }
 .link { padding: 0; border: 0; background: none; font-size: 12.5px; color: var(--accent-soft); cursor: pointer; }
 .rm { color: var(--muted); }
-.rm:hover { color: #ff8a80; }
+.rm:hover { color: var(--danger, #ff8a80); }
 :is(.link, .sl__save, .sl__chips button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>

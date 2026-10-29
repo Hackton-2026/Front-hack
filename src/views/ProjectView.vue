@@ -25,6 +25,7 @@ import ViewWhiteboard from '../components/app/views/ViewWhiteboard.vue'
 import ViewDoc from '../components/app/views/ViewDoc.vue'
 import ViewActivity from '../components/app/views/ViewActivity.vue'
 import CyclesView from './CyclesView.vue'
+import AppModal from '../components/app/AppModal.vue'
 
 const VIEWS = [
   { id: 'list', label: 'Lista', icon: 'list' },
@@ -36,8 +37,8 @@ const NO_FILTERS = ['doc', 'whiteboard', 'activity', 'form', 'cycles']
 const props = defineProps({ id: { type: String, required: true }, cycle: { type: String, default: '' }, module: { type: String, default: '' }, view: { type: String, default: '' } })
 const route = useRoute()
 const router = useRouter()
-const { state, STATUSES, PRIORITIES, project, member, isOverdue, tasksOf, progress, doneRatio, createItem, updateItem, removeItem } = useWorkspace()
-const { ui, newTask, openChat, closeChat } = useUi()
+const { state, STATUSES, PRIORITIES, project, member, isOverdue, tasksOf, progress, doneRatio, createItem, updateItem, removeItem, updateTask } = useWorkspace()
+const { ui, newTask, openChat, closeChat, toast, confirmAsk, promptAsk } = useUi()
 const { complete } = useOnboarding()
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
@@ -63,9 +64,19 @@ const asPrivate = ref(false)
 const asPinned = ref(true)
 // Um de cada tipo por projeto: as abas fixas também contam
 const taken = computed(() => new Set([...VIEWS.map((v) => v.id), ...state.views.filter((v) => v.project === pid.value && (!v.is_private || v.owner === state.me)).map((v) => v.type)]))
+const builtIn = new Set(VIEWS.map((v) => v.id))
+const existing = (type) => state.views.find((v) => v.project === pid.value && v.type === type && (!v.is_private || v.owner === state.me))
+const takenHint = (l) => (builtIn.has(l.type) || existing(l.type)?.is_pinned ? 'Já está na barra' : 'Desafixada: clique para fixar de novo')
 const shown = (group) => LAYOUTS.filter((l) => l.group === group && (!findLayout.value || `${l.label} ${l.desc}`.toLowerCase().includes(findLayout.value.toLowerCase())))
 async function addView(l) {
-  if (l.soon || taken.value.has(l.type)) return
+  if (l.soon || builtIn.has(l.type)) return
+  const found = existing(l.type)
+  if (found) {
+    if (!found.is_pinned) await updateItem('view', found, { is_pinned: true })
+    adding.value = false
+    findLayout.value = ''
+    return router.push(`/projetos/${pid.value}/visoes/${found.id}`)
+  }
   const v = await createItem('view', { project: pid.value, name: l.label, type: l.type, is_private: asPrivate.value, is_pinned: asPinned.value, order: pinned.value.length, config: {} })
   if (!v) return
   adding.value = false
@@ -78,16 +89,19 @@ onMounted(() => addEventListener('pointerdown', closeMenu))
 onUnmounted(() => removeEventListener('pointerdown', closeMenu))
 
 async function renameView() {
-  const name = prompt('Nome da visualização', saved.value.name)?.trim()
+  const name = await promptAsk('Renomear visualização', saved.value.name)
   if (name) updateItem('view', saved.value, { name })
 }
 const togglePin = () => updateItem('view', saved.value, { is_pinned: !saved.value.is_pinned })
+async function unpinView(v) {
+  if (await updateItem('view', v, { is_pinned: false })) toast(`${v.name} saiu da barra. Para voltar, use + Visualização.`)
+}
 function dropView(v) {
   if (v === saved.value) router.push(`/projetos/${pid.value}`)
   removeItem('view', v)
 }
 async function deleteView() {
-  if (confirm(`Apagar a visualização "${saved.value.name}"?`)) dropView(saved.value)
+  if (await confirmAsk(`Apagar a visualização "${saved.value.name}"?`, { message: 'O que ela guarda (filtros, notas, texto) some junto.' })) dropView(saved.value)
 }
 
 const scope = computed(() => {
@@ -128,6 +142,36 @@ const canEdit = computed(() => ['edit', 'full'].includes(p.value?.my_permission)
 const pct = computed(() => (scope.value?.kind ? doneRatio(scoped.value) : progress(pid.value)))
 const add = () => newTask({ projectId: p.value.id, ...scope.value.defaults })
 
+const picking = ref(false)
+const pickQ = ref('')
+const picked = ref([])
+const cycleId = computed(() => scope.value?.defaults?.cycle)
+const cycleName = (id) => state.cycles.find((c) => c.id === id)?.name
+const candidates = computed(() => {
+  const term = pickQ.value.trim().toLowerCase()
+  return tasksOf(pid.value).filter((t) => t.cycle !== cycleId.value && t.status !== 'done'
+    && (!term || t.title.toLowerCase().includes(term) || t.code?.toLowerCase().includes(term)))
+})
+async function removeScope() {
+  const isCycle = !!props.cycle
+  const noun = isCycle ? 'ciclo' : 'módulo'
+  const item = isCycle ? state.cycles.find((x) => x.id === Number(props.cycle)) : state.modules.find((x) => x.id === Number(props.module))
+  if (!item || !(await confirmAsk(`Apagar o ${noun} "${item.name}"?`, { message: `Os itens continuam no projeto, só saem do ${noun}.` }))) return
+  router.push(`/projetos/${pid.value}/${scope.value.back}`)
+  await removeItem(isCycle ? 'cycle' : 'module', item)
+}
+function openPicker() {
+  pickQ.value = ''
+  picked.value = []
+  picking.value = true
+}
+function addPicked() {
+  const list = state.tasks.filter((t) => picked.value.includes(t.id))
+  list.forEach((t) => updateTask(t, { cycle: cycleId.value }))
+  toast(`${list.length} ${list.length === 1 ? 'item adicionado' : 'itens adicionados'} ao ciclo.`)
+  picking.value = false
+}
+
 watch([p, scope], ([v, s]) => (ui.crumb = !v ? 'Projeto não encontrado' : s?.kind ? `${v.name} › ${s.name}` : `${v.name} › Itens de trabalho`), { immediate: true })
 function setView(id) {
   const query = { ...route.query, v: id === state.prefs.defaultView ? undefined : id }
@@ -161,6 +205,8 @@ onMounted(() => moveInk(false))
         <RouterLink :to="`/projetos/${p.id}/membros`" class="people" :title="`${people.length} ${people.length === 1 ? 'pessoa' : 'pessoas'} no projeto`"><Avatars :ids="people" :size="26" /></RouterLink>
         <button type="button" class="chat-btn" :class="{ 'is-on': ui.chat === p.id }" :aria-pressed="ui.chat === p.id" aria-label="Chat do projeto" title="Chat do projeto" @click="ui.chat === p.id ? closeChat() : openChat(p.id)"><AppIcon name="chat" :size="17" /></button>
         <RouterLink :to="`/projetos/${p.id}/membros`" class="head-btn"><AppIcon name="user" :size="15" />Participantes</RouterLink>
+        <button v-if="canEdit && (cycle || module)" type="button" class="head-btn icon-only" :aria-label="`Apagar ${cycle ? 'ciclo' : 'módulo'}`" :title="`Apagar ${cycle ? 'ciclo' : 'módulo'}`" @click="removeScope"><AppIcon name="trash" :size="15" /></button>
+        <button v-if="canEdit && cycleId" type="button" class="head-btn" @click="openPicker"><AppIcon name="plus" :size="15" />Adicionar do projeto</button>
         <GooeyButton v-if="canEdit" variant="primary" @click="add">Novo item de trabalho</GooeyButton>
       </div>
     </header>
@@ -174,7 +220,7 @@ onMounted(() => moveInk(false))
           <RouterLink :to="`/projetos/${p.id}/visoes/${v.id}`" role="tab" class="tab-link" :aria-selected="saved?.id === v.id">
             <AppIcon :name="layout(v.type).icon" :size="13" />{{ v.name }}<AppIcon v-if="v.is_private" name="lock" :size="11" />
           </RouterLink>
-          <button type="button" class="tab-x" :aria-label="`Apagar a visualização ${v.name}`" :title="`Apagar ${v.name}`" @click="dropView(v)"><AppIcon name="close" :size="11" /></button>
+          <button type="button" class="tab-x" :aria-label="`Tirar ${v.name} da barra`" :title="`Tirar ${v.name} da barra`" @click="unpinView(v)"><AppIcon name="close" :size="11" /></button>
         </template>
         <details v-if="overflow.length" class="more">
           <summary>Mais {{ overflow.length }}</summary>
@@ -189,9 +235,9 @@ onMounted(() => moveInk(false))
             <template v-for="[group, title] in [['popular', 'Popular'], ['more', 'Mais visualizações']]" :key="group">
               <p v-if="shown(group).length" class="add-group">{{ title }}</p>
               <div class="add-grid">
-                <button v-for="l in shown(group)" :key="l.type" type="button" class="add-item" :disabled="l.soon || taken.has(l.type)" @click="addView(l)">
+                <button v-for="l in shown(group)" :key="l.type" type="button" class="add-item" :disabled="l.soon || builtIn.has(l.type)" @click="addView(l)">
                   <span class="add-ico"><AppIcon :name="l.icon" :size="16" /></span>
-                  <span><strong>{{ l.label }}</strong><small>{{ l.soon ? 'Em breve' : taken.has(l.type) ? 'Já existe neste projeto' : l.desc }}</small></span>
+                  <span><strong>{{ l.label }}</strong><small>{{ l.soon ? 'Em breve' : taken.has(l.type) ? takenHint(l) : l.desc }}</small></span>
                 </button>
               </div>
             </template>
@@ -232,6 +278,25 @@ onMounted(() => moveInk(false))
     <ViewActivity v-else-if="kind === 'activity'" :project-id="p.id" />
     <CyclesView v-else-if="kind === 'cycles'" :id="String(p.id)" />
     <TaskListView v-else :tasks="tasks" :project-id="p.id" :defaults="scope.defaults" />
+
+    <AppModal :open="picking" title="Adicionar itens do projeto" @close="picking = false" @submit="addPicked">
+      <input v-model="pickQ" type="search" placeholder="Buscar pelo nome ou código" aria-label="Buscar itens do projeto" />
+      <ul v-if="candidates.length" class="pick">
+        <li v-for="t in candidates" :key="t.id">
+          <label>
+            <input v-model="picked" type="checkbox" :value="t.id" />
+            <span class="pick__code">{{ t.code }}</span>
+            <span class="pick__title">{{ t.title }}</span>
+            <small v-if="t.cycle" class="pick__from">em {{ cycleName(t.cycle) }}</small>
+          </label>
+        </li>
+      </ul>
+      <p v-else class="pick__empty">{{ pickQ ? `Nenhum item com "${pickQ}".` : 'Todos os itens abertos do projeto já estão neste ciclo.' }}</p>
+      <template #footer>
+        <button type="button" class="btn" @click="picking = false">Cancelar</button>
+        <button type="submit" class="btn primary" :disabled="!picked.length">{{ picked.length ? `Adicionar ${picked.length}` : 'Adicionar' }}</button>
+      </template>
+    </AppModal>
   </div>
   <div v-else class="missing">
     <p>{{ p ? 'Esse item não existe mais.' : 'Esse projeto não existe mais.' }}</p>
@@ -257,6 +322,17 @@ h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spac
 .head-btn { display: inline-flex; align-items: center; gap: 0.45rem; height: 36px; padding: 0 0.85rem; border: 1px solid var(--line-strong); border-radius: 8px; color: var(--text); font-size: 13.5px; font-weight: 500; text-decoration: none; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
 .head-btn:hover { border-color: var(--text); background: var(--surface-2); }
 .head-btn:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+button.head-btn { background: none; cursor: pointer; }
+.head-btn.icon-only { width: 36px; padding: 0; justify-content: center; color: var(--muted); }
+.head-btn.icon-only:hover { border-color: var(--danger, #ff8a80); color: var(--danger, #ff8a80); background: none; }
+.pick { display: flex; flex-direction: column; gap: 1px; max-height: 18rem; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.pick label { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.55rem; border-radius: 7px; cursor: pointer; }
+.pick label:hover { background: var(--surface-2); }
+.pick input { flex: none; width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
+.pick__code { flex: none; font: 500 11.5px/1 'Geist Mono', monospace; color: var(--muted); }
+.pick__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick__from { flex: none; font-size: 12px; color: var(--muted); }
+.pick__empty { margin: 0; padding: 1rem 0.5rem; text-align: center; font-size: 13px; color: var(--muted); }
 .chat-btn.is-on { background: var(--surface-2); }
 .pbar { height: 3px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .pbar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-soft)); transform-origin: left; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -267,7 +343,7 @@ h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spac
 .tabs > button[aria-selected='true'], .tabs > button:hover, .tab-link[aria-selected='true'], .tab-link:hover { color: var(--text); }
 :is(.tabs > button, .tab-link, .add-btn, .add-item, .view-actions button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: -2px; border-radius: 6px; }
 .tabs > .tab-x { margin-left: -0.55rem; padding: 0.25rem; border-radius: 4px; color: var(--muted); opacity: 0.6; }
-.tabs > .tab-x:hover { opacity: 1; color: #ff8a80; background: var(--surface-2); }
+.tabs > .tab-x:hover { opacity: 1; color: var(--danger, #ff8a80); background: var(--surface-2); }
 .add-view { position: relative; }
 .more { position: relative; }
 .more summary { padding: 0.55rem 0.6rem; font-size: 13px; color: var(--muted); list-style: none; cursor: pointer; }
@@ -296,7 +372,7 @@ h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spac
 .view-actions { display: flex; gap: 0.5rem; padding-bottom: 0.45rem; }
 .view-actions button { padding: 0.25rem 0.5rem; border: 0; border-radius: 5px; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .view-actions button:hover { background: var(--surface-2); color: var(--text); }
-.view-actions .danger:hover { color: #ff8a80; }
+.view-actions .danger:hover { color: var(--danger, #ff8a80); }
 .ink { position: absolute; left: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding-bottom: 0.45rem; }
 .filters :deep(.on) { border-color: var(--accent); color: var(--text); }

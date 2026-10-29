@@ -206,7 +206,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside))
 .tx strong { font-size: 13.5px; font-weight: 500; }
 .tx small { overflow: hidden; font-size: 11.5px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .none, .err { margin: 0.5rem 0.4rem; font-size: 12.5px; color: var(--muted); }
-.err { color: #ff8a7a; }
+.err { color: var(--danger, #ff8a80); }
 .step { display: flex; flex-direction: column; gap: 0.3rem; min-height: 0; }
 .step form { display: flex; gap: 0.3rem; }
 .back { align-self: flex-start; padding: 0.2rem 0.3rem; border: 0; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }

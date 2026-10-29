@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import AppNav from './components/AppNav.vue'
 import AppShell from './components/app/AppShell.vue'
 import ChatBot from './components/ChatBot.vue'
+import AskDialog from './components/app/AskDialog.vue'
 import { useAuth } from './composables/useAuth'
 import { useSmoothScroll } from './composables/useSmoothScroll'
 
@@ -25,4 +26,5 @@ watch(user, (u) => {
     </main>
     <ChatBot v-if="user" />
   </template>
+  <AskDialog />
 </template>

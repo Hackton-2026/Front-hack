@@ -13,7 +13,7 @@ import AppSelect from '../components/app/AppSelect.vue'
 const props = defineProps({ id: { type: String, required: true } })
 const router = useRouter()
 const { state, project, today, day, doneRatio, createItem, updateItem, removeItem, starred, toggleStar, member, peopleOf } = useWorkspace()
-const { ui } = useUi()
+const { ui, confirmAsk } = useUi()
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
 const layout = ref('list')
@@ -50,6 +50,7 @@ async function save() {
 }
 async function remove(m) {
   menu.value = null
+  if (!(await confirmAsk(`Apagar o módulo "${m.name}"?`, { message: 'Os itens continuam no projeto, só saem do módulo.' }))) return
   await removeItem('module', m)
 }
 const open = (m) => router.push(`/projetos/${pid.value}/modulos/${m.id}`)

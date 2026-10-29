@@ -35,6 +35,6 @@ small { font-size: 11.5px; color: var(--muted); }
 strong { font-size: 14px; line-height: 1.35; }
 p { margin: 0; font-size: 12.5px; color: var(--muted); }
 .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; font-size: 11.5px; color: var(--accent-soft); }
-.late { color: #ff8a80; }
+.late { color: var(--danger, #ff8a80); }
 .empty { grid-column: 1 / -1; padding: 2rem; text-align: center; color: var(--muted); }
 </style>

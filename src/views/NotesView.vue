@@ -131,6 +131,6 @@ footer { display: flex; align-items: center; gap: 0.4rem; }
 footer small { margin-left: auto; font-size: 11px; color: var(--muted); }
 .act { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .act:hover { background: var(--surface-2); color: var(--text); }
-.del:hover { color: #ff8a80; }
+.del:hover { color: var(--danger, #ff8a80); }
 :is(.dot, .tagf, .pin, .act, .colors button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>

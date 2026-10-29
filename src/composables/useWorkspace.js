@@ -160,6 +160,9 @@ function refreshFeed() {
 
 const fail = (e) => useUi().toast(e.message || 'Não foi possível salvar. Tente de novo.')
 const queues = new Map()
+// clique duplo: um pedido igual em andamento é reaproveitado em vez de criar o item duas vezes
+const inflight = new Map()
+const once = (key, run) => { if (!inflight.has(key)) inflight.set(key, run().finally(() => inflight.delete(key))); return inflight.get(key) }
 
 export function useWorkspace() {
   const project = (id) => state.projects.find((p) => p.id === id)
@@ -236,17 +239,19 @@ export function useWorkspace() {
       fail(e)
     }
   }
-  async function createProject(name, color = '#e56515') {
-    try {
-      const icon = PROJECT_ICONS[Math.floor(Math.random() * PROJECT_ICONS.length)]
-      const p = await api('/api/projects/', { method: 'POST', body: { name, color, icon } })
-      state.projects.push(p)
-      refreshFeed()
-      return p
-    } catch (e) {
-      fail(e)
-      return null
-    }
+  function createProject(name, color = '#e56515') {
+    return once(`project:${name}`, async () => {
+      try {
+        const icon = PROJECT_ICONS[Math.floor(Math.random() * PROJECT_ICONS.length)]
+        const p = await api('/api/projects/', { method: 'POST', body: { name, color, icon } })
+        state.projects.push(p)
+        refreshFeed()
+        return p
+      } catch (e) {
+        fail(e)
+        return null
+      }
+    })
   }
   async function updateProject(p, fields) {
     const before = Object.fromEntries(Object.keys(fields).map((k) => [k, p[k]]))
@@ -273,15 +278,17 @@ export function useWorkspace() {
   }
   const projectActivity = async (id) => (await api(`/api/activity/?project=${id}`)).map(fromActivity)
 
-  async function createItem(kind, body) {
-    try {
-      const item = await api(`/api/${KINDS[kind]}/`, { method: 'POST', body })
-      state[KINDS[kind]].push(item)
-      return state[KINDS[kind]].at(-1)
-    } catch (e) {
-      fail(e)
-      return null
-    }
+  function createItem(kind, body) {
+    return once(`${kind}:${JSON.stringify(body)}`, async () => {
+      try {
+        const item = await api(`/api/${KINDS[kind]}/`, { method: 'POST', body })
+        state[KINDS[kind]].push(item)
+        return state[KINDS[kind]].at(-1)
+      } catch (e) {
+        fail(e)
+        return null
+      }
+    })
   }
   async function updateItem(kind, item, fields) {
     const before = Object.fromEntries(Object.keys(fields).map((k) => [k, structuredClone(toRaw(item[k]) ?? null)]))
@@ -298,6 +305,7 @@ export function useWorkspace() {
   async function removeItem(kind, item) {
     const list = state[KINDS[kind]]
     const i = list.indexOf(item)
+    if (i < 0) return
     list.splice(i, 1)
     try {
       await api(`/api/${KINDS[kind]}/${item.id}/`, { method: 'DELETE' })

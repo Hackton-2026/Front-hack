@@ -10,7 +10,7 @@ import AppSelect from '../components/app/AppSelect.vue'
 const props = defineProps({ id: { type: String, required: true } })
 const router = useRouter()
 const { state, project, createItem, updateItem, removeItem, starred, toggleStar, member } = useWorkspace()
-const { ui } = useUi()
+const { ui, confirmAsk } = useUi()
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
 const TABS = [
@@ -43,6 +43,7 @@ async function set(pg, fields) {
 }
 async function remove(pg) {
   menu.value = null
+  if (!(await confirmAsk(`Apagar a página "${pg.title || 'Sem título'}"?`, { message: 'Não dá para desfazer.' }))) return
   await removeItem('page', pg)
 }
 

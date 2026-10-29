@@ -712,7 +712,7 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .rows li + li { border-top: 1px solid var(--line); }
 .grow { flex: 1; min-width: 0; }
 .rm { margin-left: auto; color: var(--muted); }
-.rm:hover { color: #ff8a80; }
+.rm:hover { color: var(--danger, #ff8a80); }
 .av { display: grid; place-items: center; flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; font: 700 10px/1 'Lexend', system-ui, sans-serif; color: #000; }
 .plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .plans li { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
@@ -726,9 +726,9 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .pay-what { flex: 1; min-width: 10rem; }
 .pay-how { color: var(--muted); }
 .pay-status { padding: 0.1rem 0.45rem; border-radius: 5px; background: var(--surface-2); font-size: 11.5px; }
-.pay-status.ok { color: #7fc47a; }
+.pay-status.ok { color: var(--success, #7fc47a); }
 .pay-status.wait { color: #f2c46d; }
-.pay-status.bad { color: #ff8a80; }
+.pay-status.bad { color: var(--danger, #ff8a80); }
 .days { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .days button { min-width: 2.75rem; padding: 0.3rem 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .days button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent); color: #fff; }
@@ -736,7 +736,7 @@ h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted)
 .file { position: relative; align-self: flex-start; }
 .file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .file:focus-within { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-.danger { align-self: flex-start; padding: 0.4rem 0.75rem; border: 1px solid rgb(255 91 77 / 0.4); border-radius: 6px; background: none; font-size: 13px; color: #ff8a80; cursor: pointer; }
+.danger { align-self: flex-start; padding: 0.4rem 0.75rem; border: 1px solid rgb(255 91 77 / 0.4); border-radius: 6px; background: none; font-size: 13px; color: var(--danger, #ff8a80); cursor: pointer; }
 .danger:hover { background: rgb(255 91 77 / 0.1); }
 .status { margin: 0; font-size: 12.5px; color: var(--accent-soft); }
 :is(.tabs button, .link, .switch, .danger, .swatch, .days button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }

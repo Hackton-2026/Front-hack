@@ -40,7 +40,7 @@
 .app .pg-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; display: flex; flex-direction: column; min-width: 11rem; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 34px rgb(0 0 0 / 0.45); }
 .app .pg-menu button, .app .pg-menu a { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; color: var(--text); text-align: left; text-decoration: none; cursor: pointer; }
 .app .pg-menu button:hover, .app .pg-menu a:hover { background: var(--surface-2); }
-.app .pg-menu .danger { color: #ff8a7a; }
+.app .pg-menu .danger { color: var(--danger, #ff8a80); }
 .app .pg-muted { color: var(--muted); font-size: 12.5px; }
 .app :is(.pg-btn, .pg-icon, .pg-tabs button, .pg-seg button, .pg-row__main, .pg-menu button, .pg-menu a):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 @media (max-width: 640px) {
@@ -94,7 +94,7 @@
 .app .db-dot { display: inline-block; flex: none; width: 8px; height: 8px; margin-right: 0.35rem; border-radius: 50%; background: var(--c); }
 .app .db-code { font: 500 11.5px/1 'Geist Mono', monospace; color: var(--muted); }
 .app .db-due { margin-left: auto; font-size: 12px; color: var(--muted); }
-.app .db-due.late { color: #ff8a7a; }
+.app .db-due.late { color: var(--danger, #ff8a80); }
 .app .db-empty { font-size: 13px; color: var(--muted); }
 .app .db-card { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; width: 100%; padding: 0.55rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); color: var(--text); text-align: left; }
 .app .db-card:hover { border-color: var(--accent); }

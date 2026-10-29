@@ -99,7 +99,7 @@ h3 small { font-weight: 400; color: var(--muted); }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .link { border: 0; background: none; font: inherit; font-size: 13px; color: var(--muted); text-decoration: underline; cursor: pointer; }
 .link.rm { align-self: flex-start; color: #ff8a7f; }
-.ok { margin: 0; font-size: 13px; color: #7fc47a; }
+.ok { margin: 0; font-size: 13px; color: var(--success, #7fc47a); }
 .err { margin: 0; padding: 0.55rem 0.75rem; border: 1px solid rgb(255 91 77 / 0.45); border-radius: 8px; background: rgb(255 91 77 / 0.1); font-size: 13px; color: #ffb4ab; }
 .qr { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
 .qr img { padding: 8px; border-radius: 10px; background: #fff; }

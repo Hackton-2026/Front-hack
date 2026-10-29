@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
 import AppIcon from './AppIcon.vue'
 
-const props = defineProps({ size: { type: Number, default: 28 }, photo: { type: String, default: '' }, ring: Boolean })
+const props = defineProps({ size: { type: Number, default: 28 }, photo: { type: String, default: '' }, ring: Boolean, up: Boolean, site: Boolean })
 const emit = defineEmits(['open'])
 const { user, logout } = useAuth()
 const router = useRouter()
@@ -34,10 +34,13 @@ defineExpose({ close: () => (open.value = false) })
 
 <template>
   <div ref="root" class="acc">
-    <button type="button" class="acc__btn" :class="{ ring }" :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${Math.round(size * 0.4)}px` }" :aria-expanded="open" aria-haspopup="menu" :aria-label="`Conta de ${fullName}`" @click="toggle">
+    <button v-if="$slots.default" type="button" class="acc__trigger" :aria-expanded="open" aria-haspopup="menu" :aria-label="`Conta de ${fullName}`" @click="toggle">
+      <slot :pic="pic" :initials="initials" :label="fullName" />
+    </button>
+    <button v-else type="button" class="acc__btn" :class="{ ring }" :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${Math.round(size * 0.4)}px` }" :aria-expanded="open" aria-haspopup="menu" :aria-label="`Conta de ${fullName}`" @click="toggle">
       <img v-if="pic" :src="pic" alt="" /><template v-else>{{ initials }}</template>
     </button>
-    <div v-if="open" class="acc__menu" role="menu">
+    <div v-if="open" class="acc__menu" :class="{ up }" role="menu">
       <div class="acc__card" :style="pic ? { '--bg': `url(${pic})` } : null">
         <span class="acc__av"><img v-if="pic" :src="pic" alt="" /><template v-else>{{ initials }}</template></span>
         <strong>{{ fullName }}</strong>
@@ -45,6 +48,7 @@ defineExpose({ close: () => (open.value = false) })
       </div>
       <RouterLink to="/ajustes?tab=profile" role="menuitem" @click="open = false"><AppIcon name="settings" :size="16" />Ajustes</RouterLink>
       <RouterLink to="/ajustes?tab=prefs" role="menuitem" @click="open = false"><AppIcon name="sliders" :size="16" />Preferências</RouterLink>
+      <RouterLink v-if="site" to="/" role="menuitem" @click="open = false"><AppIcon name="globe" :size="16" />Ir para o site</RouterLink>
       <hr />
       <button type="button" role="menuitem" class="out" @click="signOut"><AppIcon name="logout" :size="16" />Sair</button>
     </div>
@@ -59,6 +63,9 @@ defineExpose({ close: () => (open.value = false) })
 .acc__btn img, .acc__av img { width: 100%; height: 100%; object-fit: cover; }
 .acc__btn:focus-visible { outline: 2px solid var(--m-accent-soft); outline-offset: 3px; }
 .acc__menu { position: absolute; top: calc(100% + 12px); right: 0; z-index: 60; display: flex; flex-direction: column; gap: 0.15rem; width: 17.5rem; padding: 0.45rem; border: 1px solid var(--m-line-strong); border-radius: 12px; background: var(--m-surface); box-shadow: 0 20px 40px rgb(0 0 0 / 0.45); font: 400 14px/1.4 'Geist', system-ui, sans-serif; transform-origin: top right; animation: acc-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.acc__menu.up { top: auto; right: 0; bottom: calc(100% + 6px); left: 0; width: auto; transform-origin: bottom center; }
+.acc__trigger { display: block; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.acc__trigger:focus-visible { outline: 2px solid var(--m-accent-soft); outline-offset: 2px; border-radius: 10px; }
 @keyframes acc-in { from { opacity: 0; transform: scale(0.96) translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .acc__menu { animation: none; } }
 .acc__card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; margin-bottom: 0.3rem; padding: 1.1rem 0.75rem 1rem; overflow: hidden; border-radius: 9px; background: color-mix(in srgb, var(--m-accent) 14%, var(--m-surface-2)); text-align: center; isolation: isolate; }

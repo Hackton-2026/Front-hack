@@ -57,8 +57,8 @@ th:first-child, td:first-child { text-align: left; }
 .today { background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .dot { display: inline-block; width: 8px; height: 8px; margin-right: 0.45rem; border-radius: 50%; }
 .cell { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 6px; background: var(--surface-2); font-weight: 600; }
-.cell.over { background: rgb(255 91 77 / 0.25); color: #ff8a80; }
-.late { color: #ff8a80; }
+.cell.over { background: rgb(255 91 77 / 0.25); color: var(--danger, #ff8a80); }
+.late { color: var(--danger, #ff8a80); }
 .muted { margin: 0; font-size: 12px; color: var(--muted); }
 .team { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.75rem; }
 .person { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }

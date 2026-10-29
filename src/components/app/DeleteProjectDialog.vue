@@ -42,6 +42,6 @@ async function remove(hard) {
 
 <style scoped>
 .warn { margin: 0; }
-.warn b { color: #ff8a7a; }
+.warn b { color: var(--danger, #ff8a80); }
 .hint { margin: 0; font-size: 13px; color: var(--muted); }
 </style>

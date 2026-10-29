@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ITEM } from '../config'
 import { api } from '../services/api'
 import { useAuth } from '../composables/useAuth'
+import { useUi } from '../composables/useUi'
 import ProductCard from '../components/ProductCard.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseInput from '../components/BaseInput.vue'
@@ -39,7 +40,7 @@ window.addEventListener('products:changed', load)
 onUnmounted(() => window.removeEventListener('products:changed', load))
 
 async function remove(p) {
-  if (!confirm(`Excluir "${p.name}"?`)) return
+  if (!(await useUi().confirmAsk(`Excluir "${p.name}"?`, { confirmLabel: 'Excluir' }))) return
   try {
     await api(`/api/products/${p.id}/`, { method: 'DELETE' })
     products.value = products.value.filter((x) => x.id !== p.id)

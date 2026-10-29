@@ -27,7 +27,7 @@ const router = useRouter()
 const { user } = useAuth()
 const { state, createDoc, createTask, code, project, member, today, STATUSES, PRIORITIES } = useWorkspace()
 const { complete } = useOnboarding()
-const { toast, openTask } = useUi()
+const { toast, openTask, confirmAsk, promptAsk } = useUi()
 
 state.prefs.wiki ||= { collections: [{ id: 'geral', name: 'Minhas páginas' }], labels: [] }
 const wiki = state.prefs.wiki
@@ -278,18 +278,20 @@ function addLabel() {
   newLabel.value = ''
   touch()
 }
-function deleteLabel(id) {
-  wiki.labels.splice(wiki.labels.findIndex((l) => l.id === id), 1)
+async function deleteLabel(id) {
+  const label = wiki.labels.find((l) => l.id === id)
+  if (!label || !(await confirmAsk(`Apagar a etiqueta "${label.name}"?`, { message: 'Ela sai de todas as páginas.' }))) return
+  wiki.labels.splice(wiki.labels.indexOf(label), 1)
   state.docs.forEach((d) => (d.labels = d.labels.filter((x) => x !== id)))
   if (labelFilter.value === id) labelFilter.value = ''
 }
 
-function addCollection() {
-  const name = prompt('Nome da coleção')?.trim()
+async function addCollection() {
+  const name = await promptAsk('Nova coleção', '', { confirmLabel: 'Criar', placeholder: 'Nome da coleção' })
   if (name) wiki.collections.push({ id: `col-${Date.now().toString(36)}`, name })
 }
-function renameCollection(c) {
-  const name = prompt('Novo nome da coleção', c.name)?.trim()
+async function renameCollection(c) {
+  const name = await promptAsk('Renomear coleção', c.name)
   if (name) c.name = name
 }
 function removeCollection(c) {
@@ -590,7 +592,7 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .menu__box { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; display: flex; flex-direction: column; min-width: 14rem; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 12px 32px rgb(0 0 0 / 0.35); }
 .menu__box button { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.5rem; border: 0; border-radius: 5px; background: none; font-size: 13px; color: var(--text); text-align: left; cursor: pointer; }
 .menu__box button:hover { background: var(--surface-2); }
-.menu__box .danger { color: #ff8a80; }
+.menu__box .danger { color: var(--danger, #ff8a80); }
 .menu__select { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.35rem 0.5rem; font-size: 12.5px; color: var(--muted); }
 .notice { display: flex; align-items: center; gap: 0.4rem; margin: 0; padding: 0.45rem 0.7rem; border: 1px solid var(--line); border-radius: 7px; font-size: 12.5px; color: var(--muted); }
 .head { display: flex; flex-direction: column; gap: 0.3rem; }

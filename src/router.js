@@ -70,6 +70,7 @@ const router = createRouter({
     { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Começar', icon: 'rocket' } },
     { path: '/inicio', redirect: '/projetos' },
     { path: '/meu-trabalho', component: () => import('./views/MyWorkView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Seu trabalho', icon: 'mine' } },
+    { path: '/caixa-de-entrada', component: () => import('./views/InboxView.vue'), meta: { app: true, auth: true, area: 'inbox', title: 'Caixa de entrada', icon: 'inbox' } },
     { path: '/rascunhos', redirect: '/projetos' },
     { path: '/favoritos', component: () => import('./views/FavoritesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Favoritos', icon: 'star' } },
     { path: '/notas', component: () => import('./views/NotesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Notas', icon: 'note' } },

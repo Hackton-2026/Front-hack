@@ -61,7 +61,7 @@ td { padding: 0.3rem 0.6rem; border-top: 1px solid var(--line); white-space: now
 .title:hover { color: var(--accent-soft); }
 input { height: 28px; padding: 0 0.35rem; border: 1px solid transparent; border-radius: 5px; background: none; font: inherit; color: var(--text); }
 input:hover, input:focus { border-color: var(--line-strong); outline: none; }
-.late { color: #ff8a80; }
+.late { color: var(--danger, #ff8a80); }
 .muted { color: var(--muted); }
 .empty { padding: 1.5rem; text-align: center; }
 :is(th button, .title):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }

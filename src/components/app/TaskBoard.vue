@@ -234,7 +234,7 @@ onMounted(() => {
 .col__bar { height: 3px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .col__bar i { display: block; height: 100%; background: var(--c); transition: width 0.4s var(--ease); }
 .count { padding: 0 0.4rem; border-radius: 999px; background: var(--surface-2); font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--muted); }
-.count.over { background: rgb(255 91 77 / 0.18); color: #ff8a7a; }
+.count.over { background: rgb(255 91 77 / 0.18); color: var(--danger, #ff8a80); }
 .empty { margin: 0; padding: 1rem 0.5rem; border: 1px dashed var(--line); border-radius: 8px; font-size: 12px; color: var(--muted); text-align: center; }
 .card { position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 0.65rem 0.75rem 0.65rem 0.85rem; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); cursor: grab; transition: border-color 0.2s var(--ease), translate 0.2s var(--ease), box-shadow 0.2s var(--ease), opacity 0.2s; }
 .card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--p); }
@@ -256,11 +256,11 @@ onMounted(() => {
 .sub { display: flex; flex-direction: column; gap: 0.25rem; }
 .sub__row { display: flex; align-items: center; gap: 0.45rem; }
 .sub__bar { flex: 1; height: 4px; overflow: hidden; border-radius: 999px; background: var(--surface); }
-.sub__bar i { display: block; height: 100%; background: #7fc47a; }
+.sub__bar i { display: block; height: 100%; background: var(--success, #7fc47a); }
 .sub small { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
 .chip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.4rem; border: 1px solid var(--line); border-radius: 5px; font-size: 11px; color: var(--muted); }
-.chip.late { border-color: rgb(255 91 77 / 0.4); color: #ff8a80; }
+.chip.late { border-color: rgb(255 91 77 / 0.4); color: var(--danger, #ff8a80); }
 .who { margin-left: auto; }
 .add { display: flex; align-items: center; gap: 0.35rem; padding: 0 0.45rem; border: 1px dashed transparent; border-radius: 6px; color: var(--muted); }
 .add:hover { border-color: var(--line-strong); }

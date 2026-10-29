@@ -98,7 +98,7 @@ onMounted(() => {
 .code { flex-shrink: 0; margin-left: auto; font: 500 11px/1 'Geist Mono', monospace; color: var(--muted); opacity: 0; transition: opacity 0.15s; }
 .row:hover .code { opacity: 1; }
 .due { font-size: 12.5px; color: var(--muted); }
-.due.late { color: #ff8a80; }
+.due.late { color: var(--danger, #ff8a80); }
 .quick { display: flex; align-items: center; gap: 0.5rem; padding: 0 0.75rem; height: 36px; color: var(--muted); }
 .quick input { flex: 1; border: 0; background: none; font: inherit; color: var(--text); outline: none; }
 .quick:focus-within { background: var(--surface); }

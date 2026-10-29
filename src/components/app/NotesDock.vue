@@ -94,7 +94,7 @@ onUnmounted(() => removeEventListener('keydown', onKey))
 
 .notes {
   position: fixed;
-  left: 76px;
+  left: calc(var(--rail-w, 64px) + 12px);
   bottom: 16px;
   z-index: 40;
   display: flex;

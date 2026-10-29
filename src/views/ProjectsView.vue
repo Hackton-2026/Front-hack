@@ -24,7 +24,7 @@ const filter = ref('all')
 const sort = ref('star')
 const view = ref('cards')
 
-const HEALTH = { late: ['Atrasado', '#ff8a80'], risk: ['Em risco', '#f2c46d'], ok: ['No prazo', '#7fc47a'], empty: ['Sem itens', 'var(--muted)'] }
+const HEALTH = { late: ['Atrasado', 'var(--danger, #ff8a80)'], risk: ['Em risco', '#f2c46d'], ok: ['No prazo', 'var(--success, #7fc47a)'], empty: ['Sem itens', 'var(--muted)'] }
 function info(p) {
   const all = tasksOf(p.id)
   const open = all.filter((t) => t.status !== 'done')
@@ -158,7 +158,7 @@ h1 { display: flex; align-items: center; gap: 0.5rem; }
 .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 0; }
 .nums dt { font-size: 11.5px; color: var(--muted); }
 .nums dd { margin: 0; font: 600 1.2rem/1.2 'Geist', system-ui, sans-serif; font-variant-numeric: tabular-nums; }
-.late { color: #ff8a80; }
+.late { color: var(--danger, #ff8a80); }
 .facts { display: flex; flex-direction: column; gap: 0.3rem; margin: 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--muted); }
 .facts li { display: flex; align-items: center; gap: 0.4rem; }
 .foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }

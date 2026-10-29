@@ -12,7 +12,7 @@ import ProgressRing from '../components/app/ProgressRing.vue'
 const props = defineProps({ id: { type: String, default: '' } })
 const router = useRouter()
 const { state, project, today, day, doneRatio, createItem, updateItem, removeItem, member } = useWorkspace()
-const { ui } = useUi()
+const { ui, confirmAsk } = useUi()
 const pid = computed(() => Number(props.id) || null)
 const p = computed(() => pid.value && project(pid.value))
 const TABS = [
@@ -120,6 +120,7 @@ async function save() {
 }
 async function remove(c) {
   menu.value = null
+  if (!(await confirmAsk(`Apagar o ciclo "${c.name}"?`, { message: 'Os itens continuam no projeto, só saem do ciclo.' }))) return
   await removeItem('cycle', c)
 }
 const open = (c) => router.push(`/projetos/${c.project}/ciclos/${c.id}`)
@@ -271,14 +272,14 @@ onUnmounted(() => removeEventListener('click', onDoc))
 .sum { display: flex; flex-direction: column; padding: 1rem 1.25rem; border-right: 1px solid var(--line); }
 .sum__cap { margin: 0.6rem 0 0.25rem; padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 .sum__cap:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-.sum__lead { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.25rem; font-size: 1.05rem; font-weight: 600; color: #7fc47a; }
-.sum__lead.is-behind { color: #ff8a7a; }
+.sum__lead { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.25rem; font-size: 1.05rem; font-weight: 600; color: var(--success, #7fc47a); }
+.sum__lead.is-behind { color: var(--danger, #ff8a80); }
 .legend { display: flex; flex-direction: column; gap: 0.15rem; margin: 0; padding: 0; list-style: none; }
 .legend li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; }
 .legend b { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
 .legend i { width: 14px; height: 0; border-top: 2px solid; }
 .l-ideal { border-top-style: dashed !important; border-color: var(--muted); }
-.l-pend { border-color: #7fc47a; }
+.l-pend { border-color: var(--success, #7fc47a); }
 .l-start { border-color: var(--accent); }
 .l-scope { border-color: var(--accent-soft); }
 .badge { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 0.35rem; border-radius: 5px; font-size: 12px; }
@@ -293,8 +294,8 @@ figcaption span { margin-left: 0.3rem; font-weight: 400; color: var(--muted); }
 .bd__grid { stroke: var(--line); }
 .bd__today { stroke: var(--line-strong); stroke-dasharray: 3 4; }
 .bd__ideal { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 5; }
-.bd__actual { fill: none; stroke: #7fc47a; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
-.bd__dot { fill: #7fc47a; stroke: var(--bg); stroke-width: 2; }
+.bd__actual { fill: none; stroke: var(--success, #7fc47a); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.bd__dot { fill: var(--success, #7fc47a); stroke: var(--bg); stroke-width: 2; }
 @media (max-width: 900px) {
   .cyc__body { grid-template-columns: 1fr; }
   .sum { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -310,9 +311,9 @@ figcaption span { margin-left: 0.3rem; font-weight: 400; color: var(--muted); }
 .tl__bar.active { border-color: var(--accent); }
 .tl__bar.completed { opacity: 0.6; }
 .left { padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--surface-2); font-size: 12px; color: var(--accent-soft); }
-.left.hot { color: #ff8a80; }
+.left.hot { color: var(--danger, #ff8a80); }
 .load { display: flex; gap: 4px; }
-.load__p { display: inline-flex; align-items: center; gap: 3px; padding: 0.1rem 0.4rem 0.1rem 0.3rem; border-radius: 999px; background: color-mix(in srgb, var(--c) 20%, transparent); font: 700 10px/1.6 'Lexend', system-ui, sans-serif; color: var(--c); }
+.load__p { display: inline-flex; align-items: center; gap: 3px; padding: 0.1rem 0.4rem 0.1rem 0.3rem; border-radius: 999px; background: color-mix(in srgb, var(--c) 20%, transparent); font: 700 10px/1.6 'Lexend', system-ui, sans-serif; color: color-mix(in srgb, var(--c) 70%, var(--text)); }
 .load__p b { font: 600 11px/1 'Geist', system-ui, sans-serif; color: var(--text); }
 .tl__bar:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>

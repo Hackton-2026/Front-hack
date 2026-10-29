@@ -562,7 +562,7 @@ function destroy() {
 .menu button, .menu a { text-decoration: none; }
 .menu button, .menu a { display: flex; flex-shrink: 0; align-items: center; gap: 0.5rem; white-space: nowrap; padding: 0.45rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; text-align: left; color: var(--text); cursor: pointer; }
 .menu button:hover, .menu a:hover { background: var(--surface-2); }
-.menu .danger { color: #ff8a80; }
+.menu .danger { color: var(--danger, #ff8a80); }
 .menu .tick { margin-left: auto; color: var(--accent-soft); }
 .body { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; padding: 1.25rem 1.5rem 2rem; overflow-y: auto; }
 .parent-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.6rem; padding: 0; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
@@ -654,7 +654,7 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .sub-btn[aria-pressed='true'] { border-color: var(--accent); }
 .saving { margin-left: 0.6rem; font-size: 11.5px; color: var(--accent-soft); }
 .count { display: block; text-align: right; font-size: 11px; color: var(--muted); }
-.count.full { color: #ff8a80; }
+.count.full { color: var(--danger, #ff8a80); }
 .under { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.6rem; }
 .under small { font-size: 11.5px; color: var(--muted); }
 .actions { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.35rem; border: 1px solid var(--line); border-radius: 8px; }
@@ -668,7 +668,7 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .rel__kind { min-width: 7.5rem; font-size: 12px; color: var(--muted); }
 .rel__item { display: inline-flex; align-items: center; gap: 0.2rem; max-width: 100%; padding: 0.15rem 0.2rem 0.15rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; }
 .x { padding: 0 0.3rem; border: 0; background: none; color: var(--muted); cursor: pointer; }
-.x:hover { color: #ff8a80; }
+.x:hover { color: var(--danger, #ff8a80); }
 .files { display: flex; flex-direction: column; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; list-style: none; }
 .files li { display: flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.6rem; font-size: 13px; color: var(--muted); }
 .files li + li { border-top: 1px solid var(--line); }

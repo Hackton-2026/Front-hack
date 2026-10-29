@@ -37,7 +37,7 @@
 .ip-card li { padding: 4px 9px; border: 1px solid var(--ip-line); border-radius: 999px; color: #c7bdb2; font: 10px var(--font-mono); }
 
 .ip-code { margin: 14px 0 0; padding: 16px 18px; overflow-x: auto; border: 1px solid var(--ip-line); border-radius: 10px; background: #0d0c0b; color: #e8dccf; font: 12px/1.7 var(--font-mono); white-space: pre; }
-.ip-code .c { color: #7f766d; }
+.ip-code .c { color: #8a8178; }
 .ip-code .k { color: var(--lp-orange-soft); }
 .ip p code, .ip li code, .ip td code { padding: 1px 6px; border-radius: 4px; background: rgb(255 255 255 / .06); color: #f0d8c2; font: 11.5px var(--font-mono); }
 .ip-table { width: 100%; border-collapse: collapse; font-size: 13px; }

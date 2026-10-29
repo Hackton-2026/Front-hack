@@ -10,7 +10,7 @@ import TaskBoard from '../components/app/TaskBoard.vue'
 import TaskGantt from '../components/app/views/TaskGantt.vue'
 
 const { state, mine, project, code, isOverdue, updateTask, day } = useWorkspace()
-const { openTask, newTask } = useUi()
+const { openTask } = useUi()
 const root = ref(null)
 const tab = ref('assigned')
 const view = ref('list')
@@ -74,7 +74,6 @@ onMounted(() => {
           <button type="button" :aria-pressed="view === 'board'" title="Quadro" aria-label="Quadro" @click="view = 'board'"><AppIcon name="grid" :size="14" /></button>
           <button type="button" :aria-pressed="view === 'timeline'" title="Linha do tempo" aria-label="Linha do tempo" @click="view = 'timeline'"><AppIcon name="chart" :size="14" /></button>
         </div>
-        <button type="button" class="pg-btn primary" @click="newTask({ assignees: [state.me] })"><AppIcon name="plus" :size="14" />Nova tarefa</button>
       </div>
     </div>
 
@@ -129,18 +128,18 @@ onMounted(() => {
 .stat { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 0.5rem; align-items: center; padding: 0.7rem 0.85rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); }
 .stat b { font: 650 1.4rem/1 'Geist', system-ui, sans-serif; color: var(--text); }
 .stat span { grid-column: 1 / -1; font-size: 12px; }
-.stat.warn b { color: #ff8a80; } .stat.accent b { color: var(--accent-soft); } .stat.good b { color: #7fc47a; }
+.stat.warn b { color: var(--danger, #ff8a80); } .stat.accent b { color: var(--accent-soft); } .stat.good b { color: var(--success, #7fc47a); }
 .wk { display: flex; gap: 0.35rem; align-items: flex-end; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .wk__day { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
 .wk__bar { display: flex; align-items: flex-end; width: 18px; height: 52px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
 .wk__bar i { display: block; width: 100%; border-radius: 5px; background: var(--accent-soft); }
-.wk__bar i.over { background: #ff8a80; }
+.wk__bar i.over { background: var(--danger, #ff8a80); }
 .wk__day small { font-size: 10.5px; color: var(--muted); text-transform: capitalize; }
 .wk__day.today small { color: var(--accent-soft); font-weight: 600; }
 .tabs { padding: 0 1.25rem; }
 .bucket__head { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.45rem 1.25rem; border: 0; background: none; color: var(--text); cursor: pointer; text-align: left; }
 .bucket__head h2 { margin: 0; font-size: 12.5px; font-weight: 600; }
-.bucket.late h2 { color: #ff8a80; } .bucket.today h2 { color: var(--accent-soft); }
+.bucket.late h2 { color: var(--danger, #ff8a80); } .bucket.today h2 { color: var(--accent-soft); }
 .chev { transition: transform 0.2s var(--ease); }
 .bucket__head[aria-expanded='false'] .chev { transform: rotate(-90deg); }
 .task { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 1.25rem; border-top: 1px solid var(--line); }
@@ -152,7 +151,7 @@ onMounted(() => {
 .title { flex: 1; min-width: 0; padding: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 500; color: var(--text); text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .title:hover { color: var(--accent-soft); }
 .due { padding: 0.15rem 0.5rem; border-radius: 6px; background: var(--surface-2); font-size: 12px; color: var(--muted); }
-.due.today { color: var(--accent-soft); } .due.late { color: #ff8a80; }
+.due.today { color: var(--accent-soft); } .due.late { color: var(--danger, #ff8a80); }
 .pad { padding: 0 1.25rem; }
 @media (max-width: 760px) { .proj { display: none; } }
 :is(.tick, .title, .bucket__head):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
