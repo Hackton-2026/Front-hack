@@ -70,7 +70,7 @@ onMounted(fetchAll)
       <label class="box"><input type="checkbox" :checked="allSelected" aria-label="Selecionar todos" @change="toggleAll" />{{ selected.size ? `${selected.size} selecionado(s)` : 'Selecionar todos' }}</label>
       <button v-if="selected.size" type="button" class="pg-btn primary" @click="restoreSelected"><AppIcon name="undo" :size="14" />Restaurar selecionados</button>
     </div>
-    <p v-if="loading" class="pg-muted pad">Carregando…</p>
+    <p v-if="loading" class="pg-muted pad"><ArcLoader />Carregando…</p>
     <div v-else-if="rows.length" class="pg-rows">
       <div v-for="r in rows" :key="r.id" class="pg-row" :class="{ sel: selected.has(r.id) }">
         <label v-if="canRestore" class="box"><input type="checkbox" :checked="selected.has(r.id)" :aria-label="`Selecionar ${r.name || r.title}`" @change="toggleSel(r)" /></label>

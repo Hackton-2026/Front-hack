@@ -84,11 +84,11 @@ async function switchAccount() {
           <div class="actions"><button type="button" class="pg-btn primary" @click="switchAccount">Entrar com {{ inv.email }}</button></div>
         </template>
         <div v-else class="actions">
-          <button type="button" class="pg-btn primary" :disabled="busy" @click="accept">{{ busy ? 'Entrando…' : 'Aceitar e abrir o projeto' }}</button>
+          <button type="button" class="pg-btn primary" :disabled="busy" @click="accept"><ArcLoader v-if="busy" />{{ busy ? 'Entrando…' : 'Aceitar e abrir o projeto' }}</button>
           <button type="button" class="pg-btn" :disabled="busy" @click="decline">Recusar</button>
         </div>
       </template>
-      <p v-else-if="!error" class="sub">Carregando o convite…</p>
+      <p v-else-if="!error" class="sub"><ArcLoader />Carregando o convite…</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <RouterLink v-if="error || message || done" to="/inicio" class="back">Ir para o início</RouterLink>
     </section>

@@ -326,7 +326,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
             </template>
             <template v-else>
               <ul class="perks"><li><FlaticonIcon name="bolt" /> Aprovação na hora, todos os dias</li><li><FlaticonIcon name="bolt" /> QR Code válido por 30 minutos</li><li><FlaticonIcon name="bolt" /> Sem taxas para você</li></ul>
-              <GooeyButton variant="primary" size="lg" block :disabled="busy || !cfgReady || cfg.available === false" @click="pay('pix')">{{ busy ? 'Gerando Pix…' : `Gerar Pix de ${brl(total)}` }}</GooeyButton>
+              <GooeyButton variant="primary" size="lg" block :disabled="busy || !cfgReady || cfg.available === false" @click="pay('pix')"><ArcLoader v-if="busy" />{{ busy ? 'Gerando Pix…' : `Gerar Pix de ${brl(total)}` }}</GooeyButton>
             </template>
           </div>
 
@@ -350,7 +350,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
                   <label class="f"><span>CVV</span><input :value="card.cvv" inputmode="numeric" autocomplete="cc-csc" :placeholder="brand.cvv === 4 ? '0000' : '000'" @input="card.cvv = digits($event.target.value).slice(0, brand.cvv); $event.target.value = card.cvv" @focus="flipped = true" @blur="flipped = false; cardTouched.cvv = true" /><small v-if="cardTouched.cvv && cardErrors.cvv">{{ cardErrors.cvv }}</small></label>
                   <label class="f"><span>Parcelas</span><select v-model.number="card.installments" :disabled="!yearly"><option v-for="n in installmentOptions" :key="n" :value="n">{{ n }}x de {{ brl(Math.round(total / n)) }}{{ n > 1 ? ' sem juros' : '' }}</option></select></label>
                 </div>
-                <GooeyButton type="submit" variant="primary" size="lg" block :disabled="busy">{{ busy ? 'Processando…' : `Pagar ${brl(total)}` }}</GooeyButton>
+                <GooeyButton type="submit" variant="primary" size="lg" block :disabled="busy"><ArcLoader v-if="busy" />{{ busy ? 'Processando…' : `Pagar ${brl(total)}` }}</GooeyButton>
               </form>
             </template>
           </div>

@@ -205,7 +205,7 @@ onUnmounted(() => {
       <p v-if="user && user.email_verified === false && !hideVerify" class="verify" role="status">
         <AppIcon name="inbox" :size="15" />
         <span>Confirme seu e-mail <strong>{{ user.email }}</strong>: mandamos um link para lá.</span>
-        <button type="button" class="verify__btn" :disabled="resending" @click="resendVerify">{{ resending ? 'Enviando…' : 'Reenviar link' }}</button>
+        <button type="button" class="verify__btn" :disabled="resending" @click="resendVerify"><ArcLoader v-if="resending" />{{ resending ? 'Enviando…' : 'Reenviar link' }}</button>
         <button type="button" class="verify__x" aria-label="Fechar aviso" @click="hideVerify = true"><AppIcon name="close" :size="14" /></button>
       </p>
       <nav v-if="crumbs.length > 1 || !route.meta.ownTitle" class="crumb" aria-label="Caminho">
@@ -222,7 +222,7 @@ onUnmounted(() => {
           <p>Não foi possível carregar o workspace: {{ state.error }}</p>
           <button type="button" class="retry" @click="load">Tentar de novo</button>
         </template>
-        <template v-else><span class="spin" aria-hidden="true" />Carregando seu workspace…</template>
+        <template v-else><ArcLoader :size="22" />Carregando seu workspace…</template>
       </div>
       <div v-else class="main__scroll"><slot /></div>
     </main>
@@ -366,8 +366,6 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .main__scroll { flex: 1; min-height: 0; overflow-y: auto; }
 .loading { flex: 1; display: grid; place-content: center; justify-items: center; gap: 0.75rem; color: var(--muted); text-align: center; }
 .loading p { margin: 0; }
-.spin { display: inline-block; width: 22px; height: 22px; border: 2px solid var(--line-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { rotate: 360deg; } }
 .retry { padding: 0.45rem 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: rgb(229 101 21 / 0.12); cursor: pointer; }
 .toast { position: fixed; left: 50%; bottom: 1.25rem; z-index: 90; max-width: min(30rem, calc(100vw - 2rem)); margin: 0; padding: 0.7rem 1rem; border: 1px solid rgb(229 101 21 / 0.5); border-radius: 10px; background: #2a1408; color: #ffd2b3; box-shadow: 0 12px 30px rgb(0 0 0 / 0.4); translate: -50% 0; }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.25s var(--ease), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }

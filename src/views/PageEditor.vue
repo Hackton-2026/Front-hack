@@ -70,7 +70,7 @@ onUnmounted(flush)
   <div v-if="pg" ref="root" class="ed">
     <div class="ed__bar anim">
       <span class="pg-muted">{{ pg.is_private ? 'Privada' : 'Pública' }}, {{ member(pg.owner)?.name }}, {{ words }} {{ words === 1 ? 'palavra' : 'palavras' }}</span>
-      <span class="ed__state" role="status">{{ saving === 'saving' ? 'Salvando…' : saving === 'saved' ? 'Salvo' : '' }}</span>
+      <span class="ed__state" role="status"><ArcLoader v-if="saving === 'saving'" />{{ saving === 'saving' ? 'Salvando…' : saving === 'saved' ? 'Salvo' : '' }}</span>
       <div class="ed__actions">
         <button v-if="pg.owner === state.me && !pg.archived" type="button" class="pg-btn" @click="edit('is_private', !pg.is_private)"><AppIcon :name="pg.is_private ? 'globe' : 'lock'" :size="14" />{{ pg.is_private ? 'Tornar pública' : 'Tornar privada' }}</button>
         <button type="button" class="pg-btn" @click="archive"><AppIcon :name="pg.archived ? 'undo' : 'archive'" :size="14" />{{ pg.archived ? 'Restaurar' : 'Arquivar' }}</button>

@@ -14,7 +14,7 @@ const when = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', mo
 
 <template>
   <div class="feed">
-    <p v-if="!items" class="muted">Carregando…</p>
+    <p v-if="!items" class="muted"><ArcLoader />Carregando…</p>
     <p v-else-if="error" class="muted">{{ error }}</p>
     <p v-else-if="!items.length" class="muted">Nada aconteceu neste projeto ainda.</p>
     <ol v-else>

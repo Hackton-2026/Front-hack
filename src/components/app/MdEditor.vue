@@ -75,7 +75,7 @@ defineExpose({ edit: () => { mode.value = 'edit'; nextTick(() => area.value?.foc
           <label class="md-ed__file" title="Imagem" aria-label="Enviar imagem"><FlaticonIcon name="picture" :size="14" /><input type="file" accept="image/*" @change="attach($event, true)" /></label>
           <label class="md-ed__file" title="Anexo" aria-label="Enviar anexo"><FlaticonIcon name="clip" :size="14" /><input type="file" @change="attach($event, false)" /></label>
         </template>
-        <span v-if="busy" class="md-ed__busy">Enviando…</span>
+        <span v-if="busy" class="md-ed__busy"><ArcLoader />Enviando…</span>
       </template>
       <span class="md-ed__mode" role="group" aria-label="Modo">
         <button type="button" :aria-pressed="mode === 'edit'" @click="mode = 'edit'">Editar</button>

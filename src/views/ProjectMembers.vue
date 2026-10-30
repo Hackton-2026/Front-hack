@@ -159,7 +159,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
           <input id="invite-email" v-model="email" type="email" placeholder="nome@empresa.com" autocomplete="off" :aria-invalid="!!error && !valid" />
           <label class="sr-only" for="invite-perm">Permissão</label>
           <AppSelect id="invite-perm" v-model="permission" :options="PERM_OPTIONS" aria-label="Permissão" />
-          <button type="submit" class="pg-btn primary" :disabled="sending || !email.trim()">{{ sending ? 'Convidando…' : 'Convidar' }}</button>
+          <button type="submit" class="pg-btn primary" :disabled="sending || !email.trim()"><ArcLoader v-if="sending" />{{ sending ? 'Convidando…' : 'Convidar' }}</button>
         </div>
         <p class="hint">{{ PERMISSIONS.find((x) => x[0] === permission)[2] }}. A pessoa aceita entrando com esse e-mail (se já tem conta, o convite aparece na caixa de entrada dela).</p>
       </form>
@@ -243,7 +243,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
         </ul>
       </section>
 
-      <p v-if="!data && !error" class="hint">Carregando…</p>
+      <p v-if="!data && !error" class="hint"><ArcLoader />Carregando…</p>
     </div>
   </div>
 </template>

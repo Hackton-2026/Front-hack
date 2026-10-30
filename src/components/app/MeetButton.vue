@@ -75,7 +75,7 @@ function sendPasted() {
     <div v-if="open" class="meet__pop" role="dialog" aria-label="Chamada no Google Meet" @keydown.esc.stop="open = false">
       <strong>Chamada no Google Meet</strong>
       <p>O link vai para o chat e todo mundo do projeto entra com um clique.</p>
-      <button v-if="GOOGLE_CLIENT_ID" type="button" class="pg-btn primary" :disabled="busy" @click="createRoom">{{ busy ? 'Criando sala…' : 'Criar sala agora' }}</button>
+      <button v-if="GOOGLE_CLIENT_ID" type="button" class="pg-btn primary" :disabled="busy" @click="createRoom"><ArcLoader v-if="busy" />{{ busy ? 'Criando sala…' : 'Criar sala agora' }}</button>
       <div class="meet__or"><span>ou</span></div>
       <a class="meet__open" href="https://meet.google.com/new" target="_blank" rel="noopener">Abrir o Meet numa aba nova</a>
       <form class="meet__paste" @submit.prevent="sendPasted">

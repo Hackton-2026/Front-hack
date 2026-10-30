@@ -55,7 +55,7 @@ onMounted(() => loadCal())
         <input v-model="repo" placeholder="dono/repositório ou link do GitHub" aria-label="Repositório do GitHub" autocomplete="off" spellcheck="false" />
         <AppSelect v-model="target" :options="targets" aria-label="Para onde vão as tarefas" />
         <input v-model="token" type="password" placeholder="Token (só para repositório privado)" aria-label="Token do GitHub" autocomplete="off" />
-        <button type="submit" class="pg-btn primary" :disabled="importing || !repo.trim()">{{ importing ? 'Importando…' : 'Importar issues' }}</button>
+        <button type="submit" class="pg-btn primary" :disabled="importing || !repo.trim()"><ArcLoader v-if="importing" />{{ importing ? 'Importando…' : 'Importar issues' }}</button>
       </form>
       <p v-if="ghMsg" class="msg" :class="{ bad: !ghMsg.ok }" role="status">
         {{ ghMsg.text }} <RouterLink v-if="ghMsg.project" :to="`/projetos/${ghMsg.project}`">Abrir projeto</RouterLink>
@@ -78,7 +78,7 @@ onMounted(() => loadCal())
         <p v-if="local" class="msg bad">Este link aponta para o seu computador (localhost): o Google não consegue buscar daqui. Use "Baixar .ics" e importe no Google Agenda, ou assine quando o site estiver no ar.</p>
         <p class="hint">O Google atualiza agendas assinadas por link a cada algumas horas. Em cada tarefa também tem "Adicionar ao Google Agenda" no menu ⋯. Não compartilhe o link: quem tiver ele vê suas tarefas.</p>
       </template>
-      <p v-else class="hint">Carregando…</p>
+      <p v-else class="hint"><ArcLoader />Carregando…</p>
     </section>
 
     <section class="card">

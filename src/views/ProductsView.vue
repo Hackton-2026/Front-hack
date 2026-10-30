@@ -67,7 +67,7 @@ async function chatWith(ownerId) {
     </div>
 
     <p v-if="error" class="alert alert-error">{{ error }}</p>
-    <p v-if="loading" class="muted">Carregando…</p>
+    <p v-if="loading" class="muted"><ArcLoader />Carregando…</p>
     <div v-else-if="!filtered.length" class="empty stack">
       <p>Nenhum {{ ITEM.singular.toLowerCase() }} por aqui ainda.</p>
       <div><BaseButton v-if="user" to="/novo">Cadastrar {{ ITEM.singular.toLowerCase() }}</BaseButton></div>

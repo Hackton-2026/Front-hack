@@ -63,7 +63,7 @@ onMounted(async () => {
           <p class="sub">Você entra só neste projeto, com permissão para {{ PERM[info.permission] || info.permission }}. {{ info.people }} {{ info.people === 1 ? 'pessoa já participa' : 'pessoas já participam' }}.</p>
 
           <div v-if="user" class="actions">
-            <button type="button" class="btn primary" :disabled="busy" @click="join">{{ busy ? 'Entrando…' : 'Entrar no projeto' }}</button>
+            <button type="button" class="btn primary" :disabled="busy" @click="join"><ArcLoader v-if="busy" />{{ busy ? 'Entrando…' : 'Entrar no projeto' }}</button>
             <p class="who">Você está como <strong>{{ user.first_name || user.username }}</strong> ({{ user.email }}).</p>
           </div>
           <div v-else class="actions">
@@ -73,7 +73,7 @@ onMounted(async () => {
           </div>
         </template>
         <p v-if="error" class="error" role="alert">{{ error }}</p>
-        <p v-if="!info && !error" class="sub">Carregando convite…</p>
+        <p v-if="!info && !error" class="sub"><ArcLoader />Carregando convite…</p>
         <RouterLink v-if="error" class="btn" to="/">Ir para o site</RouterLink>
       </section>
     </main>

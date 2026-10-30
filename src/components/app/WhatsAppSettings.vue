@@ -44,7 +44,7 @@ const disconnect = () => run(() => api('/api/whatsapp/admin/logout/', { method: 
 
 <template>
   <div class="wa">
-    <p v-if="!st && !error" class="hint">Carregando…</p>
+    <p v-if="!st && !error" class="hint"><ArcLoader />Carregando…</p>
     <template v-else-if="st">
       <p v-if="!st.configured" class="hint">A integração com WhatsApp não está ligada neste servidor. Quem cuida do backend precisa subir o OpenWA e preencher <code>OPENWA_URL</code> e <code>OPENWA_API_KEY</code> (passo a passo no README do Back-hack).</p>
 

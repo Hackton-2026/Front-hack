@@ -142,14 +142,18 @@ const SECTION_TOGGLES = {
 const profile = reactive({ first_name: user.value?.first_name || '', email: user.value?.email || '', current_password: '' })
 // trocar o e-mail pede a senha atual no servidor
 const emailChanged = computed(() => !!user.value && profile.email.trim().toLowerCase() !== (user.value.email || '').toLowerCase())
+const savingProfile = ref(false)
 async function saveProfile() {
   if (!user.value) { status.value = 'Entre na sua conta para editar o perfil.'; return }
+  savingProfile.value = true
   try {
     await updateMe({ first_name: profile.first_name.trim(), email: profile.email.trim(), ...(emailChanged.value && { current_password: profile.current_password }) })
     profile.current_password = ''
     status.value = 'Perfil salvo.'
   } catch (e) {
     status.value = e.message
+  } finally {
+    savingProfile.value = false
   }
 }
 const photoInput = ref(null)
@@ -332,7 +336,7 @@ async function onImport(e) {
                 <strong>Foto de perfil</strong>
                 <small>Aparece nas tarefas, no chat e para quem participa dos seus projetos. JPG, PNG ou WebP.</small>
                 <span class="photo__btns">
-                  <button type="button" class="pg-btn" :disabled="photoBusy" @click="photoInput.click()">{{ user.avatar ? 'Trocar foto' : 'Enviar foto' }}</button>
+                  <button type="button" class="pg-btn" :disabled="photoBusy" @click="photoInput.click()"><ArcLoader v-if="photoBusy" />{{ photoBusy ? 'Enviando…' : user.avatar ? 'Trocar foto' : 'Enviar foto' }}</button>
                   <button v-if="user.avatar" type="button" class="link" :disabled="photoBusy" @click="setPhoto(null)">Remover</button>
                 </span>
               </div>
@@ -345,7 +349,7 @@ async function onImport(e) {
             </div>
             <p class="hint">{{ user ? `Usuário: ${user.username}` : 'Você está como visitante. Entre para salvar o perfil.' }}</p>
             <div class="actions">
-              <GooeyButton type="submit" variant="primary">Salvar perfil</GooeyButton>
+              <GooeyButton type="submit" variant="primary" :disabled="savingProfile"><ArcLoader v-if="savingProfile" />{{ savingProfile ? 'Salvando…' : 'Salvar perfil' }}</GooeyButton>
               <RouterLink v-if="!user" to="/login?next=/ajustes" class="link">Entrar</RouterLink>
               <button v-else type="button" class="link" @click="logout">Sair da conta</button>
             </div>
@@ -461,7 +465,7 @@ async function onImport(e) {
         </template>
 
         <template v-else-if="tab === 'billing'">
-          <p v-if="!billing" class="hint">Carregando planos…</p>
+          <p v-if="!billing" class="hint"><ArcLoader />Carregando planos…</p>
           <template v-else>
             <div class="bar">
               <strong>Plano atual</strong>

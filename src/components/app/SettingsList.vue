@@ -145,7 +145,7 @@ defineExpose({ rows })
     </form>
 
     <p v-if="error" class="sl__error" role="alert">{{ error }}</p>
-    <p v-if="loading" class="hint">Carregando…</p>
+    <p v-if="loading" class="hint"><ArcLoader />Carregando…</p>
     <p v-else-if="!rows.length" class="hint">Nenhum {{ noun }} ainda.</p>
     <div v-else class="sl__table" role="table">
       <div class="sl__row sl__head" role="row">

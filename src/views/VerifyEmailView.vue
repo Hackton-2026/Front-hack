@@ -49,7 +49,7 @@ onMounted(confirm)
     <header class="bar"><RouterLink to="/" class="logo" aria-label="Novexo, ir para o site">NOVEXO</RouterLink></header>
     <main class="wrap">
       <section class="card" aria-live="polite">
-        <template v-if="state === 'loading'"><p class="sub">Confirmando seu e-mail…</p></template>
+        <template v-if="state === 'loading'"><p class="sub"><ArcLoader />Confirmando seu e-mail…</p></template>
         <template v-else-if="state === 'ok'">
           <span class="mark ok" aria-hidden="true"><FlaticonIcon name="check" /></span>
           <h1>E-mail confirmado</h1>

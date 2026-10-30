@@ -100,12 +100,12 @@ function leave() {
           <div class="form">
             <p v-if="error" class="error" role="alert">{{ error }}</p>
             <GooeyButton variant="primary" :disabled="loading" class="submit" @click="checkConfirmed">
-              {{ loading ? 'Conferindo…' : 'Já confirmei' }}
+              <ArcLoader v-if="loading" />{{ loading ? 'Conferindo…' : 'Já confirmei' }}
             </GooeyButton>
             <p v-if="sent" class="hint center" role="status">Mandamos um link novo. Confira a caixa de entrada e o spam.</p>
             <p v-else class="hint center">
               Não chegou? Confira o spam ou
-              <button type="button" class="link" :disabled="sending" @click="resend">{{ sending ? 'enviando…' : 'mande de novo' }}</button>
+              <button type="button" class="link" :disabled="sending" @click="resend"><ArcLoader v-if="sending" />{{ sending ? 'enviando…' : 'mande de novo' }}</button>
             </p>
           </div>
           <button type="button" class="link other" @click="leave">Entrar com outra conta</button>
@@ -145,7 +145,7 @@ function leave() {
           <p v-if="offline" class="error" role="alert">Não conseguimos falar com o servidor agora. Sua sessão continua salva. <button type="button" class="retry" :disabled="loading" @click="retry">Tentar de novo</button></p>
           <p v-if="error" class="error" role="alert">{{ error }}</p>
           <GooeyButton type="submit" variant="primary" :disabled="loading" class="submit">
-            {{ loading ? 'Aguarde…' : isRegister ? 'Criar conta' : 'Entrar' }}
+            <ArcLoader v-if="loading" />{{ loading ? 'Aguarde…' : isRegister ? 'Criar conta' : 'Entrar' }}
           </GooeyButton>
         </form>
 

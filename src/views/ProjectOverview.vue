@@ -140,7 +140,7 @@ onMounted(async () => {
         <div class="cover__btns">
           <template v-if="state.isAdmin">
             <input ref="coverInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden @change="uploadCover" />
-            <button type="button" class="cover__btn" :disabled="uploadingCover" @click="coverInput.click()"><AppIcon name="upload" :size="14" />{{ uploadingCover ? 'Enviando…' : p.cover_image ? 'Trocar capa' : 'Enviar capa' }}</button>
+            <button type="button" class="cover__btn" :disabled="uploadingCover" @click="coverInput.click()"><ArcLoader v-if="uploadingCover" /><AppIcon v-else name="upload" :size="14" />{{ uploadingCover ? 'Enviando…' : p.cover_image ? 'Trocar capa' : 'Enviar capa' }}</button>
             <button v-if="p.cover_image" type="button" class="cover__btn" @click="save({ cover_image: null })"><AppIcon name="trash" :size="14" />Remover</button>
           </template>
           <button type="button" class="cover__btn" :aria-pressed="panel" :aria-label="panel ? 'Fechar painel' : 'Abrir painel'" :title="panel ? 'Fechar painel' : 'Abrir painel'" @click="togglePanel"><AppIcon name="sidebar" :size="15" /></button>
@@ -240,7 +240,7 @@ onMounted(async () => {
         </template>
         <template v-else>
           <h3>Atividade</h3>
-          <p v-if="loadingFeed && !feed.length" class="pg-muted">Carregando…</p>
+          <p v-if="loadingFeed && !feed.length" class="pg-muted"><ArcLoader />Carregando…</p>
           <p v-else-if="!feed.length" class="pg-muted">Nada por aqui ainda.</p>
           <ul class="feed">
             <li v-for="a in feed" :key="a.id"><span class="feed__ic"><AppIcon :name="a.details.kind === 'update' ? 'bolt' : a.taskId ? 'items' : 'doc'" :size="13" /></span><p>{{ a.text }}</p><time>{{ ago(a.at) }}</time></li>

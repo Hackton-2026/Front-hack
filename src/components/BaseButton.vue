@@ -13,7 +13,7 @@ defineProps({
 <template>
   <RouterLink v-if="to" :to="to" class="btn" :class="[`btn-${variant}`, { 'btn-block': block, 'btn-sm': small }]"><slot /></RouterLink>
   <button v-else :type="type" class="btn" :class="[`btn-${variant}`, { 'btn-block': block, 'btn-sm': small }]" :disabled="loading || disabled">
-    <template v-if="loading">Aguarde…</template><slot v-else />
+    <ArcLoader v-if="loading" /><slot />
   </button>
 </template>
 
