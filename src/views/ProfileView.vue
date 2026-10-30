@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { imageField, toFormData } from '../services/api'
 import { useAuth } from '../composables/useAuth'
 import BaseInput from '../components/BaseInput.vue'
@@ -8,8 +8,10 @@ import ImageUpload from '../components/ImageUpload.vue'
 
 const { user, updateMe } = useAuth()
 
-const pick = (u) => ({ avatar: u.avatar, username: u.username, email: u.email, first_name: u.first_name, last_name: u.last_name, password: '' })
+const pick = (u) => ({ avatar: u.avatar, username: u.username, email: u.email, first_name: u.first_name, last_name: u.last_name, password: '', current_password: '' })
 const form = reactive(pick(user.value))
+// o servidor pede a senha atual para trocar e-mail ou senha (conta só com Google pode deixar em branco)
+const needsCurrent = computed(() => !!form.password || form.email.trim().toLowerCase() !== (user.value.email || '').toLowerCase())
 const error = ref('')
 const success = ref('')
 const saving = ref(false)
@@ -18,7 +20,7 @@ async function submit() {
   error.value = success.value = ''
   saving.value = true
   try {
-    await updateMe(toFormData({ ...form, avatar: imageField(form.avatar), password: form.password || undefined }))
+    await updateMe(toFormData({ ...form, avatar: imageField(form.avatar), password: form.password || undefined, current_password: needsCurrent.value ? form.current_password : undefined }))
     Object.assign(form, pick(user.value))
     success.value = 'Perfil atualizado!'
   } catch (e) {
@@ -40,6 +42,7 @@ async function submit() {
     <BaseInput v-model="form.username" label="Usuário" required />
     <BaseInput v-model="form.email" label="E-mail" type="email" />
     <BaseInput v-model="form.password" label="Nova senha (deixe vazio para manter)" type="password" autocomplete="new-password" />
+    <BaseInput v-if="needsCurrent" v-model="form.current_password" label="Senha atual (para trocar e-mail ou senha)" type="password" autocomplete="current-password" />
     <p class="muted small">Membro desde {{ new Date(user.date_joined).toLocaleDateString('pt-BR') }}</p>
     <p v-if="error" class="alert alert-error">{{ error }}</p>
     <p v-if="success" class="alert alert-success">{{ success }}</p>

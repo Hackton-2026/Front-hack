@@ -6,6 +6,7 @@ import { useUi } from '../composables/useUi'
 import { api } from '../services/api'
 import GooeyButton from '../components/GooeyButton.vue'
 import GoogleButton from '../components/GoogleButton.vue'
+import TurnstileWidget from '../components/TurnstileWidget.vue'
 
 const { user, offline, init, login, register, loginWithGoogle } = useAuth()
 const { toast } = useUi()
@@ -22,6 +23,8 @@ const form = reactive({ first_name: '', email: String(history.state?.email || ''
 const showPassword = ref(false)
 const error = ref('')
 const loading = ref(false)
+const captcha = ref('')
+const turnstile = ref()
 
 async function run(action) {
   error.value = ''
@@ -38,6 +41,7 @@ async function run(action) {
     }
     const fields = e.data && !e.data.detail && typeof e.data === 'object' ? Object.values(e.data).flat() : null
     error.value = fields ? fields.join('\n') : e.message
+    turnstile.value?.reset()
   } finally {
     loading.value = false
   }
@@ -55,7 +59,7 @@ async function retry() {
 
 async function signUp() {
   const { whatsapp, ...data } = form
-  await register(data)
+  await register({ ...data, captcha: captcha.value })
   if (!whatsapp.trim()) return null
   try {
     await api('/api/whatsapp/me/', { method: 'POST', body: { phone: whatsapp } })
@@ -107,6 +111,7 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
             </span>
           </label>
           <p v-if="isRegister" class="hint">Use pelo menos 8 caracteres. Senhas comuns, só com números ou parecidas com seu nome ou e-mail não passam.</p>
+          <TurnstileWidget v-if="isRegister" ref="turnstile" v-model="captcha" />
 
           <p v-if="offline" class="error" role="alert">Não conseguimos falar com o servidor agora. Sua sessão continua salva. <button type="button" class="retry" :disabled="loading" @click="retry">Tentar de novo</button></p>
           <p v-if="error" class="error" role="alert">{{ error }}</p>

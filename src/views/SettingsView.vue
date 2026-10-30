@@ -139,11 +139,14 @@ const SECTION_TOGGLES = {
   ],
 }
 
-const profile = reactive({ first_name: user.value?.first_name || '', email: user.value?.email || '' })
+const profile = reactive({ first_name: user.value?.first_name || '', email: user.value?.email || '', current_password: '' })
+// trocar o e-mail pede a senha atual no servidor
+const emailChanged = computed(() => !!user.value && profile.email.trim().toLowerCase() !== (user.value.email || '').toLowerCase())
 async function saveProfile() {
   if (!user.value) { status.value = 'Entre na sua conta para editar o perfil.'; return }
   try {
-    await updateMe({ first_name: profile.first_name.trim(), email: profile.email.trim() })
+    await updateMe({ first_name: profile.first_name.trim(), email: profile.email.trim(), ...(emailChanged.value && { current_password: profile.current_password }) })
+    profile.current_password = ''
     status.value = 'Perfil salvo.'
   } catch (e) {
     status.value = e.message
@@ -338,6 +341,7 @@ async function onImport(e) {
             <div class="cols">
               <label>Nome <input v-model="profile.first_name" autocomplete="given-name" /></label>
               <label>E-mail <input v-model="profile.email" type="email" autocomplete="email" /></label>
+              <label v-if="emailChanged">Senha atual <input v-model="profile.current_password" type="password" autocomplete="current-password" /></label>
             </div>
             <p class="hint">{{ user ? `Usuário: ${user.username}` : 'Você está como visitante. Entre para salvar o perfil.' }}</p>
             <div class="actions">

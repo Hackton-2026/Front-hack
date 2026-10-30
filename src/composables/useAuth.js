@@ -45,6 +45,9 @@ async function updateMe(body) {
 }
 
 function logout() {
+  const refresh = tokens.refresh
+  // queima o refresh no servidor; sem rede, ao menos o navegador esquece
+  if (refresh) api('/api/auth/logout/', { method: 'POST', body: { refresh }, auth: false }).catch(() => {})
   tokens.clear()
   user.value = null
 }

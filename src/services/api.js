@@ -20,19 +20,29 @@ function errorText(data) {
   return Object.entries(data).map(([field, msgs]) => `${field}: ${[].concat(msgs).join(' ')}`).join('\n')
 }
 
-async function refreshAccess() {
+// o refresh agora é de uso único: dois 401 ao mesmo tempo gastavam o mesmo refresh e o segundo deslogava.
+// Todos esperam a mesma renovação.
+let refreshing = null
+function refreshAccess() {
+  refreshing ||= renew().finally(() => { refreshing = null })
+  return refreshing
+}
+
+async function renew() {
+  const sent = tokens.refresh
   let res
   try {
     res = await fetch(`${API_URL}/api/auth/login/refresh/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh: tokens.refresh }),
+      body: JSON.stringify({ refresh: sent }),
     })
   } catch {
     // sem rede: erro sem status, e os tokens ficam (não é sessão vencida)
     throw new Error(errorText(null))
   }
-  if (!res.ok) return false
+  // outra aba renovou primeiro e já salvou o refresh novo: o nosso foi queimado, mas a sessão continua
+  if (!res.ok) return tokens.refresh !== sent
   tokens.set(await res.json())
   return true
 }
