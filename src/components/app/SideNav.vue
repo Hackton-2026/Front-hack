@@ -7,6 +7,7 @@ import { useUi } from '../../composables/useUi'
 import { useOnboarding } from '../../composables/useOnboarding'
 import AppIcon from './AppIcon.vue'
 import ProjectIcon from './ProjectIcon.vue'
+import Avatars from './Avatars.vue'
 import DeleteProjectDialog from './DeleteProjectDialog.vue'
 
 const MORE = [
@@ -121,7 +122,9 @@ onUnmounted(() => {
       <button type="button" class="link proj" :aria-expanded="openProjects.has(p.id)" @click="toggleProject(p)">
         <ProjectIcon :icon="p.icon" :color="p.color" :size="14" class="proj__icon" />
         <span class="proj__name">{{ p.name }}</span>
-        <span v-if="openCount(p)" class="count">{{ openCount(p) }}</span>
+        <!-- projeto com mais gente: quem participa; só a pessoa: quantas tarefas faltam -->
+        <span v-if="p.members?.length > 1" class="count people" :aria-label="`${p.members.length} pessoas no projeto`"><Avatars :ids="p.members" :size="18" /></span>
+        <span v-else-if="openCount(p)" class="count">{{ openCount(p) }}</span>
       </button>
       <button type="button" class="row-btn pmenu-btn" :aria-label="`Opções de ${p.name}`" :aria-expanded="menuFor === p.id" @click="toggleMenu(p, $event)"><AppIcon name="more" :size="15" /></button>
       <Teleport defer to=".app">
@@ -170,6 +173,7 @@ onUnmounted(() => {
 .proj__icon { display: inline-flex; flex-shrink: 0; overflow: hidden; width: 15px; font-size: 13px; line-height: 1; }
 .proj__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .count { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.count.people { display: inline-flex; margin-inline-start: auto; }
 .row:hover .count, .proj:focus-visible .count { visibility: hidden; }
 .row-btn { position: absolute; inset-block-start: 4px; inset-inline-end: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s; }
 .row:hover > .row-btn, .row-btn:focus-visible, .row-btn[aria-expanded='true'] { opacity: 1; }

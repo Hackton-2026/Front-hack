@@ -5,7 +5,7 @@ import { useWorkspace } from '../../composables/useWorkspace'
 import AppIcon from './AppIcon.vue'
 
 const props = defineProps({ projectId: { type: Number, required: true } })
-const { member } = useWorkspace()
+const { member, state } = useWorkspace()
 
 const SLOTS = ['audio', 'video', 'video']
 const joined = ref(false)
@@ -268,7 +268,7 @@ onUnmounted(() => leave())
   <section class="voice" aria-label="Sala de voz do projeto">
     <div class="bar">
       <span class="label"><AppIcon name="video" :size="14" />Sala de voz<small v-if="joined">{{ Object.keys(peers).length + 1 }} na sala</small></span>
-      <button v-if="!joined" type="button" class="join" :disabled="busy" @click="join">{{ busy ? 'Entrando…' : 'Entrar' }}</button>
+      <button v-if="!joined" type="button" class="join" :disabled="busy" @click="join"><ArcLoader v-if="busy" />{{ busy ? 'Entrando…' : 'Entrar' }}</button>
       <template v-else>
         <button type="button" class="ctl" :class="{ off: !me.mic }" :aria-pressed="!me.mic" :title="me.mic ? 'Silenciar microfone' : 'Ativar microfone'" aria-label="Microfone" @click="toggleMic">{{ me.mic ? '🎙️' : '🔇' }}</button>
         <button type="button" class="ctl" :class="{ on: me.cam }" :aria-pressed="me.cam" :title="me.cam ? 'Desligar câmera' : 'Ligar câmera'" aria-label="Câmera" @click="toggleCam">📷</button>
@@ -284,7 +284,7 @@ onUnmounted(() => leave())
     <div v-if="joined" class="tiles">
       <figure class="tile me" :class="{ speaking: speaking.me }" title="Duplo clique: tela cheia" @dblclick="fullscreen">
         <video v-if="local.screen || local.cam" :srcObject.prop="local.screen || local.cam" autoplay muted playsinline />
-        <span v-else class="ava">Você</span>
+        <span v-else class="ava" :class="{ pic: member(state.me)?.avatar }"><img v-if="member(state.me)?.avatar" :src="member(state.me).avatar" alt="" referrerpolicy="no-referrer" /><template v-else>Você</template></span>
         <figcaption>Você<AppIcon v-if="!me.mic" name="microphone-slash" :size="12" /></figcaption>
       </figure>
       <figure v-for="(p, id) in peers" :key="id" class="tile" :class="{ speaking: speaking[id] }" title="Duplo clique: tela cheia" @dblclick="fullscreen">
@@ -321,6 +321,7 @@ onUnmounted(() => leave())
 .tile.speaking { border-color: #3ba55d; box-shadow: 0 0 0 2px #3ba55d; } .tile video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 .ava { display: grid; place-items: center; width: 44px; height: 44px; overflow: hidden; border-radius: 50%; background: var(--accent); font-weight: 700; font-size: 14px; color: #000; }
 .me .ava { width: auto; padding: 0 0.6rem; border-radius: 999px; }
+.me .ava.pic { width: 44px; padding: 0; border-radius: 50%; }
 .ava img { width: 100%; height: 100%; object-fit: cover; }
 figcaption { position: absolute; left: 6px; bottom: 4px; padding: 0 0.35rem; border-radius: 6px; background: rgb(0 0 0 / 0.6); font-size: 11.5px; color: #fff; }
 </style>

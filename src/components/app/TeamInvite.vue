@@ -47,7 +47,7 @@ async function invite() {
     <div class="card">
       <ul ref="list" class="people">
         <li class="person">
-          <span class="ava">{{ (user?.first_name || user?.username || 'Você').slice(0, 2).toUpperCase() }}</span>
+          <span class="ava"><img v-if="user?.avatar" :src="user.avatar" alt="" referrerpolicy="no-referrer" /><template v-else>{{ (user?.first_name || user?.username || 'Você').slice(0, 2).toUpperCase() }}</template></span>
           <span>{{ user?.username || 'você' }}</span>
           <small>Você</small>
         </li>
@@ -61,7 +61,7 @@ async function invite() {
         <AppSelect v-model="projectId" :options="mine.map((p) => ({ value: p.id, label: p.name }))" placeholder="Nenhum projeto seu" aria-label="Projeto" :disabled="!mine.length" />
         <label for="invite-email" class="sr-only">E-mail de quem você quer convidar</label>
         <input id="invite-email" v-model="email" type="email" placeholder="nome@empresa.com" autocomplete="off" :aria-invalid="!!error" aria-describedby="invite-msg" />
-        <GooeyButton type="submit" variant="primary" :disabled="sending">{{ sending ? 'Convidando…' : 'Convidar' }}</GooeyButton>
+        <GooeyButton type="submit" variant="primary" :disabled="sending"><ArcLoader v-if="sending" />{{ sending ? 'Convidando…' : 'Convidar' }}</GooeyButton>
       </form>
       <p id="invite-msg" class="msg" aria-live="polite">{{ error }}</p>
       <RouterLink v-if="projectId" :to="`/projetos/${projectId}/membros`" class="manage">Ver convites e copiar os links</RouterLink>
@@ -78,6 +78,8 @@ h2 { margin: 0 0 0.25rem; font: 600 1.25rem/1.2 'Geist', system-ui, sans-serif; 
 .person small { font-size: 11.5px; font-weight: 400; color: var(--muted); }
 .person__mail { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ava { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-soft), var(--accent)); font: 700 13px/1 'Lexend', system-ui, sans-serif; color: #000; }
+.ava { overflow: hidden; }
+.ava img { width: 100%; height: 100%; object-fit: cover; }
 .pending .ava { background: var(--surface-2); color: var(--muted); border: 1px dashed var(--line-strong); }
 .invite { display: flex; gap: 0.5rem; }
 .invite input { flex: 1; min-width: 0; height: 36px; padding: 0 0.75rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; transition: border-color 0.2s var(--ease); }

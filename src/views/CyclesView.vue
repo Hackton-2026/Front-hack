@@ -176,7 +176,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
             <span class="pg-pill cyc__date"><AppIcon name="calendar" :size="13" />{{ range(c) }}</span>
             <span v-if="phase(c) === 'active'" class="left" :class="{ hot: daysLeft(c) <= 2 }">{{ daysLeft(c) === 0 ? 'termina hoje' : `faltam ${daysLeft(c)} d` }}</span>
             <span v-if="loadOf(c).length" class="load" :title="loadOf(c).map((l) => `${member(l.id)?.name || '?'}: ${l.n}`).join(', ')">
-              <span v-for="l in loadOf(c).slice(0, 4)" :key="l.id" class="load__p" :style="{ '--c': member(l.id)?.color || 'var(--accent)' }">{{ (member(l.id)?.name || '?').slice(0, 2).toUpperCase() }}<b>{{ l.n }}</b></span>
+              <span v-for="l in loadOf(c).slice(0, 4)" :key="l.id" class="load__p" :style="{ '--c': member(l.id)?.color || 'var(--accent)' }"><img v-if="member(l.id)?.avatar" :src="member(l.id).avatar" alt="" referrerpolicy="no-referrer" class="load__pic" /><template v-else>{{ (member(l.id)?.name || '?').slice(0, 2).toUpperCase() }}</template><b>{{ l.n }}</b></span>
             </span>
             <div class="menu-wrap">
               <button type="button" class="pg-icon" :aria-expanded="menu === c.id" aria-label="Opções do ciclo" @click="menu = menu === c.id ? null : c.id"><AppIcon name="more" :size="16" /></button>
@@ -314,6 +314,7 @@ figcaption span { margin-left: 0.3rem; font-weight: 400; color: var(--muted); }
 .left.hot { color: var(--danger, #ff8a80); }
 .load { display: flex; gap: 4px; }
 .load__p { display: inline-flex; align-items: center; gap: 3px; padding: 0.1rem 0.4rem 0.1rem 0.3rem; border-radius: 999px; background: color-mix(in srgb, var(--c) 20%, transparent); font: 700 10px/1.6 'Lexend', system-ui, sans-serif; color: color-mix(in srgb, var(--c) 70%, var(--text)); }
+.load__pic { width: 14px; height: 14px; border-radius: 50%; object-fit: cover; }
 .load__p b { font: 600 11px/1 'Geist', system-ui, sans-serif; color: var(--text); }
 .tl__bar:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>
