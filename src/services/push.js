@@ -27,7 +27,7 @@ function platform() {
   const ua = navigator.userAgent
   const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iPhone' : /Windows/i.test(ua) ? 'Windows' : /Mac/i.test(ua) ? 'Mac' : 'Linux'
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox/.test(ua) ? 'Firefox' : /Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'Navegador'
-  return `${os} · ${browser}`
+  return `${os}, ${browser}`
 }
 
 export const savedToken = () => { try { return localStorage.getItem(TOKEN_KEY) } catch { return null } }

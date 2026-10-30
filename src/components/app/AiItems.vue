@@ -27,7 +27,7 @@ const due = (d) => d && new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day
       <button v-if="it.type === 'task'" type="button" class="card" :title="`Abrir ${it.code}`" @click="open(it)">
         <span class="ic"><AppIcon name="check" :size="15" /></span>
         <span class="txt">
-          <small>{{ it.code }}<template v-if="taskOf(it)"> · <span :style="{ color: status(taskOf(it).status).color }">{{ status(taskOf(it).status).name }}</span><template v-if="taskOf(it).due"> · prazo {{ due(taskOf(it).due) }}</template></template></small>
+          <small>{{ it.code }}<template v-if="taskOf(it)">, <span :style="{ color: status(taskOf(it).status).color }">{{ status(taskOf(it).status).name }}</span><template v-if="taskOf(it).due">, prazo {{ due(taskOf(it).due) }}</template></template></small>
           <strong>{{ taskOf(it)?.title || it.title }}</strong>
         </span>
         <Avatars v-if="taskOf(it)" :ids="taskOf(it).assignees" :size="22" />

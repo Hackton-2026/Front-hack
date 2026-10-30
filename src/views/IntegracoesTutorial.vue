@@ -8,7 +8,7 @@ import FlaticonIcon from '../components/FlaticonIcon.vue'
 const steps = [
   {
     title: 'Escolha a ferramenta',
-    text: 'A proposta é reunir as conexões em Ajustes → Integrações. Google Meet e Discord são exemplos de ferramentas previstas para esse espaço.',
+    text: 'A proposta é reunir as conexões na aba Integrações dos Ajustes. Google Meet e Discord são exemplos de ferramentas previstas para esse espaço.',
     caption: 'Escolher uma ferramenta para conectar',
     video: '/tutoriais/integracoes/passo-1.mp4',
   },
@@ -39,7 +39,7 @@ const steps = [
         </p>
       </header>
 
-      <p class="availability">Em preparação · Exemplos do fluxo previsto</p>
+      <p class="availability">Em preparação. Exemplos do fluxo previsto.</p>
 
       <section
         v-for="(step, index) in steps"

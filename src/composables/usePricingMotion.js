@@ -1,7 +1,7 @@
 import { nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
-import { gsap, revealTitleCharacters } from '../utils/motion'
+import { EASE, DUR, gsap, revealTitleCharacters } from '../utils/motion'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
@@ -44,7 +44,7 @@ export function usePricingMotion(root, yearly) {
       }
 
       const intro = gsap.timeline({ defaults: {
-        autoAlpha: 0, y: 16, duration: 0.8, ease: 'power3.out',
+        autoAlpha: 0, y: 16, duration: DUR.slow, ease: EASE.out,
         clearProps: 'transform,opacity,visibility',
       } })
       const lead = select('.pricing-heading__lead')
@@ -57,7 +57,7 @@ export function usePricingMotion(root, yearly) {
         if (!card && (element.closest('.price-card') || element.querySelector('.price-card, [data-pricing-reveal]'))) return
         gsap.from(element, {
           autoAlpha: 0, y: card ? 28 : 20, scale: card ? 0.985 : 1,
-          duration: card ? 0.95 : 0.8, ease: 'power3.out',
+          duration: card ? 0.95 : 0.8, ease: EASE.out,
           clearProps: 'transform,opacity,visibility',
           scrollTrigger: { trigger: element, start: 'top 91%', once: true },
         })
@@ -67,15 +67,15 @@ export function usePricingMotion(root, yearly) {
         const prices = select('.pricing-price__value')
         if (!prices.length) return
         gsap.fromTo(prices, { y: 7, autoAlpha: 0.35 }, {
-          y: 0, autoAlpha: 1, duration: 0.4, stagger: 0.04,
-          ease: 'power2.out', overwrite: 'auto',
+          y: 0, autoAlpha: 1, duration: DUR.fast, stagger: 0.04,
+          ease: EASE.soft, overwrite: 'auto',
           clearProps: 'transform,opacity,visibility',
         })
       })
       context.add('answer', element => {
         if (!element) return
         gsap.fromTo(element, { y: 7, autoAlpha: 0 }, {
-          y: 0, autoAlpha: 1, duration: 0.35, ease: 'power2.out',
+          y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.soft,
           overwrite: 'auto', clearProps: 'transform,opacity,visibility',
         })
       })

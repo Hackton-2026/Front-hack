@@ -9,14 +9,13 @@
 .app .pg-tabs .n { margin-left: 0.3rem; font-size: 11.5px; color: var(--muted); }
 .app .pg-btn { display: inline-flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.75rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2); font-size: 13px; font-weight: 500; color: var(--text); text-decoration: none; white-space: nowrap; cursor: pointer; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
 .app .pg-btn:hover { border-color: var(--accent); }
-.app .pg-btn.primary { border-color: var(--accent); background: var(--accent); color: #140700; }
+.app .pg-btn.primary { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
 .app .pg-btn.primary:hover { background: var(--accent-soft); }
 .app .pg-icon { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
 .app .pg-icon:hover, .app .pg-icon[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
 .app .pg-icon.is-on { color: var(--accent-soft); }
-.app .pg-icon.is-on .app-icon { fill: currentColor; }
 .app .pg-seg { display: flex; padding: 2px; border: 1px solid var(--line); border-radius: 7px; }
-.app .pg-seg button { display: grid; place-items: center; width: 28px; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; }
+.app .pg-seg button { display: grid; place-items: center; width: 28px; white-space: nowrap; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; }
 .app .pg-seg button[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
 .app .pg-search { display: flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
 .app .pg-search:focus-within { border-color: var(--accent); }
@@ -24,23 +23,25 @@
 .app .pg-select { height: 30px; padding: 0 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font: inherit; font-size: 13px; color: var(--text); cursor: pointer; }
 .app .pg-rows { display: flex; flex-direction: column; }
 .app .pg-row { position: relative; display: flex; align-items: center; gap: 0.75rem; min-height: 52px; padding: 0.45rem 1.25rem; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; transition: background 0.2s var(--ease); }
-.app .pg-row:hover { background: rgb(255 255 255 / 0.025); }
+.app .pg-row:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }
 .app .pg-row__main { display: flex; flex: 1; align-items: center; gap: 0.7rem; min-width: 0; color: var(--text); font-weight: 500; text-decoration: none; }
 .app .pg-row__main > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app .pg-row__main::after { content: ''; position: absolute; inset: 0; }
 .app .pg-row__side { position: relative; z-index: 1; display: flex; align-items: center; gap: 0.4rem; }
 .app .pg-pill { display: inline-flex; align-items: center; gap: 0.35rem; height: 26px; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
 .app select.pg-pill { cursor: pointer; font: inherit; font-size: 12.5px; }
-.app .pg-pill i { width: 8px; height: 8px; border-radius: 50%; }
+.app .pg-pill i:not(.app-icon) { width: 8px; height: 8px; border-radius: 50%; }
 .app .pg-tag { padding: 0.1rem 0.45rem; border-radius: 4px; background: var(--surface-2); font-size: 11.5px; color: var(--muted); }
 .app .pg-empty { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; padding: 4rem 1.5rem; text-align: center; }
+/* EXCEPTION to token-fallback/raw-rgb-hsl: sombra preta translúcida funciona igual nos temas escuro e claro */
 .app .pg-empty__art { display: grid; place-items: center; width: 84px; height: 84px; margin-bottom: 0.5rem; border: 1px solid var(--line-strong); border-radius: 22px; background: linear-gradient(160deg, var(--surface-2), var(--bg)); color: var(--accent-soft); box-shadow: 0 18px 40px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.05); }
 .app .pg-empty h2 { margin: 0; font: 600 1.05rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .app .pg-empty p { max-width: 26rem; margin: 0 0 0.4rem; color: var(--muted); }
+/* EXCEPTION to token-fallback/raw-rgb-hsl: sombra preta translúcida funciona igual nos temas escuro e claro */
 .app .pg-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; display: flex; flex-direction: column; min-width: 11rem; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 34px rgb(0 0 0 / 0.45); }
 .app .pg-menu button, .app .pg-menu a { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; color: var(--text); text-align: left; text-decoration: none; cursor: pointer; }
 .app .pg-menu button:hover, .app .pg-menu a:hover { background: var(--surface-2); }
-.app .pg-menu .danger { color: var(--danger, #ff8a80); }
+.app .pg-menu .danger { color: var(--danger); }
 .app .pg-muted { color: var(--muted); font-size: 12.5px; }
 .app :is(.pg-btn, .pg-icon, .pg-tabs button, .pg-seg button, .pg-row__main, .pg-menu button, .pg-menu a):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 @media (max-width: 640px) {
@@ -62,6 +63,7 @@
 .app .md-callout > div > :last-child { margin-bottom: 0; }
 .app .md-cols { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 1.25rem; margin: 0.6em 0; }
 @media (max-width: 640px) { .app .md-cols { grid-template-columns: 1fr; } }
+/* EXCEPTION to token-fallback/raw-hex: fundo preto atrás do vídeo (letterbox), não é cor do tema */
 .app .md-video { position: relative; margin: 0.6em 0; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 8px; background: #000; }
 .app .md-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .app .md-media { display: block; width: 100%; margin: 0.6em 0; border-radius: 8px; }
@@ -94,7 +96,7 @@
 .app .db-dot { display: inline-block; flex: none; width: 8px; height: 8px; margin-right: 0.35rem; border-radius: 50%; background: var(--c); }
 .app .db-code { font: 500 11.5px/1 'Geist Mono', monospace; color: var(--muted); }
 .app .db-due { margin-left: auto; font-size: 12px; color: var(--muted); }
-.app .db-due.late { color: var(--danger, #ff8a80); }
+.app .db-due.late { color: var(--danger); }
 .app .db-empty { font-size: 13px; color: var(--muted); }
 .app .db-card { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; width: 100%; padding: 0.55rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); color: var(--text); text-align: left; }
 .app .db-card:hover { border-color: var(--accent); }

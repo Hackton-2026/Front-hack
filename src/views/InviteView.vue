@@ -75,7 +75,7 @@ async function switchAccount() {
       <span class="icon"><AppIcon name="user" :size="22" /></span>
       <template v-if="inv">
         <h1>{{ inv.invited_by || 'Alguém' }} convidou você para <strong>{{ inv.project_name }}</strong></h1>
-        <p class="sub">Convite para {{ inv.email }} · permissão para {{ PERM[inv.permission] || inv.permission }}. Você entra só neste projeto: vê as tarefas, as páginas e o chat dele.</p>
+        <p class="sub">Convite para {{ inv.email }}, permissão para {{ PERM[inv.permission] || inv.permission }}. Você entra só neste projeto: vê as tarefas, as páginas e o chat dele.</p>
 
         <p v-if="done === 'declined'" class="note">Convite recusado. Você pode fechar esta página.</p>
         <p v-else-if="message" class="note">{{ message }}</p>

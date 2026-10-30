@@ -12,7 +12,7 @@ const { user } = useAuth()
 useSmoothScroll()
 const router = useRouter()
 watch(user, (u) => {
-  if (!u && router.currentRoute.value.meta.auth) router.push('/login')
+  if (!u && router.currentRoute.value.meta.auth) router.push({ path: '/login', query: { next: router.currentRoute.value.fullPath } })
 })
 </script>
 

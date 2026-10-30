@@ -100,7 +100,7 @@ watch(zoom, () => nextTick(() => goToday(false)))
         <button type="button" :aria-pressed="zoom === 'week'" @click="zoom = 'week'">Semanas</button>
       </div>
       <button type="button" class="ghost" @click="goToday()">Hoje</button>
-      <span class="hint">Arraste a barra para mudar as datas · a ponta direita muda o prazo</span>
+      <span class="hint">Arraste a barra para mudar as datas. A ponta direita muda o prazo.</span>
     </div>
 
     <p v-if="!dated.length" class="empty">Nenhuma tarefa com prazo. Dê um prazo às tarefas para elas aparecerem aqui.</p>
@@ -132,14 +132,14 @@ watch(zoom, () => nextTick(() => goToday(false)))
               <div
                 class="bar" :class="{ late: isOverdue(t), done: t.status === 'done', dragging: drag?.t === t }"
                 :style="{ left: `${x(live(t).start) + 2}px`, width: `${x(live(t).end) - x(live(t).start) + w - 4}px`, '--c': isOverdue(t) ? '#ff5b4d' : status(t).color, '--p': progress(t) }"
-                role="button" tabindex="0" :aria-label="`${t.title}: ${fmt(live(t).start)} a ${fmt(live(t).end)}`" :title="`${t.title} · ${fmt(live(t).start)} → ${fmt(live(t).end)}`"
+                role="button" tabindex="0" :aria-label="`${t.title}: ${fmt(live(t).start)} a ${fmt(live(t).end)}`" :title="`${t.title}, ${fmt(live(t).start)} a ${fmt(live(t).end)}`"
                 @pointerdown="grab($event, t, 'move')" @pointermove="slide" @pointerup="drop(t)" @pointercancel="drag = null" @keydown.enter="openTask(t)"
               >
                 <span class="fill" aria-hidden="true" />
                 <span class="text">{{ t.title }}</span>
                 <span class="handle" aria-hidden="true" @pointerdown.stop="grab($event, t, 'end')" @pointermove="slide" @pointerup.stop="drop(t)" />
               </div>
-              <span v-if="drag?.t === t && drag.moved" class="tip" :style="{ left: `${x(live(t).start)}px` }">{{ fmt(live(t).start) }} → {{ fmt(live(t).end) }}</span>
+              <span v-if="drag?.t === t && drag.moved" class="tip" :style="{ left: `${x(live(t).start)}px` }">{{ fmt(live(t).start) }} a {{ fmt(live(t).end) }}</span>
             </div>
           </template>
         </template>

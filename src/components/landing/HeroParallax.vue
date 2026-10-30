@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { gsap, prefersReducedMotion, revealTitleCharacters } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion, revealTitleCharacters } from '../../utils/motion'
 import GooeyButton from '../GooeyButton.vue'
 import hillFar from '../../assets/landing/hero-fundo.webp'
 import hillBack from '../../assets/landing/hero-tras.webp'
@@ -34,7 +34,7 @@ onMounted(() => {
   addEventListener('resize', onScroll)
   ctx = gsap.context(() => {
     revealTitleCharacters('.hero__char')
-    gsap.from('.hero__lead, .hero__cta', { y: -30, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.08, delay: 1.6 })
+    gsap.from('.hero__lead, .hero__cta', { y: -30, opacity: 0, duration: DUR.slow, ease: EASE.expo, stagger: 0.08, delay: 1.6 })
   }, hero.value)
 })
 onUnmounted(() => {

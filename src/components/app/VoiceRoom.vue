@@ -267,7 +267,7 @@ onUnmounted(() => leave())
 <template>
   <section class="voice" aria-label="Sala de voz do projeto">
     <div class="bar">
-      <span class="label"><AppIcon name="video" :size="14" />Sala de voz<small v-if="joined">· {{ Object.keys(peers).length + 1 }} na sala</small></span>
+      <span class="label"><AppIcon name="video" :size="14" />Sala de voz<small v-if="joined">{{ Object.keys(peers).length + 1 }} na sala</small></span>
       <button v-if="!joined" type="button" class="join" :disabled="busy" @click="join">{{ busy ? 'Entrando…' : 'Entrar' }}</button>
       <template v-else>
         <button type="button" class="ctl" :class="{ off: !me.mic }" :aria-pressed="!me.mic" :title="me.mic ? 'Silenciar microfone' : 'Ativar microfone'" aria-label="Microfone" @click="toggleMic">{{ me.mic ? '🎙️' : '🔇' }}</button>
@@ -278,20 +278,20 @@ onUnmounted(() => leave())
       </template>
     </div>
     <p v-if="error" class="err" role="alert">{{ error }}</p>
-    <p v-if="anyoneRec" class="recnote" role="status">🔴 Esta reunião está sendo gravada para gerar a ata do projeto.</p>
+    <p v-if="anyoneRec" class="recnote" role="status"><span class="rec-dot" aria-hidden="true" />Esta reunião está sendo gravada para gerar a ata do projeto.</p>
     <p v-if="minutes.busy" class="recnote" role="status">Escrevendo a ata da reunião…</p>
-    <RouterLink v-if="minutes.page" class="recnote ok" :to="`/projetos/${minutes.page.project}/paginas/${minutes.page.id}`">📝 Ata salva: {{ minutes.page.title }}</RouterLink>
+    <RouterLink v-if="minutes.page" class="recnote ok" :to="`/projetos/${minutes.page.project}/paginas/${minutes.page.id}`"><AppIcon name="doc" :size="13" />Ata salva: {{ minutes.page.title }}</RouterLink>
     <div v-if="joined" class="tiles">
       <figure class="tile me" :class="{ speaking: speaking.me }" title="Duplo clique: tela cheia" @dblclick="fullscreen">
         <video v-if="local.screen || local.cam" :srcObject.prop="local.screen || local.cam" autoplay muted playsinline />
         <span v-else class="ava">Você</span>
-        <figcaption>Você<span v-if="!me.mic"> · 🔇</span></figcaption>
+        <figcaption>Você<AppIcon v-if="!me.mic" name="microphone-slash" :size="12" /></figcaption>
       </figure>
       <figure v-for="(p, id) in peers" :key="id" class="tile" :class="{ speaking: speaking[id] }" title="Duplo clique: tela cheia" @dblclick="fullscreen">
         <video v-if="(p.state.screen && p.media[2]) || (p.state.cam && p.media[1])" :srcObject.prop="p.state.screen && p.media[2] ? p.media[2] : p.media[1]" autoplay playsinline />
         <span v-else class="ava" :style="{ background: p.user.color }"><img v-if="p.user.avatar" :src="p.user.avatar" alt="" referrerpolicy="no-referrer" /><template v-else>{{ initials(p.user.name) }}</template></span>
         <audio v-if="p.media[0]" :srcObject.prop="p.media[0]" autoplay />
-        <figcaption>{{ p.user.name }}<span v-if="!p.state.mic"> · 🔇</span></figcaption>
+        <figcaption>{{ p.user.name }}<AppIcon v-if="!p.state.mic" name="microphone-slash" :size="12" /></figcaption>
       </figure>
     </div>
   </section>
@@ -310,7 +310,8 @@ onUnmounted(() => leave())
 .ctl.off { border-color: #f2a07a; }
 .leave { border-color: #c2410c; color: #f2a07a; }
 :is(.join, .leave, .ctl):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.recnote { margin: 0; font-size: 12.5px; color: #fca5a5; }
+.recnote { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 12.5px; color: var(--danger, #ff8a80); }
+.rec-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .recnote.ok { color: var(--accent-soft, var(--accent)); text-decoration: none; }
 .ctl.rec { border-color: #ef4444; color: #fca5a5; }
 .ctl:disabled { opacity: 0.5; cursor: default; }

@@ -3,10 +3,16 @@ import { useRouter } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
 import { PLANS } from './plans'
 import { openCustomPlan } from '../../utils/customPlanEntry'
+import { useAuth } from '../../composables/useAuth'
 
 const yearly = defineModel('yearly', { default: true })
 defineProps({ hero: Boolean })
 const router = useRouter()
+const { user } = useAuth()
+// o teste de 14 dias começa no cadastro; quem já tem conta assina direto
+const signup = { path: '/login', query: { modo: 'cadastro' } }
+const ctaTo = (p) => (p.month === undefined ? undefined : !user.value ? signup : p.month ? `/checkout?plano=${p.code}&ciclo=${yearly.value ? 'anual' : 'mensal'}` : '/comecar')
+const ctaLabel = (p) => (user.value && p.month ? 'Assinar' : p.cta)
 </script>
 
 <template>
@@ -35,7 +41,7 @@ const router = useRouter()
           <span v-else class="plan__val custom">Sob medida</span>
         </div>
         <p class="plan__bill">{{ p.month ? (yearly ? `Cobrado anualmente: R$ ${p.year * 12}/membro` : 'Cobrado mensalmente') : p.month === 0 ? 'Sem cartão de crédito' : 'Contrato anual' }}</p>
-        <GooeyButton :variant="p.popular ? 'primary' : 'secondary'" size="lg" block :to="p.month === undefined ? undefined : p.month ? `/checkout?plano=${p.code}&ciclo=${yearly ? 'anual' : 'mensal'}` : '/login'" class="plan__cta" @click="p.month === undefined && openCustomPlan(router)">{{ p.cta }}</GooeyButton>
+        <GooeyButton :variant="p.popular ? 'primary' : 'secondary'" size="lg" block :to="ctaTo(p)" class="plan__cta" @click="p.month === undefined && openCustomPlan(router)">{{ ctaLabel(p) }}</GooeyButton>
         <ul class="plan__list">
           <li v-for="f in p.features" :key="f">
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>{{ f }}

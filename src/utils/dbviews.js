@@ -12,7 +12,7 @@ export function dbView(view, tasks, title, h) {
   const due = (t) => (t.due ? `<span class="db-due${t.due < h.today && t.status !== 'done' ? ' late' : ''}">${short(t.due)}</span>` : '')
   const who = (t) => t.assignees.map((id) => esc(h.member(id)?.name)).filter(Boolean).join(', ')
   const name = (t) => `<span class="db-code">${esc(h.code(t))}</span> ${esc(t.title)}`
-  const card = (t) => `<button type="button" class="db-card" data-task="${t.id}">${dot(t)}<strong>${esc(t.title)}</strong><small>${esc(h.code(t))}${t.due ? ` · ${short(t.due)}` : ''}</small>${t.tags.length ? `<span class="db-tags">${t.tags.map((g) => `<em>#${esc(g)}</em>`).join('')}</span>` : ''}</button>`
+  const card = (t) => `<button type="button" class="db-card" data-task="${t.id}">${dot(t)}<strong>${esc(t.title)}</strong><small>${esc(h.code(t))}${t.due ? `, ${short(t.due)}` : ''}</small>${t.tags.length ? `<span class="db-tags">${t.tags.map((g) => `<em>#${esc(g)}</em>`).join('')}</span>` : ''}</button>`
   let body
   if (!tasks.length) body = '<p class="db-empty">Nenhuma tarefa aqui ainda.</p>'
   else if (view === 'table') {
@@ -38,5 +38,5 @@ export function dbView(view, tasks, title, h) {
   } else {
     body = `<ul class="db-list">${tasks.map((t) => `<li data-task="${t.id}">${dot(t)}${name(t)}${due(t)}</li>`).join('')}</ul>`
   }
-  return `<div class="md-db" data-view="${esc(view)}"><header><strong>${esc(title)}</strong><small>${esc(DB_VIEWS[view] || 'Lista')} · ${tasks.length} ${tasks.length === 1 ? 'tarefa' : 'tarefas'}</small></header>${body}</div>`
+  return `<div class="md-db" data-view="${esc(view)}"><header><strong>${esc(title)}</strong><small>${esc(DB_VIEWS[view] || 'Lista')}, ${tasks.length} ${tasks.length === 1 ? 'tarefa' : 'tarefas'}</small></header>${body}</div>`
 }

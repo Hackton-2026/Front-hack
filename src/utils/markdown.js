@@ -10,7 +10,7 @@ function inline(s, ctx = {}) {
     .replace(/\+\+([^+]+)\+\+/g, '<u>$1</u>')
     .replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+|data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />')
     .replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/\[\[([\w-]+)\|([^\]]*)\]\]/g, (_, id, t) => `<a href="?doc=${id}" class="md-page" data-doc="${id}">📄 ${ctx.docTitle?.(id) ? esc(ctx.docTitle(id)) : t || 'Sem título'}</a>`)
+    .replace(/\[\[([\w-]+)\|([^\]]*)\]\]/g, (_, id, t) => `<a href="?doc=${id}" class="md-page" data-doc="${id}"><i class="fi-rr-document" aria-hidden="true"></i> ${ctx.docTitle?.(id) ? esc(ctx.docTitle(id)) : t || 'Sem título'}</a>`)
 }
 
 export const outline = (md) => md.split('\n').map((l) => l.match(/^(#{1,3}) (.+)/)).filter(Boolean).map(([, h, t]) => ({ level: h.length, text: t.trim(), id: slug(t) }))
@@ -52,7 +52,7 @@ function media(kind, arg) {
   if (kind === 'video') return video(arg)
   if (kind === 'embed') return embed(arg)
   if (kind === 'audio') return `<audio class="md-media" src="${esc(arg)}" controls preload="metadata"></audio>`
-  if (kind === 'file') return `<a class="md-file" href="${esc(arg)}" target="_blank" rel="noopener" download>📎 <span>${name}</span><small>${host}</small></a>`
+  if (kind === 'file') return `<a class="md-file" href="${esc(arg)}" target="_blank" rel="noopener" download><i class="fi-rr-clip" aria-hidden="true"></i> <span>${name}</span><small>${host}</small></a>`
   return `<a class="md-bookmark" href="${esc(arg)}" target="_blank" rel="noopener"><strong>${host}</strong><small>${esc(arg)}</small></a>`
 }
 

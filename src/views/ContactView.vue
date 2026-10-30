@@ -42,7 +42,7 @@ function prepareEmail(event) {
       return
     }
   }
-  const subject = commercial.value ? 'Novexo para minha empresa' : 'Dúvidas e suporte — Novexo'
+  const subject = commercial.value ? 'Novexo para minha empresa' : 'Dúvidas e suporte | Novexo'
   const body = [
     `Nome: ${fields.name}`, `E-mail: ${fields.email}`,
     ...(commercial.value ? [`Empresa: ${fields.company}`, `Tamanho do time: ${fields.size || 'Não informado'}`] : []),

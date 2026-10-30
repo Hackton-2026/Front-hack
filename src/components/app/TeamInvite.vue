@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useOnboarding } from '../../composables/useOnboarding'
@@ -31,7 +31,7 @@ async function invite() {
     email.value = ''
     complete('invite')
     await nextTick()
-    if (!prefersReducedMotion() && list.value?.lastElementChild) gsap.from(list.value.lastElementChild, { y: 5, scale: 0.95, autoAlpha: 0, duration: 0.35, ease: 'power3.out' })
+    if (!prefersReducedMotion() && list.value?.lastElementChild) gsap.from(list.value.lastElementChild, { y: 5, scale: 0.95, autoAlpha: 0, duration: DUR.fast, ease: EASE.out })
   } catch (e) {
     error.value = e.message
   } finally {
@@ -49,12 +49,12 @@ async function invite() {
         <li class="person">
           <span class="ava">{{ (user?.first_name || user?.username || 'Você').slice(0, 2).toUpperCase() }}</span>
           <span>{{ user?.username || 'você' }}</span>
-          <small>Dono</small>
+          <small>Você</small>
         </li>
         <li v-for="m in invited" :key="m.email + m.project" class="person pending">
           <span class="ava">{{ m.email.slice(0, 2).toUpperCase() }}</span>
           <span class="person__mail">{{ m.email }}</span>
-          <small>Convidado · {{ m.project }}</small>
+          <small>Convidado, {{ m.project }}</small>
         </li>
       </ul>
       <form class="invite" novalidate @submit.prevent="invite">

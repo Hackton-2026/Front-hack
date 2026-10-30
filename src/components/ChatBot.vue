@@ -3,6 +3,7 @@ import { nextTick, ref } from 'vue'
 import { api } from '../services/api'
 import { useAuth } from '../composables/useAuth'
 import BaseButton from './BaseButton.vue'
+import FlaticonIcon from './FlaticonIcon.vue'
 
 const { loadMe } = useAuth()
 const open = ref(false)
@@ -64,7 +65,7 @@ async function decide(action, ok) {
     <section v-if="open" class="panel card" aria-label="Assistente">
       <header class="head">
         <strong>Assistente</strong>
-        <button class="close" aria-label="Fechar assistente" @click="open = false">×</button>
+        <button class="close" aria-label="Fechar assistente" @click="open = false"><FlaticonIcon name="cross-small" :size="18" /></button>
       </header>
       <div ref="list" class="messages" aria-live="polite">
         <p v-if="!messages.length" class="muted small">Oi! Posso fazer por você o que você faria no site: produtos, perfil, conversas e tarefas, sempre dentro das suas permissões.</p>
@@ -85,7 +86,7 @@ async function decide(action, ok) {
       </form>
     </section>
     <button class="toggle" :aria-expanded="open" aria-label="Abrir assistente" @click="open = !open">
-      {{ open ? '×' : 'IA' }}
+      <FlaticonIcon v-if="open" name="cross-small" :size="20" /><template v-else>IA</template>
     </button>
   </div>
 </template>

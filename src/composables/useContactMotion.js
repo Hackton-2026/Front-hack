@@ -1,7 +1,7 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import { SplitText } from 'gsap/SplitText'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { gsap, revealTitleCharacters } from '../utils/motion'
+import { EASE, DUR, gsap, revealTitleCharacters } from '../utils/motion'
 
 gsap.registerPlugin(SplitText)
 
@@ -33,16 +33,16 @@ export function useContactMotion(root) {
       })
 
       gsap.timeline({ defaults: {
-        autoAlpha: 0, y: 20, duration: 0.85, ease: 'power3.out',
+        autoAlpha: 0, y: 20, duration: DUR.slow, ease: EASE.out,
         clearProps: 'transform,opacity,visibility',
       } })
         .from(select('.contact-intro__lead'), {}, 0.5)
         .from(select('.contact-shortcut'), { stagger: 0.1 }, 0.65)
-        .from(select('.contact-panel'), { y: 30, duration: 1 }, 0.2)
+        .from(select('.contact-panel'), { y: 30, duration: DUR.long }, 0.2)
 
       select('[data-contact-reveal]').forEach(element => {
         gsap.from(element, {
-          autoAlpha: 0, y: 18, duration: 0.8, ease: 'power3.out',
+          autoAlpha: 0, y: 18, duration: DUR.slow, ease: EASE.out,
           clearProps: 'transform,opacity,visibility',
           scrollTrigger: { trigger: element, start: 'top 90%', once: true },
         })
@@ -50,13 +50,13 @@ export function useContactMotion(root) {
 
       context.add('fields', () => {
         gsap.fromTo(select('.contact-fields > *'), { y: 9, autoAlpha: 0 }, {
-          y: 0, autoAlpha: 1, duration: 0.4, stagger: 0.045, ease: 'power2.out',
+          y: 0, autoAlpha: 1, duration: DUR.fast, stagger: 0.045, ease: EASE.soft,
           overwrite: 'auto', clearProps: 'transform,opacity,visibility',
         })
       })
       context.add('answer', element => {
         gsap.fromTo(element, { y: 6, autoAlpha: 0 }, {
-          y: 0, autoAlpha: 1, duration: 0.35, ease: 'power2.out',
+          y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.soft,
           overwrite: 'auto', clearProps: 'transform,opacity,visibility',
         })
       })

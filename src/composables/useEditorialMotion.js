@@ -2,7 +2,7 @@ import { nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
 import { Flip } from 'gsap/Flip'
-import { gsap, prefersReducedMotion, revealTitleCharacters } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion, revealTitleCharacters } from '../utils/motion'
 
 gsap.registerPlugin(SplitText, Flip)
 
@@ -26,8 +26,8 @@ export function useEditorialMotion(root, { page, items } = {}) {
   function reveal(targets, trigger, vars = {}) {
     if (!targets.length) return
     return gsap.from(targets, {
-      autoAlpha: 0, y: 24, duration: 0.8, stagger: 0.075,
-      ease: 'power3.out', clearProps: 'transform,opacity,visibility',
+      autoAlpha: 0, y: 24, duration: DUR.slow, stagger: 0.075,
+      ease: EASE.out, clearProps: 'transform,opacity,visibility',
       scrollTrigger: { trigger, start: 'top 89%', once: true },
       ...vars,
     })
@@ -48,24 +48,24 @@ export function useEditorialMotion(root, { page, items } = {}) {
       })
     }
 
-    const intro = gsap.timeline({ defaults: { duration: 0.7, ease: 'power3.out', clearProps: 'transform,opacity,visibility' } })
+    const intro = gsap.timeline({ defaults: { duration: DUR.mid, ease: EASE.out, clearProps: 'transform,opacity,visibility' } })
     if (!isBlog) intro.from(select('.breadcrumbs'), { y: 12, autoAlpha: 0 }, 0)
     const introContent = isBlog ? [] : select('.article-head__lead, .article-head__byline')
     if (introContent.length) {
       intro.from(introContent, {
-        y: -30, autoAlpha: 0, duration: 0.8, ease: 'expo.out', stagger: 0.08,
+        y: -30, autoAlpha: 0, duration: DUR.slow, ease: EASE.expo, stagger: 0.08,
       }, 1.6)
     }
 
     const cover = select(isBlog ? '.news-feature' : '.article-cover')[0]
     if (cover) {
-      reveal([cover], cover, { y: 32, duration: 1, stagger: 0 })
+      reveal([cover], cover, { y: 32, duration: DUR.long, stagger: 0 })
       reveal(select(isBlog ? '.news-feature__content > *' : '.article-cover__words > *, .article-cover__demo'), cover, { y: 18, stagger: 0.09 })
 
       if (context.conditions.desktop) {
         gsap.fromTo(select(isBlog ? '.news-feature__photo' : '.article-cover__photo'),
           { scale: 1.1, yPercent: -3 },
-          { scale: 1.1, yPercent: 3, ease: 'none',
+          { scale: 1.1, yPercent: 3, ease: EASE.linear,
             scrollTrigger: { trigger: cover, start: 'top bottom', end: 'bottom top', scrub: 0.8 },
           })
       }
@@ -74,7 +74,7 @@ export function useEditorialMotion(root, { page, items } = {}) {
     if (isBlog) {
       const feed = select('.news-feed__heading')[0]
       reveal(select('.news-feed__heading > *'), feed)
-      reveal(select('.news-filters > button'), select('.news-filters')[0], { y: 12, stagger: 0.045, duration: 0.55 })
+      reveal(select('.news-filters > button'), select('.news-filters')[0], { y: 12, stagger: 0.045, duration: DUR.base })
       const next = select('.news-next')[0]
       reveal(select('.news-next > *'), next, { stagger: 0.12 })
     } else {
@@ -84,7 +84,7 @@ export function useEditorialMotion(root, { page, items } = {}) {
         reveal([...section.children], section, { y: 20, stagger: 0.065 })
       })
       select('.flaticon--framed').forEach(icon => {
-        reveal([icon], icon.parentElement, { y: 8, scale: 0.94, duration: 0.7, stagger: 0 })
+        reveal([icon], icon.parentElement, { y: 8, scale: 0.94, duration: DUR.mid, stagger: 0 })
       })
       const explore = select('.explore-section')[0]
       reveal(select('.explore-section__head, .explore-card'), explore, { y: 28, stagger: 0.12 })
@@ -93,7 +93,7 @@ export function useEditorialMotion(root, { page, items } = {}) {
     context.add('openAnswer', details => {
       const answer = details.querySelector('p')
       if (answer) gsap.fromTo(answer, { y: 8, autoAlpha: 0 }, {
-        y: 0, autoAlpha: 1, duration: 0.35, ease: 'power2.out',
+        y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.soft,
         overwrite: 'auto', clearProps: 'transform,opacity,visibility',
       })
     })
@@ -111,7 +111,7 @@ export function useEditorialMotion(root, { page, items } = {}) {
       const existing = cards.filter(card => revealedCards.has(card))
       if (previousState && existing.length) {
         Flip.from(previousState, {
-          targets: existing, duration: 0.55, ease: 'power3.inOut',
+          targets: existing, duration: DUR.base, ease: EASE.inOut,
           scale: true, prune: true, stagger: 0.025,
         })
       }
@@ -123,15 +123,15 @@ export function useEditorialMotion(root, { page, items } = {}) {
       fresh.forEach((card, index) => {
         const offset = (index % columns) * 0.065
         const entrance = gsap.timeline({
-          defaults: { ease: 'power2.out', clearProps: 'transform,opacity,visibility' },
+          defaults: { ease: EASE.soft, clearProps: 'transform,opacity,visibility' },
           scrollTrigger: { trigger: card, start: 'top 88%', once: true },
           onStart: () => revealedCards.add(card),
         })
-        entrance.to(card, { autoAlpha: 1, y: 0, duration: 0.85 }, offset)
-          .fromTo(card.querySelector('.blog-card__cover'), { scale: 1.025 }, { scale: 1, duration: 1.05 }, offset)
+        entrance.to(card, { autoAlpha: 1, y: 0, duration: DUR.slow }, offset)
+          .fromTo(card.querySelector('.blog-card__cover'), { scale: 1.025 }, { scale: 1, duration: DUR.long }, offset)
           .fromTo(card.querySelectorAll('h3, p, time'),
             { autoAlpha: 0, y: 8 },
-            { autoAlpha: 1, y: 0, duration: 0.65, stagger: 0.065 }, offset + 0.12)
+            { autoAlpha: 1, y: 0, duration: DUR.mid, stagger: 0.065 }, offset + 0.12)
       })
     }, root.value)
   }

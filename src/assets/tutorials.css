@@ -1,8 +1,17 @@
 .tutorial-page[class] {
-  --footer-transition-color: #000; --tutorial-line: rgb(255 255 255 / 0.12);
+  --tutorial-bg: #000;
+  --footer-transition-color: var(--tutorial-bg);
+  --tutorial-line: rgb(255 255 255 / 0.12);
+  --tutorial-chip: rgb(255 255 255 / 0.025);
+  --tutorial-edge: rgb(219 172 135 / 0.24);
+  --tutorial-text: #ded0c3;
   --tutorial-muted: #ada39a;
+  --tutorial-faint: #95877c;
   --tutorial-accent: #ffb77f;
-  background: #000;
+  --tutorial-orange: #e58a46;
+  --tutorial-surface: #14110e;
+  --tutorial-surface-deep: #080706;
+  background: var(--tutorial-bg);
   overflow-x: clip;
 }
 
@@ -28,7 +37,7 @@
 
 .tutorial-page .intro > h1 em {
   display: inline-block;
-  color: #f7b786;
+  color: var(--tutorial-accent);
 }
 
 .tutorial-page .intro > p:last-child {
@@ -67,7 +76,7 @@
   margin: 0;
   border: 0;
   border-radius: 0;
-  color: #e58a46;
+  color: var(--tutorial-orange);
   font-family: 'Geist', system-ui, sans-serif;
   font-size: clamp(60px, 5vw, 76px);
   font-weight: 500;
@@ -106,9 +115,9 @@
 .tutorial-page .guide video,
 .tutorial-page .guide .screenshot,
 .tutorial-page .guide .prompt-preview {
-  border: 1px solid rgb(219 172 135 / 0.24);
+  border: 1px solid var(--tutorial-edge);
   border-radius: 20px;
-  box-shadow: 0 20px 70px -30px #000;
+  box-shadow: 0 20px 70px -30px var(--tutorial-bg);
 }
 
 .tutorial-page .guide .video-placeholder {
@@ -116,14 +125,14 @@
   isolation: isolate;
   gap: 16px;
   padding: 30px;
-  background: #14110e;
+  background: var(--tutorial-surface);
   transition:
     border-color 0.4s ease,
     box-shadow 0.4s ease;
 }
 
 .tutorial-page .guide .video-placeholder:hover {
-  border-color: rgb(251 164 92 / 0.5);
+  border-color: color-mix(in srgb, var(--tutorial-accent) 50%, transparent);
 }
 
 .tutorial-page .guide .video-placeholder > svg {
@@ -131,20 +140,20 @@
   width: 34px;
   height: 34px;
   padding: 20px;
-  border: 1px solid #ffffff25;
+  border: 1px solid var(--tutorial-line);
   border-radius: 50%;
-  background: rgb(255 255 255 / 0.025);
-  stroke: #e8b58d;
+  background: var(--tutorial-chip);
+  stroke: var(--tutorial-accent);
 }
 
 .tutorial-page .guide .video-placeholder > span {
-  color: #ded0c3;
+  color: var(--tutorial-text);
   font-size: 14px;
 }
 
 .tutorial-page .guide .video-placeholder > p {
   max-width: 320px;
-  color: #95877c;
+  color: var(--tutorial-faint);
   font-size: 12px;
 }
 
@@ -159,7 +168,7 @@
   display: inline-block;
   margin-bottom: 36px;
   border-radius: 999px;
-  background: #c06f3210;
+  background: color-mix(in srgb, var(--tutorial-orange) 6%, transparent);
 }
 
 .tutorial-page.ai-guide main.guide > section {
@@ -181,7 +190,7 @@
 
 .tutorial-page.ai-guide .guide .prompt-preview {
   padding: 48px clamp(24px, 8vw, 140px);
-  background: #080706;
+  background: var(--tutorial-surface-deep);
 }
 
 .tutorial-page.ai-guide .guide .examples,
@@ -294,7 +303,7 @@
   position: absolute;
   inset: -1px 0 auto;
   height: 1px;
-  background: rgb(217 136 75 / 0.6);
+  background: color-mix(in srgb, var(--tutorial-orange) 60%, transparent);
   transform: scaleX(var(--line-progress, 1));
   transform-origin: left;
   pointer-events: none;
@@ -303,7 +312,7 @@
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .tutorial-page .guide .video-placeholder {
     transition:
-      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.6s var(--ease),
       border-color 0.4s,
       box-shadow 0.4s;
   }
@@ -312,13 +321,13 @@
   }
   .tutorial-page .guide .video-placeholder > svg {
     transition:
-      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.6s var(--ease),
       background 0.4s,
       border-color 0.4s;
   }
   .tutorial-page .guide .video-placeholder:hover > svg {
     transform: scale(1.1);
-    border-color: #fba45c70;
-    background: #e58a4612;
+    border-color: color-mix(in srgb, var(--tutorial-accent) 44%, transparent);
+    background: color-mix(in srgb, var(--tutorial-orange) 7%, transparent);
   }
 }

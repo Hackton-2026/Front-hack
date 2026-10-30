@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import gsap from 'gsap'
 import { Flip } from 'gsap/Flip'
 import FlaticonIcon from '../FlaticonIcon.vue'
-import { prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, prefersReducedMotion } from '../../utils/motion'
 
 gsap.registerPlugin(Flip)
 
@@ -27,8 +27,8 @@ async function advance(task) {
   el.style.height = ''
   await nextTick()
   const depois = el.offsetHeight
-  Flip.from(estado, { targets: el.querySelectorAll('[data-flip-id]'), duration: 0.75, ease: 'power3.inOut' })
-  if (antes !== depois) gsap.fromTo(el, { height: antes }, { height: depois, duration: 0.75, ease: 'power3.inOut', clearProps: 'height' })
+  Flip.from(estado, { targets: el.querySelectorAll('[data-flip-id]'), duration: DUR.slow, ease: EASE.inOut })
+  if (antes !== depois) gsap.fromTo(el, { height: antes }, { height: depois, duration: DUR.slow, ease: EASE.inOut, clearProps: 'height' })
 }
 
 const touched = ref(false)

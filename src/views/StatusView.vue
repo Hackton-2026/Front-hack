@@ -85,7 +85,7 @@ onUnmounted(() => {
             <li v-for="c in CHECKS" :key="c.id">
               <span class="status-dot" :class="`is-${c.state}`" aria-hidden="true" />
               <div class="status-row">
-                <div><h3>{{ c.name }}</h3><p>{{ c.what }}<template v-if="c.extra"> · {{ c.extra }}</template></p></div>
+                <div><h3>{{ c.name }}</h3><p>{{ c.what }}<template v-if="c.extra">, {{ c.extra }}</template></p></div>
                 <div class="status-meta">
                   <strong :class="`is-${c.state}`">{{ LABEL[c.state] }}</strong>
                   <span v-if="c.ms !== null">{{ c.ms }} ms</span>

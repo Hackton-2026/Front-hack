@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useOnboarding } from '../../composables/useOnboarding'
 import AppIcon from './AppIcon.vue'
 import BrandIcon from './BrandIcon.vue'
@@ -26,7 +26,7 @@ function connect(app, e) {
   if (connected.value.includes(app.slug)) return
   connected.value.push(app.slug)
   complete('integration')
-  if (!prefersReducedMotion()) gsap.fromTo(e.currentTarget, { scale: 0.94 }, { scale: 1, duration: 0.45, ease: 'back.out(2)' })
+  if (!prefersReducedMotion()) gsap.fromTo(e.currentTarget, { scale: 0.94 }, { scale: 1, duration: DUR.base, ease: EASE.pop })
 }
 </script>
 

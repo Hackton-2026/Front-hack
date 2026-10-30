@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
+import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({ view: { type: Object, required: true } })
 const { updateItem, createTask } = useWorkspace()
@@ -37,8 +38,8 @@ function drag(n, e) {
         <textarea v-model="n.text" rows="4" placeholder="Escreva uma ideia…" aria-label="Texto da nota" @input="save" />
         <div class="actions">
           <button type="button" title="Trocar cor" aria-label="Trocar cor" @click="recolor(n)">●</button>
-          <button type="button" title="Virar tarefa" @click="toTask(n)">→ tarefa</button>
-          <button type="button" title="Apagar nota" aria-label="Apagar nota" @click="remove(n)">×</button>
+          <button type="button" title="Virar tarefa" @click="toTask(n)">Virar tarefa</button>
+          <button type="button" title="Apagar nota" aria-label="Apagar nota" @click="remove(n)"><AppIcon name="close" :size="12" /></button>
         </div>
       </div>
       <p v-if="!notes.length" class="empty">Quadro vazio. Clique em "+ Nota" para começar.</p>

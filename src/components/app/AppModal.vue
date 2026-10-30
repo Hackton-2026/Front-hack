@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onUnmounted, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import AppIcon from './AppIcon.vue'
 
 const props = defineProps({ open: Boolean, title: { type: String, required: true } })
@@ -15,8 +15,8 @@ watch(() => props.open, async (v) => {
   box.value?.querySelector('input, textarea, select')?.focus()
   if (!prefersReducedMotion()) {
     gsap.timeline()
-      .fromTo(box.value, { y: 14, scale: 0.97, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.32, ease: 'power3.out' })
-      .from(box.value.querySelectorAll('.f, footer'), { y: 6, autoAlpha: 0, duration: 0.25, stagger: 0.04, ease: 'power2.out' }, '-=0.18')
+      .fromTo(box.value, { y: 14, scale: 0.97, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
+      .from(box.value.querySelectorAll('.f, footer'), { y: 6, autoAlpha: 0, duration: DUR.press, stagger: 0.04, ease: EASE.soft }, '-=0.18')
   }
 }, { immediate: true })
 onUnmounted(() => removeEventListener('keydown', onKey))
@@ -40,7 +40,7 @@ onUnmounted(() => removeEventListener('keydown', onKey))
 <style scoped>
 .ov { position: fixed; inset: 0; z-index: 85; display: grid; place-items: center; padding: 1rem; background: rgb(0 0 0 / 0.55); }
 .box {
-  --surface: #181614; --surface-2: #211f1c; --line: #2e2b27; --line-strong: #3d3934; --text: #f2efea; --muted: #a29d95; --accent: #e56515; --accent-soft: #fba45c;
+  --surface: #181614; --surface-2: #211f1c; --line: #2e2b27; --line-strong: #3d3934; --text: #f2efea; --muted: #a29d95; --accent: #e56515; --accent-soft: #fba45c; --on-accent: #140700;
   display: flex; flex-direction: column; gap: 0.9rem; width: min(32rem, 100%); max-height: calc(100vh - 2rem); overflow-y: auto; padding: 1.2rem 1.3rem;
   border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); box-shadow: 0 30px 70px rgb(0 0 0 / 0.55);
   font: 400 14px/1.45 'Geist', 'Helvetica Neue', system-ui, sans-serif; color: var(--text);
@@ -56,7 +56,7 @@ footer { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25
 .box :deep(:is(input:not([type='checkbox']), textarea, select)) { width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 7px; background: #0f0e0d; font: inherit; color: var(--text); outline: none; }
 .box :deep(:is(input, textarea, select):focus) { border-color: var(--accent); }
 .box :deep(.btn) { padding: 0.5rem 0.95rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); font-weight: 500; color: var(--text); cursor: pointer; }
-.box :deep(.btn.primary) { border-color: var(--accent); background: var(--accent); color: #140700; }
+.box :deep(.btn.primary) { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
 .box :deep(.btn.danger) { border-color: #d9483b; background: #d9483b; color: #fff; }
 .box :deep(.btn:disabled) { opacity: 0.5; cursor: not-allowed; }
 .box :deep(.chips) { display: flex; flex-wrap: wrap; gap: 0.35rem; }

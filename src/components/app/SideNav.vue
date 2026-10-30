@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import { useOnboarding } from '../../composables/useOnboarding'
@@ -62,11 +62,11 @@ const toggleProject = (p) => (openProjects.has(p.id) ? openProjects.delete(p.id)
 
 function onEnter(el, done) {
   if (reduced) return done()
-  gsap.fromTo(el, { height: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', autoAlpha: 1, duration: 0.3, ease: 'power3.out', clearProps: 'overflow', onComplete: done })
+  gsap.fromTo(el, { height: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', autoAlpha: 1, duration: DUR.fast, ease: EASE.out, clearProps: 'overflow', onComplete: done })
 }
 function onLeave(el, done) {
   if (reduced) return done()
-  gsap.to(el, { height: 0, autoAlpha: 0, overflow: 'hidden', duration: 0.22, ease: 'power2.in', onComplete: done })
+  gsap.to(el, { height: 0, autoAlpha: 0, overflow: 'hidden', duration: DUR.press, ease: EASE.in, onComplete: done })
 }
 
 async function startProject() {
@@ -181,8 +181,9 @@ onUnmounted(() => {
 .tree > *::before { top: calc(-1 * var(--gap)); width: 7px; height: calc(var(--mid) + var(--gap)); border: 0 solid var(--line-strong); border-width: 0 0 1px 1px; border-end-start-radius: 7px; }
 .tree > :not(:last-child)::after { top: 0; bottom: calc(-1 * var(--gap)); border-inline-start: 1px solid var(--line-strong); }
 .tree > :first-child::before { top: -6px; height: calc(var(--mid) + 6px); }
-.nest { margin-block-start: 2px; margin-inline-start: 23px; }
-.row > .nest { margin-inline-start: 27px; }
+/* as linhas ficam 9px à esquerda de cada item: o padding as mantém dentro da área que o GSAP revela ao abrir, e elas crescem junto */
+.nest { margin-block-start: 2px; margin-inline-start: 14px; padding-inline-start: 9px; }
+.row > .nest { margin-inline-start: 18px; }
 .more { justify-content: flex-start; }
 .new { gap: 0.45rem; }
 .new :deep(.app-icon) { flex: none; }

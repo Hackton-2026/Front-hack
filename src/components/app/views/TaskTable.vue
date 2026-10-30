@@ -4,6 +4,7 @@ import { useWorkspace } from '../../../composables/useWorkspace'
 import { useUi } from '../../../composables/useUi'
 import Avatars from '../Avatars.vue'
 import AppSelect from '../AppSelect.vue'
+import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({ tasks: { type: Array, required: true } })
 const { STATUSES, PRIORITIES, code, updateTask, isOverdue } = useWorkspace()
@@ -31,7 +32,7 @@ function sort(k) {
       <thead>
         <tr>
           <th v-for="[k, label] in COLS" :key="k" :aria-sort="sortBy === k ? (asc ? 'ascending' : 'descending') : 'none'">
-            <button type="button" @click="sort(k)">{{ label }} <span v-if="sortBy === k">{{ asc ? '↑' : '↓' }}</span></button>
+            <button type="button" @click="sort(k)">{{ label }} <AppIcon v-if="sortBy === k" name="chevron" :size="12" :style="asc ? { transform: 'rotate(180deg)' } : null" /></button>
           </th>
         </tr>
       </thead>

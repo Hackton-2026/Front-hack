@@ -21,11 +21,17 @@ function errorText(data) {
 }
 
 async function refreshAccess() {
-  const res = await fetch(`${API_URL}/api/auth/login/refresh/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh: tokens.refresh }),
-  })
+  let res
+  try {
+    res = await fetch(`${API_URL}/api/auth/login/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: tokens.refresh }),
+    })
+  } catch {
+    // sem rede: erro sem status, e os tokens ficam (não é sessão vencida)
+    throw new Error(errorText(null))
+  }
   if (!res.ok) return false
   tokens.set(await res.json())
   return true

@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 
 defineProps({ reactions: { type: Array, default: () => [] } })
@@ -10,12 +10,12 @@ const { state, member } = useWorkspace()
 const picking = ref(false)
 const names = (users) => users.map((id) => member(id)?.name || '?').join(', ')
 const root = ref(null)
-const pop = (el) => !prefersReducedMotion() && el && gsap.fromTo(el, { scale: 0.7 }, { scale: 1, duration: 0.45, ease: 'back.out(3.2)' })
+const pop = (el) => !prefersReducedMotion() && el && gsap.fromTo(el, { scale: 0.7 }, { scale: 1, duration: DUR.base, ease: EASE.popStrong })
 const pick = (e) => { emit('toggle', e); picking.value = false; nextTick(() => setTimeout(() => pop([...(root.value?.querySelectorAll('.r') || [])].find((b) => b.textContent.startsWith(e))), 250)) }
 async function openPicker() {
   picking.value = !picking.value
   await nextTick()
-  if (picking.value && !prefersReducedMotion()) gsap.from(root.value.querySelectorAll('.pick button'), { scale: 0.4, autoAlpha: 0, duration: 0.25, stagger: 0.015, ease: 'back.out(2.5)' })
+  if (picking.value && !prefersReducedMotion()) gsap.from(root.value.querySelectorAll('.pick button'), { scale: 0.4, autoAlpha: 0, duration: DUR.press, stagger: 0.015, ease: EASE.pop })
 }
 </script>
 

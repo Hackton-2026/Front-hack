@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { esc, outline, render, toggleCheck } from '../utils/markdown'
 import { dbView } from '../utils/dbviews'
 import { IMPORT_KINDS, importFiles } from '../utils/importers'
@@ -10,6 +10,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useOnboarding } from '../composables/useOnboarding'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
 import BlockMenu from '../components/app/BlockMenu.vue'
 import AppModal from '../components/app/AppModal.vue'
@@ -17,8 +18,8 @@ import AppModal from '../components/app/AppModal.vue'
 const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
 const ICONS = ['', '📄', '📌', '✅', '🚀', '💡', '📚', '🧭', '🛠️', '📈', '🗓️', '🔒', '🎯', '🧪', '👋']
 const TOOLBAR = [
-  ['B', '**', '**'], ['I', '*', '*'], ['S', '~~', '~~'],
-  ['• Lista', '- ', ''], ['☐ Tarefa', '- [ ] ', ''], ['1. Lista', '1. ', ''], ['❝', '> ', ''], ['</>', '`', '`'], ['Link', '[', '](https://)'], ['—', '\n---\n', ''],
+  ['B', 'Negrito', '**', '**'], ['I', 'Itálico', '*', '*'], ['S', 'Riscado', '~~', '~~'],
+  ['fi:list', 'Lista', '- ', ''], ['fi:checkbox', 'Lista de tarefas', '- [ ] ', ''], ['1.', 'Lista numerada', '1. ', ''], ['fi:quote-right', 'Citação', '> ', ''], ['</>', 'Código', '`', '`'], ['fi:link-alt', 'Link', '[', '](https://)'], ['fi:minus', 'Divisor', '\n---\n', ''],
 ]
 const LABEL_COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3b82f6', '#a855f7', '#ec4899', '#919599']
 
@@ -111,7 +112,7 @@ async function open(id) {
   if (id) for (let p = byId(byId(id)?.parentId); p; p = byId(p.parentId)) expanded.value.add(p.id)
   router.replace({ query: id ? { doc: id } : {} })
   await nextTick()
-  if (!prefersReducedMotion() && editor.value) gsap.fromTo(editor.value, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.3, ease: 'power2.out' })
+  if (!prefersReducedMotion() && editor.value) gsap.fromTo(editor.value, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.soft })
 }
 watch(() => route.query.doc, (id) => id !== activeId.value && open(id || null))
 async function create(fields = {}) {
@@ -143,7 +144,7 @@ function restore(v) {
   toast('Versão restaurada.')
 }
 
-function format([, before, after]) {
+function format([, , before, after]) {
   const el = area.value
   if (!el || doc.value.locked) return
   const { selectionStart: a, selectionEnd: b, value } = el
@@ -461,17 +462,17 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
         </div>
 
         <div class="tags">
-          <span v-for="id in doc.labels" :key="id" class="chip" :style="{ '--c': label(id)?.color }">{{ label(id)?.name }}<button v-if="!doc.locked" type="button" :aria-label="`Tirar etiqueta ${label(id)?.name}`" @click="doc.labels.splice(doc.labels.indexOf(id), 1); touch()">×</button></span>
+          <span v-for="id in doc.labels" :key="id" class="chip" :style="{ '--c': label(id)?.color }">{{ label(id)?.name }}<button v-if="!doc.locked" type="button" :aria-label="`Tirar etiqueta ${label(id)?.name}`" @click="doc.labels.splice(doc.labels.indexOf(id), 1); touch()"><AppIcon name="close" :size="11" /></button></span>
           <form v-if="!doc.locked" class="tag-add" @submit.prevent="addLabel">
             <input v-model="newLabel" list="wiki-labels" placeholder="+ etiqueta" aria-label="Adicionar etiqueta" />
             <datalist id="wiki-labels"><option v-for="l in wiki.labels" :key="l.id" :value="l.name" /></datalist>
           </form>
         </div>
-        <p class="meta">{{ words }} palavras · {{ Math.max(1, Math.round(words / 200)) }} min de leitura · criada {{ when(doc.createdAt || doc.updatedAt) }} · editada {{ when(doc.updatedAt) }}</p>
+        <p class="meta">{{ words }} palavras, {{ Math.max(1, Math.round(words / 200)) }} min de leitura, criada {{ when(doc.createdAt || doc.updatedAt) }}, editada {{ when(doc.updatedAt) }}</p>
 
         <template v-if="mode === 'edit' && !doc.locked">
           <div class="tools" role="toolbar" aria-label="Formatação">
-            <button v-for="t in TOOLBAR" :key="t[0]" type="button" :title="t[0]" @mousedown.prevent @click="format(t)">{{ t[0] }}</button>
+            <button v-for="t in TOOLBAR" :key="t[1]" type="button" :title="t[1]" :aria-label="t[1]" @mousedown.prevent @click="format(t)"><FlaticonIcon v-if="t[0].startsWith('fi:')" :name="t[0].slice(3)" :size="14" /><template v-else>{{ t[0] }}</template></button>
           </div>
           <div class="write" @mousemove="onHover" @mouseleave="hoverLine = null">
             <button v-if="hoverLine && !menu" type="button" class="line-add" :style="{ top: `${hoverLine.top + hoverLine.h / 2 - 11}px` }" aria-label="Adicionar bloco abaixo desta linha" title="Clique para adicionar um bloco abaixo (ou digite /)" @mousedown.prevent @click="addBelow(hoverLine.i)">+</button>
@@ -522,7 +523,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
       <template v-if="wiki.labels.length">
         <h3>Etiquetas</h3>
         <div class="labels">
-          <span v-for="l in wiki.labels" :key="l.id" class="chip" :style="{ '--c': l.color }">{{ l.name }}<button type="button" :aria-label="`Apagar etiqueta ${l.name}`" @click="deleteLabel(l.id)">×</button></span>
+          <span v-for="l in wiki.labels" :key="l.id" class="chip" :style="{ '--c': l.color }">{{ l.name }}<button type="button" :aria-label="`Apagar etiqueta ${l.name}`" @click="deleteLabel(l.id)"><AppIcon name="close" :size="11" /></button></span>
         </div>
       </template>
     </div>
@@ -531,7 +532,6 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 
 <style scoped>
 .wiki { display: grid; grid-template-columns: 17rem minmax(0, 1fr); height: 100%; min-height: 0; }
-@media (max-width: 760px) { .wiki { grid-template-columns: minmax(0, 1fr); height: auto; } .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 45vh; } .page { grid-template-columns: minmax(0, 1fr); } .side { display: none; } }
 .list { display: flex; flex-direction: column; gap: 1px; min-height: 0; padding: 0.9rem 0.6rem; border-right: 1px solid var(--line); overflow-y: auto; }
 .list__head { display: flex; align-items: center; justify-content: space-between; padding: 0 0.35rem 0.6rem; }
 .head-btns { display: flex; gap: 0.3rem; }
@@ -654,4 +654,6 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .card__icon { font-size: 1.3rem; }
 .card .muted { padding: 0; }
 :is(.new-page, .row button, button.row, .mini, .caret, .add-col, .icon, .seg button, .menu__box button, .tools button, .chip, .sub, .toc, .link, .card, .new, .emoji summary):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+/* depois das regras base: antes delas, .page e .side as sobrescreviam e o editor ficava com 50px no celular */
+@media (max-width: 760px) { .wiki { grid-template-columns: minmax(0, 1fr); height: auto; } .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 45vh; } .page { grid-template-columns: minmax(0, 1fr); } .side { display: none; } }
 </style>

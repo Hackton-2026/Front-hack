@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import GooeyButton from '../GooeyButton.vue'
 import FlaticonIcon from '../FlaticonIcon.vue'
 import footerPhoto from '../../assets/landing/footer-sunset.webp'
@@ -37,14 +37,14 @@ let ctx
 onMounted(() => {
   if (prefersReducedMotion()) return
   ctx = gsap.context(() => {
-    gsap.fromTo('.foot__photo', { scale: 1.18 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: root.value, start: 'top bottom', end: 'bottom bottom', scrub: true } })
+    gsap.fromTo('.foot__photo', { scale: 1.18 }, { scale: 1, ease: EASE.linear, scrollTrigger: { trigger: root.value, start: 'top bottom', end: 'bottom bottom', scrub: true } })
     if (root.value.querySelector('.foot__transition')) {
       gsap.fromTo('.foot__transition', { y: 40, opacity: 0.45 }, {
-        y: 0, opacity: 1, ease: 'none',
+        y: 0, opacity: 1, ease: EASE.linear,
         scrollTrigger: { trigger: root.value, start: 'top bottom', end: 'top 30%', scrub: 1 },
       })
     }
-    gsap.from('.foot__head > *', { y: 30, opacity: 0, duration: 1.2, ease: 'expo.out', stagger: 0.12, scrollTrigger: { trigger: root.value, start: 'top 60%', once: true } })
+    gsap.from('.foot__head > *', { y: 30, opacity: 0, duration: DUR.enter, ease: EASE.expo, stagger: 0.12, scrollTrigger: { trigger: root.value, start: 'top 60%', once: true } })
   }, root.value)
 })
 onUnmounted(() => ctx?.revert())

@@ -1,6 +1,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, gsap, prefersReducedMotion } from '../utils/motion'
 
 const props = defineProps({
   delay: { type: Number, default: 0 },
@@ -14,7 +14,7 @@ onMounted(() => {
   if (prefersReducedMotion()) return
   tween = gsap.fromTo(path.value, { drawSVG: '0%' }, {
     drawSVG: '100%',
-    ease: 'power2.inOut',
+    ease: EASE.inOutSoft,
     duration: props.duration,
     delay: props.delay,
     scrollTrigger: { trigger: path.value, start: 'top 95%', once: true },

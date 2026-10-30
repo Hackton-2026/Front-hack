@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
@@ -75,14 +75,14 @@ const series = computed(() => {
 async function animate() {
   await nextTick()
   if (prefersReducedMotion() || !root.value) return
-  gsap.fromTo(root.value.querySelectorAll('.bar i'), { scaleX: 0 }, { scaleX: 1, transformOrigin: 'left', duration: 0.8, stagger: 0.03, ease: 'power3.out' })
-  gsap.fromTo(root.value.querySelectorAll('.ln'), { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.1, ease: 'power2.inOut' })
-  gsap.fromTo(root.value.querySelectorAll('.area'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.8, delay: 0.4 })
+  gsap.fromTo(root.value.querySelectorAll('.bar i'), { scaleX: 0 }, { scaleX: 1, transformOrigin: 'left', duration: DUR.slow, stagger: 0.03, ease: EASE.out })
+  gsap.fromTo(root.value.querySelectorAll('.ln'), { drawSVG: '0%' }, { drawSVG: '100%', duration: DUR.enter, ease: EASE.inOutSoft })
+  gsap.fromTo(root.value.querySelectorAll('.area'), { autoAlpha: 0 }, { autoAlpha: 1, duration: DUR.slow, delay: 0.4 })
 }
 watch([pid, span], animate)
 onMounted(() => {
   animate()
-  if (!prefersReducedMotion()) gsap.from(root.value.querySelectorAll('.card'), { y: 14, autoAlpha: 0, duration: 0.5, stagger: 0.07, ease: 'power3.out' })
+  if (!prefersReducedMotion()) gsap.from(root.value.querySelectorAll('.card'), { y: 14, autoAlpha: 0, duration: DUR.base, stagger: 0.07, ease: EASE.out })
 })
 </script>
 
@@ -101,7 +101,7 @@ onMounted(() => {
       <div v-for="k in kpis" :key="k.id" class="kpi">
         <small>{{ k.label }}</small>
         <strong>{{ k.v }}</strong>
-        <span v-if="k.d" class="delta" :class="deltaClass(k)">{{ k.d > 0 ? '▲' : '▼' }} {{ Math.abs(k.d) }}{{ k.unit || '' }} vs {{ span }} d antes</span>
+        <span v-if="k.d" class="delta" :class="deltaClass(k)"><AppIcon :name="k.d > 0 ? 'arrow-trend-up' : 'arrow-trend-down'" :size="12" />{{ Math.abs(k.d) }}{{ k.unit || '' }} vs {{ span }} d antes</span>
         <span v-else class="delta">{{ k.id === 'late' ? 'hoje' : 'igual ao período anterior' }}</span>
       </div>
     </div>
@@ -181,11 +181,11 @@ i.c2 { background: var(--success, #7fc47a); }
 .kpi { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.85rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .kpi small { font-size: 12px; color: var(--muted); }
 .kpi strong { font: 600 1.6rem/1.2 'Geist', system-ui, sans-serif; font-variant-numeric: tabular-nums; color: var(--text); }
-.delta { font-size: 11.5px; color: var(--muted); }
+.delta { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 11.5px; color: var(--muted); }
 .delta.up { color: var(--success, #7fc47a); }
 .delta.down { color: var(--danger, #ff8a80); }
 .insights { display: flex; flex-direction: column; gap: 0.4rem; margin: 1rem 1.25rem 0; padding: 0.8rem 1rem; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--accent) 7%, var(--surface)); list-style: none; font-size: 13.5px; }
 .insights li { display: flex; align-items: center; gap: 0.5rem; }
-.insights :deep(svg) { flex: none; color: var(--accent-soft); }
+.insights :deep(.app-icon) { flex: none; color: var(--accent-soft); }
 @media (max-width: 760px) { .grid, .kpis { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
 </style>

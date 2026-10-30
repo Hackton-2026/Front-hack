@@ -19,7 +19,7 @@ function resolve(key) {
   const find = (list) => list.find((x) => x.id === id)
   const base = { key, kind: k, label: KINDS[k]?.[0] || k, icon: KINDS[k]?.[1] || 'star' }
   if (k === 'project') { const p = find(state.projects); return p && { ...base, title: p.name, sub: `${p.prefix || ''}`, color: p.color, go: () => router.push(`/projetos/${p.id}`) } }
-  if (k === 'task') { const t = find(state.tasks); return t && { ...base, title: t.title, sub: `${code(t)} · ${project(t.projectId)?.name || 'Rascunho'}`, go: () => openTask(t) } }
+  if (k === 'task') { const t = find(state.tasks); return t && { ...base, title: t.title, sub: `${code(t)}, ${project(t.projectId)?.name || 'Rascunho'}`, go: () => openTask(t) } }
   const lists = { view: ['views', 'visoes'], page: ['pages', 'paginas'], module: ['modules', 'modulos'], cycle: ['cycles', 'ciclos'] }
   if (!lists[k]) return null
   const item = find(state[lists[k][0]])
@@ -45,9 +45,9 @@ onMounted(() => staggerIn(root.value?.querySelectorAll('.fav, .sug')))
 <template>
   <div ref="root" class="pg favs">
     <div class="pg-bar">
-      <h1>Favoritos <span class="count">{{ all.length }}</span></h1>
+      <h1>Favoritos <span v-if="all.length" class="count">{{ all.length }}</span></h1>
       <div class="pg-tabs" role="tablist">
-        <button type="button" role="tab" :aria-selected="!kind" @click="kind = ''">Tudo<span class="n">{{ all.length }}</span></button>
+        <button type="button" role="tab" :aria-selected="!kind" @click="kind = ''">Tudo<span v-if="all.length" class="n">{{ all.length }}</span></button>
         <template v-for="(v, k) in KINDS" :key="k">
           <button v-if="counts[k]" type="button" role="tab" :aria-selected="kind === k" @click="kind = k">{{ v[0] }}s<span class="n">{{ counts[k] }}</span></button>
         </template>
@@ -64,11 +64,11 @@ onMounted(() => staggerIn(root.value?.querySelectorAll('.fav, .sug')))
         <span class="ico" :style="f.color ? { '--c': f.color } : null"><AppIcon :name="f.icon" :size="15" /></span>
         <button type="button" class="main" @click="f.go()">
           <strong>{{ f.title }}</strong>
-          <small>{{ f.label }}{{ f.sub ? ` · ${f.sub}` : '' }}</small>
+          <small>{{ f.label }}{{ f.sub ? `, ${f.sub}` : '' }}</small>
         </button>
         <span v-if="!kind" class="order">
-          <button type="button" class="pg-icon" :disabled="i === 0" :aria-label="`Subir ${f.title}`" @click="move(f, -1)">↑</button>
-          <button type="button" class="pg-icon" :disabled="i === shown.length - 1" :aria-label="`Descer ${f.title}`" @click="move(f, 1)">↓</button>
+          <button type="button" class="pg-icon" :disabled="i === 0" :aria-label="`Subir ${f.title}`" @click="move(f, -1)"><AppIcon name="chevron" :size="14" :style="{ transform: 'rotate(180deg)' }" /></button>
+          <button type="button" class="pg-icon" :disabled="i === shown.length - 1" :aria-label="`Descer ${f.title}`" @click="move(f, 1)"><AppIcon name="chevron" :size="14" /></button>
         </span>
         <button type="button" class="pg-icon on" :aria-label="`Tirar ${f.title} dos favoritos`" title="Tirar dos favoritos" @click="unstar(f)"><AppIcon name="star" :size="15" /></button>
       </li>

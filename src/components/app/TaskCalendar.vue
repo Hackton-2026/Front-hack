@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
@@ -40,10 +40,10 @@ const undated = computed(() => props.tasks.filter((t) => !t.due && t.status !== 
 async function shift(dir) {
   const go = () => { const d = new Date(cursor.value); d.setMonth(d.getMonth() + dir); cursor.value = d }
   if (prefersReducedMotion()) return go()
-  await gsap.to(grid.value, { x: -20 * dir, autoAlpha: 0, duration: 0.15, ease: 'power2.in' })
+  await gsap.to(grid.value, { x: -20 * dir, autoAlpha: 0, duration: DUR.press, ease: EASE.in })
   go()
   await nextTick()
-  gsap.fromTo(grid.value, { x: 20 * dir, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 0.3, ease: 'power3.out' })
+  gsap.fromTo(grid.value, { x: 20 * dir, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
 }
 function goToday() {
   const d = new Date(`${today()}T12:00`)
@@ -58,7 +58,7 @@ function drop(day) {
   updateTask(task, { due: day })
   nextTick(() => {
     const el = grid.value.querySelector(`[data-day="${day}"] [data-task="${task.id}"]`)
-    if (el && !prefersReducedMotion()) gsap.from(el, { scale: 0.85, autoAlpha: 0, duration: 0.4, ease: 'back.out(2)' })
+    if (el && !prefersReducedMotion()) gsap.from(el, { scale: 0.85, autoAlpha: 0, duration: DUR.fast, ease: EASE.pop })
   })
 }
 </script>

@@ -11,7 +11,7 @@ defineProps({ product: { type: Object, required: true } })
     <div class="body">
       <h3>{{ product.name }}</h3>
       <p v-if="product.description" class="muted small desc">{{ product.description }}</p>
-      <p class="muted small">por {{ product.owner }} · {{ new Date(product.created_at).toLocaleDateString('pt-BR') }}</p>
+      <p class="muted small">por {{ product.owner }}, {{ new Date(product.created_at).toLocaleDateString('pt-BR') }}</p>
       <div class="row"><slot name="actions" /></div>
     </div>
   </article>

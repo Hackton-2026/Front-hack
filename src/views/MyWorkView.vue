@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
@@ -59,7 +59,7 @@ async function animate() {
 watch([tab, view], animate)
 onMounted(() => {
   animate()
-  if (!prefersReducedMotion() && root.value) gsap.from(root.value.querySelectorAll('.wk i'), { scaleY: 0, transformOrigin: 'bottom', duration: 0.6, stagger: 0.04, ease: 'power3.out' })
+  if (!prefersReducedMotion() && root.value) gsap.from(root.value.querySelectorAll('.wk i'), { scaleY: 0, transformOrigin: 'bottom', duration: DUR.mid, stagger: 0.04, ease: EASE.out })
 })
 </script>
 
@@ -79,7 +79,7 @@ onMounted(() => {
 
     <div class="top">
       <div class="stats">
-        <div v-for="[label, n, ic, tone] in STATS" :key="label" class="stat" :class="tone"><AppIcon :name="ic" :size="15" /><b>{{ n }}</b><span>{{ label }}</span></div>
+        <div v-for="[label, n, ic, tone] in STATS" :key="label" class="stat" :class="n ? tone : 'zero'"><AppIcon :name="ic" :size="15" /><b>{{ n }}</b><span>{{ label }}</span></div>
       </div>
       <div class="wk" aria-label="Carga da semana">
         <div v-for="w in week" :key="w.d" class="wk__day" :class="{ today: w.today }" :title="`${w.n} tarefa(s) em ${fmt(w.d)}`">
@@ -90,7 +90,7 @@ onMounted(() => {
     </div>
 
     <div class="pg-tabs tabs" role="tablist">
-      <button v-for="[id, label, n] in [['assigned', 'Atribuídas a mim', mine.filter((t) => t.status !== 'done').length], ['created', 'Criadas por mim', created.filter((t) => t.status !== 'done').length], ['done', 'Concluídas', finished.length]]" :key="id" type="button" role="tab" :aria-selected="tab === id" @click="tab = id">{{ label }}<span class="n">{{ n }}</span></button>
+      <button v-for="[id, label, n] in [['assigned', 'Atribuídas a mim', mine.filter((t) => t.status !== 'done').length], ['created', 'Criadas por mim', created.filter((t) => t.status !== 'done').length], ['done', 'Concluídas', finished.length]]" :key="id" type="button" role="tab" :aria-selected="tab === id" @click="tab = id">{{ label }}<span v-if="n" class="n">{{ n }}</span></button>
     </div>
 
     <template v-if="view === 'list'">
@@ -129,6 +129,7 @@ onMounted(() => {
 .stat b { font: 650 1.4rem/1 'Geist', system-ui, sans-serif; color: var(--text); }
 .stat span { grid-column: 1 / -1; font-size: 12px; }
 .stat.warn b { color: var(--danger, #ff8a80); } .stat.accent b { color: var(--accent-soft); } .stat.good b { color: var(--success, #7fc47a); }
+.stat.zero b { color: var(--muted); font-weight: 500; }
 .wk { display: flex; gap: 0.35rem; align-items: flex-end; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .wk__day { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
 .wk__bar { display: flex; align-items: flex-end; width: 18px; height: 52px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }

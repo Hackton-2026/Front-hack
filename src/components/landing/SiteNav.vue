@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
+import FlaticonIcon from '../FlaticonIcon.vue'
 import AccountMenu from '../app/AccountMenu.vue'
 import { useAuth } from '../../composables/useAuth'
 import { MENU, ICONS, PRODUCT_LINKS } from './navData'
@@ -157,7 +158,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
               >{{ l }}</RouterLink
             >
             <RouterLink v-if="g.more" to="/#topo" class="mm__more" @click="active = null"
-              >{{ g.more }} <span aria-hidden="true">→</span></RouterLink
+              >{{ g.more }} <FlaticonIcon name="arrow-small-right" /></RouterLink
             >
           </div>
         </div>

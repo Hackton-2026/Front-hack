@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { useAuth } from '../composables/useAuth'
+import { api } from '../services/api'
 import AppIcon from '../components/app/AppIcon.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import OnboardingChecklist from '../components/app/OnboardingChecklist.vue'
@@ -20,21 +21,37 @@ const { user } = useAuth()
 const firstName = computed(() => user.value?.first_name || user.value?.username || '')
 const root = ref(null)
 
+// o aviso do teste vem da assinatura de verdade (antes era "Termina em 13 dias" escrito fixo)
+const trial = ref(null)
+const trialLeft = computed(() => (!trial.value ? '' : trial.value.days <= 0 ? 'Termina hoje' : `Termina em ${trial.value.days} ${trial.value.days === 1 ? 'dia' : 'dias'}`))
+onMounted(async () => {
+  try {
+    const sub = (await api('/api/billing/')).subscription
+    if (sub?.status !== 'trialing' || !sub.trial_ends_at) return
+    trial.value = { days: Math.ceil((new Date(sub.trial_ends_at) - Date.now()) / 86400000) }
+    if (prefersReducedMotion()) return
+    await nextTick()
+    ctx?.add(() => {
+      gsap.timeline({ defaults: { ease: EASE.out } })
+        .from('.trial', { y: 10, autoAlpha: 0, duration: DUR.base })
+        .fromTo('.trial', { boxShadow: '0 0 0 2px rgb(229 101 21 / 0.9)' }, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0)', duration: DUR.enter, ease: EASE.soft })
+        .from('.trial__icon', { rotation: -45, scale: 0.6, duration: DUR.mid, ease: EASE.pop }, '<-0.2')
+    })
+  } catch { } // sem a assinatura, o cartão de teste só não aparece: não há número para mentir
+})
+
 let ctx
 onMounted(() => {
   if (prefersReducedMotion()) return
   ctx = gsap.context(() => {
     const scroller = root.value.closest('.main__scroll')
-    gsap.timeline({ defaults: { ease: 'power3.out' } })
-      .from('.hello__word', { y: 14, autoAlpha: 0, filter: 'blur(6px)', duration: 0.6, stagger: 0.06, delay: 0.25 })
-      .from('.hello__sub', { y: 10, autoAlpha: 0, duration: 0.5 }, '-=0.35')
-      .from('.trial', { y: 10, autoAlpha: 0, duration: 0.5 }, '-=0.3')
-      .fromTo('.trial', { boxShadow: '0 0 0 2px rgb(229 101 21 / 0.9)' }, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0)', duration: 1.2, ease: 'power2.out' })
-      .from('.trial__icon', { rotation: -45, scale: 0.6, duration: 0.6, ease: 'back.out(2)' }, '<-0.2')
+    gsap.timeline({ defaults: { ease: EASE.out } })
+      .from('.hello__word', { y: 14, autoAlpha: 0, filter: 'blur(6px)', duration: DUR.mid, stagger: 0.06, delay: 0.25 })
+      .from('.hello__sub', { y: 10, autoAlpha: 0, duration: DUR.base }, '-=0.35')
     gsap.utils.toArray('.reveal').forEach((el) => {
-      gsap.from(el, { y: 16, autoAlpha: 0, duration: 0.6, scrollTrigger: { trigger: el, scroller, start: 'top 92%', once: true } })
+      gsap.from(el, { y: 16, autoAlpha: 0, duration: DUR.mid, scrollTrigger: { trigger: el, scroller, start: 'top 92%', once: true } })
     })
-    gsap.from('.compare__chip', { y: 8, autoAlpha: 0, duration: 0.4, stagger: 0.05, scrollTrigger: { trigger: '.compare', scroller, start: 'top 92%', once: true } })
+    gsap.from('.compare__chip', { y: 8, autoAlpha: 0, duration: DUR.fast, stagger: 0.05, scrollTrigger: { trigger: '.compare', scroller, start: 'top 92%', once: true } })
   }, root.value)
 })
 onUnmounted(() => ctx?.revert())
@@ -49,10 +66,10 @@ onUnmounted(() => ctx?.revert())
       <p class="hello__sub">Aqui está tudo o que você precisa para começar a organizar o trabalho do time.</p>
     </header>
 
-    <section class="trial" aria-labelledby="trial-title">
+    <section v-if="trial" class="trial" aria-labelledby="trial-title">
       <span class="trial__icon"><AppIcon name="rocket" :size="18" /></span>
-      <h2 id="trial-title">Seu teste de 14 dias do Business está ativo! <span class="badge">Termina em 13 dias</span></h2>
-      <p>Use metas, painéis, controle de tempo e a Novexo IA. Adicione um cartão para continuar depois do teste, ou volte para o Grátis quando quiser.</p>
+      <h2 id="trial-title">Seu teste de 14 dias do Business está ativo! <span class="badge">{{ trialLeft }}</span></h2>
+      <p>Use metas, painéis, controle de tempo e a Novexo IA. Assine para continuar no Business depois do teste. Se não assinar, o workspace volta sozinho para o Grátis, sem perder nada.</p>
       <div class="trial__btns">
         <GooeyButton variant="primary" to="/checkout?plano=business&ciclo=anual">Assinar agora</GooeyButton>
         <GooeyButton variant="secondary" to="/precos#detalhes-business">Ver recursos do Business</GooeyButton>

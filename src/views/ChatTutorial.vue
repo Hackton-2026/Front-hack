@@ -79,7 +79,7 @@ const steps = [
 
       <div class="guide-end">
         <p>
-          Para fechar o painel, clique no <strong>×</strong> no canto superior direito. Abra o Chat
+          Para fechar o painel, clique no botão de fechar, no canto superior direito. Abra o Chat
           novamente quando quiser voltar à conversa.
         </p>
         <GooeyButton to="/projetos" size="lg"

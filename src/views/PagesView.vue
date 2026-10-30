@@ -76,7 +76,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
         <AppIcon name="page" :size="17" class="ico" />
         <RouterLink class="pg-row__main" :to="`/projetos/${pid}/paginas/${pg.id}`"><span>{{ pg.title || 'Sem título' }}</span></RouterLink>
         <div class="pg-row__side">
-          <span class="pg-muted pg-hide-sm">{{ member(pg.owner)?.name.split(' ')[0] }} · {{ when(pg.updated_at) }}</span>
+          <span class="pg-muted pg-hide-sm">{{ member(pg.owner)?.name.split(' ')[0] }}, {{ when(pg.updated_at) }}</span>
           <span class="pg-icon" :title="pg.is_private ? 'Privada: só você vê' : 'Pública: o time todo vê'"><AppIcon :name="pg.is_private ? 'lock' : 'globe'" :size="15" /></span>
           <button type="button" class="pg-icon" :class="{ 'is-on': starred('page', pg.id) }" :aria-pressed="starred('page', pg.id)" :aria-label="starred('page', pg.id) ? 'Tirar estrela' : 'Dar estrela'" @click="toggleStar('page', pg.id)"><AppIcon name="star" :size="15" /></button>
           <div class="menu-wrap">

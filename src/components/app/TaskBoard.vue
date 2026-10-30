@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { Flip } from 'gsap/Flip'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
@@ -57,7 +57,7 @@ async function withFlip(change) {
   const st = reduced ? null : Flip.getState(root.value.querySelectorAll('.card'))
   change()
   await nextTick()
-  if (st) flip = Flip.from(st, { targets: root.value.querySelectorAll('.card'), duration: 0.45, ease: 'power3.out', onEnter: (els) => gsap.from(els, { scale: 0.9, autoAlpha: 0, duration: 0.35 }) })
+  if (st) flip = Flip.from(st, { targets: root.value.querySelectorAll('.card'), duration: DUR.base, ease: EASE.out, onEnter: (els) => gsap.from(els, { scale: 0.9, autoAlpha: 0, duration: DUR.fast }) })
 }
 
 function onDragStart(e, task) {
@@ -75,7 +75,7 @@ function onDrop(status, lane) {
   withFlip(() => updateTask(task, patch))
   nextTick(() => {
     const el = root.value.querySelector(`[data-flip-id="${task.id}"]`)
-    if (el && !reduced) gsap.fromTo(el, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0.9)' }, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0)', duration: 1, delay: 0.3 })
+    if (el && !reduced) gsap.fromTo(el, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0.9)' }, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0)', duration: DUR.long, delay: 0.3 })
   })
 }
 function moveBy(task, dir) {
@@ -96,7 +96,7 @@ const closeMenu = () => { menu.value = '' }
 onUnmounted(() => window.removeEventListener('click', closeMenu))
 onMounted(() => {
   window.addEventListener('click', closeMenu)
-  if (!reduced) gsap.from(root.value.querySelectorAll('.col'), { y: 14, autoAlpha: 0, duration: 0.45, stagger: 0.07, ease: 'power2.out' })
+  if (!reduced) gsap.from(root.value.querySelectorAll('.col'), { y: 14, autoAlpha: 0, duration: DUR.base, stagger: 0.07, ease: EASE.soft })
 })
 </script>
 
@@ -113,12 +113,12 @@ onMounted(() => {
         </div>
       </div>
       <label class="opt"><input v-model="cfg.hideEmpty" type="checkbox" />Ocultar colunas vazias</label>
-      <span class="total pg-muted">{{ tasks.length }} itens · {{ tasks.filter((t) => t.status === 'done').length }} concluídos</span>
+      <span class="total pg-muted">{{ tasks.length }} itens, {{ tasks.filter((t) => t.status === 'done').length }} concluídos</span>
     </div>
 
     <div class="kb__scroll">
       <div v-for="l in shownLanes" :key="l.id" class="lane">
-        <h3 v-if="cfg.group" class="lane__head"><i :style="{ background: l.color }" />{{ l.label }}<span class="count">{{ tasks.filter(l.has).length }}</span></h3>
+        <h3 v-if="cfg.group" class="lane__head"><i :style="{ background: l.color }" />{{ l.label }}<span v-if="tasks.some(l.has)" class="count">{{ tasks.filter(l.has).length }}</span></h3>
         <div class="board" :style="{ gridTemplateColumns: template }">
           <section
             v-for="c in cols"
@@ -138,7 +138,7 @@ onMounted(() => {
               <header class="col__head">
                 <div class="col__title">
                   <StatusBadge :status="c.id" />
-                  <span class="count" :class="{ over: c.limit && c.tasks.length > c.limit }" :title="c.limit ? 'Itens / limite' : 'Itens'">{{ inLane(c, l).length }}<template v-if="c.limit"> / {{ c.limit }}</template></span>
+                  <span v-if="inLane(c, l).length || c.limit" class="count" :class="{ over: c.limit && c.tasks.length > c.limit }" :title="c.limit ? 'Itens / limite' : 'Itens'">{{ inLane(c, l).length }}<template v-if="c.limit"> / {{ c.limit }}</template></span>
                   <span v-if="late(c) && l.id === shownLanes[0].id" class="chip late" :title="`${late(c)} atrasado(s)`"><AppIcon name="calendar" :size="11" />{{ late(c) }}</span>
                   <div class="rel push">
                     <button type="button" class="pg-icon" :aria-label="`Opções de ${c.name}`" :aria-expanded="menu === c.id + l.id" @click.stop="menu = menu === c.id + l.id ? '' : c.id + l.id"><AppIcon name="more" :size="15" /></button>
@@ -187,7 +187,7 @@ onMounted(() => {
                 <div class="chips">
                   <span v-if="cfg.fields.priority && t.priority" class="chip prio"><PriorityFlag :priority="t.priority" />{{ prio(t.priority)?.name }}</span>
                   <span v-if="cfg.fields.cycle && cycleName(t)" class="chip"><AppIcon name="cycle" :size="11" />{{ cycleName(t) }}</span>
-                  <span v-if="cfg.fields.dates && t.due" class="chip" :class="{ late: isOverdue(t) }"><AppIcon name="calendar" :size="11" />{{ t.start ? `${fmt(t.start)} → ` : '' }}{{ fmt(t.due) }}</span>
+                  <span v-if="cfg.fields.dates && t.due" class="chip" :class="{ late: isOverdue(t) }"><AppIcon name="calendar" :size="11" />{{ t.start ? `${fmt(t.start)} a ` : '' }}{{ fmt(t.due) }}</span>
                   <Avatars v-if="cfg.fields.assignees && t.assignees.length" :ids="t.assignees" :size="20" class="who" />
                 </div>
               </article>

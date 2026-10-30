@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
@@ -54,7 +54,7 @@ watch(() => ui.palette, async (open) => {
   q.value = ''
   await nextTick()
   input.value?.focus()
-  if (!prefersReducedMotion()) gsap.fromTo(box.value, { scale: 0.96, y: -8, autoAlpha: 0 }, { scale: 1, y: 0, autoAlpha: 1, duration: 0.25, ease: 'power3.out' })
+  if (!prefersReducedMotion()) gsap.fromTo(box.value, { scale: 0.96, y: -8, autoAlpha: 0 }, { scale: 1, y: 0, autoAlpha: 1, duration: DUR.press, ease: EASE.out })
 })
 watch(index, async () => { await nextTick(); box.value?.querySelector('.is-on')?.scrollIntoView({ block: 'nearest' }) })
 </script>

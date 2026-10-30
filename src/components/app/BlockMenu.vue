@@ -4,6 +4,7 @@ import { compressImage } from '../../utils/image'
 import { DB_VIEWS } from '../../utils/dbviews'
 import { useWorkspace } from '../../composables/useWorkspace'
 import BrandIcon from './BrandIcon.vue'
+import FlaticonIcon from '../FlaticonIcon.vue'
 
 const props = defineProps({ query: { type: String, default: null }, docId: { type: String, default: '' } })
 const emit = defineEmits(['insert', 'page', 'close'])
@@ -14,42 +15,43 @@ const url = (kind, label) => ({ step: 'url', kind, label })
 const SECTIONS = [
   ['Blocos básicos', [
     B('text', 'Texto', 'Comece a escrever com texto simples', 'Aa', '%c%', 'paragrafo text'),
-    B('page', 'Página', 'Cria uma subpágina dentro desta', '📄', { step: 'page' }, 'subpagina page'),
-    B('todo', 'Lista de tarefas', 'Acompanhe tarefas com caixas de seleção', '☑', '- [ ] %c%', 'checklist todo to-do'),
+    B('page', 'Página', 'Cria uma subpágina dentro desta', 'fi:document', { step: 'page' }, 'subpagina page'),
+    B('todo', 'Lista de tarefas', 'Acompanhe tarefas com caixas de seleção', 'fi:checkbox', '- [ ] %c%', 'checklist todo to-do'),
     B('h1', 'Título 1', 'Título de seção grande', 'H1', '# %c%', 'heading'),
     B('h2', 'Título 2', 'Título de seção médio', 'H2', '## %c%', 'heading'),
     B('h3', 'Título 3', 'Título de seção pequeno', 'H3', '### %c%', 'heading'),
-    B('table', 'Tabela', 'Linhas e colunas simples', '▦', '| %c%Coluna 1 | Coluna 2 | Coluna 3 |\n|---|---|---|\n|  |  |  |\n|  |  |  |', 'table grade'),
-    B('bullet', 'Lista com marcadores', 'Uma lista simples', '•', '- %c%', 'bullet ul'),
+    B('table', 'Tabela', 'Linhas e colunas simples', 'fi:table-layout', '| %c%Coluna 1 | Coluna 2 | Coluna 3 |\n|---|---|---|\n|  |  |  |\n|  |  |  |', 'table grade'),
+    B('bullet', 'Lista com marcadores', 'Uma lista simples', 'fi:list', '- %c%', 'bullet ul'),
     B('number', 'Lista numerada', 'Uma lista com números', '1.', '1. %c%', 'numbered ol'),
-    B('toggle', 'Lista de alternância', 'Esconda e mostre o conteúdo dentro', '▸', ':::toggle %c%Título\nConteúdo escondido\n:::', 'toggle expandir'),
-    B('quote', 'Citação', 'Destaque uma citação', '❝', '> %c%', 'quote'),
-    B('divider', 'Divisor', 'Separe blocos com uma linha', '—', '---\n%c%', 'divider linha hr'),
-    B('link', 'Link para página', 'Aponte para outra página da wiki', '↗', { step: 'doc', make: (d) => `[[${d.id}|${d.title || 'Sem título'}]]%c%` }, 'link pagina'),
-    B('callout', 'Texto destacado', 'Faça o texto se destacar', '💡', ':::callout 💡\n%c%\n:::', 'callout aviso'),
+    B('toggle', 'Lista de alternância', 'Esconda e mostre o conteúdo dentro', 'fi:angle-small-right', ':::toggle %c%Título\nConteúdo escondido\n:::', 'toggle expandir'),
+    B('quote', 'Citação', 'Destaque uma citação', 'fi:quote-right', '> %c%', 'quote'),
+    B('divider', 'Divisor', 'Separe blocos com uma linha', 'fi:minus', '---\n%c%', 'divider linha hr'),
+    B('link', 'Link para página', 'Aponte para outra página da wiki', 'fi:link-alt', { step: 'doc', make: (d) => `[[${d.id}|${d.title || 'Sem título'}]]%c%` }, 'link pagina'),
+    // EXCEPTION to copy-lint/emoji: o 💡 vira o ícone do bloco destacado e a pessoa troca por outro no texto
+    B('callout', 'Texto destacado', 'Faça o texto se destacar', 'fi:bulb', ':::callout 💡\n%c%\n:::', 'callout aviso'),
   ]],
   ['Mídia', [
-    B('image', 'Imagem', 'Envie do computador ou cole um link', '🖼', { step: 'image' }, 'image foto'),
-    B('video', 'Vídeo', 'YouTube, Vimeo ou link de vídeo', '▶', url('video', 'Link do vídeo'), 'video youtube'),
-    B('audio', 'Áudio', 'Link de um arquivo de áudio', '♪', url('audio', 'Link do áudio'), 'audio som musica'),
+    B('image', 'Imagem', 'Envie do computador ou cole um link', 'fi:picture', { step: 'image' }, 'image foto'),
+    B('video', 'Vídeo', 'YouTube, Vimeo ou link de vídeo', 'fi:play', url('video', 'Link do vídeo'), 'video youtube'),
+    B('audio', 'Áudio', 'Link de um arquivo de áudio', 'fi:music', url('audio', 'Link do áudio'), 'audio som musica'),
     B('code', 'Código', 'Trecho de código', '</>', '```js\n%c%\n```', 'code'),
-    B('file', 'Arquivo', 'Link para um arquivo', '📎', url('file', 'Link do arquivo'), 'file anexo pdf'),
-    B('bookmark', 'Marcador da web', 'Cartão com um link de site', '🔖', url('bookmark', 'Link do site'), 'bookmark site url'),
+    B('file', 'Arquivo', 'Link para um arquivo', 'fi:clip', url('file', 'Link do arquivo'), 'file anexo pdf'),
+    B('bookmark', 'Marcador da web', 'Cartão com um link de site', 'fi:bookmark', url('bookmark', 'Link do site'), 'bookmark site url'),
   ]],
   ['Base de dados', Object.entries(DB_VIEWS).map(([v, label], k) =>
-    B(`db-${v}`, `Visualização de ${label.toLowerCase()}`, 'Tarefas do Novexo, sempre atualizadas', ['▦', '▥', '▤', '☰', '📅', '⇶'][k], { step: 'project', view: v }, `database base dados ${v}`))],
+    B(`db-${v}`, `Visualização de ${label.toLowerCase()}`, 'Tarefas do Novexo, sempre atualizadas', `fi:${['table-layout', 'columns-3', 'grid', 'list', 'calendar', 'chart-gantt'][k]}`, { step: 'project', view: v }, `database base dados ${v}`))],
   ['Blocos avançados', [
-    B('toc', 'Índice', 'Sumário com os títulos da página', '≣', '[toc]\n%c%', 'toc sumario'),
-    B('math', 'Equação em bloco', 'Fórmula em LaTeX', '∑', '$$\n%c%\n$$', 'math latex formula equacao'),
-    B('button', 'Botão', 'Cria uma tarefa com um clique', '⏺', { step: 'text' }, 'button botao'),
-    B('breadcrumb', 'Navegação estrutural', 'Mostra onde esta página está', '›', '@[breadcrumb]()\n%c%', 'breadcrumb caminho'),
-    B('cols2', '2 colunas', 'Lado a lado', '⫴', ':::columns\n%c%Coluna 1\n|||\nColuna 2\n:::', 'columns colunas'),
-    B('cols3', '3 colunas', 'Três lado a lado', '⫴', ':::columns\n%c%Coluna 1\n|||\nColuna 2\n|||\nColuna 3\n:::', 'columns colunas'),
-    B('cols4', '4 colunas', 'Quatro lado a lado', '⫴', ':::columns\n%c%Coluna 1\n|||\nColuna 2\n|||\nColuna 3\n|||\nColuna 4\n:::', 'columns colunas'),
-    B('th1', 'Título 1 alternável', 'Título que esconde o que vem dentro', '▸', ':::toggle # %c%Título\nConteúdo\n:::', 'toggle heading'),
-    B('th2', 'Título 2 alternável', 'Título que esconde o que vem dentro', '▸', ':::toggle ## %c%Título\nConteúdo\n:::', 'toggle heading'),
-    B('th3', 'Título 3 alternável', 'Título que esconde o que vem dentro', '▸', ':::toggle ### %c%Título\nConteúdo\n:::', 'toggle heading'),
-    B('sync', 'Bloco sincronizado', 'Mostra o conteúdo de outra página, sempre igual', '⟳', { step: 'doc', make: (d) => `@[sync](${d.id})\n%c%` }, 'synced sincronizado'),
+    B('toc', 'Índice', 'Sumário com os títulos da página', 'fi:table-list', '[toc]\n%c%', 'toc sumario'),
+    B('math', 'Equação em bloco', 'Fórmula em LaTeX', 'fi:sigma', '$$\n%c%\n$$', 'math latex formula equacao'),
+    B('button', 'Botão', 'Cria uma tarefa com um clique', 'fi:bullseye-pointer', { step: 'text' }, 'button botao'),
+    B('breadcrumb', 'Navegação estrutural', 'Mostra onde esta página está', 'fi:chart-tree', '@[breadcrumb]()\n%c%', 'breadcrumb caminho'),
+    B('cols2', '2 colunas', 'Lado a lado', 'fi:columns-3', ':::columns\n%c%Coluna 1\n|||\nColuna 2\n:::', 'columns colunas'),
+    B('cols3', '3 colunas', 'Três lado a lado', 'fi:columns-3', ':::columns\n%c%Coluna 1\n|||\nColuna 2\n|||\nColuna 3\n:::', 'columns colunas'),
+    B('cols4', '4 colunas', 'Quatro lado a lado', 'fi:columns-3', ':::columns\n%c%Coluna 1\n|||\nColuna 2\n|||\nColuna 3\n|||\nColuna 4\n:::', 'columns colunas'),
+    B('th1', 'Título 1 alternável', 'Título que esconde o que vem dentro', 'fi:angle-small-right', ':::toggle # %c%Título\nConteúdo\n:::', 'toggle heading'),
+    B('th2', 'Título 2 alternável', 'Título que esconde o que vem dentro', 'fi:angle-small-right', ':::toggle ## %c%Título\nConteúdo\n:::', 'toggle heading'),
+    B('th3', 'Título 3 alternável', 'Título que esconde o que vem dentro', 'fi:angle-small-right', ':::toggle ### %c%Título\nConteúdo\n:::', 'toggle heading'),
+    B('sync', 'Bloco sincronizado', 'Mostra o conteúdo de outra página, sempre igual', 'fi:refresh', { step: 'doc', make: (d) => `@[sync](${d.id})\n%c%` }, 'synced sincronizado'),
   ]],
   ['Integrações', [
     B('e-drive', 'Google Drive', 'Docs, Planilhas, Apresentações ou arquivo', 'brand:googledrive', url('embed', 'Link do Google Drive'), 'google docs sheets slides planilha'),
@@ -58,13 +60,13 @@ const SECTIONS = [
     B('e-maps', 'Google Maps', 'Mapa de um endereço', 'brand:googlemaps', { step: 'map' }, 'mapa endereco local'),
     B('e-loom', 'Loom', 'Vídeo gravado no Loom', 'brand:loom', url('embed', 'Link do Loom'), 'loom video'),
     B('e-miro', 'Miro', 'Quadro do Miro', 'brand:miro', url('embed', 'Link do quadro do Miro'), 'miro quadro board'),
-    B('e-pdf', 'PDF', 'Documento PDF por link', '📄', url('embed', 'Link do PDF'), 'pdf documento'),
+    B('e-pdf', 'PDF', 'Documento PDF por link', 'fi:file-pdf', url('embed', 'Link do PDF'), 'pdf documento'),
     B('e-tweet', 'Post do X (Twitter)', 'Um post incorporado', 'brand:x', url('embed', 'Link do post'), 'twitter x tweet'),
     B('e-codepen', 'CodePen', 'Pen do CodePen', 'brand:codepen', url('embed', 'Link do CodePen'), 'codepen'),
     B('e-spotify', 'Spotify', 'Música, álbum, playlist ou podcast', 'brand:spotify', url('embed', 'Link do Spotify'), 'spotify musica podcast'),
     B('e-typeform', 'Typeform', 'Formulário do Typeform', 'brand:typeform', url('embed', 'Link do Typeform'), 'typeform formulario'),
     B('e-excalidraw', 'Excalidraw', 'Desenho do Excalidraw', 'brand:excalidraw', url('embed', 'Link do Excalidraw'), 'excalidraw desenho'),
-    B('e-any', 'Incorporar link', 'Qualquer site que permita incorporar', '⧉', url('embed', 'Link do site'), 'embed incorporar iframe'),
+    B('e-any', 'Incorporar link', 'Qualquer site que permita incorporar', 'fi:globe', url('embed', 'Link do site'), 'embed incorporar iframe'),
   ]],
 ]
 
@@ -128,7 +130,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside))
 
 <template>
   <div ref="box" class="bm" role="dialog" aria-label="Inserir bloco" @keydown="key($event) && $event.preventDefault()">
-    <button type="button" class="x" aria-label="Fechar" title="Fechar (Esc)" @mousedown.prevent @click="emit('close')">×</button>
+    <button type="button" class="x" aria-label="Fechar" title="Fechar (Esc)" @mousedown.prevent @click="emit('close')"><FlaticonIcon name="cross-small" :size="16" /></button>
     <template v-if="!step">
       <input v-if="query === null" v-model="search" class="search" placeholder="Filtrar blocos…" aria-label="Filtrar blocos" />
       <div class="list" role="listbox" aria-label="Blocos">
@@ -146,7 +148,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside))
             @mouseenter="active = flat.indexOf(b)"
             @click="choose(b)"
           >
-            <span class="ic"><BrandIcon v-if="b.icon.startsWith('brand:')" :name="b.icon.slice(6)" :size="18" /><template v-else>{{ b.icon }}</template></span><span class="tx"><strong>{{ b.label }}</strong><small>{{ b.hint }}</small></span>
+            <span class="ic"><BrandIcon v-if="b.icon.startsWith('brand:')" :name="b.icon.slice(6)" :size="18" /><FlaticonIcon v-else-if="b.icon.startsWith('fi:')" :name="b.icon.slice(3)" :size="16" /><template v-else>{{ b.icon }}</template></span><span class="tx"><strong>{{ b.label }}</strong><small>{{ b.hint }}</small></span>
           </button>
         </template>
         <p v-if="!flat.length" class="none">Nenhum bloco com “{{ query ?? search }}”.</p>
@@ -154,7 +156,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside))
     </template>
 
     <div v-else class="step">
-      <button type="button" class="back" @click="step = null">← {{ step.label }}</button>
+      <button type="button" class="back" @click="step = null"><FlaticonIcon name="angle-small-left" :size="16" /> {{ step.label }}</button>
       <template v-if="step.then.step === 'url' || step.id === 'image'">
         <form @submit.prevent="submitUrl">
           <input v-model="value" type="url" :placeholder="step.then.label || 'Link da imagem (https://…)'" :aria-label="step.then.label || 'Link da imagem'" />
@@ -166,15 +168,15 @@ onUnmounted(() => document.removeEventListener('mousedown', outside))
       <template v-else-if="step.then.step === 'doc'">
         <input v-model="value" placeholder="Buscar página…" aria-label="Buscar página" />
         <div class="list">
-          <button v-for="d in docs" :key="d.id" type="button" class="it" @click="pickDoc(d)"><span class="ic">{{ d.icon || '📄' }}</span><span class="tx"><strong>{{ d.title || 'Sem título' }}</strong></span></button>
+          <button v-for="d in docs" :key="d.id" type="button" class="it" @click="pickDoc(d)"><span class="ic"><template v-if="d.icon">{{ d.icon }}</template><FlaticonIcon v-else name="document" :size="16" /></span><span class="tx"><strong>{{ d.title || 'Sem título' }}</strong></span></button>
           <p v-if="!docs.length" class="none">Nenhuma outra página.</p>
         </div>
       </template>
       <template v-else-if="step.then.step === 'project'">
         <p class="sec">De qual projeto?</p>
         <div class="list">
-          <button type="button" class="it" @click="pickProject('all')"><span class="ic">✦</span><span class="tx"><strong>Todos os projetos</strong></span></button>
-          <button v-for="p in state.projects" :key="p.id" type="button" class="it" @click="pickProject(p.id)"><span class="ic" :style="{ color: p.color }">■</span><span class="tx"><strong>{{ p.name }}</strong></span></button>
+          <button type="button" class="it" @click="pickProject('all')"><span class="ic"><FlaticonIcon name="apps" :size="16" /></span><span class="tx"><strong>Todos os projetos</strong></span></button>
+          <button v-for="p in state.projects" :key="p.id" type="button" class="it" @click="pickProject(p.id)"><span class="ic" :style="{ color: p.color }"><FlaticonIcon name="square" :size="14" /></span><span class="tx"><strong>{{ p.name }}</strong></span></button>
         </div>
       </template>
       <form v-else-if="step.then.step === 'map'" @submit.prevent="value.trim() && emit('insert', `@[map](${value.trim().replace(/[()]/g, '')})\n%c%`)">
@@ -190,7 +192,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside))
 </template>
 
 <style scoped>
-.bm { position: absolute; z-index: 30; display: flex; flex-direction: column; width: 20rem; max-height: 22rem; padding: 0.35rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 44px rgb(0 0 0 / 0.5); }
+.bm { position: absolute; z-index: 30; display: flex; flex-direction: column; width: 20rem; max-width: calc(100% - 2rem); max-height: 22rem; padding: 0.35rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 44px rgb(0 0 0 / 0.5); }
 .x { position: absolute; top: 0.35rem; right: 0.35rem; z-index: 1; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: var(--surface); font-size: 18px; line-height: 1; color: var(--muted); cursor: pointer; }
 .x:hover { background: var(--surface-2); color: var(--text); }
 .x:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 1px; }
@@ -209,8 +211,8 @@ onUnmounted(() => document.removeEventListener('mousedown', outside))
 .err { color: var(--danger, #ff8a80); }
 .step { display: flex; flex-direction: column; gap: 0.3rem; min-height: 0; }
 .step form { display: flex; gap: 0.3rem; }
-.back { align-self: flex-start; padding: 0.2rem 0.3rem; border: 0; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
-.ok { flex: none; height: 32px; padding: 0 0.75rem; border: 0; border-radius: 7px; background: var(--accent); font: 600 12.5px/1 'Geist', system-ui, sans-serif; color: #140700; cursor: pointer; }
+.back { display: inline-flex; align-items: center; gap: 0.25rem; align-self: flex-start; padding: 0.2rem 0.3rem; border: 0; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.ok { flex: none; height: 32px; padding: 0 0.75rem; border: 0; border-radius: 7px; background: var(--accent); font: 600 12.5px/1 'Geist', system-ui, sans-serif; color: var(--on-accent); cursor: pointer; }
 .up { display: grid; place-items: center; height: 34px; border: 1px dashed var(--line-strong); border-radius: 7px; font-size: 13px; color: var(--text); cursor: pointer; }
 .up:hover { border-color: var(--accent); }
 .up input { position: absolute; width: 1px; height: 1px; opacity: 0; }

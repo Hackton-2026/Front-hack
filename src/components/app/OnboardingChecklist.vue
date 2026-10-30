@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onMounted, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useOnboarding } from '../../composables/useOnboarding'
 
 const { STEPS, isDone, toggle, count, total } = useOnboarding()
@@ -14,13 +14,13 @@ function animateCheck(id, done) {
   const box = row.querySelector('.box'), path = row.querySelector('.box path')
   if (done) {
     gsap.timeline()
-      .fromTo(box, { scale: 0.7 }, { scale: 1, duration: 0.45, ease: 'back.out(2.2)' })
-      .fromTo(path, { strokeDashoffset: 20 }, { strokeDashoffset: 0, duration: 0.35, ease: 'power2.out' }, 0.05)
-      .fromTo(row, { '--flash': 1 }, { '--flash': 0, duration: 0.9, ease: 'power2.out' }, 0)
+      .fromTo(box, { scale: 0.7 }, { scale: 1, duration: DUR.base, ease: EASE.pop })
+      .fromTo(path, { strokeDashoffset: 20 }, { strokeDashoffset: 0, duration: DUR.fast, ease: EASE.soft }, 0.05)
+      .fromTo(row, { '--flash': 1 }, { '--flash': 0, duration: DUR.slow, ease: EASE.soft }, 0)
       .set(path, { clearProps: 'strokeDashoffset' })
   } else {
     gsap.set(path, { clearProps: 'strokeDashoffset' })
-    gsap.fromTo(box, { scale: 0.85 }, { scale: 1, duration: 0.3, ease: 'power2.out' })
+    gsap.fromTo(box, { scale: 0.85 }, { scale: 1, duration: DUR.fast, ease: EASE.soft })
   }
 }
 
@@ -32,15 +32,15 @@ function onToggle(id) {
 watch(count, async (n, old) => {
   const bar = root.value?.querySelector('.bar__fill')
   if (reduced || !bar) { shown.value = n; return }
-  gsap.to(bar, { scaleX: n / total, duration: 0.7, ease: 'expo.out' })
-  gsap.to(shown, { value: n, duration: 0.5, ease: 'power2.out', snap: { value: 1 } })
+  gsap.to(bar, { scaleX: n / total, duration: DUR.mid, ease: EASE.expo })
+  gsap.to(shown, { value: n, duration: DUR.base, ease: EASE.soft, snap: { value: 1 } })
   if (n === total && old < total) { await nextTick(); celebrate() }
 })
 
 function celebrate() {
   const banner = root.value.querySelector('.done')
   if (!banner) return
-  gsap.fromTo(banner, { y: 10, autoAlpha: 0, scale: 0.97 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.5, ease: 'power3.out' })
+  gsap.fromTo(banner, { y: 10, autoAlpha: 0, scale: 0.97 }, { y: 0, autoAlpha: 1, scale: 1, duration: DUR.base, ease: EASE.out })
   const burst = root.value.querySelector('.burst')
   for (let i = 0; i < 28; i++) {
     const s = document.createElement('i')
@@ -48,7 +48,7 @@ function celebrate() {
     burst.append(s)
     gsap.fromTo(s, { x: 0, y: 0, rotation: 0, autoAlpha: 1 }, {
       x: gsap.utils.random(-220, 220), y: gsap.utils.random(-140, 40), rotation: gsap.utils.random(-260, 260),
-      autoAlpha: 0, duration: gsap.utils.random(0.9, 1.5), ease: 'power3.out', onComplete: () => s.remove(),
+      autoAlpha: 0, duration: gsap.utils.random(0.9, 1.5), ease: EASE.out, onComplete: () => s.remove(),
     })
   }
 }
@@ -57,8 +57,8 @@ onMounted(() => {
   const bar = root.value.querySelector('.bar__fill')
   gsap.set(bar, { scaleX: count.value / total })
   if (reduced) return
-  gsap.from(root.value.querySelectorAll('.step'), { y: 10, autoAlpha: 0, duration: 0.45, stagger: 0.05, ease: 'power2.out', delay: 0.35 })
-  gsap.from(bar, { scaleX: 0, duration: 1, ease: 'expo.out', delay: 0.5 })
+  gsap.from(root.value.querySelectorAll('.step'), { y: 10, autoAlpha: 0, duration: DUR.base, stagger: 0.05, ease: EASE.soft, delay: 0.35 })
+  gsap.from(bar, { scaleX: 0, duration: DUR.long, ease: EASE.expo, delay: 0.5 })
 })
 </script>
 

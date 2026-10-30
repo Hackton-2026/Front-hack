@@ -70,7 +70,7 @@ const disconnect = () => run(() => api('/api/whatsapp/admin/logout/', { method: 
 
       <section v-if="st.is_admin && st.configured" class="card">
         <h3>Número do Novexo <small>(admin do site)</small></h3>
-        <p class="hint">Status: <strong>{{ STATUS[st.status] || st.status }}</strong><template v-if="st.bot_phone"> · {{ st.bot_phone }}</template>. Use um número só para isso: o WhatsApp pode bloquear números que mandam mensagens automáticas.</p>
+        <p class="hint">Status: <strong>{{ STATUS[st.status] || st.status }}</strong><template v-if="st.bot_phone">, {{ st.bot_phone }}</template>. Use um número só para isso: o WhatsApp pode bloquear números que mandam mensagens automáticas.</p>
         <div v-if="qr?.qr" class="qr"><img :src="qr.qr" alt="QR Code para conectar o WhatsApp do Novexo" width="220" height="220" /><p class="hint">No celular do número do Novexo: WhatsApp › Aparelhos conectados › Conectar aparelho, e leia este QR.</p></div>
         <p v-else-if="qr" class="hint">{{ STATUS[qr.status] || qr.status }}…</p>
         <div class="row">
@@ -95,7 +95,7 @@ h3 small { font-weight: 400; color: var(--muted); }
 .grow { display: flex; flex: 1 1 14rem; flex-direction: column; gap: 0.3rem; font-size: 12.5px; color: var(--muted); }
 .grow input { height: 32px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font: inherit; font-size: 14px; color: var(--text); outline: none; }
 .grow input:focus { border-color: var(--accent); }
-.btn { height: 32px; padding: 0 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent); font: inherit; font-weight: 500; color: #140700; cursor: pointer; }
+.btn { height: 32px; padding: 0 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent); font: inherit; font-weight: 500; color: var(--on-accent); cursor: pointer; }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .link { border: 0; background: none; font: inherit; font-size: 13px; color: var(--muted); text-decoration: underline; cursor: pointer; }
 .link.rm { align-self: flex-start; color: #ff8a7f; }

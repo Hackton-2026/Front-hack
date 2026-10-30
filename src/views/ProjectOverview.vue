@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { COVERS, UPDATE_STATES, useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import { api } from '../services/api'
@@ -89,7 +89,7 @@ async function uploadCover(e) {
   uploadingCover.value = true
   try {
     Object.assign(p.value, await api(`/api/projects/${p.value.id}/`, { method: 'PATCH', body }))
-    if (!prefersReducedMotion()) gsap.fromTo(root.value.querySelector('.cover'), { filter: 'brightness(1.5)' }, { filter: 'brightness(1)', duration: 0.6, ease: 'power2.out' })
+    if (!prefersReducedMotion()) gsap.fromTo(root.value.querySelector('.cover'), { filter: 'brightness(1.5)' }, { filter: 'brightness(1)', duration: DUR.mid, ease: EASE.soft })
   } catch (err) {
     toast(err.message)
   } finally {
@@ -112,11 +112,11 @@ async function post() {
 async function togglePanel() {
   panel.value = !panel.value
   await nextTick()
-  if (panel.value && !prefersReducedMotion()) gsap.from(root.value.querySelector('.side'), { x: 24, autoAlpha: 0, duration: 0.35, ease: 'power3.out' })
+  if (panel.value && !prefersReducedMotion()) gsap.from(root.value.querySelector('.side'), { x: 24, autoAlpha: 0, duration: DUR.fast, ease: EASE.out })
 }
 watch(tab, async () => {
   await nextTick()
-  if (!prefersReducedMotion()) gsap.from(root.value?.querySelectorAll('.side__body > *') || [], { y: 8, autoAlpha: 0, duration: 0.3, stagger: 0.04, ease: 'power2.out' })
+  if (!prefersReducedMotion()) gsap.from(root.value?.querySelectorAll('.side__body > *') || [], { y: 8, autoAlpha: 0, duration: DUR.fast, stagger: 0.04, ease: EASE.soft })
 })
 watch(p, (v) => (ui.crumb = v ? `${v.name} › Visão geral` : 'Projeto não encontrado'), { immediate: true })
 watch(() => props.id, async () => { refresh(); await nextTick(); grow() })
@@ -125,11 +125,11 @@ onMounted(async () => {
   await nextTick()
   grow()
   if (prefersReducedMotion() || !root.value) return
-  gsap.timeline({ defaults: { ease: 'power3.out' } })
-    .from(root.value.querySelector('.cover'), { scaleY: 0.6, transformOrigin: 'top', autoAlpha: 0, duration: 0.6 })
-    .from(root.value.querySelector('.icon'), { y: 14, scale: 0.8, autoAlpha: 0, duration: 0.45 }, '-=0.3')
-    .from(root.value.querySelectorAll('.doc > *:not(.icon-wrap)'), { y: 12, autoAlpha: 0, duration: 0.45, stagger: 0.06 }, '-=0.25')
-    .from(root.value.querySelectorAll('.side'), { x: 20, autoAlpha: 0, duration: 0.45 }, 0.15)
+  gsap.timeline({ defaults: { ease: EASE.out } })
+    .from(root.value.querySelector('.cover'), { scaleY: 0.6, transformOrigin: 'top', autoAlpha: 0, duration: DUR.mid })
+    .from(root.value.querySelector('.icon'), { y: 14, scale: 0.8, autoAlpha: 0, duration: DUR.base }, '-=0.3')
+    .from(root.value.querySelectorAll('.doc > *:not(.icon-wrap)'), { y: 12, autoAlpha: 0, duration: DUR.base, stagger: 0.06 }, '-=0.25')
+    .from(root.value.querySelectorAll('.side'), { x: 20, autoAlpha: 0, duration: DUR.base }, 0.15)
 })
 </script>
 
@@ -166,7 +166,7 @@ onMounted(async () => {
         <div class="links">
           <RouterLink v-for="l in LINKS" :key="l.label" :to="`/projetos/${p.id}${l.to}`" class="link">
             <span class="link__icon"><i :class="l.icon" aria-hidden="true" /></span>
-            <span class="link__text"><strong>{{ l.label }}</strong><small>{{ l.n }} · {{ l.hint }}</small></span>
+            <span class="link__text"><strong>{{ l.label }}</strong><small>{{ l.n }}, {{ l.hint }}</small></span>
             <i class="fi-rr-arrow-small-right link__go" aria-hidden="true" />
           </RouterLink>
         </div>
@@ -185,7 +185,7 @@ onMounted(async () => {
           <li v-for="l in materials" :key="l.id">
             <a :href="l.url" target="_blank" rel="noopener noreferrer" class="material">
               <span class="link__icon"><i class="fi-rr-link-alt" aria-hidden="true" /></span>
-              <span class="link__text"><strong>{{ l.name || host(l.url) }}</strong><small>{{ host(l.url) }}<template v-if="l.created_by"> · adicionado por {{ l.created_by }}</template></small></span>
+              <span class="link__text"><strong>{{ l.name || host(l.url) }}</strong><small>{{ host(l.url) }}<template v-if="l.created_by">, adicionado por {{ l.created_by }}</template></small></span>
             </a>
             <button v-if="canEdit" type="button" class="rm" :aria-label="`Remover ${l.name || host(l.url)}`" title="Remover" @click="removeLink(l)"><AppIcon name="trash" :size="13" /></button>
           </li>
@@ -285,7 +285,7 @@ onMounted(async () => {
 .sec { margin: 1.5rem 0 0.4rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font: 600 1.05rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .sec-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1.5rem 0 0.4rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
 .sec-row .sec { margin: 0; padding: 0; border: 0; }
-.add-link { display: inline-flex; align-items: center; gap: 0.35rem; height: 28px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.add-link { display: inline-flex; align-items: center; white-space: nowrap; gap: 0.35rem; height: 28px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .add-link:hover { border-color: var(--line-strong); color: var(--text); }
 .link-form { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem; }
 .link-form input { flex: 1 1 12rem; min-width: 0; height: 32px; padding: 0 0.65rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13px; color: var(--text); outline: none; }

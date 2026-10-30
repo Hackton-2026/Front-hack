@@ -3,18 +3,22 @@ import { api, tokens } from '../services/api'
 
 const user = ref(null)
 const ready = ref(false)
+// servidor fora não é sessão vencida: os tokens ficam e a próxima navegação tenta de novo
+const offline = ref(false)
 
 async function loadMe() {
   try {
     user.value = await api('/api/auth/me/')
-  } catch {
+    offline.value = false
+  } catch (e) {
     user.value = null
+    offline.value = !e.status
   }
 }
 
 async function init() {
   if (tokens.access) await loadMe()
-  ready.value = true
+  ready.value = !offline.value
 }
 
 async function login(username, password) {
@@ -29,7 +33,11 @@ async function loginWithGoogle(credential) {
 
 async function register(data) {
   await api('/api/auth/register/', { method: 'POST', body: data, auth: false })
-  await login(data.email, data.password)
+  try {
+    await login(data.email, data.password)
+  } catch (e) {
+    throw Object.assign(e, { registered: true })
+  }
 }
 
 async function updateMe(body) {
@@ -44,5 +52,5 @@ function logout() {
 window.addEventListener('auth:logout', logout)
 
 export function useAuth() {
-  return { user, ready, init, loadMe, login, loginWithGoogle, register, updateMe, logout }
+  return { user, ready, offline, init, loadMe, login, loginWithGoogle, register, updateMe, logout }
 }

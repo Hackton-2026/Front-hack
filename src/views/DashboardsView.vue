@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
@@ -45,13 +45,13 @@ onMounted(() => {
   if (!root.value) return
   const nums = root.value.querySelectorAll('.kpi b')
   if (prefersReducedMotion()) return
-  gsap.from(root.value.querySelectorAll('.card, .kpi'), { y: 14, autoAlpha: 0, duration: 0.5, stagger: 0.06, ease: 'power3.out' })
+  gsap.from(root.value.querySelectorAll('.card, .kpi'), { y: 14, autoAlpha: 0, duration: DUR.base, stagger: 0.06, ease: EASE.out })
   nums.forEach((el) => {
     const end = Number(el.textContent)
     const n = { v: 0 }
-    gsap.to(n, { v: end, duration: 1, ease: 'power2.out', onUpdate: () => (el.textContent = Math.round(n.v)) })
+    gsap.to(n, { v: end, duration: DUR.long, ease: EASE.soft, onUpdate: () => (el.textContent = Math.round(n.v)) })
   })
-  gsap.fromTo(root.value.querySelectorAll('.pbar span'), { scaleX: 0 }, { scaleX: (i, el) => Number(el.dataset.v), duration: 0.9, stagger: 0.05, ease: 'power3.out', delay: 0.2 })
+  gsap.fromTo(root.value.querySelectorAll('.pbar span'), { scaleX: 0 }, { scaleX: (i, el) => Number(el.dataset.v), duration: DUR.slow, stagger: 0.05, ease: EASE.out, delay: 0.2 })
 })
 </script>
 
@@ -64,8 +64,8 @@ onMounted(() => {
     <div v-if="editing" class="custom" aria-label="Blocos do painel">
       <div v-for="(k, i) in dash.order" :key="k" class="wd" :class="{ off: !shown(k) }">
         <label><input type="checkbox" :checked="shown(k)" @change="toggle(k)" />{{ WIDGETS[k] }}</label>
-        <button type="button" class="pg-icon" :disabled="i === 0" :aria-label="`Subir ${WIDGETS[k]}`" @click="move(k, -1)">↑</button>
-        <button type="button" class="pg-icon" :disabled="i === dash.order.length - 1" :aria-label="`Descer ${WIDGETS[k]}`" @click="move(k, 1)">↓</button>
+        <button type="button" class="pg-icon" :disabled="i === 0" :aria-label="`Subir ${WIDGETS[k]}`" @click="move(k, -1)"><AppIcon name="chevron" :size="14" :style="{ transform: 'rotate(180deg)' }" /></button>
+        <button type="button" class="pg-icon" :disabled="i === dash.order.length - 1" :aria-label="`Descer ${WIDGETS[k]}`" @click="move(k, 1)"><AppIcon name="chevron" :size="14" /></button>
       </div>
     </div>
     <div class="kpis">
@@ -98,12 +98,12 @@ onMounted(() => {
         </ul>
       </section>
       <section v-if="shown('load')" class="card" :style="{ order: pos('load') }">
-        <header><h2>Carga por pessoa</h2><span class="pg-muted">abertos · atrasados</span></header>
+        <header><h2>Carga por pessoa</h2><span class="pg-muted">abertos, atrasados</span></header>
         <p v-if="!load.length" class="pg-muted">Ninguém com itens abertos.</p>
         <ul class="plist">
           <li v-for="m in load" :key="m.id">
             <span class="who"><i class="dot" :style="{ background: m.color }" />{{ member(m.id)?.name }}</span>
-            <span class="pg-muted">{{ m.open }}<template v-if="m.late"> · <b class="late">{{ m.late }}</b></template></span>
+            <span class="pg-muted">{{ m.open }}<template v-if="m.late">, <b class="late">{{ m.late }}</b></template></span>
             <span class="pbar"><span :data-v="m.open / maxLoad" :style="{ transform: `scaleX(${m.open / maxLoad})` }" /></span>
           </li>
         </ul>
@@ -124,7 +124,7 @@ onMounted(() => {
         <div class="cycles">
           <RouterLink v-for="c in active" :key="c.id" :to="`/projetos/${c.project}/ciclos/${c.id}`" class="cy">
             <ProgressRing :value="doneRatio(tasks.filter((t) => t.cycle === c.id))" :size="40" />
-            <span><strong>{{ c.name }}</strong><small>{{ project(c.project)?.name }} · até {{ fmt(c.end_date) }}</small></span>
+            <span><strong>{{ c.name }}</strong><small>{{ project(c.project)?.name }}, até {{ fmt(c.end_date) }}</small></span>
           </RouterLink>
         </div>
       </section>

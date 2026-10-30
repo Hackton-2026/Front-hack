@@ -19,6 +19,9 @@ const info = ref(null)
 const error = ref('')
 const busy = ref(false)
 const back = `/entrar/${props.token}?entrar=1`
+// entrar sozinho só na volta do login que a pessoa pediu aqui: um ?entrar=1 colado num link não basta
+const JOIN_KEY = 'novexo:join'
+const askJoin = () => { try { sessionStorage.setItem(JOIN_KEY, props.token) } catch { } }
 
 async function join() {
   busy.value = true
@@ -42,7 +45,9 @@ onMounted(async () => {
     error.value = e.status === 404 ? 'Este link de convite não vale mais. Peça um novo para quem mandou.' : e.message
     return
   }
-  if (user.value && (route.query.entrar || info.value.already_member)) join()
+  let asked = false
+  try { asked = sessionStorage.getItem(JOIN_KEY) === props.token; sessionStorage.removeItem(JOIN_KEY) } catch { }
+  if (user.value && ((route.query.entrar && asked) || info.value.already_member)) join()
 })
 </script>
 
@@ -62,8 +67,8 @@ onMounted(async () => {
             <p class="who">Você está como <strong>{{ user.first_name || user.username }}</strong> ({{ user.email }}).</p>
           </div>
           <div v-else class="actions">
-            <RouterLink class="btn primary" :to="{ path: '/login', query: { modo: 'cadastro', next: back } }">Criar conta e entrar</RouterLink>
-            <RouterLink class="btn" :to="{ path: '/login', query: { next: back } }">Já tenho conta</RouterLink>
+            <RouterLink class="btn primary" :to="{ path: '/login', query: { modo: 'cadastro', next: back } }" @click="askJoin">Criar conta e entrar</RouterLink>
+            <RouterLink class="btn" :to="{ path: '/login', query: { next: back } }" @click="askJoin">Já tenho conta</RouterLink>
             <p class="who">Leva menos de um minuto. Depois do cadastro você cai direto no projeto.</p>
           </div>
         </template>

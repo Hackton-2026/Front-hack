@@ -1,7 +1,7 @@
 import { nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { SplitText } from 'gsap/SplitText'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { gsap, revealTitleCharacters } from '../utils/motion'
+import { EASE, DUR, gsap, revealTitleCharacters } from '../utils/motion'
 
 gsap.registerPlugin(SplitText)
 
@@ -27,12 +27,12 @@ export function useCustomPlanMotion(root, step, reviewing) {
         autoSplit: true, aria: 'auto', onSplit: split => revealTitleCharacters(split.chars),
       })
       gsap.from(select('.custom-form, .custom-budget'), {
-        y: 20, autoAlpha: 0, duration: .85, stagger: .1, delay: .3, ease: 'power3.out',
+        y: 20, autoAlpha: 0, duration: DUR.slow, stagger: .1, delay: .3, ease: EASE.out,
         clearProps: 'transform,opacity,visibility',
       })
       context.add('step', () => {
         gsap.fromTo(select('.custom-question, .custom-review__row'), { y: 10, autoAlpha: 0 }, {
-          y: 0, autoAlpha: 1, duration: .45, stagger: .045, ease: 'power2.out',
+          y: 0, autoAlpha: 1, duration: DUR.base, stagger: .045, ease: EASE.soft,
           overwrite: 'auto', clearProps: 'transform,opacity,visibility',
         })
       })

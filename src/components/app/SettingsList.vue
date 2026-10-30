@@ -23,7 +23,7 @@ const editing = ref(null)
 const revealed = ref('')
 const form = reactive({})
 const inputs = computed(() => props.fields.filter((f) => !['secret', 'readonly'].includes(f.type)))
-const taskOptions = computed(() => state.tasks.filter((x) => !x.draft).map((t) => ({ value: t.id, label: `${t.code ? `${t.code} · ` : ''}${t.title}` })))
+const taskOptions = computed(() => state.tasks.filter((x) => !x.draft).map((t) => ({ value: t.id, label: `${t.code ? `${t.code}: ` : ''}${t.title}` })))
 
 const get = (row, f) => (f.data ? row.data?.[f.key] : row[f.key])
 function blank() {
@@ -178,7 +178,7 @@ defineExpose({ rows })
 .sl__chips button { padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .sl__chips button[aria-pressed='true'] { border-color: var(--accent); color: var(--text); background: color-mix(in srgb, var(--accent) 18%, transparent); }
 .sl__actions { display: flex; align-items: center; gap: 0.75rem; }
-.sl__save { height: 32px; padding: 0 0.85rem; border: 0; border-radius: 6px; background: var(--accent); font-size: 13px; font-weight: 500; color: #140700; cursor: pointer; }
+.sl__save { height: 32px; padding: 0 0.85rem; border: 0; border-radius: 6px; background: var(--accent); font-size: 13px; font-weight: 500; color: var(--on-accent); cursor: pointer; }
 .sl__table { display: flex; flex-direction: column; overflow-x: auto; font-size: 13px; }
 .sl__row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(7rem, 1fr); gap: 0.75rem; align-items: center; padding: 0.45rem 0.25rem; border-top: 1px solid var(--line); }
 .sl__row > span { min-width: 0; overflow-wrap: anywhere; }

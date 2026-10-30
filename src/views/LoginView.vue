@@ -7,7 +7,7 @@ import { api } from '../services/api'
 import GooeyButton from '../components/GooeyButton.vue'
 import GoogleButton from '../components/GoogleButton.vue'
 
-const { login, register, loginWithGoogle } = useAuth()
+const { user, offline, init, login, register, loginWithGoogle } = useAuth()
 const { toast } = useUi()
 const route = useRoute()
 const router = useRouter()
@@ -30,8 +30,24 @@ async function run(action) {
     const to = await action()
     router.push(to || route.query.next || '/comecar')
   } catch (e) {
+    if (e.registered) {
+      // a conta foi criada; só o login de depois falhou. Tentar cadastrar de novo diria "já existe"
+      router.replace({ query: { ...route.query, modo: undefined } })
+      error.value = 'Sua conta foi criada. Entre com o e-mail e a senha que você escolheu.'
+      return
+    }
     const fields = e.data && !e.data.detail && typeof e.data === 'object' ? Object.values(e.data).flat() : null
     error.value = fields ? fields.join('\n') : e.message
+  } finally {
+    loading.value = false
+  }
+}
+
+async function retry() {
+  loading.value = true
+  try {
+    await init()
+    if (user.value) router.replace(route.query.next || '/comecar')
   } finally {
     loading.value = false
   }
@@ -90,8 +106,9 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
               </button>
             </span>
           </label>
-          <p v-if="isRegister" class="hint">Use pelo menos 8 caracteres, misturando letras e números.</p>
+          <p v-if="isRegister" class="hint">Use pelo menos 8 caracteres. Senhas comuns, só com números ou parecidas com seu nome ou e-mail não passam.</p>
 
+          <p v-if="offline" class="error" role="alert">Não conseguimos falar com o servidor agora. Sua sessão continua salva. <button type="button" class="retry" :disabled="loading" @click="retry">Tentar de novo</button></p>
           <p v-if="error" class="error" role="alert">{{ error }}</p>
           <GooeyButton type="submit" variant="primary" :disabled="loading" class="submit">
             {{ loading ? 'Aguarde…' : isRegister ? 'Criar conta' : 'Entrar' }}
@@ -99,7 +116,7 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
         </form>
 
         <div class="divider"><span>ou</span></div>
-        <GoogleButton theme="filled_black" @credential="(c) => run(() => loginWithGoogle(c))" />
+        <GoogleButton theme="filled_black" @credential="(c) => loading || run(() => loginWithGoogle(c))" />
       </div>
     </main>
 
@@ -167,6 +184,7 @@ h1 { margin: 1.75rem 0 0.75rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend
 .eye:hover { color: var(--text); }
 .hint { margin: -0.5rem 0 0; font-size: 0.8125rem; color: var(--muted); }
 .error { margin: 0; padding: 0.75rem 0.9rem; border-radius: 6px; background: rgb(229 101 21 / 0.12); border: 1px solid rgb(229 101 21 / 0.4); font-size: 0.875rem; white-space: pre-line; color: #ffd2b3; }
+.error .retry { margin-left: 0.35rem; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: inherit; text-decoration: underline; cursor: pointer; }
 .submit { align-self: center; margin-top: 0.5rem; }
 
 .divider { display: flex; align-items: center; gap: 1rem; width: 100%; margin: 1.75rem 0 1.25rem; font-size: 0.8125rem; color: var(--muted); }

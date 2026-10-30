@@ -85,7 +85,7 @@ export function getCustomPlanAnswerLabel(question, value) {
 export function buildCustomPlanRequest(answers, value) {
   const preview = getCustomPlanPreview(value)
   return [
-    'Solicitação de plano personalizado — Novexo',
+    'Solicitação de plano personalizado | Novexo',
     `Orçamento total mensal da empresa: ${formatBRL(preview.budget)}`,
     `Configuração ilustrativa: ${preview.band?.title || 'Ainda sem faixa sugerida'}`,
     '',

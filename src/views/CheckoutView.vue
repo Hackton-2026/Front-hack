@@ -4,10 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import QRCode from 'qrcode'
 import { api } from '../services/api'
 import { useAuth } from '../composables/useAuth'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { brandOf, brl, cardLength, cpfValid, digits, expValid, formatCard, formatCpf, formatExp, luhn } from '../utils/payment'
 import { PLANS } from '../components/landing/plans'
 import GooeyButton from '../components/GooeyButton.vue'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -24,10 +25,20 @@ const fullYear = computed(() => plan.value.month * 100 * seats.value * 12)
 const saving = computed(() => (yearly.value ? fullYear.value - total.value : 0))
 watch([planCode, yearly], () => router.replace({ query: { plano: planCode.value, ciclo: yearly.value ? 'anual' : 'mensal' } }))
 
-const cfg = ref({ test_mode: true, public_key: null, max_installments: 12, max_seats: 500 })
-onMounted(async () => {
-  try { cfg.value = await api('/api/payments/config/', { auth: false }) } catch { }
-})
+// sem a config não sabemos se o pagamento é de teste ou real: nada de "modo de teste" nem formulário de cartão até ela chegar
+const cfg = ref({ test_mode: false, public_key: null, max_installments: 12, max_seats: 500 })
+const cfgReady = ref(false)
+const cfgError = ref('')
+async function loadCfg() {
+  cfgError.value = ''
+  try {
+    cfg.value = await api('/api/payments/config/', { auth: false })
+    cfgReady.value = true
+  } catch (e) {
+    cfgError.value = `Não conseguimos carregar o pagamento: ${e.message}`
+  }
+}
+onMounted(loadCfg)
 
 const payer = ref({ name: [user.value?.first_name, user.value?.last_name].filter(Boolean).join(' '), email: user.value?.email || '', document: '' })
 const touched = ref({})
@@ -77,6 +88,7 @@ function handle(p) {
 const qr = ref('')
 const copied = ref(false)
 const left = ref(0)
+const pixOffline = ref(false)
 let poll, tick
 async function startPix(p) {
   qr.value = p.pix_qr_base64 ? `data:image/png;base64,${p.pix_qr_base64}` : await QRCode.toDataURL(p.pix_code, { margin: 1, width: 240, color: { dark: '#000000', light: '#ffffff' } })
@@ -93,9 +105,12 @@ async function checkPix() {
   try {
     const p = await api(`/api/payments/${payment.value.id}/`)
     payment.value = p
+    pixOffline.value = false
     if (p.status === 'approved') { stopPix(); success(p) }
     else if (p.status !== 'pending') { stopPix(); error.value = p.status === 'expired' ? 'O Pix venceu. Gere outro para continuar.' : p.failure_reason || 'Pagamento não concluído.' }
-  } catch { }
+  } catch {
+    pixOffline.value = true
+  }
 }
 async function simulate() {
   busy.value = true
@@ -168,8 +183,8 @@ async function success(p) {
   window.scrollTo({ top: 0 })
   if (prefersReducedMotion() || !successBox.value) return
   gsap.timeline()
-    .from(successBox.value.querySelectorAll('.ok > *'), { y: 14, autoAlpha: 0, duration: 0.5, stagger: 0.06, ease: 'expo.out' })
-    .fromTo(successBox.value.querySelector('.ok__tick'), { strokeDashoffset: 40 }, { strokeDashoffset: 0, duration: 0.45, ease: 'power2.out' }, 0.15)
+    .from(successBox.value.querySelectorAll('.ok > *'), { y: 14, autoAlpha: 0, duration: DUR.base, stagger: 0.06, ease: EASE.expo })
+    .fromTo(successBox.value.querySelector('.ok__tick'), { strokeDashoffset: 40 }, { strokeDashoffset: 0, duration: DUR.base, ease: EASE.soft }, 0.15)
 }
 const goWorkspace = () => { clearTimeout(leave); router.push('/inicio') }
 const stayHere = () => clearTimeout(leave)
@@ -177,7 +192,7 @@ const stayHere = () => clearTimeout(leave)
 const root = ref(null)
 onMounted(() => {
   if (prefersReducedMotion()) return
-  gsap.from(root.value.querySelectorAll('.reveal'), { y: 28, autoAlpha: 0, duration: 0.9, ease: 'expo.out', stagger: 0.08, clearProps: 'transform' })
+  gsap.from(root.value.querySelectorAll('.reveal'), { y: 28, autoAlpha: 0, duration: DUR.slow, ease: EASE.expo, stagger: 0.08, clearProps: 'transform' })
 })
 onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 </script>
@@ -187,7 +202,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
     <header class="bar">
       <RouterLink to="/" class="logo" aria-label="Novexo, início">NOVEXO</RouterLink>
       <span class="secure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10V8a6 6 0 0 1 12 0v2 M5 10h14v11H5z M12 14v3" /></svg>Pagamento seguro</span>
-      <RouterLink to="/#planos" class="back">← Voltar aos planos</RouterLink>
+      <RouterLink to="/#planos" class="back"><FlaticonIcon name="angle-small-left" :size="16" /> Voltar aos planos</RouterLink>
     </header>
 
     <section v-if="done" ref="successBox" class="ok-wrap" aria-live="polite">
@@ -196,9 +211,9 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
         <h1>Bem-vindo ao<br />{{ done.plan_name }}</h1>
         <p class="ok__sub">O plano já está ativo no seu workspace. Abrindo ele para você…</p>
         <dl class="receipt">
-          <div><dt>Plano</dt><dd>{{ done.plan_name }} · {{ done.interval === 'year' ? 'anual' : 'mensal' }}</dd></div>
+          <div><dt>Plano</dt><dd>{{ done.plan_name }}, {{ done.interval === 'year' ? 'anual' : 'mensal' }}</dd></div>
           <div><dt>Pessoas</dt><dd>{{ done.seats }}</dd></div>
-          <div><dt>Pagamento</dt><dd>{{ done.method === 'pix' ? 'Pix' : `Cartão ${done.card_brand} final ${done.card_last4}${done.installments > 1 ? ` · ${done.installments}x` : ''}` }}</dd></div>
+          <div><dt>Pagamento</dt><dd>{{ done.method === 'pix' ? 'Pix' : `Cartão ${done.card_brand} final ${done.card_last4}${done.installments > 1 ? `, ${done.installments}x` : ''}` }}</dd></div>
           <div class="total"><dt>Total</dt><dd>{{ brl(done.amount_cents) }}</dd></div>
         </dl>
         <div class="ok__go">
@@ -236,7 +251,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
           </div>
           <div class="plan__price">
             <span class="plan__cur">R$</span>
-            <span class="plan__val"><Transition name="num" mode="out-in"><span :key="perSeatMonth">{{ perSeatMonth / 100 }}</span></Transition></span>
+            <span class="plan__val"><Transition name="num" mode="out-in"><span :key="perSeatMonth">{{ (perSeatMonth / 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) }}</span></Transition></span>
             <span class="plan__per">por pessoa/mês</span>
           </div>
 
@@ -259,14 +274,16 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
           <div v-if="saving" class="save"><dt>Desconto do plano anual</dt><dd>− {{ brl(saving) }}</dd></div>
           <div class="sum"><dt>Total {{ yearly ? 'hoje (1 ano)' : 'por mês' }}</dt><dd><Transition name="num" mode="out-in"><span :key="total">{{ brl(total) }}</span></Transition></dd></div>
         </dl>
-        <p class="trust reveal"><span>Cancele quando quiser</span><span>Recibo por e-mail</span><span>Dados protegidos</span></p>
+        <p class="trust reveal"><span><FlaticonIcon name="check" /> Plano ativo assim que o pagamento é aprovado</span><span><FlaticonIcon name="check" /> Recibos em Ajustes</span><span><FlaticonIcon name="check" /> Dados protegidos</span></p>
       </aside>
 
       <section class="pay reveal" aria-labelledby="pay-title">
         <h2 id="pay-title" class="pay__title">Pagamento</h2>
         <p v-if="cfg.test_mode" class="test">
-          <strong>Modo de teste</strong> · nenhum valor é cobrado. Pix: gere e clique em “Simular pagamento”. Cartão: <code>4242 4242 4242 4242</code> aprova, <code>4000 0000 0000 0002</code> recusa.
+          <strong>Modo de teste:</strong> nenhum valor é cobrado. Pix: gere e clique em “Simular pagamento”. Cartão: <code>4242 4242 4242 4242</code> aprova, <code>4000 0000 0000 0002</code> recusa.
         </p>
+        <p v-if="cfgError" class="error" role="alert">{{ cfgError }} <button type="button" class="link" @click="loadCfg">Tentar de novo</button></p>
+        <p v-else-if="cfg.available === false" class="error" role="alert">O pagamento está indisponível no momento. Tente mais tarde ou <RouterLink to="/contato" class="link">fale com a gente</RouterLink>.</p>
 
         <fieldset class="step" :disabled="!!payment && payment.status === 'pending'">
           <legend><span class="n">1</span>Quem paga</legend>
@@ -294,7 +311,8 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
               <div class="pix">
                 <div class="qr"><img :src="qr" alt="QR Code do Pix" width="200" height="200" /><span class="scan" aria-hidden="true" /></div>
                 <div class="pix__side">
-                  <p class="wait"><span class="dot" aria-hidden="true" />Aguardando pagamento · <strong>{{ clock }}</strong></p>
+                  <p class="wait"><span class="dot" aria-hidden="true" />Aguardando pagamento: <strong>{{ clock }}</strong></p>
+                  <p v-if="pixOffline" class="error" role="status">Sem conexão com o servidor. Se você já pagou, a gente confere assim que a conexão voltar.</p>
                   <ol class="howto"><li>Abra o app do seu banco e escolha Pix.</li><li>Escaneie o QR ou cole o código.</li><li>Confirme {{ brl(payment.amount_cents) }}. A gente reconhece na hora.</li></ol>
                   <label class="f"><span>Pix copia e cola</span>
                     <span class="copy"><input id="pix-code" :value="payment.pix_code" readonly @focus="$event.target.select()" /><button type="button" class="pg" @click="copyPix">{{ copied ? 'Copiado!' : 'Copiar' }}</button></span>
@@ -307,13 +325,14 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
               </div>
             </template>
             <template v-else>
-              <ul class="perks"><li>Aprovação na hora, todos os dias</li><li>QR Code válido por 30 minutos</li><li>Sem taxas para você</li></ul>
-              <GooeyButton variant="primary" size="lg" block :disabled="busy" @click="pay('pix')">{{ busy ? 'Gerando Pix…' : `Gerar Pix de ${brl(total)}` }}</GooeyButton>
+              <ul class="perks"><li><FlaticonIcon name="bolt" /> Aprovação na hora, todos os dias</li><li><FlaticonIcon name="bolt" /> QR Code válido por 30 minutos</li><li><FlaticonIcon name="bolt" /> Sem taxas para você</li></ul>
+              <GooeyButton variant="primary" size="lg" block :disabled="busy || !cfgReady || cfg.available === false" @click="pay('pix')">{{ busy ? 'Gerando Pix…' : `Gerar Pix de ${brl(total)}` }}</GooeyButton>
             </template>
           </div>
 
           <div v-else class="panel">
             <div v-if="cfg.public_key" id="mp-card-brick" ref="brickBox" class="brick" />
+            <p v-else-if="!cfg.test_mode" class="fine">{{ !cfgReady ? 'Carregando o pagamento com cartão…' : cfg.available === false ? 'O pagamento está indisponível no momento.' : 'O pagamento com cartão não está disponível agora. Use o Pix.' }}</p>
             <template v-else>
               <div class="cc" :class="{ flipped }" aria-hidden="true">
                 <div class="cc__face cc__front">
@@ -338,7 +357,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 
           <p v-if="error" class="error" role="alert">{{ error }}</p>
         </div>
-        <p class="fine">Ao continuar, você concorda com os Termos de uso. Renovação {{ yearly ? 'anual' : 'mensal' }}; cancele quando quiser em Ajustes › Planos.</p>
+        <p class="fine">Ao continuar, você concorda com os Termos de uso. O plano vale por {{ yearly ? '12 meses' : '1 mês' }} a partir da aprovação do pagamento.</p>
       </section>
     </main>
   </div>
@@ -423,7 +442,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 .bill .sum dd { overflow: hidden; font: 900 1.75rem/1 var(--lp-display); letter-spacing: -0.02em; }
 .bill .sum dd span { display: inline-block; }
 .trust { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin: 1.25rem 0 0; padding: 0 0.25rem; font-size: 0.8125rem; color: var(--lp-grey); }
-.trust span::before { content: '✓ '; color: var(--lp-orange); }
+.trust .flaticon { color: var(--lp-orange); }
 
 .pay { position: relative; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: 18px; background: #111111; }
 .pay__title { margin: 0 0 1rem; color: var(--lp-white); font: 800 1.35rem/1 var(--lp-display); text-transform: uppercase; }
@@ -453,7 +472,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 .methods__ink.right { transform: translateX(100%); }
 .panel { display: flex; flex-direction: column; gap: 1rem; padding-top: 0.5rem; }
 .perks { display: grid; gap: 0.5rem; margin: 0.25rem 0 0.25rem; padding: 0; list-style: none; color: rgb(248 248 248 / 0.8); }
-.perks li::before { content: '⚡ '; }
+.perks .flaticon { color: var(--lp-orange); }
 
 .pix { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: start; }
 @media (max-width: 560px) { .pix { grid-template-columns: 1fr; justify-items: center; } }

@@ -3,7 +3,7 @@ export const LAYOUTS = [
   { type: 'gantt', label: 'Gantt', desc: 'Duração e prazos numa linha do tempo', icon: 'chart', group: 'popular' },
   { type: 'calendar', label: 'Calendário', desc: 'Planeje e distribua por data', icon: 'calendar', group: 'popular' },
   { type: 'doc', label: 'Documento', desc: 'Uma página do projeto ao lado das tarefas', icon: 'page', group: 'popular' },
-  { type: 'board', label: 'Quadro – Kanban', desc: 'Mova tarefas entre colunas', icon: 'grid', group: 'popular' },
+  { type: 'board', label: 'Quadro (Kanban)', desc: 'Mova tarefas entre colunas', icon: 'grid', group: 'popular' },
   { type: 'form', label: 'Formulário', desc: 'Pedidos que viram tarefas', icon: 'check', group: 'popular' },
   { type: 'artifact', label: 'Artifact', desc: 'Criar com IA', icon: 'bolt', group: 'popular', soon: true },
   { type: 'dashboard', label: 'Painel', desc: 'Números e gráficos do projeto', icon: 'dashboard', group: 'popular' },

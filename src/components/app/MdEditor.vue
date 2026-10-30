@@ -1,7 +1,8 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { render, toggleCheck } from '../../utils/markdown'
+import FlaticonIcon from '../FlaticonIcon.vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -14,8 +15,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'commit'])
 const TOOLS = [
   ['H', 'Título', '## ', ''], ['B', 'Negrito', '**', '**'], ['I', 'Itálico', '*', '*'], ['U', 'Sublinhado', '++', '++'], ['S', 'Riscado', '~~', '~~'],
-  ['1.', 'Lista numerada', '1. ', ''], ['•', 'Lista', '- ', ''], ['☐', 'Lista de tarefas', '- [ ] ', ''], ['❝', 'Citação', '> ', ''],
-  ['</>', 'Código', '`', '`'], ['🔗', 'Link', '[', '](https://)'],
+  ['1.', 'Lista numerada', '1. ', ''], ['fi:list', 'Lista', '- ', ''], ['fi:checkbox', 'Lista de tarefas', '- [ ] ', ''], ['fi:quote-right', 'Citação', '> ', ''],
+  ['</>', 'Código', '`', '`'], ['fi:link-alt', 'Link', '[', '](https://)'],
 ]
 const mode = ref(props.view && props.modelValue ? 'view' : 'edit')
 const area = ref(null)
@@ -26,12 +27,12 @@ const html = computed(() => render(props.modelValue))
 const root = ref(null)
 watch(mode, async () => {
   await nextTick()
-  if (!prefersReducedMotion()) gsap.fromTo(root.value?.querySelector('textarea, .md-ed__view'), { autoAlpha: 0, y: 4 }, { autoAlpha: 1, y: 0, duration: 0.25, ease: 'power2.out' })
+  if (!prefersReducedMotion()) gsap.fromTo(root.value?.querySelector('textarea, .md-ed__view'), { autoAlpha: 0, y: 4 }, { autoAlpha: 1, y: 0, duration: DUR.press, ease: EASE.soft })
 })
 watch(expanded, async (open) => {
   await nextTick()
   const el = root.value?.querySelector('.md-ed__view')
-  if (el && !prefersReducedMotion()) gsap.from(el, { height: open ? '14rem' : el.scrollHeight, duration: 0.4, ease: 'power3.out', clearProps: 'height' })
+  if (el && !prefersReducedMotion()) gsap.from(el, { height: open ? '14rem' : el.scrollHeight, duration: DUR.fast, ease: EASE.out, clearProps: 'height' })
 })
 
 function put(text) {
@@ -69,10 +70,10 @@ defineExpose({ edit: () => { mode.value = 'edit'; nextTick(() => area.value?.foc
   <div ref="root" class="md-ed" :class="{ 'is-view': mode === 'view' }">
     <div class="md-ed__bar" role="toolbar" aria-label="Formatação">
       <template v-if="mode === 'edit'">
-        <button v-for="t in TOOLS" :key="t[1]" type="button" :title="t[1]" :aria-label="t[1]" @mousedown.prevent @click="format(t)">{{ t[0] }}</button>
+        <button v-for="t in TOOLS" :key="t[1]" type="button" :title="t[1]" :aria-label="t[1]" @mousedown.prevent @click="format(t)"><FlaticonIcon v-if="t[0].startsWith('fi:')" :name="t[0].slice(3)" :size="14" /><template v-else>{{ t[0] }}</template></button>
         <template v-if="upload">
-          <label class="md-ed__file" title="Imagem" aria-label="Enviar imagem">🖼<input type="file" accept="image/*" @change="attach($event, true)" /></label>
-          <label class="md-ed__file" title="Anexo" aria-label="Enviar anexo">📎<input type="file" @change="attach($event, false)" /></label>
+          <label class="md-ed__file" title="Imagem" aria-label="Enviar imagem"><FlaticonIcon name="picture" :size="14" /><input type="file" accept="image/*" @change="attach($event, true)" /></label>
+          <label class="md-ed__file" title="Anexo" aria-label="Enviar anexo"><FlaticonIcon name="clip" :size="14" /><input type="file" @change="attach($event, false)" /></label>
         </template>
         <span v-if="busy" class="md-ed__busy">Enviando…</span>
       </template>

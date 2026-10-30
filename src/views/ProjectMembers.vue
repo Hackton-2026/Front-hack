@@ -15,6 +15,7 @@ const PERMISSIONS = [
 ]
 const label = (perm) => PERMISSIONS.find((x) => x[0] === perm)?.[1] || perm
 const PERM_OPTIONS = PERMISSIONS.map(([value, l, hint]) => ({ value, label: l, hint }))
+const LINK_PERM_OPTIONS = PERM_OPTIONS.filter((o) => o.value !== 'full') // o servidor não deixa o link dar permissão total
 const SUGGESTED_ROLES = ['Gerente de projeto', 'Desenvolvedor', 'Designer', 'QA', 'Produto', 'Marketing', 'Suporte']
 
 const props = defineProps({ id: { type: [String, Number], required: true } })
@@ -27,6 +28,7 @@ const p = computed(() => project(pid.value))
 const data = ref(null)
 const email = ref('')
 const permission = ref('edit')
+const linkPermission = ref('edit')
 const sending = ref(false)
 const error = ref('')
 const confirming = ref(null)
@@ -90,7 +92,10 @@ const cancel = (inv) => run(`inv-${inv.id}`, () => cancelInvite(pid.value, inv.i
 const link = ref(null)
 const linkUrl = computed(() => link.value && `${location.origin}/entrar/${link.value.token}`)
 const linkApi = (opts) => api(`/api/projects/${pid.value}/invite-link/`, opts)
-watch(() => data.value?.can_manage, async (can) => { link.value = can ? await linkApi().catch(() => null) : null }, { immediate: true })
+// falha de rede não é "sem link": sem o aviso, a tela oferecia criar um link que talvez já existisse
+watch(() => data.value?.can_manage, async (can) => {
+  link.value = can ? await linkApi().catch((e) => { if (e.status !== 404) error.value = `Não deu para carregar o link de convite: ${e.message}`; return null }) : null
+}, { immediate: true })
 const saveLink = (perm, newCode = false) => run('link', async () => { link.value = await linkApi({ method: 'POST', body: { permission: perm, new_code: newCode } }) })
 const dropLink = () => run('link', async () => { await linkApi({ method: 'DELETE' }); link.value = null })
 async function copyLink() {
@@ -139,13 +144,14 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
   <div class="pg members">
     <div class="pg-bar">
       <strong class="title"><AppIcon name="user" :size="16" />Membros<span v-if="data" class="n">{{ data.members.length }}</span></strong>
-      <span v-if="p?.shared" class="shared">Projeto de {{ p.owner_name }} · sua permissão: {{ label(p.my_permission) }}</span>
+      <span v-if="p?.shared" class="shared">Projeto de {{ p.owner_name }}, sua permissão: {{ label(p.my_permission) }}</span>
     </div>
 
     <div class="body">
       <p class="lead">Quem participa vê as tarefas, as páginas e o chat <strong>deste projeto</strong>. O seu workspace, os outros projetos, notas e documentos continuam só seus.</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
 
+      <p v-if="data && !data.can_manage" class="pg-muted">Só quem tem permissão total no projeto convida pessoas. Peça para quem convidou você.</p>
       <form v-if="data?.can_manage" class="invite card" novalidate @submit.prevent="invite">
         <h2>Convidar para {{ p?.name }}</h2>
         <div class="row">
@@ -167,7 +173,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
             <button type="button" class="pg-btn primary" @click="copyLink">Copiar link</button>
           </div>
           <div class="row link-opts">
-            <AppSelect size="sm" :model-value="link.permission" :options="PERM_OPTIONS" :disabled="busy === 'link'" aria-label="Permissão de quem entra pelo link" @change="(v) => saveLink(v)" />
+            <AppSelect size="sm" :model-value="link.permission" :options="LINK_PERM_OPTIONS" :disabled="busy === 'link'" aria-label="Permissão de quem entra pelo link" @change="(v) => saveLink(v)" />
             <span class="hint">{{ link.uses }} {{ link.uses === 1 ? 'pessoa entrou' : 'pessoas entraram' }} por ele</span>
             <span class="spacer" />
             <button type="button" class="pg-btn ghost" :disabled="busy === 'link'" @click="saveLink(link.permission, true)">Trocar link</button>
@@ -178,8 +184,8 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
         <template v-else>
           <p class="hint">Gere um link para mandar no grupo ou no WhatsApp. Quem abrir cria a conta (ou entra) e já cai neste projeto.</p>
           <div class="row">
-            <AppSelect v-model="permission" :options="PERM_OPTIONS" aria-label="Permissão de quem entra pelo link" />
-            <button type="button" class="pg-btn primary" :disabled="busy === 'link'" @click="saveLink(permission)">Criar link de convite</button>
+            <AppSelect v-model="linkPermission" :options="LINK_PERM_OPTIONS" aria-label="Permissão de quem entra pelo link" />
+            <button type="button" class="pg-btn primary" :disabled="busy === 'link'" @click="saveLink(linkPermission)">Criar link de convite</button>
           </div>
         </template>
       </section>
@@ -191,7 +197,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
             <span class="ava" :style="{ background: m.color }"><img referrerpolicy="no-referrer" v-if="m.avatar" :src="m.avatar" alt="" /><template v-else>{{ initials(m.name) }}</template></span>
             <span class="who">
               <strong>{{ m.name }}<span v-if="m.id === state.me" class="you"> (você)</span></strong>
-              <small>@{{ m.username }}<template v-if="m.owner"> · dono do projeto</template><template v-else-if="m.invited"> · convidado</template></small>
+              <small>@{{ m.username }}<template v-if="m.owner">, dono do projeto</template><template v-else-if="m.invited">, convidado</template></small>
             </span>
             <span v-if="editingRole === m.id" class="role-edit">
               <input
@@ -227,7 +233,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
             <span class="ava pending"><AppIcon name="inbox" :size="14" /></span>
             <span class="who">
               <strong>{{ inv.email }}</strong>
-              <small>{{ label(inv.permission) }} · convidado por {{ inv.invited_by }} · vence {{ when(inv.expires_at) }}</small>
+              <small>{{ label(inv.permission) }}, convidado por {{ inv.invited_by }}, vence {{ when(inv.expires_at) }}</small>
             </span>
             <span class="actions">
               <button type="button" class="pg-btn" @click="copy(inv)"><AppIcon name="arrow" :size="13" />Copiar link</button>

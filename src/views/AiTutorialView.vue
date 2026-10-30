@@ -112,7 +112,7 @@ const selectedPrompt = ref(prompts[0])
                 ><p :key="selectedPrompt">{{ selectedPrompt }}</p></Transition
               >
               <div class="composer-bottom">
-                <span>↵ enviar · ⇧ ↵ nova linha</span
+                <span>↵ enviar, ⇧ ↵ nova linha</span
                 ><span class="send-icon" aria-hidden="true"
                   ><FlaticonIcon name="arrow-up-right" :size="16"
                 /></span>

@@ -1,54 +1,72 @@
-.ip { --ip-line: rgb(255 255 255 / .14); --ip-muted: #a59d94; --ip-text: #e9e3db; }
+.ip {
+  --ip-line: rgb(255 255 255 / .14);
+  --ip-chip: rgb(255 255 255 / .06);
+  --ip-title: #f8f5f0;
+  --ip-heading: #ece6df;
+  --ip-text: #e9e3db;
+  --ip-code: #f0d8c2;
+  --ip-soft: #cfc2b4;
+  --ip-muted: #a59d94;
+  --ip-faint: #8c847b;
+  --ip-label: #b9a48f;
+  --ip-label-dim: #8d7a66;
+  --ip-surface: #0c0b0a;
+  --ip-surface-hi: #19140f;
+  --ip-glow: rgb(229 101 21 / .12);
+  --ip-glow-deep: rgb(140 53 10 / .05);
+  --ip-tint: rgb(229 101 21 / .06);
+}
 .ip-main { max-width: 1320px; margin-inline: auto; padding: 166px 48px 40px; }
 .ip :is(a, button, summary):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 5px; }
 
 .ip-hero { position: relative; isolation: isolate; display: grid; grid-template-columns: 1.1fr .9fr; gap: clamp(40px, 6vw, 90px); align-items: end; padding-bottom: 72px; border-bottom: 1px solid var(--ip-line); }
-.ip-hero::before { content: ''; position: absolute; z-index: -1; pointer-events: none; width: min(850px, 100vw); height: 760px; top: -220px; left: -260px; background: radial-gradient(ellipse at center, rgb(229 101 21 / .12), rgb(140 53 10 / .05) 40%, transparent 68%); }
-.ip-kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 26px; color: #b9a48f; font: 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.ip-hero::before { content: ''; position: absolute; z-index: -1; pointer-events: none; width: min(850px, 100vw); height: 760px; top: -220px; left: -260px; background: radial-gradient(ellipse at center, var(--ip-glow), var(--ip-glow-deep) 40%, transparent 68%); }
+.ip-kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 26px; color: var(--ip-label); font: 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
 .ip-kicker::before { content: ''; width: 18px; height: 1px; background: var(--lp-orange-soft); }
-.ip-hero h1 { margin: 0; color: #f8f5f0; font: 600 clamp(56px, 6.4vw, 92px)/.98 var(--lp-hero); letter-spacing: -.07em; }
+.ip-hero h1 { margin: 0; color: var(--ip-title); font: 600 clamp(56px, 6.4vw, 92px)/.98 var(--lp-hero); letter-spacing: -.07em; }
 .ip-hero h1 em { color: var(--lp-orange-soft); font-family: var(--font-serif); font-weight: 400; letter-spacing: -.045em; }
 .ip-lead { max-width: 420px; margin: 0; color: var(--ip-muted); font-size: 15px; line-height: 1.8; }
 .ip-lead strong { color: var(--ip-text); font-weight: 500; }
 
 .ip-section { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(40px, 6vw, 90px); padding: 72px 0; border-bottom: 1px solid var(--ip-line); }
+.ip-section > *, .ip-hero > * { min-width: 0; }
 .ip-section:last-child { border-bottom: 0; }
 .ip-section > header { position: sticky; top: 110px; align-self: start; }
-.ip-section > header h2 { margin: 0; color: #eae4dd; font: 500 clamp(28px, 2.8vw, 38px)/1.12 var(--lp-hero); letter-spacing: -.055em; }
-.ip-section > header h2 span { color: #8f877f; }
+.ip-section > header h2 { margin: 0; color: var(--ip-heading); font: 500 clamp(28px, 2.8vw, 38px)/1.12 var(--lp-hero); letter-spacing: -.055em; }
+.ip-section > header h2 span { color: var(--ip-faint); }
 .ip-section > header p { margin: 18px 0 0; max-width: 340px; color: var(--ip-muted); font-size: 13px; line-height: 1.8; }
 
 .ip-list { margin: 0; padding: 0; list-style: none; }
 .ip-list > li { display: grid; grid-template-columns: 34px 1fr; gap: 0 18px; padding: 24px 0; border-top: 1px solid var(--ip-line); }
 .ip-list > li:last-child { border-bottom: 1px solid var(--ip-line); }
-.ip-num { padding-top: 3px; color: #8d7a66; font: 10px var(--font-mono); }
+.ip-num { padding-top: 3px; color: var(--ip-label-dim); font: 10px var(--font-mono); }
 .ip-list h3 { margin: 0 0 8px; color: var(--ip-text); font: 500 16px/1.35 var(--lp-sans); letter-spacing: -.01em; }
 .ip-list p { margin: 0; color: var(--ip-muted); font-size: 13px; line-height: 1.85; }
 .ip-list a, .ip-link { display: inline-flex; gap: 8px; align-items: center; margin-top: 12px; color: var(--lp-orange-soft); font-size: 12px; text-decoration: none; }
 .ip-list a:hover, .ip-link:hover { text-decoration: underline; }
 
 .ip-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--ip-line); border: 1px solid var(--ip-line); border-radius: 16px; overflow: hidden; }
-.ip-card { display: flex; flex-direction: column; gap: 12px; min-height: 230px; padding: 28px; background: #0b0a09; text-decoration: none; transition: background .3s; }
-.ip-card:hover { background: linear-gradient(145deg, #19140f, #0c0c0c 60%); }
+.ip-card { display: flex; flex-direction: column; gap: 12px; min-height: 230px; padding: 28px; background: var(--ip-surface); text-decoration: none; transition: background .3s; }
+.ip-card:hover { background: linear-gradient(145deg, var(--ip-surface-hi), var(--ip-surface) 60%); }
 .ip-card .flaticon--framed { color: var(--lp-orange-soft); }
 .ip-card h3 { margin: 6px 0 0; color: var(--ip-text); font: 500 19px/1.25 var(--lp-hero); letter-spacing: -.04em; }
 .ip-card p { margin: 0; color: var(--ip-muted); font-size: 13px; line-height: 1.75; }
 .ip-card ul { display: flex; flex-wrap: wrap; gap: 6px; margin: auto 0 0; padding: 0; list-style: none; }
-.ip-card li { padding: 4px 9px; border: 1px solid var(--ip-line); border-radius: 999px; color: #c7bdb2; font: 10px var(--font-mono); }
+.ip-card li { padding: 4px 9px; border: 1px solid var(--ip-line); border-radius: 999px; color: var(--ip-soft); font: 10px var(--font-mono); }
 
-.ip-code { margin: 14px 0 0; padding: 16px 18px; overflow-x: auto; border: 1px solid var(--ip-line); border-radius: 10px; background: #0d0c0b; color: #e8dccf; font: 12px/1.7 var(--font-mono); white-space: pre; }
-.ip-code .c { color: #8a8178; }
+.ip-code { margin: 14px 0 0; padding: 16px 18px; overflow-x: auto; border: 1px solid var(--ip-line); border-radius: 10px; background: var(--ip-surface); color: var(--ip-text); font: 12px/1.7 var(--font-mono); white-space: pre; }
+.ip-code .c { color: var(--ip-faint); }
 .ip-code .k { color: var(--lp-orange-soft); }
-.ip p code, .ip li code, .ip td code { padding: 1px 6px; border-radius: 4px; background: rgb(255 255 255 / .06); color: #f0d8c2; font: 11.5px var(--font-mono); }
+.ip p code, .ip li code, .ip td code { padding: 1px 6px; border-radius: 4px; background: var(--ip-chip); color: var(--ip-code); font: 11.5px var(--font-mono); }
 .ip-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.ip-table th { padding: 0 12px 12px 0; color: #8d7a66; font: 10px var(--font-mono); text-align: left; text-transform: uppercase; letter-spacing: .06em; }
+.ip-table th { padding: 0 12px 12px 0; color: var(--ip-label-dim); font: 10px var(--font-mono); text-align: left; text-transform: uppercase; letter-spacing: .06em; }
 .ip-table td { padding: 13px 12px 13px 0; border-top: 1px solid var(--ip-line); color: var(--ip-muted); vertical-align: top; line-height: 1.6; }
 .ip-table td:first-child { white-space: nowrap; }
 .ip-verb { display: inline-block; min-width: 46px; color: var(--lp-orange-soft); font: 600 10px var(--font-mono); }
-.ip-note { margin: 18px 0 0; padding: 14px 16px; border-left: 2px solid var(--lp-orange-soft); background: rgb(229 101 21 / .06); color: #d8c7b6; font-size: 12.5px; line-height: 1.75; }
+.ip-note { margin: 18px 0 0; padding: 14px 16px; border-left: 2px solid var(--lp-orange-soft); background: var(--ip-tint); color: var(--ip-soft); font-size: 12.5px; line-height: 1.75; }
 
-.ip-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; margin-top: 72px; padding: 36px 40px; border: 1px solid rgb(255 255 255 / .16); border-radius: 16px; background: linear-gradient(145deg, #19140f, #0c0c0c 42%, #0a0a0a); }
-.ip-cta h2 { margin: 0; color: #eee8e1; font: 500 clamp(24px, 2.4vw, 32px)/1.2 var(--lp-hero); letter-spacing: -.05em; }
+.ip-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; margin-top: 72px; padding: 36px 40px; border: 1px solid var(--ip-line); border-radius: 16px; background: linear-gradient(145deg, var(--ip-surface-hi), var(--ip-surface) 42%, var(--ip-surface)); }
+.ip-cta h2 { margin: 0; color: var(--ip-heading); font: 500 clamp(24px, 2.4vw, 32px)/1.2 var(--lp-hero); letter-spacing: -.05em; }
 .ip-cta h2 em { color: var(--lp-orange-soft); font-family: var(--font-serif); font-weight: 400; }
 .ip-cta__actions { display: flex; flex-wrap: wrap; gap: 12px; }
 

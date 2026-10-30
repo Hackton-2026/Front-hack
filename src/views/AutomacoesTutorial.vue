@@ -39,7 +39,7 @@ const steps = [
         </p>
       </header>
 
-      <p class="availability">Em preparação · Exemplos do fluxo previsto</p>
+      <p class="availability">Em preparação. Exemplos do fluxo previsto.</p>
 
       <section
         v-for="(step, index) in steps"

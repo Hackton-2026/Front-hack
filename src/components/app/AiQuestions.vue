@@ -22,7 +22,7 @@ function typed(i) {
 }
 function send() {
   if (done.value < qs.value.length) return
-  emit('answer', `Respostas (${props.form.title}):\n${qs.value.map((q, i) => `${i + 1}. ${q.question} → ${answerOf(i)}`).join('\n')}`)
+  emit('answer', `Respostas (${props.form.title}):\n${qs.value.map((q, i) => `${i + 1}. ${q.question}: ${answerOf(i)}`).join('\n')}`)
 }
 function useRecommended() {
   qs.value.forEach((q, i) => { if (!answerOf(i) && q.recommended) picked[i] = [q.recommended] })

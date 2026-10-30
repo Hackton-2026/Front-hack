@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
@@ -28,8 +28,8 @@ const addingSub = ref(false)
 const confirmDelete = ref(false)
 const reduced = prefersReducedMotion()
 const motion = () => !prefersReducedMotion()
-const pop = (el) => motion() && el && gsap.fromTo(el, { scale: 0.82 }, { scale: 1, duration: 0.4, ease: 'back.out(3)' })
-const enter = (els, opts = {}) => motion() && els?.length && gsap.fromTo(els, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.3, stagger: 0.035, ease: 'power2.out', clearProps: 'transform', ...opts })
+const pop = (el) => motion() && el && gsap.fromTo(el, { scale: 0.82 }, { scale: 1, duration: DUR.fast, ease: EASE.popStrong })
+const enter = (els, opts = {}) => motion() && els?.length && gsap.fromTo(els, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: DUR.fast, stagger: 0.035, ease: EASE.soft, clearProps: 'transform', ...opts })
 const q = (sel) => panel.value?.querySelectorAll(sel)
 
 const activity = ref([])
@@ -124,7 +124,7 @@ watch(() => task.value?.title, (t) => (titleLen.value = t?.length || 0), { immed
 watch([tab, newest], async () => { await nextTick(); enter(q('.log li')) })
 watch(adding, async (v) => {
   await nextTick()
-  if (v && motion()) gsap.from(q('.inline, form.add'), { height: 0, autoAlpha: 0, duration: 0.3, ease: 'power2.out', clearProps: 'height' })
+  if (v && motion()) gsap.from(q('.inline, form.add'), { height: 0, autoAlpha: 0, duration: DUR.fast, ease: EASE.soft, clearProps: 'height' })
 })
 watch(() => [panelData.value.relations.length, panelData.value.attachments.length, comments.value.length], async (now, before) => {
   if (!before || now.every((n, i) => n <= before[i])) return
@@ -133,7 +133,7 @@ watch(() => [panelData.value.relations.length, panelData.value.attachments.lengt
   if (now[1] > before[1]) enter([...(q('.files li') || [])].slice(0, 1))
   if (now[2] > before[2]) enter(newest.value ? [...(q('.log li') || [])].slice(0, 1) : [...(q('.log li') || [])].slice(-1))
 })
-watch(saving, async (v) => { await nextTick(); if (v === 'Salvo' && motion()) gsap.fromTo(q('.saving'), { autoAlpha: 0, x: -6 }, { autoAlpha: 1, x: 0, duration: 0.3 }) })
+watch(saving, async (v) => { await nextTick(); if (v === 'Salvo' && motion()) gsap.fromTo(q('.saving'), { autoAlpha: 0, x: -6 }, { autoAlpha: 1, x: 0, duration: DUR.fast }) })
 const desc = ref('')
 watch(() => [ui.taskId, task.value?.description], () => (desc.value = task.value?.description || ''), { immediate: true })
 const saveDesc = () => desc.value !== task.value.description && set({ description: desc.value })
@@ -160,12 +160,12 @@ watch(() => ui.taskId, async (id, old) => {
   comment.value = ''
   if (!id || old || reduced) return
   await nextTick()
-  gsap.fromTo(panel.value, { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 0.35, ease: 'power3.out' })
-  gsap.from(panel.value.querySelectorAll('.sec'), { y: 10, autoAlpha: 0, duration: 0.35, stagger: 0.04, ease: 'power2.out', delay: 0.08 })
+  gsap.fromTo(panel.value, { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
+  gsap.from(panel.value.querySelectorAll('.sec'), { y: 10, autoAlpha: 0, duration: DUR.fast, stagger: 0.04, ease: EASE.soft, delay: 0.08 })
 })
 function close() {
   if (reduced || !panel.value) return closeTask()
-  gsap.to(panel.value, { x: 40, autoAlpha: 0, duration: 0.2, ease: 'power2.in', onComplete: closeTask })
+  gsap.to(panel.value, { x: 40, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: closeTask })
 }
 
 async function set(fields) {
@@ -203,7 +203,7 @@ const gcalUrl = computed(() => {
   const details = `${t.description ? `${t.description.slice(0, 800)}
 
 ` : ''}${location.origin}/projetos/${t.projectId}`
-  return `https://calendar.google.com/calendar/render?${new URLSearchParams({ action: 'TEMPLATE', text: `${code(t)} · ${t.title}`, dates: `${start}/${ymd(end)}`, details })}`
+  return `https://calendar.google.com/calendar/render?${new URLSearchParams({ action: 'TEMPLATE', text: `${code(t)}: ${t.title}`, dates: `${start}/${ymd(end)}`, details })}`
 })
 const titleOf = (id) => state.projects.find((p) => p.id === task.value?.projectId)?.titles?.[id]
 
@@ -212,9 +212,9 @@ const priorityOptions = computed(() => [{ value: '', label: 'Sem prioridade', co
 const relKindOptions = computed(() => (adding.value === 'dep'
   ? [{ value: 'blocks', label: 'Esta bloqueia…' }, { value: 'blocked_by', label: 'Esta é bloqueada por…' }]
   : [{ value: 'relates', label: 'Relacionada a…' }, { value: 'duplicate', label: 'Duplicada de…' }]))
-const relTaskOptions = computed(() => relationOptions.value.map((t) => ({ value: t.id, label: `${code(t)} · ${t.title}` })))
+const relTaskOptions = computed(() => relationOptions.value.map((t) => ({ value: t.id, label: `${code(t)}: ${t.title}` })))
 const pageOptions = computed(() => state.pages.filter((p) => p.project === task.value?.projectId).map((pg) => ({ value: pg.id, label: pg.title || 'Sem título' })))
-const parentSelectOptions = computed(() => [{ value: null, label: 'Sem pai' }, ...parentOptions.value.map((t) => ({ value: t.id, label: `${code(t)} · ${t.title}` }))])
+const parentSelectOptions = computed(() => [{ value: null, label: 'Sem pai' }, ...parentOptions.value.map((t) => ({ value: t.id, label: `${code(t)}: ${t.title}` }))])
 const projectOptions = computed(() => [{ value: null, label: 'Sem projeto' }, ...state.projects.map((p) => ({ value: p.id, label: p.name, color: p.color }))])
 const cycleOptions = computed(() => [{ value: null, label: 'Sem ciclo' }, ...state.cycles.filter((c) => c.project === task.value?.projectId).map((c) => ({ value: c.id, label: c.name }))])
 function addItem() {
@@ -225,7 +225,7 @@ function addItem() {
 function toggleItem(item, el) {
   item.done = !item.done
   set({ checklist: [...task.value.checklist] })
-  if (item.done && !reduced) gsap.fromTo(el, { scale: 0.7 }, { scale: 1, duration: 0.4, ease: 'back.out(2.4)' })
+  if (item.done && !reduced) gsap.fromTo(el, { scale: 0.7 }, { scale: 1, duration: DUR.fast, ease: EASE.pop })
 }
 const removeItem = (item) => set({ checklist: task.value.checklist.filter((i) => i !== item) })
 function addTag() {
@@ -286,7 +286,7 @@ function duplicate() {
 }
 async function copyCode() {
   try {
-    await navigator.clipboard.writeText(`${code(task.value)} · ${task.value.title}`)
+    await navigator.clipboard.writeText(`${code(task.value)}: ${task.value.title}`)
     toast('Código copiado.')
   } catch { toast('Não deu para copiar.') }
 }
@@ -318,8 +318,8 @@ function destroy() {
           <button v-else type="button" class="done-btn" :disabled="!task.projectId" :title="task.projectId ? '' : 'Escolha um projeto para publicar'" @click="publish">Publicar</button>
           <template v-if="saved">
             <span class="votes" role="group" aria-label="Votos">
-              <button type="button" class="vote" :aria-pressed="myVote === 1" :title="`A favor: ${names(panelData.upvotes)}`" aria-label="Votar a favor" @click="vote(1, $event.currentTarget)">▲ {{ panelData.upvotes.length }}</button>
-              <button type="button" class="vote" :aria-pressed="myVote === -1" :title="`Contra: ${names(panelData.downvotes)}`" aria-label="Votar contra" @click="vote(-1, $event.currentTarget)">▼ {{ panelData.downvotes.length }}</button>
+              <button type="button" class="vote" :aria-pressed="myVote === 1" :title="`A favor: ${names(panelData.upvotes)}`" aria-label="Votar a favor" @click="vote(1, $event.currentTarget)"><AppIcon name="caret-up" :size="14" />{{ panelData.upvotes.length }}</button>
+              <button type="button" class="vote" :aria-pressed="myVote === -1" :title="`Contra: ${names(panelData.downvotes)}`" aria-label="Votar contra" @click="vote(-1, $event.currentTarget)"><AppIcon name="caret-down" :size="14" />{{ panelData.downvotes.length }}</button>
             </span>
             <button type="button" class="sub-btn" :aria-pressed="watching" :title="`Inscritos: ${names(panelData.watchers)}`" @click="act('subscribe/', { on: !watching }).then(() => pop($event.currentTarget))"><AppIcon name="user" :size="13" />{{ watching ? 'Inscrito' : 'Inscrever-se' }}<span>{{ panelData.watchers.length }}</span></button>
             <button type="button" class="icon" title="Copiar nome da branch" aria-label="Copiar nome da branch" @click="copyBranch"><AppIcon name="github" :size="15" /></button>
@@ -346,7 +346,7 @@ function destroy() {
       <div class="body">
         <div class="sec">
           <span class="code">{{ code(task) }}</span>
-          <button v-if="parent" type="button" class="parent-link" @click="openTask(parent)"><AppIcon name="parent" :size="13" />{{ code(parent) }} · {{ parent.title }}</button>
+          <button v-if="parent" type="button" class="parent-link" @click="openTask(parent)"><AppIcon name="parent" :size="13" />{{ code(parent) }}: {{ parent.title }}</button>
           <span v-if="saving" class="saving">{{ saving }}</span>
           <textarea class="title" :value="task.title" rows="1" maxlength="200" aria-label="Título" @input="titleLen = $event.target.value.length" @change="set({ title: $event.target.value.trim() || task.title })" />
           <span class="count" :class="{ full: titleLen >= 200 }">{{ titleLen }}/200</span>
@@ -413,8 +413,8 @@ function destroy() {
           <div v-for="[kind, items] in relationGroups" :key="kind" class="rel">
             <span class="rel__kind">{{ RELATIONS[kind] }}</span>
             <span v-for="r in items" :key="r.id" class="rel__item">
-              <button type="button" class="subs__title" @click="r.other && openTask(r.other)">{{ r.other ? `${code(r.other)} · ${r.other.title}` : `#${r.task}` }}</button>
-              <button type="button" class="x" :aria-label="`Remover relação com ${r.other?.title || r.task}`" @click="act(`relations/${r.id}/`, undefined, 'DELETE')">×</button>
+              <button type="button" class="subs__title" @click="r.other && openTask(r.other)">{{ r.other ? `${code(r.other)}: ${r.other.title}` : `#${r.task}` }}</button>
+              <button type="button" class="x" :aria-label="`Remover relação com ${r.other?.title || r.task}`" @click="act(`relations/${r.id}/`, undefined, 'DELETE')"><AppIcon name="close" :size="12" /></button>
             </span>
           </div>
         </section>
@@ -426,7 +426,7 @@ function destroy() {
               <AppIcon v-else :name="ICON_OF[a.kind] || 'doc'" :size="15" />
               <a :href="a.url" target="_blank" rel="noopener">{{ a.name || a.url }}</a>
               <small>{{ size(a.size) }}</small>
-              <button type="button" class="x" :aria-label="`Remover ${a.name}`" @click="act(`attachments/${a.id}/`, undefined, 'DELETE')">×</button>
+              <button type="button" class="x" :aria-label="`Remover ${a.name}`" @click="act(`attachments/${a.id}/`, undefined, 'DELETE')"><AppIcon name="close" :size="12" /></button>
             </li>
           </ul>
         </section>
@@ -470,7 +470,7 @@ function destroy() {
             </dd>
             <dt><AppIcon name="tag" :size="15" />Etiquetas</dt>
             <dd class="chips">
-              <span v-for="t in task.tags" :key="t" class="ntag">{{ t }}<button type="button" :aria-label="`Remover ${t}`" @click="set({ tags: task.tags.filter((x) => x !== t) })">×</button></span>
+              <span v-for="t in task.tags" :key="t" class="ntag">{{ t }}<button type="button" :aria-label="`Remover ${t}`" @click="set({ tags: task.tags.filter((x) => x !== t) })"><AppIcon name="close" :size="11" /></button></span>
               <input v-model="newTag" class="tag-input" placeholder="Adicionar etiquetas" aria-label="Nova etiqueta" @keydown.enter.prevent="addTag" @blur="addTag" />
             </dd>
           </dl>
@@ -499,7 +499,7 @@ function destroy() {
         <section v-if="saved" class="sec">
           <div class="tabs" role="tablist">
             <button v-for="t in TABS" :key="t[0]" type="button" role="tab" :aria-selected="tab === t[0]" @click="tab = t[0]">{{ t[1] }}</button>
-            <button type="button" class="sort" :title="newest ? 'Mais recentes primeiro' : 'Mais antigos primeiro'" @click="newest = !newest">{{ newest ? '↓ Recentes' : '↑ Antigos' }}</button>
+            <button type="button" class="sort" :title="newest ? 'Mais recentes primeiro' : 'Mais antigos primeiro'" @click="newest = !newest"><AppIcon name="chevron" :size="12" :style="newest ? null : { transform: 'rotate(180deg)' }" />{{ newest ? 'Recentes' : 'Antigos' }}</button>
           </div>
           <form v-if="['all', 'comments', 'updates'].includes(tab)" class="comment" @submit.prevent="sendComment">
             <div v-if="tab === 'updates'" class="states" role="radiogroup" aria-label="Situação">
@@ -514,7 +514,7 @@ function destroy() {
                 <div class="c-head">
                   <strong>{{ member(f.comment.author)?.name || 'Alguém' }}</strong>
                   <span v-if="f.comment.is_update" class="upd" :style="{ '--c': UPDATE_STATES.find((s) => s[0] === f.comment.update_state)?.[2] }">{{ UPDATE_STATES.find((s) => s[0] === f.comment.update_state)?.[1] || 'Atualização' }}</span>
-                  <time>{{ ago(f.at) }}{{ f.comment.edited_at ? ' · editado' : '' }}</time>
+                  <time>{{ ago(f.at) }}{{ f.comment.edited_at ? ' (editado)' : '' }}</time>
                   <span v-if="f.comment.author === state.me" class="c-actions">
                     <button type="button" @click="editingId = f.comment.id; editBody = f.comment.body">Editar</button>
                     <button type="button" @click="commentAction(f.comment, '', undefined, 'DELETE')">Apagar</button>
@@ -529,7 +529,7 @@ function destroy() {
               </template>
               <template v-else>
                 <span><strong v-if="f.actor">{{ member(f.actor)?.name || 'Alguém' }}</strong> {{ f.text }}</span>
-                <small v-if="f.details && Object.keys(f.details).length" class="det">{{ Object.entries(f.details).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' · ') }}</small>
+                <small v-if="f.details && Object.keys(f.details).length" class="det">{{ Object.entries(f.details).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(', ') }}</small>
                 <time>{{ ago(f.at) }}</time>
               </template>
             </li>
@@ -646,7 +646,7 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .ghost { padding: 0 0.7rem; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .ghost:hover { background: var(--surface-2); color: var(--text); }
 .votes { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; }
-.vote { height: 28px; padding: 0 0.5rem; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
+.vote { display: inline-flex; align-items: center; gap: 0.15rem; height: 28px; padding: 0 0.5rem; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .vote + .vote { border-left: 1px solid var(--line); }
 .vote[aria-pressed='true'] { color: var(--accent-soft); }
 .sub-btn { display: inline-flex; align-items: center; gap: 0.35rem; height: 30px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--text); cursor: pointer; }
@@ -677,7 +677,7 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .files small { font-size: 11.5px; }
 .thumb { width: 28px; height: 28px; border-radius: 4px; object-fit: cover; }
 .tabs { flex-wrap: wrap; align-items: center; }
-.sort { margin-left: auto; padding: 0.25rem 0.5rem; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
+.sort { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: auto; padding: 0.25rem 0.5rem; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .states { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .states label { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.55rem; border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); border-radius: 999px; font-size: 12px; cursor: pointer; }
 .states label:has(input:checked) { background: color-mix(in srgb, var(--c) 22%, transparent); }

@@ -4,15 +4,17 @@
   --lp-grey: #919599;
   --lp-grey-light: #cdcdcb;
   --lp-white: #f8f8f8;
+  --lp-black: #000;
   --lp-display: 'Lexend', 'Geist', system-ui, sans-serif;
   --lp-hero: 'Inter', 'Geist', system-ui, sans-serif;
   --lp-sans: 'Geist', 'Helvetica Neue', system-ui, sans-serif;
-  background: #000;
+  background: var(--lp-black);
   color: var(--lp-white);
   font-family: var(--lp-sans);
   overflow-x: clip;
 }
+/* EXCEPTION to token-fallback/raw-hex: o html fica fora do .lp e não enxerga --lp-black; é o mesmo #000 */
 html:has(.lp), html:has(.lp) body { background: #000; }
-.lp ::selection { background: var(--lp-orange); color: #000; }
+.lp ::selection { background: var(--lp-orange); color: var(--lp-black); }
 .lp .editorial-word { display: inline-block; white-space: nowrap; }
 .lp .editorial-char { display: inline-block; }

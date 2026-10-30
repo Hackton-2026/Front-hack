@@ -1,13 +1,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import GooeyButton from '../GooeyButton.vue'
 
 const root = ref(null)
 let tween
 onMounted(() => {
   if (prefersReducedMotion()) return
-  tween = gsap.from(root.value.querySelector('.cta__card'), { y: 60, opacity: 0, duration: 1.2, ease: 'expo.out', scrollTrigger: { trigger: root.value, start: 'top 75%', once: true } })
+  tween = gsap.from(root.value.querySelector('.cta__card'), { y: 60, opacity: 0, duration: DUR.enter, ease: EASE.expo, scrollTrigger: { trigger: root.value, start: 'top 75%', once: true } })
 })
 onUnmounted(() => { tween?.scrollTrigger?.kill(); tween?.kill() })
 </script>

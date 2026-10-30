@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { api } from '../services/api'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import AppIcon from '../components/app/AppIcon.vue'
 import AiItems from '../components/app/AiItems.vue'
 import AiMarkdown from '../components/app/AiMarkdown.vue'
@@ -48,7 +48,7 @@ async function scrollDown(animate) {
   if (!list.value) return
   list.value.scrollTo({ top: list.value.scrollHeight, behavior: animate ? 'smooth' : 'auto' })
   const last = list.value.querySelector('.msg:last-of-type')
-  if (animate && last && !prefersReducedMotion()) gsap.from(last, { y: 8, autoAlpha: 0, duration: 0.3, ease: 'power2.out' })
+  if (animate && last && !prefersReducedMotion()) gsap.from(last, { y: 8, autoAlpha: 0, duration: DUR.fast, ease: EASE.soft })
 }
 
 async function poll() {
@@ -254,7 +254,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
         <button type="button" class="mention" :class="{ on: callsWhatsapp }" :aria-pressed="callsWhatsapp" title="Mandar pelo WhatsApp para quem participa" @click="whatsapp"><AppIcon name="chat" :size="14" />/whatsapp</button>
         </template>
         <MeetButton @link="startCall" />
-        <span class="hint"><kbd>↵</kbd> enviar · <kbd>⇧</kbd><kbd>↵</kbd> linha</span>
+        <span class="hint"><kbd>↵</kbd> enviar, <kbd>⇧</kbd><kbd>↵</kbd> linha</span>
         <button type="submit" class="send" :disabled="sending || !text.trim()" aria-label="Enviar"><AppIcon name="arrow" :size="16" /></button>
       </div>
     </form>

@@ -17,7 +17,7 @@ const PRINCIPLES = [
 const STORY = [
   ['Começo', 'Tarefas, projetos e quadros', 'A base: listas, Kanban, calendário e o menu de projeto com ciclos, módulos, visões e páginas.'],
   ['Depois', 'A Novexo IA', 'Uma IA que cria tarefas, ciclos e páginas falando em português, com os mesmos limites de quem pede.'],
-  ['Em seguida', 'Times de verdade', 'Convites por link, quatro níveis de permissão, cargos por pessoa e um chat em cada projeto.'],
+  ['Em seguida', 'Trabalho em equipe', 'Convites por link, quatro níveis de permissão, cargos por pessoa e um chat em cada projeto.'],
   ['Agora', 'Fora da tela', 'Planos com Pix e cartão, avisos de prazo no WhatsApp, GitHub e Google Agenda.'],
 ]
 
@@ -59,7 +59,7 @@ onUnmounted(() => { document.title = previousTitle })
       </section>
 
       <div v-reveal class="ip-cta">
-        <h2>Quer ver como funciona<br><em>na prática?</em></h2>
+        <h2>Quer ver o Novexo<br><em>funcionando?</em></h2>
         <div class="ip-cta__actions">
           <GooeyButton variant="secondary" size="lg" to="/blog/como-funciona">Como funciona</GooeyButton>
           <GooeyButton variant="primary" size="lg" to="/login">Começar grátis</GooeyButton>

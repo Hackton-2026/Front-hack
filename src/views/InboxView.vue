@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
@@ -49,7 +49,7 @@ async function reveal() {
   if (prefersReducedMotion()) return
   await nextTick()
   const rows = root.value?.querySelectorAll('.invite, .item')
-  if (rows?.length) gsap.from(rows, { y: 6, autoAlpha: 0, duration: 0.3, stagger: 0.03, ease: 'power2.out' })
+  if (rows?.length) gsap.from(rows, { y: 6, autoAlpha: 0, duration: DUR.fast, stagger: 0.03, ease: EASE.soft })
 }
 onMounted(reveal)
 watch(tab, reveal)
@@ -60,7 +60,7 @@ watch(tab, reveal)
     <div class="pg-bar">
       <h1>Caixa de entrada</h1>
       <div class="pg-tabs" role="tablist">
-        <button type="button" role="tab" :aria-selected="tab === 'all'" @click="tab = 'all'">Tudo<span class="n">{{ state.inbox.length }}</span></button>
+        <button type="button" role="tab" :aria-selected="tab === 'all'" @click="tab = 'all'">Tudo<span v-if="state.inbox.length" class="n">{{ state.inbox.length }}</span></button>
         <button type="button" role="tab" :aria-selected="tab === 'unread'" @click="tab = 'unread'">Não lidas<span v-if="unread" class="n">{{ unread }}</span></button>
       </div>
       <button type="button" class="pg-btn" :disabled="!unread" @click="markAllRead"><AppIcon name="check" :size="14" />Marcar tudo como lido</button>

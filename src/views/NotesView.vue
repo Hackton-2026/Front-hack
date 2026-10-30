@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { useNotes } from '../composables/useOnboarding'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
@@ -30,17 +30,17 @@ async function create() {
   await nextTick()
   const el = root.value.querySelector(`[data-note="${n.id}"]`)
   el?.querySelector('textarea')?.focus()
-  if (el && !reduced) gsap.from(el, { scale: 0.85, rotation: -3, autoAlpha: 0, duration: 0.5, ease: 'back.out(1.7)' })
+  if (el && !reduced) gsap.from(el, { scale: 0.85, rotation: -3, autoAlpha: 0, duration: DUR.base, ease: EASE.popSoft })
 }
 function del(id) {
   const el = root.value.querySelector(`[data-note="${id}"]`)
   if (!el || reduced) return remove(id)
-  gsap.to(el, { scale: 0.85, autoAlpha: 0, duration: 0.25, ease: 'power2.in', onComplete: () => remove(id) })
+  gsap.to(el, { scale: 0.85, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: () => remove(id) })
 }
 async function pin(n, el) {
   n.pinned = !n.pinned
   await nextTick()
-  if (!reduced) gsap.fromTo(root.value.querySelector(`[data-note="${n.id}"]`), { y: -10, autoAlpha: 0.4 }, { y: 0, autoAlpha: 1, duration: 0.4, ease: 'power3.out' })
+  if (!reduced) gsap.fromTo(root.value.querySelector(`[data-note="${n.id}"]`), { y: -10, autoAlpha: 0.4 }, { y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
 }
 function toDraft(n) {
   const [first, ...rest] = n.text.trim().split('\n')
@@ -50,14 +50,14 @@ function toDraft(n) {
 }
 watch([q, color, tag], async () => { await nextTick(); staggerIn(root.value?.querySelectorAll('.note')) })
 onMounted(() => {
-  if (!reduced) gsap.from(root.value.querySelectorAll('.note'), { y: 16, rotation: () => gsap.utils.random(-3, 3), autoAlpha: 0, duration: 0.5, stagger: 0.05, ease: 'power3.out' })
+  if (!reduced) gsap.from(root.value.querySelectorAll('.note'), { y: 16, rotation: () => gsap.utils.random(-3, 3), autoAlpha: 0, duration: DUR.base, stagger: 0.05, ease: EASE.out })
 })
 </script>
 
 <template>
   <div ref="root" class="pg notes">
     <div class="pg-bar">
-      <h1>Notas <span class="count">{{ notes.length }}</span></h1>
+      <h1>Notas <span v-if="notes.length" class="count">{{ notes.length }}</span></h1>
       <div class="pg-bar__right">
         <label class="pg-search"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar nas notas" aria-label="Buscar nas notas" /></label>
         <button type="button" class="pg-btn primary" @click="create"><AppIcon name="plus" :size="14" />Nova nota</button>
@@ -92,7 +92,7 @@ onMounted(() => {
             <span class="colors">
               <button v-for="c in COLORS" :key="c" type="button" :class="{ on: c === n.color }" :style="{ background: c }" :aria-label="`Cor ${c}`" @click="n.color = c" />
             </span>
-            <small>{{ when(n.at) }} · {{ words(n) }} pal.</small>
+            <small>{{ when(n.at) }}, {{ words(n) }} pal.</small>
             <button type="button" class="act" title="Virar rascunho de tarefa" aria-label="Virar rascunho de tarefa" @click="toDraft(n)"><AppIcon name="draft" :size="14" /></button>
             <button type="button" class="act del" aria-label="Apagar nota" @click="del(n.id)"><AppIcon name="close" :size="14" /></button>
           </footer>

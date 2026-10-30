@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../services/api'
 import { useAuth } from '../composables/useAuth'
+import FlaticonIcon from '../components/FlaticonIcon.vue'
 
 const route = useRoute()
 const { user, init, loadMe } = useAuth()
@@ -10,17 +11,23 @@ const state = ref('loading')
 const message = ref('')
 const email = ref('')
 const sent = ref(false)
+const sending = ref(false)
 
 async function resend() {
+  if (sending.value) return
+  sending.value = true
   try {
     await api('/api/auth/verify-email/resend/', { method: 'POST' })
     sent.value = true
   } catch (e) {
     message.value = e.message
+  } finally {
+    sending.value = false
   }
 }
 
-onMounted(async () => {
+async function confirm() {
+  state.value = 'loading'
   await init()
   try {
     const r = await api('/api/auth/verify-email/', { method: 'POST', body: { token: route.query.token || '' }, auth: false })
@@ -29,9 +36,12 @@ onMounted(async () => {
     if (user.value) await loadMe()
   } catch (e) {
     message.value = e.message
-    state.value = 'error'
+    // sem status é rede: o link pode estar bom, então não chamamos de inválido
+    state.value = e.status ? 'error' : 'offline'
   }
-})
+}
+
+onMounted(confirm)
 </script>
 
 <template>
@@ -41,16 +51,22 @@ onMounted(async () => {
       <section class="card" aria-live="polite">
         <template v-if="state === 'loading'"><p class="sub">Confirmando seu e-mail…</p></template>
         <template v-else-if="state === 'ok'">
-          <span class="mark ok" aria-hidden="true">✓</span>
+          <span class="mark ok" aria-hidden="true"><FlaticonIcon name="check" /></span>
           <h1>E-mail confirmado</h1>
           <p class="sub"><strong>{{ email }}</strong> está confirmado. Pode fechar esta aba ou seguir para o Novexo.</p>
           <RouterLink class="btn primary" :to="user ? '/comecar' : '/login'">{{ user ? 'Ir para o Novexo' : 'Entrar' }}</RouterLink>
         </template>
+        <template v-else-if="state === 'offline'">
+          <span class="mark" aria-hidden="true"><FlaticonIcon name="wifi-slash" /></span>
+          <h1>Sem conexão</h1>
+          <p class="sub">Não conseguimos falar com o servidor para confirmar seu e-mail. O link continua valendo.</p>
+          <button type="button" class="btn primary" @click="confirm">Tentar de novo</button>
+        </template>
         <template v-else>
-          <span class="mark" aria-hidden="true">!</span>
+          <span class="mark" aria-hidden="true"><FlaticonIcon name="exclamation" /></span>
           <h1>Link inválido</h1>
           <p class="error" role="alert">{{ message }}</p>
-          <button v-if="user && !sent" type="button" class="btn primary" @click="resend">Mandar um link novo para {{ user.email }}</button>
+          <button v-if="user && !sent" type="button" class="btn primary" :disabled="sending" @click="resend">Mandar um link novo para {{ user.email }}</button>
           <p v-else-if="sent" class="sub">Pronto, mandamos um link novo. Confira sua caixa de entrada (e o spam).</p>
           <RouterLink v-else class="btn primary" to="/login">Entrar para pedir um link novo</RouterLink>
         </template>

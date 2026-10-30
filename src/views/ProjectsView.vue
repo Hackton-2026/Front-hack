@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useOnboarding } from '../composables/useOnboarding'
 import AppIcon from '../components/app/AppIcon.vue'
@@ -58,7 +58,7 @@ async function animate() {
   await nextTick()
   if (!root.value) return
   staggerIn(root.value.querySelectorAll('.card, tbody tr'))
-  if (!prefersReducedMotion()) root.value.querySelectorAll('.pbar span').forEach((bar) => gsap.fromTo(bar, { scaleX: 0 }, { scaleX: Number(bar.dataset.v), duration: 1, ease: 'expo.out', delay: 0.2 }))
+  if (!prefersReducedMotion()) root.value.querySelectorAll('.pbar span').forEach((bar) => gsap.fromTo(bar, { scaleX: 0 }, { scaleX: Number(bar.dataset.v), duration: DUR.long, ease: EASE.expo, delay: 0.2 }))
 }
 watch([view, filter, sort], animate)
 onMounted(animate)
@@ -67,7 +67,7 @@ onMounted(animate)
 <template>
   <div ref="root" class="pg projects">
     <div class="pg-bar">
-      <h1>Projetos <span class="count">{{ state.projects.length }}</span></h1>
+      <h1>Projetos <span v-if="state.projects.length" class="count">{{ state.projects.length }}</span></h1>
       <div class="pg-bar__right">
         <label class="pg-search"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar projeto" aria-label="Buscar projeto" /></label>
         <AppSelect v-model="filter" :options="[{ value: 'all', label: 'Todos' }, { value: 'mine', label: 'Onde eu participo' }, { value: 'late', label: 'Com atraso' }]" size="sm" aria-label="Filtrar projetos" />
@@ -89,12 +89,12 @@ onMounted(animate)
         <div class="health" :style="{ '--h': HEALTH[r.health][1] }"><i />{{ HEALTH[r.health][0] }}<span class="prefix">{{ r.p.prefix }}</span></div>
         <div class="prog"><div class="pbar"><span :data-v="r.pct" :style="{ transform: `scaleX(${r.pct})` }" /></div><b>{{ Math.round(r.pct * 100) }}%</b></div>
         <dl class="nums">
-          <div><dt>Abertas</dt><dd>{{ r.open }}</dd></div>
-          <div><dt>Concluídas</dt><dd>{{ r.done }}</dd></div>
-          <div><dt>Atrasadas</dt><dd :class="{ late: r.late }">{{ r.late }}</dd></div>
+          <div><dt>Abertas</dt><dd :class="{ zero: !r.open }">{{ r.open }}</dd></div>
+          <div><dt>Concluídas</dt><dd :class="{ zero: !r.done }">{{ r.done }}</dd></div>
+          <div><dt>Atrasadas</dt><dd :class="{ late: r.late, zero: !r.late }">{{ r.late }}</dd></div>
         </dl>
         <ul class="facts">
-          <li><AppIcon name="cycle" :size="13" />{{ r.cycle ? `${r.cycle.name} · faltam ${daysLeft(r.cycle)} d` : 'Sem ciclo ativo' }}</li>
+          <li><AppIcon name="cycle" :size="13" />{{ r.cycle ? `${r.cycle.name}, faltam ${daysLeft(r.cycle)} d` : 'Sem ciclo ativo' }}</li>
           <li><AppIcon name="calendar" :size="13" />{{ r.next ? `Próximo prazo: ${fmt(r.next.due)}` : 'Nenhum prazo pela frente' }}</li>
         </ul>
         <footer class="foot">
@@ -158,6 +158,7 @@ h1 { display: flex; align-items: center; gap: 0.5rem; }
 .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 0; }
 .nums dt { font-size: 11.5px; color: var(--muted); }
 .nums dd { margin: 0; font: 600 1.2rem/1.2 'Geist', system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.nums dd.zero { color: var(--muted); font-weight: 500; }
 .late { color: var(--danger, #ff8a80); }
 .facts { display: flex; flex-direction: column; gap: 0.3rem; margin: 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--muted); }
 .facts li { display: flex; align-items: center; gap: 0.4rem; }

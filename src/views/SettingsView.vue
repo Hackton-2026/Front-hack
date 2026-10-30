@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { parseCsv, toCsv } from '../utils/csv'
 import { api, toFormData } from '../services/api'
 import { compressImage } from '../utils/image'
@@ -115,7 +115,7 @@ watch(tab, async (t) => {
   if (t === 'billing' && !billing.value) loadBilling()
   if (t === 'notify') loadDevices()
   await nextTick()
-  if (!prefersReducedMotion()) gsap.fromTo(panel.value, { y: 6, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.25, ease: 'power2.out' })
+  if (!prefersReducedMotion()) gsap.fromTo(panel.value, { y: 6, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: DUR.press, ease: EASE.soft })
 })
 const twice = (key, run) => {
   if (confirm2.value !== key) { confirm2.value = key; return }
@@ -198,10 +198,12 @@ const origin = location.origin
 
 const billing = ref(null)
 const payments = ref([])
+const paymentsError = ref('')
 const yearly = ref(false)
 async function loadBilling() {
   try {
-    const [b, list] = await Promise.all([api('/api/billing/'), api('/api/payments/').catch(() => [])])
+    // a lista vazia por erro parecia "nenhum pagamento", justo onde o checkout manda procurar o recibo
+    const [b, list] = await Promise.all([api('/api/billing/'), api('/api/payments/').catch((e) => { paymentsError.value = `Não deu para carregar os pagamentos: ${e.message}`; return [] })])
     billing.value = b
     payments.value = list
   } catch (e) { status.value = e.message }
@@ -440,7 +442,7 @@ async function onImport(e) {
           <ul class="rows">
             <li v-for="m in state.people" :key="m.id">
               <span class="av" :style="{ background: m.color }"><img referrerpolicy="no-referrer" v-if="m.avatar" :src="m.avatar" alt="" class="av-img" /><template v-else>{{ m.name.slice(0, 2).toUpperCase() }}</template></span>
-              <span class="grow">{{ m.name }}<small v-if="m.id === state.me" class="muted"> · você</small>
+              <span class="grow">{{ m.name }}<small v-if="m.id === state.me" class="muted"> (você)</small>
                 <small class="muted block">{{ state.projects.filter((p) => p.members?.includes(m.id)).map((p) => p.name).join(', ') || 'Nenhum projeto em comum' }}</small>
               </span>
             </li>
@@ -448,7 +450,7 @@ async function onImport(e) {
           <h3>Membros por projeto</h3>
           <ul class="rows">
             <li v-for="p in state.projects" :key="p.id">
-              <span class="grow">{{ p.name }}<small class="muted"> · {{ p.members?.length || 1 }} {{ (p.members?.length || 1) === 1 ? 'pessoa' : 'pessoas' }}<template v-if="p.shared"> · de {{ p.owner_name }}</template></small></span>
+              <span class="grow">{{ p.name }}<small class="muted">, {{ p.members?.length || 1 }} {{ (p.members?.length || 1) === 1 ? 'pessoa' : 'pessoas' }}<template v-if="p.shared">, de {{ p.owner_name }}</template></small></span>
               <RouterLink :to="`/projetos/${p.id}/membros`" class="link">{{ p.my_permission === 'full' ? 'Convidar e gerenciar' : 'Ver membros' }}</RouterLink>
             </li>
           </ul>
@@ -460,9 +462,9 @@ async function onImport(e) {
             <div class="bar">
               <strong>Plano atual</strong>
               <span>{{ current ? billing.plans.find((p) => p.code === current.plan)?.name || current.plan : 'Grátis' }}</span>
-              <span v-if="current?.status && current.status !== 'active'" class="hint">· {{ SUB_STATUS[current.status] }}</span>
-              <span v-if="current?.trial_ends_at" class="hint">· teste até {{ fmtDate(current.trial_ends_at) }}</span>
-              <span v-if="current?.current_period_end && current.plan !== 'free'" class="hint">· vale até {{ fmtDate(current.current_period_end) }}</span>
+              <span v-if="current?.status && current.status !== 'active'" class="hint">{{ SUB_STATUS[current.status] }}</span>
+              <span v-if="current?.trial_ends_at" class="hint">teste até {{ fmtDate(current.trial_ends_at) }}</span>
+              <span v-if="current?.current_period_end && current.plan !== 'free'" class="hint">vale até {{ fmtDate(current.current_period_end) }}</span>
             </div>
             <div class="seg billing-seg" role="group" aria-label="Período">
               <label><input v-model="yearly" type="radio" name="period" :value="false" />Mensal</label>
@@ -476,12 +478,13 @@ async function onImport(e) {
               </li>
             </ul>
             <p class="hint">Pagamento por Pix ou cartão (até 12x no anual), com o valor calculado pelas pessoas do workspace. <RouterLink to="/#planos" class="link">Comparar planos</RouterLink></p>
+            <p v-if="paymentsError" class="hint" role="alert">{{ paymentsError }}</p>
             <template v-if="payments.length">
               <h3 class="pay-title">Pagamentos</h3>
               <ul class="rows pays">
                 <li v-for="p in payments" :key="p.id">
                   <span class="pay-when">{{ fmtDate(p.paid_at || p.created_at) }}</span>
-                  <span class="pay-what">{{ p.plan_name }} · {{ p.interval === 'year' ? 'anual' : 'mensal' }} · {{ p.seats }} {{ p.seats === 1 ? 'pessoa' : 'pessoas' }}</span>
+                  <span class="pay-what">{{ p.plan_name }}, {{ p.interval === 'year' ? 'anual' : 'mensal' }}, {{ p.seats }} {{ p.seats === 1 ? 'pessoa' : 'pessoas' }}</span>
                   <span class="pay-how">{{ p.method === 'pix' ? 'Pix' : `Cartão ${p.card_brand} •••• ${p.card_last4}`.trim() }}<template v-if="p.installments > 1"> em {{ p.installments }}x</template></span>
                   <strong>{{ brl(p.amount_cents) }}</strong>
                   <span class="pay-status" :class="PAY_STATUS[p.status]">{{ p.status_label }}</span>
@@ -566,7 +569,7 @@ async function onImport(e) {
               <input :value="schedule.start" type="time" aria-label="Início do expediente" :disabled="!isAdmin" @change="setSetting('schedule', 'start', $event.target.value)" />
               <span class="hint">até</span>
               <input :value="schedule.end" type="time" aria-label="Fim do expediente" :disabled="!isAdmin" @change="setSetting('schedule', 'end', $event.target.value)" />
-              <span class="hint">{{ fmtHours(dailyHours) }} por dia · {{ fmtHours(dailyHours * schedule.days.length) }} por semana</span>
+              <span class="hint">{{ fmtHours(dailyHours) }} por dia, {{ fmtHours(dailyHours * schedule.days.length) }} por semana</span>
             </div>
           </fieldset>
           <fieldset class="group">
@@ -577,7 +580,7 @@ async function onImport(e) {
               <button type="submit" class="link">Adicionar</button>
             </form>
             <ul v-if="schedule.holidays.length" class="rows">
-              <li v-for="h in schedule.holidays" :key="h.date + h.name"><span class="grow">{{ fmtDate(h.date) }} · {{ h.name }}</span><button v-if="isAdmin" type="button" class="link rm" @click="setSetting('schedule', 'holidays', schedule.holidays.filter((x) => x !== h))">Remover</button></li>
+              <li v-for="h in schedule.holidays" :key="h.date + h.name"><span class="grow">{{ fmtDate(h.date) }}, {{ h.name }}</span><button v-if="isAdmin" type="button" class="link rm" @click="setSetting('schedule', 'holidays', schedule.holidays.filter((x) => x !== h))">Remover</button></li>
             </ul>
             <p v-else class="hint">Nenhum feriado ou folga ainda.</p>
           </fieldset>

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
@@ -130,8 +130,8 @@ async function animate() {
   if (!root.value) return
   staggerIn(root.value.querySelectorAll('.cyc, .pg-row'))
   if (prefersReducedMotion()) return
-  gsap.fromTo(root.value.querySelectorAll('.bd__actual'), { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.2, ease: 'power2.inOut', delay: 0.2 })
-  gsap.from(root.value.querySelectorAll('.bd__dot'), { scale: 0, transformOrigin: 'center', duration: 0.4, ease: 'back.out(2)', delay: 1.2 })
+  gsap.fromTo(root.value.querySelectorAll('.bd__actual'), { drawSVG: '0%' }, { drawSVG: '100%', duration: DUR.enter, ease: EASE.inOutSoft, delay: 0.2 })
+  gsap.from(root.value.querySelectorAll('.bd__dot'), { scale: 0, transformOrigin: 'center', duration: DUR.fast, ease: EASE.pop, delay: 1.2 })
 }
 watch([tab, () => props.id], animate)
 watch(() => props.id, () => (tab.value = 'active'))
@@ -157,11 +157,11 @@ onUnmounted(() => removeEventListener('click', onDoc))
     </div>
 
     <section v-if="timeline.length" class="tl" aria-label="Linha do tempo dos ciclos">
-      <div class="tl__head"><strong>Linha do tempo</strong><span class="pg-muted">2 semanas atrás → 6 semanas à frente</span></div>
+      <div class="tl__head"><strong>Linha do tempo</strong><span class="pg-muted">De 2 semanas atrás até 6 semanas à frente</span></div>
       <div class="tl__track">
         <span class="tl__today" :style="{ left: `${todayPos}%` }"><small>hoje</small></span>
-        <button v-for="b in timeline" :key="b.c.id" type="button" class="tl__bar" :class="b.phase" :style="{ left: `${b.left}%`, width: `${b.width}%` }" :title="`${b.c.name} · ${range(b.c)} · ${Math.round(b.pct * 100)}% concluído`" @click="open(b.c)">
-          <i :style="{ width: `${b.pct * 100}%` }" /><span>{{ b.c.name }}{{ !pid ? ` · ${project(b.c.project)?.name || ''}` : '' }}</span>
+        <button v-for="b in timeline" :key="b.c.id" type="button" class="tl__bar" :class="b.phase" :style="{ left: `${b.left}%`, width: `${b.width}%` }" :title="`${b.c.name}: ${range(b.c)}, ${Math.round(b.pct * 100)}% concluído`" @click="open(b.c)">
+          <i :style="{ width: `${b.pct * 100}%` }" /><span>{{ b.c.name }}{{ !pid ? `, ${project(b.c.project)?.name || ''}` : '' }}</span>
         </button>
       </div>
     </section>
@@ -175,7 +175,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
             <span v-if="!pid" class="pg-tag">{{ project(c.project)?.name }}</span>
             <span class="pg-pill cyc__date"><AppIcon name="calendar" :size="13" />{{ range(c) }}</span>
             <span v-if="phase(c) === 'active'" class="left" :class="{ hot: daysLeft(c) <= 2 }">{{ daysLeft(c) === 0 ? 'termina hoje' : `faltam ${daysLeft(c)} d` }}</span>
-            <span v-if="loadOf(c).length" class="load" :title="loadOf(c).map((l) => `${member(l.id)?.name || '?'}: ${l.n}`).join(' · ')">
+            <span v-if="loadOf(c).length" class="load" :title="loadOf(c).map((l) => `${member(l.id)?.name || '?'}: ${l.n}`).join(', ')">
               <span v-for="l in loadOf(c).slice(0, 4)" :key="l.id" class="load__p" :style="{ '--c': member(l.id)?.color || 'var(--accent)' }">{{ (member(l.id)?.name || '?').slice(0, 2).toUpperCase() }}<b>{{ l.n }}</b></span>
             </span>
             <div class="menu-wrap">

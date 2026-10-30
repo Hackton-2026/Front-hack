@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 
 const props = defineProps({ value: { type: Number, default: 0 }, size: { type: Number, default: 30 }, label: { type: Boolean, default: true } })
 const C = 2 * Math.PI * 15
@@ -15,8 +15,8 @@ function paint(animate) {
     return
   }
   const n = { v: shown.value }
-  gsap.to(bar.value, { ...to, duration: 0.9, ease: 'power3.out' })
-  gsap.to(n, { v: props.value * 100, duration: 0.9, ease: 'power3.out', onUpdate: () => (shown.value = Math.round(n.v)) })
+  gsap.to(bar.value, { ...to, duration: DUR.slow, ease: EASE.out })
+  gsap.to(n, { v: props.value * 100, duration: DUR.slow, ease: EASE.out, onUpdate: () => (shown.value = Math.round(n.v)) })
 }
 onMounted(() => {
   gsap.set(bar.value, { strokeDashoffset: C })

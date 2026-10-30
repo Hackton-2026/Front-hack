@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import { useOnboarding } from '../../composables/useOnboarding'
@@ -22,7 +22,7 @@ const fmt = (d) => d === today() ? 'Hoje' : new Date(`${d}T12:00`).toLocaleDateS
 
 function toggleGroup(g, el) {
   closed[g.id] = !closed[g.id]
-  if (!closed[g.id] && !prefersReducedMotion()) nextTick(() => gsap.from(el.closest('.group').querySelectorAll('.row'), { y: -6, autoAlpha: 0, duration: 0.3, stagger: 0.03, ease: 'power2.out' }))
+  if (!closed[g.id] && !prefersReducedMotion()) nextTick(() => gsap.from(el.closest('.group').querySelectorAll('.row'), { y: -6, autoAlpha: 0, duration: DUR.fast, stagger: 0.03, ease: EASE.soft }))
 }
 async function quickAdd(status) {
   const title = (adding[status] || '').trim()
@@ -32,12 +32,12 @@ async function quickAdd(status) {
   adding[status] = ''
   await nextTick()
   const rows = root.value.querySelectorAll(`[data-group="${status}"] .row`)
-  if (rows.length && !prefersReducedMotion()) gsap.from(rows[rows.length - 1], { y: 6, autoAlpha: 0, backgroundColor: 'rgb(229 101 21 / 0.2)', duration: 0.6, ease: 'power2.out' })
+  if (rows.length && !prefersReducedMotion()) gsap.from(rows[rows.length - 1], { y: 6, autoAlpha: 0, backgroundColor: 'rgb(229 101 21 / 0.2)', duration: DUR.mid, ease: EASE.soft })
 }
 const tick = (t) => updateTask(t, { status: t.status === 'done' ? 'todo' : 'done' })
 
 onMounted(() => {
-  if (!prefersReducedMotion()) gsap.from(root.value.querySelectorAll('.group'), { y: 10, autoAlpha: 0, duration: 0.4, stagger: 0.06, ease: 'power2.out' })
+  if (!prefersReducedMotion()) gsap.from(root.value.querySelectorAll('.group'), { y: 10, autoAlpha: 0, duration: DUR.fast, stagger: 0.06, ease: EASE.soft })
 })
 </script>
 
@@ -47,7 +47,7 @@ onMounted(() => {
       <header class="group__head">
         <button type="button" class="caret" :class="{ 'is-closed': closed[g.id] }" :aria-expanded="!closed[g.id]" :aria-label="`${closed[g.id] ? 'Abrir' : 'Fechar'} ${g.name}`" @click="toggleGroup(g, $event.currentTarget)"><AppIcon name="chevron" :size="14" /></button>
         <StatusBadge :status="g.id" />
-        <span class="count">{{ g.tasks.length }}</span>
+        <span v-if="g.tasks.length" class="count">{{ g.tasks.length }}</span>
       </header>
       <template v-if="!closed[g.id]">
         <div class="cols" aria-hidden="true"><span>Nome</span><span>Responsáveis</span><span>Prazo</span><span>Prioridade</span></div>

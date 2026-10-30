@@ -1,4 +1,4 @@
-import { gsap } from './motion'
+import { EASE, DUR, gsap } from './motion'
 
 export const vTutorialMotion = {
   mounted(root) {
@@ -13,8 +13,8 @@ export const vTutorialMotion = {
           autoAlpha: 0,
           filter: 'blur(6px)',
           stagger: 0.14,
-          duration: 1.15,
-          ease: 'power3.out',
+          duration: DUR.enter,
+          ease: EASE.out,
           clearProps: 'transform,opacity,visibility,filter',
         })
       }
@@ -25,7 +25,7 @@ export const vTutorialMotion = {
         const figure = section.querySelector('figure')
         const timeline = gsap.timeline({
           scrollTrigger: { trigger: section, start: 'top 83%', once: true },
-          defaults: { ease: 'power3.out' },
+          defaults: { ease: EASE.out },
         })
 
         timeline.fromTo(
@@ -33,7 +33,7 @@ export const vTutorialMotion = {
           { '--line-progress': 0 },
           {
             '--line-progress': 1,
-            duration: 1.2,
+            duration: DUR.enter,
           },
           0
         )
@@ -46,7 +46,7 @@ export const vTutorialMotion = {
               autoAlpha: 0,
               filter: 'blur(4px)',
               transformOrigin: 'left bottom',
-              duration: 1.15,
+              duration: DUR.enter,
               clearProps: 'transform,opacity,visibility,filter',
             },
             0.05
@@ -60,7 +60,7 @@ export const vTutorialMotion = {
               y: 24,
               autoAlpha: 0,
               stagger: 0.12,
-              duration: 0.9,
+              duration: DUR.slow,
               clearProps: 'transform,opacity,visibility',
             },
             0.2
@@ -72,7 +72,7 @@ export const vTutorialMotion = {
               y: 24,
               autoAlpha: 0,
               stagger: 0.1,
-              duration: 0.9,
+              duration: DUR.slow,
               clearProps: 'transform,opacity,visibility',
             },
             0.15
@@ -86,7 +86,7 @@ export const vTutorialMotion = {
               y: 40,
               scale: 0.96,
               autoAlpha: 0,
-              duration: 1.2,
+              duration: DUR.enter,
               clearProps: 'transform,opacity,visibility',
             },
             0.22
@@ -100,8 +100,8 @@ export const vTutorialMotion = {
           y: 20,
           autoAlpha: 0,
           stagger: 0.15,
-          duration: 0.85,
-          ease: 'power3.out',
+          duration: DUR.slow,
+          ease: EASE.out,
           clearProps: 'transform,opacity,visibility',
           scrollTrigger: { trigger: end, start: 'top 90%', once: true },
         })

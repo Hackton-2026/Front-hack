@@ -24,7 +24,8 @@ const comparisonGroups = computed(() => COMPARISON_GROUPS.map(group => ({
   rows: group.rows.filter(row => !differencesOnly.value || new Set(row.values).size > 1),
 })).filter(group => group.rows.length))
 const comparedRows = computed(() => comparisonGroups.value.reduce((total, group) => total + group.rows.length, 0))
-const destination = plan => plan.id === 'enterprise' ? undefined : '/login'
+// "Testar 14 dias" abre o cadastro: o teste começa quando o workspace é criado
+const destination = plan => plan.id === 'enterprise' ? undefined : { path: '/login', query: { modo: 'cadastro' } }
 const enterCustomPlan = () => openCustomPlan(router)
 
 const enterpriseSteps = [
@@ -92,7 +93,7 @@ onUnmounted(() => { document.title = previousTitle })
             <div class="pricing-detail__label"><FlaticonIcon :name="plan.icon" :size="18" /><h3>{{ plan.name }}</h3></div>
             <h4>{{ plan.detail.title }}</h4><p>{{ plan.detail.description }}</p>
             <ul><li v-for="bullet in plan.detail.bullets" :key="bullet"><FlaticonIcon name="check" :size="11" />{{ bullet }}</li></ul>
-            <GooeyButton :to="destination(plan)" variant="secondary" :aria-label="`${plan.cta} — plano ${plan.name}`">{{ plan.cta }}<FlaticonIcon name="arrow-up-right" :size="12" /></GooeyButton>
+            <GooeyButton :to="destination(plan)" variant="secondary" :aria-label="`${plan.cta}: plano ${plan.name}`">{{ plan.cta }}<FlaticonIcon name="arrow-up-right" :size="12" /></GooeyButton>
           </article>
         </div>
       </section>

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
@@ -61,7 +61,7 @@ onMounted(async () => {
   await nextTick()
   grow()
   if (!pg.value?.title) root.value?.querySelector('.title')?.focus()
-  if (!prefersReducedMotion() && root.value) gsap.from(root.value.querySelectorAll('.anim'), { y: 12, opacity: 0, duration: 0.5, stagger: 0.07, ease: 'power3.out' })
+  if (!prefersReducedMotion() && root.value) gsap.from(root.value.querySelectorAll('.anim'), { y: 12, opacity: 0, duration: DUR.base, stagger: 0.07, ease: EASE.out })
 })
 onUnmounted(flush)
 </script>
@@ -69,7 +69,7 @@ onUnmounted(flush)
 <template>
   <div v-if="pg" ref="root" class="ed">
     <div class="ed__bar anim">
-      <span class="pg-muted">{{ pg.is_private ? 'Privada' : 'Pública' }} · {{ member(pg.owner)?.name }} · {{ words }} {{ words === 1 ? 'palavra' : 'palavras' }}</span>
+      <span class="pg-muted">{{ pg.is_private ? 'Privada' : 'Pública' }}, {{ member(pg.owner)?.name }}, {{ words }} {{ words === 1 ? 'palavra' : 'palavras' }}</span>
       <span class="ed__state" role="status">{{ saving === 'saving' ? 'Salvando…' : saving === 'saved' ? 'Salvo' : '' }}</span>
       <div class="ed__actions">
         <button v-if="pg.owner === state.me && !pg.archived" type="button" class="pg-btn" @click="edit('is_private', !pg.is_private)"><AppIcon :name="pg.is_private ? 'globe' : 'lock'" :size="14" />{{ pg.is_private ? 'Tornar pública' : 'Tornar privada' }}</button>

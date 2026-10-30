@@ -65,7 +65,7 @@ h1, h2, h3 { color: var(--color-heading); line-height: 1.15; margin: 0 0 var(--s
 h1 { font-size: var(--font-size-xl); }
 h2 { font-size: var(--font-size-lg); }
 ::selection { background: var(--pastel-yellow); color: var(--color-heading); }
-html { scrollbar-color: var(--color-border-strong) transparent; caret-color: var(--color-heading); }
+html { scrollbar-color: rgb(140 132 124 / 0.55) transparent; caret-color: var(--color-heading); }
 :is(input, textarea, [contenteditable]:not([contenteditable='false'])) { caret-color: var(--accent, #e56515); }
 
 .serif { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.005em; }

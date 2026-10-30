@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { api } from '../services/api'
 import { useAuth } from '../composables/useAuth'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -35,7 +35,7 @@ const scroll = () => nextTick(() => list.value?.scrollTo({ top: list.value.scrol
 async function animateLast() {
   await nextTick()
   const el = list.value?.lastElementChild
-  if (el && !prefersReducedMotion()) gsap.from(el, { y: 10, autoAlpha: 0, duration: 0.35, ease: 'power2.out' })
+  if (el && !prefersReducedMotion()) gsap.from(el, { y: 10, autoAlpha: 0, duration: DUR.fast, ease: EASE.soft })
 }
 const refresh = () => { load(); loadMe() }
 const describe = (e) => (e.status === 401 ? 'Entre na sua conta para usar a IA.' : e.status === 503 ? 'A IA não está configurada no servidor (falta a GROQ_API_KEY no backend).' : e.message)
@@ -72,7 +72,7 @@ async function analyze(e) {
   e.target.value = ''
   if (!file || loading.value) return
   const prompt = text.value.trim()
-  messages.value.push({ role: 'user', content: `📎 ${file.name}${prompt ? ` — ${prompt}` : ''}` })
+  messages.value.push({ role: 'user', content: `Arquivo anexado: ${file.name}${prompt ? `. ${prompt}` : ''}` })
   text.value = ''
   error.value = ''
   loading.value = true
@@ -140,7 +140,7 @@ async function decide(action, ok) {
         <div class="composer__bar">
           <input ref="fileInput" type="file" accept=".pdf,.txt,.md" hidden @change="analyze" />
           <button type="button" class="attach" :disabled="loading" title="Anexar PDF, .txt ou .md para gerar um relatório na wiki" aria-label="Anexar arquivo para relatório" @click="fileInput.click()"><AppIcon name="upload" :size="16" /></button>
-          <span class="hint"><kbd>↵</kbd> enviar · <kbd>⇧</kbd><kbd>↵</kbd> nova linha</span>
+          <span class="hint"><kbd>↵</kbd> enviar, <kbd>⇧</kbd><kbd>↵</kbd> nova linha</span>
           <button type="submit" class="send" :disabled="loading || !text.trim()" aria-label="Enviar"><AppIcon name="arrow" :size="16" /></button>
         </div>
       </form>

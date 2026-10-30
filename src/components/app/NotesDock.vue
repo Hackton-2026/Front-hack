@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onUnmounted, ref } from 'vue'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useNotes } from '../../composables/useOnboarding'
 import AppIcon from './AppIcon.vue'
 
@@ -15,7 +15,7 @@ async function openDial() {
   dial.value = !dial.value
   await nextTick()
   if (dial.value && !reduced) {
-    gsap.fromTo(root.value.querySelectorAll('.dial__item'), { y: 10, scale: 0.8, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.3, stagger: 0.05, ease: 'power3.out' })
+    gsap.fromTo(root.value.querySelectorAll('.dial__item'), { y: 10, scale: 0.8, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: DUR.fast, stagger: 0.05, ease: EASE.out })
   }
 }
 async function openPanel() {
@@ -23,13 +23,13 @@ async function openPanel() {
   dial.value = false
   await nextTick()
   if (!reduced) {
-    gsap.fromTo(root.value.querySelector('.notes'), { scale: 0.95, y: 10, autoAlpha: 0 }, { scale: 1, y: 0, autoAlpha: 1, duration: 0.35, ease: 'power3.out' })
-    gsap.from(root.value.querySelectorAll('.note'), { y: 10, autoAlpha: 0, duration: 0.35, stagger: 0.04, ease: 'power2.out', delay: 0.1 })
+    gsap.fromTo(root.value.querySelector('.notes'), { scale: 0.95, y: 10, autoAlpha: 0 }, { scale: 1, y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
+    gsap.from(root.value.querySelectorAll('.note'), { y: 10, autoAlpha: 0, duration: DUR.fast, stagger: 0.04, ease: EASE.soft, delay: 0.1 })
   }
 }
 function closePanel() {
   if (reduced) return (panel.value = false)
-  gsap.to(root.value.querySelector('.notes'), { scale: 0.97, y: 8, autoAlpha: 0, duration: 0.2, ease: 'power2.in', onComplete: () => (panel.value = false) })
+  gsap.to(root.value.querySelector('.notes'), { scale: 0.97, y: 8, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: () => (panel.value = false) })
 }
 async function newNote() {
   const note = add(COLORS[notes.value.length % COLORS.length])
@@ -37,12 +37,12 @@ async function newNote() {
   await nextTick()
   const el = root.value.querySelector(`[data-note="${note.id}"]`)
   el?.querySelector('textarea')?.focus()
-  if (el && !reduced) gsap.from(el, { scale: 0.9, autoAlpha: 0, duration: 0.4, ease: 'back.out(1.6)' })
+  if (el && !reduced) gsap.from(el, { scale: 0.9, autoAlpha: 0, duration: DUR.fast, ease: EASE.popSoft })
 }
 function deleteNote(id) {
   const el = root.value.querySelector(`[data-note="${id}"]`)
   if (!el || reduced) return remove(id)
-  gsap.to(el, { scale: 0.9, autoAlpha: 0, duration: 0.2, ease: 'power2.in', onComplete: () => remove(id) })
+  gsap.to(el, { scale: 0.9, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: () => remove(id) })
 }
 const onKey = (e) => { if (e.key === 'Escape') { dial.value = false; if (panel.value) closePanel() } }
 addEventListener('keydown', onKey)

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { gsap, prefersReducedMotion } from '../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import { useOnboarding } from '../composables/useOnboarding'
@@ -184,7 +184,7 @@ async function moveInk(animate = true) {
   const ink = tabs.value?.querySelector('.ink')
   if (!el || !ink) return
   const to = { x: el.offsetLeft, width: el.offsetWidth }
-  animate && !prefersReducedMotion() ? gsap.to(ink, { ...to, duration: 0.35, ease: 'power3.out' }) : gsap.set(ink, to)
+  animate && !prefersReducedMotion() ? gsap.to(ink, { ...to, duration: DUR.fast, ease: EASE.out }) : gsap.set(ink, to)
 }
 watch([view, () => props.view, () => pinned.value.length], () => moveInk())
 onMounted(() => moveInk(false))
@@ -196,10 +196,10 @@ onMounted(() => moveInk(false))
       <div class="head__title">
         <ProjectIcon :icon="p.icon" :color="p.color" :size="22" class="emoji" />
         <div>
-          <RouterLink v-if="scope.kind" :to="`/projetos/${p.id}/${scope.back}`" class="back">{{ scope.kind }} · {{ p.name }}</RouterLink>
+          <RouterLink v-if="scope.kind" :to="`/projetos/${p.id}/${scope.back}`" class="back">{{ scope.kind }}: {{ p.name }}</RouterLink>
           <h1>{{ scope.kind ? scope.name : p.name }}</h1>
         </div>
-        <span class="pct">{{ Math.round(pct * 100) }}% concluído · {{ scoped.length }} {{ scoped.length === 1 ? 'item' : 'itens' }}</span>
+        <span class="pct">{{ Math.round(pct * 100) }}% concluído, {{ scoped.length }} {{ scoped.length === 1 ? 'item' : 'itens' }}</span>
       </div>
       <div class="head__right">
         <RouterLink :to="`/projetos/${p.id}/membros`" class="people" :title="`${people.length} ${people.length === 1 ? 'pessoa' : 'pessoas'} no projeto`"><Avatars :ids="people" :size="26" /></RouterLink>
@@ -260,7 +260,7 @@ onMounted(() => moveInk(false))
         <AppSelect v-model="f.priority" size="sm" :class="{ on: f.priority }" :options="PRIORITY_OPTIONS" aria-label="Filtrar por prioridade" />
         <AppSelect v-model="f.due" size="sm" :class="{ on: f.due }" :options="DUE_OPTIONS" aria-label="Filtrar por prazo" />
         <button type="button" class="toggle" :aria-pressed="onlyMine" @click="onlyMine = !onlyMine"><AppIcon name="mine" :size="14" />Só minhas</button>
-        <button v-if="filtering" type="button" class="clear" @click="clearFilters">Limpar<span class="sr-only"> filtros</span> · {{ tasks.length }} de {{ scoped.length }}</button>
+        <button v-if="filtering" type="button" class="clear" @click="clearFilters">Limpar<span class="sr-only"> filtros</span>: {{ tasks.length }} de {{ scoped.length }}</button>
       </div>
     </div>
 

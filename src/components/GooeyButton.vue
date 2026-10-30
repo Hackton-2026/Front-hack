@@ -63,7 +63,8 @@ function animateTo(target) {
   if (reduced) { progress = target; return draw() }
   const from = progress, dur = target ? 1200 : 1080, start = performance.now()
   const step = (now) => {
-    const t = Math.min(1, (now - start) / dur)
+    // o horário do rAF é o início do quadro e pode vir antes do performance.now() do start: t < 0 dava raio negativo no ellipse
+    const t = Math.min(1, Math.max(0, (now - start) / dur))
     progress = from + (target - from) * (1 - (1 - t) ** 3)
     draw()
     if (t < 1) tween = requestAnimationFrame(step)

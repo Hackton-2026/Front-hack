@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
-import { gsap, prefersReducedMotion } from '../../utils/motion'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
 import { api } from '../../services/api'
 import { useOnboarding } from '../../composables/useOnboarding'
@@ -47,6 +47,7 @@ async function resendVerify() {
   }
 }
 const title = computed(() => ui.crumb || route.meta.title || '')
+// ownTitle: a página já mostra o próprio título; um caminho de um nível só o repetiria
 const crumbs = computed(() => {
   const parts = title.value.split(' › ').map((label) => ({ label }))
   const id = route.path.match(/^\/projetos\/(\d+)/)?.[1]
@@ -75,11 +76,11 @@ const reduced = prefersReducedMotion()
 
 function subEnter(el, done) {
   if (reduced) return done()
-  gsap.fromTo(el, { height: 0, marginBottom: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', marginBottom: '0.75rem', autoAlpha: 1, duration: 0.3, ease: 'power3.out', clearProps: 'height,marginBottom,overflow', onComplete: done })
+  gsap.fromTo(el, { height: 0, marginBottom: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', marginBottom: '0.75rem', autoAlpha: 1, duration: DUR.fast, ease: EASE.out, clearProps: 'height,marginBottom,overflow', onComplete: done })
 }
 function subLeave(el, done) {
   if (reduced) return done()
-  gsap.to(el, { height: 0, autoAlpha: 0, marginBottom: 0, overflow: 'hidden', duration: 0.22, ease: 'power2.in', onComplete: done })
+  gsap.to(el, { height: 0, autoAlpha: 0, marginBottom: 0, overflow: 'hidden', duration: DUR.press, ease: EASE.in, onComplete: done })
 }
 
 function onKey(e) {
@@ -98,7 +99,7 @@ watch(() => route.path, async () => {
   if (reduced) return
   await nextTick()
   const page = root.value?.querySelector('.main__scroll > *')
-  if (page) gsap.fromTo(page, { y: -8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' })
+  if (page) gsap.fromTo(page, { y: -8, opacity: 0 }, { y: 0, opacity: 1, duration: DUR.fast, ease: EASE.soft })
   root.value.querySelector('.main__scroll').scrollTop = 0
 })
 
@@ -117,9 +118,9 @@ onMounted(() => {
   addEventListener('click', onClick)
   if (reduced) return
   ctx = gsap.context(() => {
-    gsap.timeline({ defaults: { ease: 'power2.out' } })
-      .from('.rail__item', { x: -10, autoAlpha: 0, duration: 0.4, stagger: 0.05 })
-      .from('.top > *', { y: -6, autoAlpha: 0, duration: 0.4, stagger: 0.06 }, '<')
+    gsap.timeline({ defaults: { ease: EASE.soft } })
+      .from('.rail__item', { x: -10, autoAlpha: 0, duration: DUR.fast, stagger: 0.05 })
+      .from('.top > *', { y: -6, autoAlpha: 0, duration: DUR.fast, stagger: 0.06 }, '<')
   }, root.value)
 })
 onUnmounted(() => {
@@ -169,7 +170,7 @@ onUnmounted(() => {
         <img src="/logo-mark.png" alt="" width="34" height="34" class="ws__logo" />
         <span class="ws__text">
           <strong>{{ state.workspaceName || 'Workspace' }}</strong>
-          <small>{{ plural(state.projects.length, 'projeto', 'projetos') }} · {{ plural(state.members.length || 1, 'membro', 'membros') }}</small>
+          <small>{{ plural(state.projects.length, 'projeto', 'projetos') }}, {{ plural(state.members.length || 1, 'membro', 'membros') }}</small>
         </span>
       </RouterLink>
       <div class="rail__main">
@@ -207,10 +208,10 @@ onUnmounted(() => {
         <button type="button" class="verify__btn" :disabled="resending" @click="resendVerify">{{ resending ? 'Enviando…' : 'Reenviar link' }}</button>
         <button type="button" class="verify__x" aria-label="Fechar aviso" @click="hideVerify = true"><AppIcon name="close" :size="14" /></button>
       </p>
-      <nav class="crumb" aria-label="Caminho">
+      <nav v-if="crumbs.length > 1 || !route.meta.ownTitle" class="crumb" aria-label="Caminho">
         <AppIcon :name="route.meta.icon || 'work'" :size="16" />
         <template v-for="(c, i) in crumbs" :key="i">
-          <span v-if="i" class="crumb__sep" aria-hidden="true">›</span>
+          <AppIcon v-if="i" name="angle-small-right" :size="14" class="crumb__sep" />
           <RouterLink v-if="c.to" :to="c.to" class="crumb__link">{{ c.label }}</RouterLink>
           <span v-else :aria-current="i === crumbs.length - 1 ? 'page' : null">{{ c.label }}</span>
         </template>
@@ -245,6 +246,7 @@ onUnmounted(() => {
   --muted: #a29d95;
   --accent: #e56515;
   --accent-soft: #fba45c;
+  --on-accent: #140700;
   --danger: #ff8a80;
   --success: #7fc47a;
   --ease: cubic-bezier(0, 0, 0.2, 1);
@@ -258,6 +260,7 @@ onUnmounted(() => {
   --color-surface-2: var(--surface-2);
   --color-border: var(--line);
   --color-border-strong: var(--line-strong);
+  scrollbar-color: color-mix(in srgb, var(--muted) 55%, transparent) transparent;
   display: grid;
   grid-template: 'rail top' 48px 'rail main' 1fr / var(--rail-w) 1fr;
   height: 100vh;
@@ -268,6 +271,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 :global(html:has(.app)), :global(html:has(.app) body) { background: #0f0e0d; }
+:global(html:has(.app)) { scrollbar-color: rgb(162 157 149 / 0.55) transparent; }
 .app { color-scheme: dark; }
 .app.is-light {
   --bg: #f7f5f2;
@@ -315,7 +319,7 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .rail { grid-area: rail; position: relative; z-index: 65; display: flex; flex-direction: column; gap: 2px; min-height: 0; padding: 0.6rem 0.65rem 0.75rem; }
 .rail__main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-height: 0; margin-inline: -0.65rem; padding: 0 0.65rem 1rem; overflow: hidden auto; scrollbar-width: thin; }
 .rail__row { position: relative; }
-.rail__sub { display: flex; flex-direction: column; gap: 0.6rem; margin-block: 2px 0.75rem; margin-inline-start: 1.8rem; }
+.rail__sub { display: flex; flex-direction: column; gap: 0.6rem; margin-block: 2px 0.75rem; margin-inline-start: calc(1.8rem - 9px); padding-inline-start: 9px; }
 .rail__add { position: absolute; inset-block-start: 50%; inset-inline-end: 6px; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; opacity: 0; translate: 0 -50%; transition: opacity 0.15s, background 0.15s, color 0.15s; }
 .rail__row:hover .rail__add, .rail__add:focus-visible { opacity: 1; }
 .rail__add:hover { background: var(--line); color: var(--text); }
@@ -347,7 +351,7 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .main { grid-area: main; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--line); border-width: 1px 0 0 1px; border-radius: 10px 0 0 0; background: var(--bg); }
 .verify { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0; padding: 0.55rem 1.5rem; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); font-size: 13px; color: var(--text); }
 .verify strong { font-weight: 600; overflow-wrap: anywhere; }
-.verify > :deep(svg) { flex: none; color: var(--accent-soft); }
+.verify > :deep(.app-icon) { flex: none; color: var(--accent-soft); }
 .verify__btn { margin-left: auto; padding: 0.3rem 0.7rem; border: 1px solid var(--accent); border-radius: 6px; background: none; font: inherit; font-weight: 500; color: var(--text); cursor: pointer; }
 .verify__btn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
 .verify__btn:disabled { opacity: 0.6; cursor: default; }
