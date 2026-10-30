@@ -2,14 +2,12 @@
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
-import { useUi } from '../composables/useUi'
 import { api } from '../services/api'
 import GooeyButton from '../components/GooeyButton.vue'
 import GoogleButton from '../components/GoogleButton.vue'
 import TurnstileWidget from '../components/TurnstileWidget.vue'
 
-const { user, offline, init, login, register, loginWithGoogle } = useAuth()
-const { toast } = useUi()
+const { user, offline, init, loadMe, login, register, loginWithGoogle, logout } = useAuth()
 const route = useRoute()
 const router = useRouter()
 
@@ -19,19 +17,23 @@ const toggleMode = () => {
   router.replace({ query: { ...route.query, modo: isRegister.value ? undefined : 'cadastro' } })
 }
 
-const form = reactive({ first_name: '', email: String(history.state?.email || ''), password: '', whatsapp: '' })
+const form = reactive({ first_name: '', email: String(history.state?.email || ''), password: '' })
 const showPassword = ref(false)
 const error = ref('')
 const loading = ref(false)
 const captcha = ref('')
 const turnstile = ref()
+// segundo passo: conta nova só entra no app depois de confirmar o e-mail
+const confirming = computed(() => !!user.value?.must_confirm_email)
+const sending = ref(false)
+const sent = ref(false)
 
 async function run(action) {
   error.value = ''
   loading.value = true
   try {
     const to = await action()
-    router.push(to || route.query.next || '/comecar')
+    if (!confirming.value) router.push(to || route.query.next || '/comecar')
   } catch (e) {
     if (e.registered) {
       // a conta foi criada; só o login de depois falhou. Tentar cadastrar de novo diria "já existe"
@@ -57,19 +59,34 @@ async function retry() {
   }
 }
 
-async function signUp() {
-  const { whatsapp, ...data } = form
-  await register({ ...data, captcha: captcha.value })
-  if (!whatsapp.trim()) return null
-  try {
-    await api('/api/whatsapp/me/', { method: 'POST', body: { phone: whatsapp } })
-    toast('Mandamos um código no seu WhatsApp. Digite ele aqui para confirmar o número.')
-  } catch (e) {
-    toast(`Conta criada, mas o WhatsApp não foi cadastrado: ${e.message}`)
-  }
-  return '/ajustes?tab=whatsapp'
-}
+// o WhatsApp fica para depois, em Ajustes: aqui ele alongava o cadastro, e o código pago só vai para conta confirmada
+const signUp = () => register({ ...form, captcha: captcha.value })
 const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, form.password)))
+
+const checkConfirmed = () => run(async () => {
+  await loadMe()
+  if (confirming.value) throw new Error('Ainda não recebemos a confirmação. Abra o link do e-mail e tente de novo.')
+})
+
+async function resend() {
+  error.value = ''
+  sending.value = true
+  try {
+    await api('/api/auth/verify-email/resend/', { method: 'POST' })
+    sent.value = true
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    sending.value = false
+  }
+}
+
+function leave() {
+  logout()
+  error.value = ''
+  sent.value = false
+  form.password = ''
+}
 </script>
 
 <template>
@@ -77,6 +94,23 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
     <main class="side">
       <div class="box">
         <RouterLink to="/" class="logo" aria-label="Novexo, voltar ao início">NOVEXO</RouterLink>
+        <template v-if="confirming">
+          <h1>Confirme seu e-mail</h1>
+          <p class="switch center">Último passo: abra o link que mandamos para <strong>{{ user.email }}</strong>. Ele vale por 2 dias.</p>
+          <div class="form">
+            <p v-if="error" class="error" role="alert">{{ error }}</p>
+            <GooeyButton variant="primary" :disabled="loading" class="submit" @click="checkConfirmed">
+              {{ loading ? 'Conferindo…' : 'Já confirmei' }}
+            </GooeyButton>
+            <p v-if="sent" class="hint center" role="status">Mandamos um link novo. Confira a caixa de entrada e o spam.</p>
+            <p v-else class="hint center">
+              Não chegou? Confira o spam ou
+              <button type="button" class="link" :disabled="sending" @click="resend">{{ sending ? 'enviando…' : 'mande de novo' }}</button>
+            </p>
+          </div>
+          <button type="button" class="link other" @click="leave">Entrar com outra conta</button>
+        </template>
+        <template v-else>
         <h1>{{ isRegister ? 'Crie sua conta' : 'Que bom te ver de novo!' }}</h1>
         <p class="switch">
           {{ isRegister ? 'Já tem uma conta?' : 'Ainda não tem conta?' }}
@@ -92,11 +126,6 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
             <span>{{ isRegister ? 'E-mail' : 'E-mail ou usuário' }}</span>
             <input v-model="form.email" :type="isRegister ? 'email' : 'text'" required :autocomplete="isRegister ? 'email' : 'username'" />
           </label>
-          <label v-if="isRegister" class="field">
-            <span>WhatsApp <small class="opt">(opcional)</small></span>
-            <input v-model="form.whatsapp" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 91234-5678" aria-describedby="wa-hint" />
-            <small id="wa-hint" class="opt">Para receber os avisos dos seus projetos. Confirmamos com um código no WhatsApp.</small>
-          </label>
           <label class="field">
             <span>Senha</span>
             <span class="pass">
@@ -110,7 +139,7 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
               </button>
             </span>
           </label>
-          <p v-if="isRegister" class="hint">Use pelo menos 8 caracteres. Senhas comuns, só com números ou parecidas com seu nome ou e-mail não passam.</p>
+          <p v-if="isRegister" class="hint">Mínimo de 8 caracteres. Evite senhas comuns ou parecidas com seu nome.</p>
           <TurnstileWidget v-if="isRegister" ref="turnstile" v-model="captcha" />
 
           <p v-if="offline" class="error" role="alert">Não conseguimos falar com o servidor agora. Sua sessão continua salva. <button type="button" class="retry" :disabled="loading" @click="retry">Tentar de novo</button></p>
@@ -122,6 +151,7 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
 
         <div class="divider"><span>ou</span></div>
         <GoogleButton theme="filled_black" @credential="(c) => loading || run(() => loginWithGoogle(c))" />
+        </template>
       </div>
     </main>
 
@@ -156,19 +186,18 @@ const submit = () => run(() => (isRegister.value ? signUp() : login(form.email, 
 :global(html:has(.auth)), :global(html:has(.auth) body) { background: #111111; }
 @media (max-width: 900px) { .auth { grid-template-columns: minmax(0, 1fr); } .art { display: none; } }
 
-.side { display: grid; place-items: center; padding: 3rem 1.25rem; }
+.side { display: grid; place-items: center; padding: 1rem 1.25rem; }
 .box { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 27rem; }
 .logo { font: 800 2rem/1 'Lexend', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); text-decoration: none; }
-h1 { margin: 1.75rem 0 0.75rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); text-align: center; }
-.switch { margin: 0 0 2.25rem; font-size: 0.875rem; color: var(--text); }
+h1 { margin: 1.25rem 0 0.5rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); text-align: center; }
+.switch { margin: 0 0 1.5rem; font-size: 0.875rem; color: var(--text); }
 .link { padding: 0; border: 0; background: none; font: 600 0.875rem/1 inherit; color: var(--text); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .link:hover { color: var(--orange-soft); }
 .link:focus-visible, .eye:focus-visible { outline: 2px solid var(--orange-soft); outline-offset: 2px; border-radius: 4px; }
 
-.form { display: flex; flex-direction: column; gap: 1.25rem; width: 100%; }
-.field { display: flex; flex-direction: column; gap: 0.5rem; }
+.form { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
+.field { display: flex; flex-direction: column; gap: 0.4rem; }
 .field > span:first-child { font-size: 0.875rem; font-weight: 600; }
-.opt { font-size: 0.78rem; font-weight: 400; color: var(--muted); }
 .field input {
   width: 100%;
   height: 2.75rem;
@@ -188,11 +217,16 @@ h1 { margin: 1.75rem 0 0.75rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend
 .eye svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .eye:hover { color: var(--text); }
 .hint { margin: -0.5rem 0 0; font-size: 0.8125rem; color: var(--muted); }
+.center { text-align: center; }
+.switch strong { font-weight: 600; overflow-wrap: anywhere; }
+.hint .link { font-size: 0.8125rem; }
+.link:disabled { opacity: 0.6; cursor: default; }
+.other { margin-top: 1.75rem; color: var(--muted); }
 .error { margin: 0; padding: 0.75rem 0.9rem; border-radius: 6px; background: rgb(229 101 21 / 0.12); border: 1px solid rgb(229 101 21 / 0.4); font-size: 0.875rem; white-space: pre-line; color: #ffd2b3; }
 .error .retry { margin-left: 0.35rem; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: inherit; text-decoration: underline; cursor: pointer; }
 .submit { align-self: center; margin-top: 0.5rem; }
 
-.divider { display: flex; align-items: center; gap: 1rem; width: 100%; margin: 1.75rem 0 1.25rem; font-size: 0.8125rem; color: var(--muted); }
+.divider { display: flex; align-items: center; gap: 1rem; width: 100%; margin: 1.25rem 0 1rem; font-size: 0.8125rem; color: var(--muted); }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
 .art { position: sticky; top: 0.5rem; height: calc(100svh - 0.5rem); margin: 0.5rem 0 0 0; overflow: hidden; border-radius: 16px 0 0 0; background: var(--orange-soft); }

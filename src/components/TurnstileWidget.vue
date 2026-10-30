@@ -32,6 +32,8 @@ onMounted(async () => {
     sitekey: TURNSTILE_SITE_KEY,
     language: 'pt-br',
     theme: 'dark',
+    // só aparece quando o Cloudflare precisa de um clique: a maioria das pessoas nem vê, e o cadastro cabe sem rolar
+    appearance: 'interaction-only',
     callback: (t) => { token.value = t },
     'expired-callback': () => { token.value = '' },
     'error-callback': () => { token.value = '' },
@@ -49,6 +51,6 @@ defineExpose({ reset: () => { token.value = ''; if (widgetId != null) window.tur
 </template>
 
 <style scoped>
-.turnstile { min-height: 65px; }
+.turnstile:empty { display: none; }
 .turnstile-off { margin: 0; font-size: 0.8125rem; opacity: 0.75; }
 </style>
