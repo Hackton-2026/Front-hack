@@ -26,9 +26,9 @@ const LABEL_COLORS = ['#e56515', '#fba45c', '#f2c46d', '#7fc47a', '#3b82f6', '#a
 const route = useRoute()
 const router = useRouter()
 const { user } = useAuth()
-const { state, createDoc, createTask, code, project, member, today, STATUSES, PRIORITIES } = useWorkspace()
+const { state, createDoc, code, project, member, today, STATUSES, PRIORITIES } = useWorkspace()
 const { complete } = useOnboarding()
-const { toast, openTask, confirmAsk, promptAsk } = useUi()
+const { toast, openTask, newTask, confirmAsk, promptAsk } = useUi()
 
 state.prefs.wiki ||= { collections: [{ id: 'geral', name: 'Minhas páginas' }], labels: [] }
 const wiki = state.prefs.wiki
@@ -162,7 +162,7 @@ function onPreviewClick(e) {
   const t = e.target.closest('[data-task]')
   if (t) return openTask(state.tasks.find((x) => String(x.id) === t.dataset.task))
   const btn = e.target.closest('[data-action="task"]')
-  if (btn) { createTask({ title: btn.dataset.title || 'Nova tarefa', projectId: null, assignees: [state.me] }); return toast('Tarefa criada em Rascunhos.') }
+  if (btn) return newTask({ title: btn.dataset.title || '' })
   const line = e.target.dataset?.line
   if (line === undefined || doc.value.locked) return
   doc.value.body = toggleCheck(doc.value.body, Number(line))

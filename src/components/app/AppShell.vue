@@ -53,6 +53,7 @@ const crumbs = computed(() => {
   const id = route.path.match(/^\/projetos\/(\d+)/)?.[1]
   if (!id || parts.length < 2) return parts
   parts[0].to = `/projetos/${id}/visao-geral`
+  if (parts.length > 2 && /\/paginas\/\d+/.test(route.path)) parts[1].to = `/projetos/${id}/paginas`
   return [{ label: 'Projetos', to: '/projetos' }, ...parts]
 })
 

@@ -4,8 +4,8 @@ import { useWorkspace } from '../../../composables/useWorkspace'
 import { useUi } from '../../../composables/useUi'
 import Avatars from '../Avatars.vue'
 
-const props = defineProps({ tasks: { type: Array, required: true }, byPerson: Boolean })
-const { STATUSES, member, code, today, isOverdue, updateTask } = useWorkspace()
+const props = defineProps({ tasks: { type: Array, required: true } })
+const { STATUSES, code, today, isOverdue, updateTask } = useWorkspace()
 const { openTask } = useUi()
 const DAY = 864e5
 const ZOOM = { day: 36, week: 14 }
@@ -45,11 +45,6 @@ const x = (ms) => Math.round((ms - range.value.from) / DAY) * w.value
 const todayX = computed(() => x(toDay(today())))
 const width = computed(() => range.value.days.length * w.value)
 
-const groups = computed(() => {
-  if (!props.byPerson) return [{ key: 'all', name: '', tasks: dated.value }]
-  const ids = [...new Set(dated.value.flatMap((t) => (t.assignees.length ? t.assignees : [null])))]
-  return ids.map((id) => ({ key: id ?? 'none', name: id ? member(id)?.name || '?' : 'Sem responsável', tasks: dated.value.filter((t) => (id ? t.assignees.includes(id) : !t.assignees.length)) }))
-})
 const status = (t) => STATUSES.find((s) => s.id === t.status) || STATUSES[0]
 const progress = (t) => (t.status === 'done' ? 1 : t.checklist?.length ? t.checklist.filter((i) => i.done).length / t.checklist.length : 0)
 const fmt = (ms) => new Date(ms).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
@@ -106,7 +101,7 @@ watch(zoom, () => nextTick(() => goToday(false)))
     <p v-if="!dated.length" class="empty">Nenhuma tarefa com prazo. Dê um prazo às tarefas para elas aparecerem aqui.</p>
     <div v-else ref="scroller" class="scroll">
       <div class="grid" :style="{ gridTemplateColumns: `16rem ${width}px` }">
-        <div class="corner">{{ byPerson ? 'Pessoa / tarefa' : 'Tarefa' }}</div>
+        <div class="corner">Tarefa</div>
         <div class="head">
           <div class="months"><span v-for="m in months" :key="m.key" :style="{ width: `${m.n * w}px` }"><b>{{ m.label }}</b></span></div>
           <div class="days">
@@ -118,9 +113,7 @@ watch(zoom, () => nextTick(() => goToday(false)))
           <span class="today-pill" :style="{ left: `${todayX + w / 2}px` }">Hoje</span>
         </div>
 
-        <template v-for="g in groups" :key="g.key">
-          <div v-if="byPerson" class="group">{{ g.name }}<small>{{ g.tasks.length }}</small></div>
-          <template v-for="t in g.tasks" :key="`${g.key}-${t.id}`">
+          <template v-for="t in dated" :key="t.id">
             <button type="button" class="label" @click="openTask(t)">
               <i class="dot" :style="{ background: status(t).color }" :title="status(t).name" />
               <small class="code">{{ code(t) }}</small>
@@ -142,7 +135,6 @@ watch(zoom, () => nextTick(() => goToday(false)))
               <span v-if="drag?.t === t && drag.moved" class="tip" :style="{ left: `${x(live(t).start)}px` }">{{ fmt(live(t).start) }} a {{ fmt(live(t).end) }}</span>
             </div>
           </template>
-        </template>
       </div>
     </div>
 
@@ -177,8 +169,6 @@ watch(zoom, () => nextTick(() => goToday(false)))
 .days .now { color: var(--text); font-weight: 700; }
 .today-pill { position: absolute; bottom: -9px; z-index: 2; translate: -50% 0; padding: 0.05rem 0.4rem; border-radius: 999px; background: var(--accent); font-size: 10px; font-weight: 600; color: #000; pointer-events: none; }
 
-.group { position: sticky; left: 0; grid-column: 1 / -1; display: flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--line); background: var(--surface-2); font-weight: 600; color: var(--text); }
-.group small { font-weight: 400; color: var(--muted); }
 
 .label { position: sticky; left: 0; z-index: 2; display: flex; align-items: center; gap: 0.5rem; height: 40px; min-width: 0; padding: 0 0.85rem; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); font: inherit; color: var(--text); text-align: left; cursor: pointer; }
 .label:hover { background: var(--surface-2); }

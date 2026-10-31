@@ -82,7 +82,7 @@ function onKey(e) {
   }
 }
 const outside = (e) => { if (!btn.value?.contains(e.target) && !list.value?.contains(e.target)) hide(false) }
-const close = (e) => { if (!list.value?.contains(e.target)) hide(false) }
+const close = (e) => { if (!(e.target instanceof Node && list.value?.contains(e.target))) hide(false) }  // no resize o alvo é a janela, que não é Node
 watch(open, (v) => {
   const method = v ? 'addEventListener' : 'removeEventListener'
   document[method]('pointerdown', outside, true)

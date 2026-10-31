@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { COVERS, UPDATE_STATES, useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
@@ -19,6 +19,14 @@ const p = computed(() => project(pid.value))
 const panel = ref(true)
 const tab = ref('info')
 const picking = ref(false)
+const closePickerOutside = (e) => { if (!e.target.closest('.icon-wrap')) picking.value = false }
+const closePickerOnEsc = (e) => { if (e.key === 'Escape') picking.value = false }
+watch(picking, (open) => {
+  const method = open ? 'addEventListener' : 'removeEventListener'
+  document[method]('pointerdown', closePickerOutside, true)
+  document[method]('keydown', closePickerOnEsc)
+})
+onUnmounted(() => { picking.value = false; document.removeEventListener('pointerdown', closePickerOutside, true); document.removeEventListener('keydown', closePickerOnEsc) })
 const feed = ref([])
 const loadingFeed = ref(false)
 const update = reactive({ state: 'on_track', text: '' })
@@ -28,7 +36,8 @@ const desc = ref(null)
 const tasks = computed(() => tasksOf(pid.value))
 const people = computed(() => [...new Set(tasks.value.flatMap((t) => t.assignees))])
 const cycles = computed(() => state.cycles.filter((c) => c.project === pid.value))
-const activeCycle = computed(() => cycles.value.find((c) => c.start_date <= today() && c.end_date >= today()))
+const activeCycle = computed(() => cycles.value.find((c) => c.start_date <= today() && c.end_date >= today()) || lateCycle.value)
+const lateCycle = computed(() => cycles.value.find((c) => c.end_date < today() && tasks.value.some((t) => t.cycle === c.id && t.status !== 'done')))
 const LINKS = computed(() => [
   { icon: 'fi-rr-list-check', label: 'Itens de trabalho', n: tasks.value.length, to: '', hint: 'as tarefas do time' },
   { icon: 'fi-rr-refresh', label: 'Ciclos', n: cycles.value.length, to: '/ciclos', hint: 'sprints com começo e fim', key: 'cycles' },
@@ -192,10 +201,10 @@ onMounted(async () => {
         </ul>
         <p v-else-if="!newLink.open" class="pg-muted">Nenhum link ainda. Guarde aqui a pasta do Drive, o Figma, o repositório ou documentos do projeto.</p>
         <template v-if="activeCycle">
-          <h2 class="sec">Ciclo em andamento</h2>
+          <h2 class="sec">{{ activeCycle === lateCycle ? 'Ciclo atrasado' : 'Ciclo em andamento' }}</h2>
           <RouterLink :to="`/projetos/${p.id}/ciclos/${activeCycle.id}`" class="cycle">
             <ProgressRing :value="tasks.filter((t) => t.cycle === activeCycle.id).length ? tasks.filter((t) => t.cycle === activeCycle.id && t.status === 'done').length / tasks.filter((t) => t.cycle === activeCycle.id).length : 0" :size="38" />
-            <span><strong>{{ activeCycle.name }}</strong><small>até {{ new Date(`${activeCycle.end_date}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) }}</small></span>
+            <span><strong>{{ activeCycle.name }}</strong><small>{{ activeCycle === lateCycle ? 'terminava em' : 'até' }} {{ new Date(`${activeCycle.end_date}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) }}</small></span>
           </RouterLink>
         </template>
       </div>
@@ -306,7 +315,7 @@ onMounted(async () => {
 .link { min-height: 4.25rem; }
 .link__icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 17px; line-height: 1; }
 .link__icon i::before, .link__go::before { display: block; line-height: 1; }
-.link__text strong, .link__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .link__text, .cycle span { display: flex; flex-direction: column; min-width: 0; } .link small, .cycle small { font-size: 12.5px; color: var(--muted); }
+.link__text strong, .link__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .link__text, .cycle > span:last-child { display: flex; flex-direction: column; min-width: 0; } .link small, .cycle small { font-size: 12.5px; color: var(--muted); }
 .link__go { flex-shrink: 0; margin-left: auto; font-size: 16px; color: var(--muted); transition: translate 0.25s var(--ease), color 0.2s var(--ease); }
 .link:hover .link__go { translate: 3px 0; color: var(--text); }
 .side { position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; gap: 1rem; max-height: calc(100vh - 97px); overflow-y: auto; padding: 1rem 1.1rem; border-left: 1px solid var(--line); }

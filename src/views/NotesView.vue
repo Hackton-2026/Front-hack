@@ -8,8 +8,8 @@ import AppIcon from '../components/app/AppIcon.vue'
 
 const COLORS = ['#fba45c', '#e56515', '#cdcdcb', '#919599', '#f2c46d', '#7fc47a']
 const { notes, add, remove } = useNotes()
-const { state, createTask } = useWorkspace()
-const { toast } = useUi()
+const { state } = useWorkspace()
+const { toast, newTask } = useUi()
 const root = ref(null)
 const q = ref('')
 const color = ref('')
@@ -42,11 +42,10 @@ async function pin(n, el) {
   await nextTick()
   if (!reduced) gsap.fromTo(root.value.querySelector(`[data-note="${n.id}"]`), { y: -10, autoAlpha: 0.4 }, { y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
 }
-function toDraft(n) {
+function toTask(n) {
   const [first, ...rest] = n.text.trim().split('\n')
   if (!first) { toast('Escreva algo na nota antes.'); return }
-  createTask({ title: first.replace(/#[\p{L}\p{N}_-]+/gu, '').trim().slice(0, 200) || first.slice(0, 200), description: rest.join('\n').trim(), tags: tagsOf(n), projectId: null, assignees: [state.me] })
-  toast('Virou rascunho. Está em Rascunhos.')
+  newTask({ title: first.replace(/#[\p{L}\p{N}_-]+/gu, '').trim().slice(0, 200) || first.slice(0, 200), description: rest.join('\n').trim() })
 }
 watch([q, color, tag], async () => { await nextTick(); staggerIn(root.value?.querySelectorAll('.note')) })
 onMounted(() => {
@@ -76,7 +75,7 @@ onMounted(() => {
     <div v-if="!notes.length" class="pg-empty">
       <span class="pg-empty__art"><AppIcon name="note" :size="36" /></span>
       <h2>Ideias rápidas, links e lembretes</h2>
-      <p>Use #etiquetas para organizar, fixe as importantes no topo e transforme uma nota em rascunho de tarefa quando ela amadurecer.</p>
+      <p>Use #etiquetas para organizar, fixe as importantes no topo e transforme uma nota em tarefa quando ela amadurecer.</p>
       <button type="button" class="pg-btn primary" @click="create"><AppIcon name="plus" :size="14" />Criar a primeira nota</button>
     </div>
     <p v-else-if="!shown.length" class="pg-muted none">Nenhuma nota com esse filtro.</p>
@@ -93,7 +92,7 @@ onMounted(() => {
               <button v-for="c in COLORS" :key="c" type="button" :class="{ on: c === n.color }" :style="{ background: c }" :aria-label="`Cor ${c}`" @click="n.color = c" />
             </span>
             <small>{{ when(n.at) }}, {{ words(n) }} pal.</small>
-            <button type="button" class="act" title="Virar rascunho de tarefa" aria-label="Virar rascunho de tarefa" @click="toDraft(n)"><AppIcon name="draft" :size="14" /></button>
+            <button type="button" class="act" title="Virar tarefa" aria-label="Virar tarefa" @click="toTask(n)"><AppIcon name="draft" :size="14" /></button>
             <button type="button" class="act del" aria-label="Apagar nota" @click="del(n.id)"><AppIcon name="close" :size="14" /></button>
           </footer>
         </article>

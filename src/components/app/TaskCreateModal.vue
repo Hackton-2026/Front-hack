@@ -15,15 +15,10 @@ const form = reactive({})
 const error = ref('')
 const box = ref(null)
 const titleInput = ref(null)
-const asDraft = ref(false)
-const more = ref(false)
 
 watch(() => ui.creating, async (defaults) => {
   if (!defaults) return
-  asDraft.value = !!defaults.asDraft
-  more.value = false
-  Object.assign(form, { title: '', projectId: asDraft.value ? '' : state.projects[0]?.id || '', status: 'todo', priority: state.prefs.defaultPriority, assignees: state.prefs.assignMe ? [state.me] : [], due: '', description: '', cycle: null, modules: [] }, defaults)
-  delete form.asDraft
+  Object.assign(form, { title: '', projectId: state.projects[0]?.id || '', status: 'todo', priority: state.prefs.defaultPriority, assignees: state.prefs.assignMe ? [state.me] : [], start: '', due: '', description: '', cycle: null, modules: [] }, defaults)
   error.value = ''
   await nextTick()
   titleInput.value?.focus()
@@ -43,29 +38,26 @@ const roleOn = (r) => r.ids.every((id) => form.assignees?.includes(id))
 function toggleRole(r) {
   form.assignees = roleOn(r) ? form.assignees.filter((id) => !r.ids.includes(id)) : [...new Set([...form.assignees, ...r.ids])]
 }
-const projectOptions = computed(() => [{ value: '', label: asDraft.value ? 'Sem projeto' : 'Sem projeto (rascunho)' }, ...state.projects.map((p) => ({ value: p.id, label: p.name, color: p.color }))])
+const projectOptions = computed(() => [...state.projects.map((p) => ({ value: p.id, label: p.name, color: p.color }))])
 const statusOptions = STATUSES.map((s) => ({ value: s.id, label: s.name, color: s.color }))
 const priorityOptions = [{ value: '', label: 'Sem prioridade' }, ...PRIORITIES.map((p) => ({ value: p.id, label: p.name, color: p.color }))]
-function save(draft) {
+function save() {
   if (!form.title.trim()) { error.value = 'Dê um título para a tarefa.'; titleInput.value?.focus(); return }
-  const task = createTask({ ...form, title: form.title.trim(), due: form.due || null, projectId: form.projectId || null, draft: draft || !form.projectId })
-  if (!task.draft) complete('task')
-  if (asDraft.value && more.value) {
-    Object.assign(form, { title: '', description: '' })
-    titleInput.value?.focus()
-    return code(task)
-  }
+  if (!form.projectId) { error.value = 'Escolha um projeto para a tarefa.'; return }
+  if (form.start && form.due && form.start > form.due) { error.value = 'O início não pode ser depois do prazo.'; return }
+  const task = createTask({ ...form, title: form.title.trim(), start: form.start || null, due: form.due || null, projectId: form.projectId })
+  complete('task')
   closeNew()
-  if (!task.draft) openTask(task)
+  openTask(task)
   return code(task)
 }
 </script>
 
 <template>
   <div v-if="ui.creating" class="veil" @click.self="closeNew" @keydown.esc="closeNew">
-    <form ref="box" class="modal" role="dialog" aria-modal="true" aria-labelledby="new-title" novalidate @submit.prevent="save(asDraft)">
+    <form ref="box" class="modal" role="dialog" aria-modal="true" aria-labelledby="new-title" novalidate @submit.prevent="save">
       <header>
-        <h2 id="new-title">{{ asDraft ? 'Criar rascunho' : 'Nova tarefa' }}</h2>
+        <h2 id="new-title">Nova tarefa</h2>
         <button type="button" class="x" aria-label="Fechar" @click="closeNew"><AppIcon name="close" :size="16" /></button>
       </header>
       <input ref="titleInput" v-model="form.title" class="title" placeholder="Título da tarefa" aria-label="Título" :aria-invalid="!!error" />
@@ -74,7 +66,8 @@ function save(draft) {
         <div class="field"><span>Projeto</span><AppSelect v-model="form.projectId" block :options="projectOptions" aria-label="Projeto" /></div>
         <div class="field"><span>Status</span><AppSelect v-model="form.status" block :options="statusOptions" aria-label="Status" /></div>
         <div class="field"><span>Prioridade</span><AppSelect v-model="form.priority" block :options="priorityOptions" aria-label="Prioridade" /></div>
-        <label>Prazo <input v-model="form.due" type="date" /></label>
+        <label>Início <input v-model="form.start" type="date" :max="form.due || undefined" /></label>
+        <label>Prazo <input v-model="form.due" type="date" :min="form.start || undefined" /></label>
       </div>
       <fieldset class="people">
         <legend>Responsáveis</legend>
@@ -88,10 +81,7 @@ function save(draft) {
       </fieldset>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <footer>
-        <label v-if="asDraft" class="more"><input v-model="more" type="checkbox" role="switch" />Criar mais</label>
-        <button v-if="asDraft" type="button" class="ghost" @click="closeNew">Descartar</button>
-        <button v-else type="button" class="ghost" @click="save(true)">Salvar como rascunho</button>
-        <GooeyButton type="submit" variant="primary">{{ asDraft ? 'Salvar em rascunhos' : 'Criar tarefa' }}</GooeyButton>
+        <GooeyButton type="submit" variant="primary">Criar tarefa</GooeyButton>
       </footer>
     </form>
   </div>
@@ -121,8 +111,6 @@ textarea:focus, .row input:focus { border-color: var(--accent); }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
 .error { margin: 0; font-size: 13px; color: #ffb48a; }
 footer { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; padding-top: 0.25rem; }
-.more { display: inline-flex; align-items: center; gap: 0.45rem; margin-right: auto; font-size: 12.5px; color: var(--muted); cursor: pointer; }
-.more input { accent-color: var(--accent); }
 .ghost { padding: 0.45rem 0.8rem; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .ghost:hover { background: var(--surface-2); color: var(--text); }
 :is(.x, .chip, .ghost):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }

@@ -17,6 +17,7 @@ const pid = computed(() => Number(props.id) || null)
 const p = computed(() => pid.value && project(pid.value))
 const TABS = [
   { id: 'active', label: 'Ativo' },
+  { id: 'late', label: 'Atrasados' },
   { id: 'upcoming', label: 'Próximos' },
   { id: 'completed', label: 'Concluídos' },
 ]
@@ -26,10 +27,12 @@ const menu = ref(null)
 const collapsed = reactive(new Set())
 const root = ref(null)
 
-const phase = (c) => (c.end_date < today() ? 'completed' : c.start_date > today() ? 'upcoming' : 'active')
+const pendingOf = (c) => state.tasks.filter((t) => t.cycle === c.id && !t.draft && t.status !== 'done').length
+// A data acabar não encerra o ciclo: com tarefa pendente ele fica atrasado até concluírem, apagarem ou tirarem essas tarefas
+const phase = (c) => (c.end_date < today() ? (pendingOf(c) ? 'late' : 'completed') : c.start_date > today() ? 'upcoming' : 'active')
 const mine = computed(() => state.cycles.filter((c) => (!pid.value || c.project === pid.value) && (!q.value || c.name.toLowerCase().includes(q.value.toLowerCase()))))
 const count = (t) => mine.value.filter((c) => phase(c) === t).length
-const shown = computed(() => mine.value.filter((c) => phase(c) === (pid.value ? tab.value : 'active')))
+const shown = computed(() => mine.value.filter((c) => (pid.value ? phase(c) === tab.value : ['active', 'late'].includes(phase(c)))))
 const tasksOf = (c) => state.tasks.filter((t) => t.cycle === c.id && !t.draft)
 const fmt = (d) => new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 const range = (c) => `${fmt(c.start_date)} – ${fmt(c.end_date)}, ${c.end_date.slice(0, 4)}`
@@ -99,6 +102,7 @@ const timeline = computed(() => state.cycles.filter((c) => (!pid.value || c.proj
   }))
 const todayPos = (daysBetween(TL.from, today()) / TL.days) * 100
 const daysLeft = (c) => Math.max(0, daysBetween(today(), c.end_date))
+const daysLate = (c) => Math.max(0, daysBetween(c.end_date, today()))
 const loadOf = (c) => {
   const open = tasksOf(c).filter((t) => t.status !== 'done')
   return [...new Set(open.flatMap((t) => t.assignees))].map((id) => ({ id, n: open.filter((t) => t.assignees.includes(id)).length })).sort((a, b) => b.n - a.n)
@@ -120,7 +124,11 @@ async function save() {
 }
 async function remove(c) {
   menu.value = null
-  if (!(await confirmAsk(`Apagar o ciclo "${c.name}"?`, { message: 'Os itens continuam no projeto, só saem do ciclo.' }))) return
+  const pending = pendingOf(c)
+  const message = pending
+    ? `Tem certeza? ${pending === 1 ? 'Ainda há 1 tarefa pendente' : `Ainda há ${pending} tarefas pendentes`} neste ciclo. Os itens continuam no projeto, só saem do ciclo.`
+    : 'Os itens continuam no projeto, só saem do ciclo.'
+  if (!(await confirmAsk(`Apagar o ciclo "${c.name}"?`, { message }))) return
   await removeItem('cycle', c)
 }
 const open = (c) => router.push(`/projetos/${c.project}/ciclos/${c.id}`)
@@ -166,7 +174,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
       </div>
     </section>
     <template v-if="shown.length">
-      <template v-if="!pid || tab === 'active'">
+      <template v-if="!pid || tab === 'active' || tab === 'late'">
         <article v-for="c in shown" :key="c.id" class="cyc">
           <header class="cyc__head">
             <button type="button" class="pg-icon" :aria-expanded="!collapsed.has(c.id)" :aria-label="collapsed.has(c.id) ? 'Expandir ciclo' : 'Recolher ciclo'" @click="collapsed.has(c.id) ? collapsed.delete(c.id) : collapsed.add(c.id)"><AppIcon name="chevron" :size="15" class="chev" /></button>
@@ -174,6 +182,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
             <button type="button" class="cyc__name" @click="open(c)">{{ c.name }}</button>
             <span v-if="!pid" class="pg-tag">{{ project(c.project)?.name }}</span>
             <span class="pg-pill cyc__date"><AppIcon name="calendar" :size="13" />{{ range(c) }}</span>
+            <span v-if="phase(c) === 'late'" class="left hot">atrasado há {{ daysLate(c) }} d, {{ pendingOf(c) }} {{ pendingOf(c) === 1 ? 'pendente' : 'pendentes' }}</span>
             <span v-if="phase(c) === 'active'" class="left" :class="{ hot: daysLeft(c) <= 2 }">{{ daysLeft(c) === 0 ? 'termina hoje' : `faltam ${daysLeft(c)} d` }}</span>
             <span v-if="loadOf(c).length" class="load" :title="loadOf(c).map((l) => `${member(l.id)?.name || '?'}: ${l.n}`).join(', ')">
               <span v-for="l in loadOf(c).slice(0, 4)" :key="l.id" class="load__p" :style="{ '--c': member(l.id)?.color || 'var(--accent)' }"><img v-if="member(l.id)?.avatar" :src="member(l.id).avatar" alt="" referrerpolicy="no-referrer" class="load__pic" /><template v-else>{{ (member(l.id)?.name || '?').slice(0, 2).toUpperCase() }}</template><b>{{ l.n }}</b></span>
@@ -236,7 +245,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
     </template>
     <div v-else class="pg-empty">
       <span class="pg-empty__art"><AppIcon name="cycle" :size="36" /></span>
-      <h2>{{ !state.projects.length ? 'Crie um projeto primeiro' : tab === 'completed' ? 'Nenhum ciclo concluído' : tab === 'upcoming' ? 'Nenhum ciclo programado' : 'Nenhum ciclo ativo' }}</h2>
+      <h2>{{ !state.projects.length ? 'Crie um projeto primeiro' : tab === 'completed' ? 'Nenhum ciclo concluído' : tab === 'late' ? 'Nenhum ciclo atrasado' : tab === 'upcoming' ? 'Nenhum ciclo programado' : 'Nenhum ciclo ativo' }}</h2>
       <p>Ciclos são sprints com começo e fim: escolha as tarefas da vez e acompanhe o burn-down até o último dia.</p>
       <button v-if="state.projects.length" type="button" class="pg-btn primary" @click="openForm()"><AppIcon name="plus" :size="14" />Criar ciclo</button>
     </div>
@@ -310,6 +319,7 @@ figcaption span { margin-left: 0.3rem; font-weight: 400; color: var(--muted); }
 .tl__bar span { position: relative; padding: 0 0.5rem; font-size: 11.5px; font-weight: 500; line-height: 22px; color: var(--text); white-space: nowrap; }
 .tl__bar.active { border-color: var(--accent); }
 .tl__bar.completed { opacity: 0.6; }
+.tl__bar.late { border-color: var(--danger, #ff8a80); }
 .left { padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--surface-2); font-size: 12px; color: var(--accent-soft); }
 .left.hot { color: var(--danger, #ff8a80); }
 .load { display: flex; gap: 4px; }

@@ -9,7 +9,6 @@ import AiItems from '../components/app/AiItems.vue'
 import AiMarkdown from '../components/app/AiMarkdown.vue'
 import AiQuestions from '../components/app/AiQuestions.vue'
 import MeetButton from '../components/app/MeetButton.vue'
-import VoiceRoom from '../components/app/VoiceRoom.vue'
 
 const POLL_MS = 3000
 const props = defineProps({ id: { type: [String, Number], required: true }, page: Boolean })
@@ -199,7 +198,6 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
       <RouterLink v-if="!page" :to="`/projetos/${pid}/chat`" class="x" aria-label="Abrir em página inteira" title="Abrir em página inteira"><AppIcon name="expand" :size="15" /></RouterLink>
       <button v-if="!page" type="button" class="x" aria-label="Fechar chat" @click="ui.closeChat()"><AppIcon name="close" :size="16" /></button>
     </div>
-    <VoiceRoom v-if="!peer" :key="pid" :project-id="pid" />
 
     <div ref="list" class="msgs" aria-live="polite">
       <div v-if="!messages.length && !error" class="empty">

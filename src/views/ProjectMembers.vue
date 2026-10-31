@@ -55,7 +55,7 @@ async function invite() {
   error.value = ''
   try {
     const inv = await inviteToProject(pid.value, email.value.trim(), permission.value)
-    ui.toast(`Convite enviado para ${inv.email}. Copie o link para mandar para a pessoa.`)
+    ui.toast(inv.email_sent ? `Convite enviado por e-mail para ${inv.email}.` : `Convite criado para ${inv.email}, mas o e-mail não saiu. Copie o link para mandar para a pessoa.`)
     email.value = ''
     await refresh()
   } catch (e) {
@@ -161,7 +161,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
           <AppSelect id="invite-perm" v-model="permission" :options="PERM_OPTIONS" aria-label="Permissão" />
           <button type="submit" class="pg-btn primary" :disabled="sending || !email.trim()"><ArcLoader v-if="sending" />{{ sending ? 'Convidando…' : 'Convidar' }}</button>
         </div>
-        <p class="hint">{{ PERMISSIONS.find((x) => x[0] === permission)[2] }}. A pessoa aceita entrando com esse e-mail (se já tem conta, o convite aparece na caixa de entrada dela).</p>
+        <p class="hint">{{ PERMISSIONS.find((x) => x[0] === permission)[2] }}. A pessoa recebe um e-mail e aceita entrando com esse endereço (se já tem conta, o convite também aparece na caixa de entrada dela).</p>
       </form>
 
       <section v-if="data?.can_manage" class="card">

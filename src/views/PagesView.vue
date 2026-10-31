@@ -72,12 +72,12 @@ onUnmounted(() => removeEventListener('click', onDoc))
     </div>
 
     <div v-if="list.length" class="pg-rows">
-      <div v-for="pg in list" :key="pg.id" class="pg-row">
+      <div v-for="pg in list" :key="pg.id" class="pg-row" :class="{ 'is-open': menu === pg.id }">
         <AppIcon name="page" :size="17" class="ico" />
         <RouterLink class="pg-row__main" :to="`/projetos/${pid}/paginas/${pg.id}`"><span>{{ pg.title || 'Sem título' }}</span></RouterLink>
         <div class="pg-row__side">
           <span class="pg-muted pg-hide-sm">{{ member(pg.owner)?.name.split(' ')[0] }}, {{ when(pg.updated_at) }}</span>
-          <span class="pg-icon" :title="pg.is_private ? 'Privada: só você vê' : 'Pública: o time todo vê'"><AppIcon :name="pg.is_private ? 'lock' : 'globe'" :size="15" /></span>
+          <span v-if="!pg.archived" class="pg-icon" :title="pg.is_private ? 'Privada: só você vê' : 'Pública: o time todo vê'"><AppIcon :name="pg.is_private ? 'lock' : 'globe'" :size="15" /></span>
           <button type="button" class="pg-icon" :class="{ 'is-on': starred('page', pg.id) }" :aria-pressed="starred('page', pg.id)" :aria-label="starred('page', pg.id) ? 'Tirar estrela' : 'Dar estrela'" @click="toggleStar('page', pg.id)"><AppIcon name="star" :size="15" /></button>
           <div class="menu-wrap">
             <button type="button" class="pg-icon" :aria-expanded="menu === pg.id" aria-label="Opções da página" @click="menu = menu === pg.id ? null : pg.id"><AppIcon name="more" :size="16" /></button>
@@ -85,6 +85,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
               <template v-if="!pg.archived">
                 <button v-if="pg.owner === state.me" type="button" role="menuitem" @click="set(pg, { is_private: !pg.is_private })"><AppIcon :name="pg.is_private ? 'globe' : 'lock'" :size="14" />{{ pg.is_private ? 'Tornar pública' : 'Tornar privada' }}</button>
                 <button type="button" role="menuitem" @click="set(pg, { archived: true })"><AppIcon name="archive" :size="14" />Arquivar</button>
+                <button type="button" role="menuitem" class="danger" @click="remove(pg)"><AppIcon name="trash" :size="14" />Apagar</button>
               </template>
               <template v-else>
                 <button type="button" role="menuitem" @click="set(pg, { archived: false })"><AppIcon name="undo" :size="14" />Restaurar</button>
@@ -108,4 +109,5 @@ onUnmounted(() => removeEventListener('click', onDoc))
 <style scoped>
 .ico { color: var(--muted); }
 .menu-wrap { position: relative; }
+.pg-row.is-open { position: relative; z-index: 5; }
 </style>

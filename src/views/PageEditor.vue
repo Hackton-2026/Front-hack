@@ -51,7 +51,7 @@ async function remove() {
   await removeItem('page', target)
 }
 
-watch(() => [p.value, pg.value?.title], ([proj, title]) => (ui.crumb = proj ? `${proj.name} › ${title || 'Sem título'}` : 'Projeto não encontrado'), { immediate: true })
+watch(() => [p.value, pg.value?.title], ([proj, title]) => (ui.crumb = proj ? `${proj.name} › Documentos do projeto › ${title || 'Sem título'}` : 'Projeto não encontrado'), { immediate: true })
 onMounted(async () => {
   if (!pg.value) {
     looking.value = true

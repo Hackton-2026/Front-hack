@@ -25,8 +25,8 @@ const CASES = [
     text: 'Pedidos chegam como tarefas, as revisões ficam nos comentários e o quadro mostra o que está em aprovação.',
     tags: ['Quadros', 'Comentários', 'Visões salvas'] },
   { icon: 'user', title: 'Sua organização pessoal', to: '/produto/tarefas',
-    text: 'Rascunhos, notas e favoritos para a sua semana. Peça para a Novexo IA montar a lista do dia.',
-    tags: ['Notas', 'Rascunhos', 'Novexo IA'] },
+    text: 'Notas e favoritos para a sua semana. Peça para a Novexo IA montar a lista do dia.',
+    tags: ['Notas', 'Favoritos', 'Novexo IA'] },
 ]
 
 const DAY = [

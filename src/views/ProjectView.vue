@@ -17,7 +17,6 @@ import { LAYOUTS, layout } from '../components/app/views/layouts'
 import TaskGantt from '../components/app/views/TaskGantt.vue'
 import TaskTable from '../components/app/views/TaskTable.vue'
 import TaskGallery from '../components/app/views/TaskGallery.vue'
-import TaskForm from '../components/app/views/TaskForm.vue'
 import TaskStats from '../components/app/views/TaskStats.vue'
 import TaskPeople from '../components/app/views/TaskPeople.vue'
 import TaskMindmap from '../components/app/views/TaskMindmap.vue'
@@ -33,7 +32,7 @@ const VIEWS = [
   { id: 'calendar', label: 'Calendário', icon: 'calendar' },
   { id: 'gantt', label: 'Gantt', icon: 'chart' },
 ]
-const NO_FILTERS = ['doc', 'whiteboard', 'activity', 'form', 'cycles']
+const NO_FILTERS = ['doc', 'whiteboard', 'activity', 'cycles']
 const props = defineProps({ id: { type: String, required: true }, cycle: { type: String, default: '' }, module: { type: String, default: '' }, view: { type: String, default: '' } })
 const route = useRoute()
 const router = useRouter()
@@ -49,8 +48,11 @@ const tabs = ref(null)
 
 const saved = computed(() => props.view && state.views.find((x) => x.id === Number(props.view)))
 const kind = computed(() => saved.value?.type || view.value)
+// Formulário e Linha do tempo saíram do produto: as já criadas somem da barra e o link volta para o projeto
+const REMOVED = ['form', 'timeline']
+watch(saved, (v) => { if (REMOVED.includes(v?.type)) router.replace(`/projetos/${pid.value}`) }, { immediate: true })
 const pinned = computed(() => (props.cycle || props.module ? [] : state.views
-  .filter((v) => v.project === pid.value && v.is_pinned && (!v.is_private || v.owner === state.me))
+  .filter((v) => v.project === pid.value && v.is_pinned && !REMOVED.includes(v.type) && (!v.is_private || v.owner === state.me))
   .sort((a, b) => a.order - b.order || a.id - b.id)))
 
 const MAX_TABS = 6
@@ -62,14 +64,12 @@ const adding = ref(false)
 const findLayout = ref('')
 const asPrivate = ref(false)
 const asPinned = ref(true)
-// Um de cada tipo por projeto: as abas fixas também contam
-const taken = computed(() => new Set([...VIEWS.map((v) => v.id), ...state.views.filter((v) => v.project === pid.value && (!v.is_private || v.owner === state.me)).map((v) => v.type)]))
 const builtIn = new Set(VIEWS.map((v) => v.id))
 const existing = (type) => state.views.find((v) => v.project === pid.value && v.type === type && (!v.is_private || v.owner === state.me))
-const takenHint = (l) => (builtIn.has(l.type) || existing(l.type)?.is_pinned ? 'Já está na barra' : 'Desafixada: clique para fixar de novo')
+const onBar = (type) => builtIn.has(type) || !!existing(type)?.is_pinned
 const shown = (group) => LAYOUTS.filter((l) => l.group === group && (!findLayout.value || `${l.label} ${l.desc}`.toLowerCase().includes(findLayout.value.toLowerCase())))
 async function addView(l) {
-  if (l.soon || builtIn.has(l.type)) return
+  if (onBar(l.type)) return
   const found = existing(l.type)
   if (found) {
     if (!found.is_pinned) await updateItem('view', found, { is_pinned: true })
@@ -119,13 +119,14 @@ const scope = computed(() => {
 const scoped = computed(() => (scope.value ? tasksOf(pid.value).filter(scope.value.match) : []))
 const people = computed(() => p.value?.members || [])
 
-const f = ref({ who: '', status: '', priority: '', due: '' })
+const f = ref({ who: '', status: '', priority: '', due: '', tag: '' })
 const filtering = computed(() => Object.values(f.value).some(Boolean) || onlyMine.value || q.value)
-const clearFilters = () => { f.value = { who: '', status: '', priority: '', due: '' }; onlyMine.value = false; q.value = '' }
+const clearFilters = () => { f.value = { who: '', status: '', priority: '', due: '', tag: '' }; onlyMine.value = false; q.value = '' }
 const WHO_OPTIONS = computed(() => [{ value: '', label: 'Responsável' }, { value: 'none', label: 'Sem responsável' }, ...people.value.map((id) => ({ value: id, label: member(id)?.name || 'Pessoa' }))])
 const STATUS_OPTIONS = [{ value: '', label: 'Situação' }, ...STATUSES.map((s) => ({ value: s.id, label: s.name, color: s.color }))]
 const PRIORITY_OPTIONS = [{ value: '', label: 'Prioridade' }, ...PRIORITIES.map((x) => ({ value: x.id, label: x.name, color: x.color })), { value: 'none', label: 'Sem prioridade' }]
 const DUE_OPTIONS = [{ value: '', label: 'Prazo' }, { value: 'late', label: 'Atrasadas' }, { value: 'today', label: 'Vence hoje' }, { value: 'week', label: 'Próximos 7 dias' }, { value: 'none', label: 'Sem prazo' }]
+const TAG_OPTIONS = computed(() => [{ value: '', label: 'Etiqueta' }, { value: '__any', label: 'Com etiqueta' }, { value: '__none', label: 'Sem etiqueta' }, ...[...new Set(scoped.value.flatMap((t) => t.tags))].sort().map((tag) => ({ value: tag, label: tag }))])
 const ymd = (offset = 0) => { const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const dueMatch = (t, k) => !k
   || (k === 'late' && isOverdue(t))
@@ -137,6 +138,7 @@ const tasks = computed(() => scoped.value.filter((t) => (!onlyMine.value || t.as
   && (!f.value.who || (f.value.who === 'none' ? !t.assignees.length : t.assignees.includes(f.value.who)))
   && (!f.value.status || t.status === f.value.status)
   && (!f.value.priority || (f.value.priority === 'none' ? !t.priority : t.priority === f.value.priority))
+  && (!f.value.tag || (f.value.tag === '__any' ? t.tags.length > 0 : f.value.tag === '__none' ? !t.tags.length : t.tags.includes(f.value.tag)))
   && dueMatch(t, f.value.due)))
 const canEdit = computed(() => ['edit', 'full'].includes(p.value?.my_permission))
 const pct = computed(() => (scope.value?.kind ? doneRatio(scoped.value) : progress(pid.value)))
@@ -235,9 +237,9 @@ onMounted(() => moveInk(false))
             <template v-for="[group, title] in [['popular', 'Popular'], ['more', 'Mais visualizações']]" :key="group">
               <p v-if="shown(group).length" class="add-group">{{ title }}</p>
               <div class="add-grid">
-                <button v-for="l in shown(group)" :key="l.type" type="button" class="add-item" :disabled="l.soon || builtIn.has(l.type)" @click="addView(l)">
+                <button v-for="l in shown(group)" :key="l.type" type="button" class="add-item" :disabled="onBar(l.type)" @click="addView(l)">
                   <span class="add-ico"><AppIcon :name="l.icon" :size="16" /></span>
-                  <span><strong>{{ l.label }}</strong><small>{{ l.soon ? 'Em breve' : taken.has(l.type) ? takenHint(l) : l.desc }}</small></span>
+                  <span><strong>{{ l.label }}</strong><small>{{ onBar(l.type) ? 'Já está na barra' : l.desc }}</small></span>
                 </button>
               </div>
             </template>
@@ -259,6 +261,7 @@ onMounted(() => moveInk(false))
         <AppSelect v-model="f.status" size="sm" :class="{ on: f.status }" :options="STATUS_OPTIONS" aria-label="Filtrar por situação" />
         <AppSelect v-model="f.priority" size="sm" :class="{ on: f.priority }" :options="PRIORITY_OPTIONS" aria-label="Filtrar por prioridade" />
         <AppSelect v-model="f.due" size="sm" :class="{ on: f.due }" :options="DUE_OPTIONS" aria-label="Filtrar por prazo" />
+        <AppSelect v-model="f.tag" size="sm" :class="{ on: f.tag }" :options="TAG_OPTIONS" aria-label="Filtrar por etiqueta" />
         <button type="button" class="toggle" :aria-pressed="onlyMine" @click="onlyMine = !onlyMine"><AppIcon name="mine" :size="14" />Só minhas</button>
         <button v-if="filtering" type="button" class="clear" @click="clearFilters">Limpar<span class="sr-only"> filtros</span>: {{ tasks.length }} de {{ scoped.length }}</button>
       </div>
@@ -266,10 +269,9 @@ onMounted(() => moveInk(false))
 
     <TaskBoard v-if="kind === 'board'" :tasks="tasks" :project-id="p.id" :defaults="scope.defaults" />
     <TaskCalendar v-else-if="kind === 'calendar'" :tasks="tasks" :project-id="p.id" :defaults="scope.defaults" />
-    <TaskGantt v-else-if="kind === 'gantt' || kind === 'timeline'" :tasks="tasks" :by-person="kind === 'timeline'" />
+    <TaskGantt v-else-if="kind === 'gantt'" :tasks="tasks" />
     <TaskTable v-else-if="kind === 'table'" :tasks="tasks" />
     <TaskGallery v-else-if="kind === 'gallery'" :tasks="tasks" />
-    <TaskForm v-else-if="kind === 'form'" :project-id="p.id" :defaults="scope.defaults" />
     <TaskStats v-else-if="kind === 'dashboard'" :tasks="tasks" />
     <TaskPeople v-else-if="kind === 'workload' || kind === 'team'" :tasks="tasks" :team="kind === 'team'" />
     <TaskMindmap v-else-if="kind === 'mindmap'" :tasks="tasks" :title="saved?.name || p.name" />
