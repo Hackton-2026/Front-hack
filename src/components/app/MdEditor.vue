@@ -61,9 +61,15 @@ async function attach(e, asImage) {
 }
 function onPreviewClick(e) {
   const line = e.target.dataset?.line
-  if (line !== undefined) put(toggleCheck(props.modelValue, Number(line)))
+  if (line !== undefined) return put(toggleCheck(props.modelValue, Number(line)))
+  // um clique no texto passa a editar; antes só o duplo clique ou o botão Editar faziam isso
+  if (!e.target.closest('a, button')) edit()
 }
-defineExpose({ edit: () => { mode.value = 'edit'; nextTick(() => area.value?.focus()) } })
+function edit() {
+  mode.value = 'edit'
+  nextTick(() => area.value?.focus())
+}
+defineExpose({ edit })
 </script>
 
 <template>
@@ -78,13 +84,13 @@ defineExpose({ edit: () => { mode.value = 'edit'; nextTick(() => area.value?.foc
         <span v-if="busy" class="md-ed__busy"><ArcLoader />Enviando…</span>
       </template>
       <span class="md-ed__mode" role="group" aria-label="Modo">
-        <button type="button" :aria-pressed="mode === 'edit'" @click="mode = 'edit'">Editar</button>
+        <button type="button" :aria-pressed="mode === 'edit'" @click="edit">Editar</button>
         <button type="button" :aria-pressed="mode === 'view'" @click="mode = 'view'; emit('commit')">Visualizar</button>
       </span>
     </div>
     <textarea v-if="mode === 'edit'" ref="area" :value="modelValue" :rows="rows" :placeholder="placeholder" aria-label="Texto" @input="emit('update:modelValue', $event.target.value)" @blur="emit('commit')" @keydown.ctrl.enter="emit('commit', 'submit')" @keydown.meta.enter="emit('commit', 'submit')" />
     <template v-else>
-      <div class="md-ed__view" :class="{ clamp: long && !expanded }" @click="onPreviewClick" @dblclick="mode = 'edit'" v-html="html || `<p class='md-ed__empty'>${placeholder}</p>`" />
+      <div class="md-ed__view" :class="{ clamp: long && !expanded }" @click="onPreviewClick" v-html="html || `<p class='md-ed__empty'>${placeholder}</p>`" />
       <button v-if="long" type="button" class="md-ed__more" @click="expanded = !expanded">{{ expanded ? 'Mostrar menos' : 'Mostrar tudo' }}</button>
     </template>
   </div>
