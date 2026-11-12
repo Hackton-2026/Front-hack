@@ -16,6 +16,7 @@ import TaskDrawer from './TaskDrawer.vue'
 import ProjectChat from '../../views/ProjectChat.vue'
 import { onForegroundPush } from '../../services/push'
 import SideNav from './SideNav.vue'
+import BrandN from './BrandN.vue'
 import '../../assets/app-pages.css'
 
 const route = useRoute()
@@ -177,7 +178,7 @@ onUnmounted(() => {
 
     <nav class="rail" aria-label="Navegação principal">
       <RouterLink to="/projetos" class="ws" :title="state.workspaceName">
-        <img src="/logo-mark.png" alt="" width="34" height="34" class="ws__logo" />
+        <BrandN :size="34" class="ws__logo" />
         <span class="ws__text">
           <strong>{{ state.workspaceName || 'Workspace' }}</strong>
           <small>{{ plural(state.projects.length, 'projeto', 'projetos') }}, {{ plural(state.members.length || 1, 'membro', 'membros') }}</small>

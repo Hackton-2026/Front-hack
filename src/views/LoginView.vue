@@ -1,4 +1,5 @@
 <script setup>
+import ponte from '../assets/login-ponte.webp'
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
@@ -92,6 +93,10 @@ function leave() {
 <template>
   <div class="auth">
     <main class="side">
+      <GooeyButton variant="secondary" to="/" class="back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+        Voltar ao site
+      </GooeyButton>
       <div class="box">
         <RouterLink to="/" class="logo" aria-label="Novexo, voltar ao início">NOVEXO</RouterLink>
         <template v-if="confirming">
@@ -156,10 +161,9 @@ function leave() {
     </main>
 
     <aside class="art" aria-hidden="true">
-      <div class="art__shapes" />
-      <div class="art__glow" />
+      <img class="art__photo" :src="ponte" alt="" />
       <div class="art__copy">
-        <p class="art__title">Organize o trabalho que seu time sempre precisou.</p>
+        <p class="art__title">Construa pontes, não planilhas.</p>
         <p class="art__sub">Tarefas, quadros e metas num só lugar, do primeiro sprint ao centésimo.</p>
       </div>
     </aside>
@@ -186,7 +190,9 @@ function leave() {
 :global(html:has(.auth)), :global(html:has(.auth) body) { background: #111111; }
 @media (max-width: 900px) { .auth { grid-template-columns: minmax(0, 1fr); } .art { display: none; } }
 
-.side { display: grid; place-items: center; padding: 1rem 1.25rem; }
+.side { position: relative; display: grid; place-items: center; padding: 1rem 1.25rem; }
+.back { position: absolute; top: 1.25rem; left: 1.25rem; }
+@media (max-width: 560px) { .side { padding-top: 4.5rem; } }
 .box { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 27rem; }
 .logo { font: 800 2rem/1 'Lexend', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); text-decoration: none; }
 h1 { margin: 1.25rem 0 0.5rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); text-align: center; }
@@ -230,36 +236,10 @@ h1 { margin: 1.25rem 0 0.5rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend'
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
 .art { position: sticky; top: 0.5rem; height: calc(100svh - 0.5rem); margin: 0.5rem 0 0 0; overflow: hidden; border-radius: 16px 0 0 0; background: var(--orange-soft); }
-.art__shapes {
-  position: absolute;
-  inset: -10%;
-  background:
-    radial-gradient(circle at 22% 18%, #ffe3ec 0 12%, transparent 30%),
-    conic-gradient(from 45deg at 30% 30%, #fde2c8, #fba45c 25%, #ffd7a8 50%, #f7b27a 75%, #fde2c8),
-    #fba45c;
-  filter: saturate(1.1);
-}
-.art__shapes::before, .art__shapes::after {
-  content: '';
-  position: absolute;
-  width: 46%;
-  aspect-ratio: 1;
-  border-radius: 12%;
-  rotate: 45deg;
-  filter: blur(2px);
-}
-.art__shapes::before { top: 8%; right: 6%; background: linear-gradient(135deg, #fff4d6, #ffc46b 55%, #ff8a7a); opacity: 0.9; }
-.art__shapes::after { bottom: 10%; left: 18%; background: linear-gradient(135deg, #ffe0ea, #fba45c 50%, #e56515); opacity: 0.75; }
-.art__glow { position: absolute; top: -15%; left: -15%; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgb(255 228 238 / 0.85), transparent 65%); mix-blend-mode: soft-light; pointer-events: none; }
-@media (prefers-reduced-motion: no-preference) {
-  .art__shapes::before { animation: art-flutua-a 14s ease-in-out infinite alternate; }
-  .art__shapes::after { animation: art-flutua-b 17s ease-in-out infinite alternate; }
-  .art__glow { animation: art-luz 20s ease-in-out infinite alternate; }
-}
-@keyframes art-flutua-a { from { translate: 0 0; rotate: 45deg; scale: 1; } to { translate: -4% 6%; rotate: 53deg; scale: 1.06; } }
-@keyframes art-flutua-b { from { translate: 0 0; rotate: 45deg; scale: 1; } to { translate: 7% -5%; rotate: 38deg; scale: 0.95; } }
-@keyframes art-luz { from { translate: 0 0; } 50% { translate: 55% 25%; } to { translate: 20% 70%; } }
-.art__copy { position: absolute; inset: auto 2.5rem 2.5rem; display: flex; flex-direction: column; gap: 1.25rem; color: #1a1a1a; }
+.art__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% center; }
+/* escurece a base da foto para o texto branco ler bem sobre o céu claro */
+.art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(10 6 4 / 0.82), rgb(10 6 4 / 0.35) 45%, transparent 70%); pointer-events: none; }
+.art__copy { position: absolute; z-index: 1; inset: auto 2.5rem 2.5rem; display: flex; flex-direction: column; gap: 1.25rem; color: #fff; text-shadow: 0 2px 24px rgb(0 0 0 / 0.35); }
 .art__title { margin: 0; max-width: 12ch; font: 500 clamp(3rem, 5.4vw, 5.25rem)/0.95 'Geist', system-ui, sans-serif; letter-spacing: -0.055em; text-wrap: balance; }
 .art__sub { margin: 0; max-width: 28ch; font: 400 clamp(1.25rem, 1.9vw, 1.75rem)/1.1 'Geist', system-ui, sans-serif; letter-spacing: -0.03em; }
 </style>
