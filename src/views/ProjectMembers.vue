@@ -6,6 +6,7 @@ import { useUi } from '../composables/useUi'
 import { api } from '../services/api'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import DoneTasksTable from '../components/app/DoneTasksTable.vue'
 
 const PERMISSIONS = [
   ['view', 'view', 'Vê tarefas, páginas e o chat'],
@@ -20,7 +21,7 @@ const SUGGESTED_ROLES = ['Gerente de projeto', 'Desenvolvedor', 'Designer', 'QA'
 
 const props = defineProps({ id: { type: [String, Number], required: true } })
 const router = useRouter()
-const { state, project, member, projectMembers, inviteToProject, cancelInvite, setProjectPermission, setProjectRole, removeProjectMember, load } = useWorkspace()
+const { state, project, member, tasksOf, projectMembers, inviteToProject, cancelInvite, setProjectPermission, setProjectRole, removeProjectMember, load } = useWorkspace()
 const ui = useUi()
 
 const pid = computed(() => Number(props.id))
@@ -225,6 +226,8 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
         </ul>
         <p v-if="me && !me.invited" class="hint">Você é {{ me.owner ? 'o dono' : 'do workspace' }} deste projeto e tem acesso por ele.</p>
       </section>
+
+      <DoneTasksTable v-if="me?.owner" :tasks="tasksOf(pid)" :members="data.members" />
 
       <section v-if="data?.can_manage" class="card">
         <h2>Convites pendentes <span class="n">{{ data.invitations.length }}</span></h2>

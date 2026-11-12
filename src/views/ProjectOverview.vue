@@ -10,6 +10,8 @@ import { PROJECT_ICONS, iconClass } from '../components/app/projectIcons'
 import Avatars from '../components/app/Avatars.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
 import DeleteProjectDialog from '../components/app/DeleteProjectDialog.vue'
+import FortnightHeatmap from '../components/app/FortnightHeatmap.vue'
+import YearHeatmap from '../components/app/YearHeatmap.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const { state, project, tasksOf, progress, updateProject, postUpdate, projectActivity, STATUSES, today } = useWorkspace()
@@ -175,44 +177,54 @@ onMounted(async () => {
         </div>
         <input class="name" :value="p.name" aria-label="Nome do projeto" maxlength="120" :readonly="!canEdit" @change="$event.target.value.trim() && save({ name: $event.target.value.trim() })" />
         <textarea ref="desc" class="desc" :value="p.description" rows="2" :readonly="!canEdit" :placeholder="canEdit ? 'Conte do que se trata o projeto, os objetivos e os marcos…' : 'Sem descrição.'" aria-label="Descrição do projeto" @input="grow" @change="save({ description: $event.target.value })" />
-        <h2 class="sec">O que tem neste projeto</h2>
-        <div class="links">
-          <RouterLink v-for="l in LINKS" :key="l.label" :to="`/projetos/${p.id}${l.to}`" class="link">
-            <span class="link__icon"><i :class="l.icon" aria-hidden="true" /></span>
-            <span class="link__text"><strong>{{ l.label }}</strong><small>{{ l.n }}, {{ l.hint }}</small></span>
-            <i class="fi-rr-arrow-small-right link__go" aria-hidden="true" />
-          </RouterLink>
+        <div class="duo">
+          <div class="col">
+            <h2 class="sec">O que tem neste projeto</h2>
+            <div class="links">
+              <RouterLink v-for="l in LINKS" :key="l.label" :to="`/projetos/${p.id}${l.to}`" class="link">
+                <span class="link__icon"><i :class="l.icon" aria-hidden="true" /></span>
+                <span class="link__text"><strong>{{ l.label }}</strong><small>{{ l.n }}, {{ l.hint }}</small></span>
+                <i class="fi-rr-arrow-small-right link__go" aria-hidden="true" />
+              </RouterLink>
+            </div>
+            <button v-if="canDelete" type="button" class="pg-btn del" @click="deleting = p"><AppIcon name="trash" :size="14" />Excluir projeto</button>
+            <DeleteProjectDialog :project="deleting" @close="deleting = null" />
+          </div>
+          <FortnightHeatmap :tasks="tasks" class="aside-card" />
         </div>
-        <button v-if="canDelete" type="button" class="pg-btn del" @click="deleting = p"><AppIcon name="trash" :size="14" />Excluir projeto</button>
-        <DeleteProjectDialog :project="deleting" @close="deleting = null" />
-        <div class="sec-row">
-          <h2 class="sec">Materiais de apoio</h2>
-          <button v-if="canEdit && !newLink.open" type="button" class="add-link" @click="newLink.open = true"><AppIcon name="plus" :size="13" />Adicionar link</button>
+        <div class="duo">
+          <div class="col">
+            <div class="sec-row">
+              <h2 class="sec">Materiais de apoio</h2>
+              <button v-if="canEdit && !newLink.open" type="button" class="add-link" @click="newLink.open = true"><AppIcon name="plus" :size="13" />Adicionar link</button>
+            </div>
+            <form v-if="newLink.open" class="link-form" @submit.prevent="addLink">
+              <input v-model="newLink.url" type="text" placeholder="https://drive.google.com/…" aria-label="Endereço do link" required @vue:mounted="({ el }) => el.focus()" />
+              <input v-model="newLink.name" type="text" maxlength="120" placeholder="Nome (opcional)" aria-label="Nome do link" />
+              <button type="submit" class="pg-btn primary" :disabled="!newLink.url.trim()">Adicionar</button>
+              <button type="button" class="pg-btn" @click="Object.assign(newLink, { open: false, error: '' })">Cancelar</button>
+              <p v-if="newLink.error" class="link-error" role="alert">{{ newLink.error }}</p>
+            </form>
+            <ul v-if="materials.length" class="materials">
+              <li v-for="l in materials" :key="l.id">
+                <a :href="l.url" target="_blank" rel="noopener noreferrer" class="material">
+                  <span class="link__icon"><i class="fi-rr-link-alt" aria-hidden="true" /></span>
+                  <span class="link__text"><strong>{{ l.name || host(l.url) }}</strong><small>{{ host(l.url) }}<template v-if="l.created_by">, adicionado por {{ l.created_by }}</template></small></span>
+                </a>
+                <button v-if="canEdit" type="button" class="rm" :aria-label="`Remover ${l.name || host(l.url)}`" title="Remover" @click="removeLink(l)"><AppIcon name="trash" :size="13" /></button>
+              </li>
+            </ul>
+            <p v-else-if="!newLink.open" class="pg-muted">Nenhum link ainda. Guarde aqui a pasta do Drive, o Figma, o repositório ou documentos do projeto.</p>
+            <template v-if="activeCycle">
+              <h2 class="sec">{{ activeCycle === lateCycle ? 'Ciclo atrasado' : 'Ciclo em andamento' }}</h2>
+              <RouterLink :to="`/projetos/${p.id}/ciclos/${activeCycle.id}`" class="cycle">
+                <ProgressRing :value="tasks.filter((t) => t.cycle === activeCycle.id).length ? tasks.filter((t) => t.cycle === activeCycle.id && t.status === 'done').length / tasks.filter((t) => t.cycle === activeCycle.id).length : 0" :size="38" />
+                <span><strong>{{ activeCycle.name }}</strong><small>{{ activeCycle === lateCycle ? 'terminava em' : 'até' }} {{ new Date(`${activeCycle.end_date}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) }}</small></span>
+              </RouterLink>
+            </template>
+          </div>
+          <YearHeatmap :tasks="tasks" class="aside-card" />
         </div>
-        <form v-if="newLink.open" class="link-form" @submit.prevent="addLink">
-          <input v-model="newLink.url" type="text" placeholder="https://drive.google.com/…" aria-label="Endereço do link" required @vue:mounted="({ el }) => el.focus()" />
-          <input v-model="newLink.name" type="text" maxlength="120" placeholder="Nome (opcional)" aria-label="Nome do link" />
-          <button type="submit" class="pg-btn primary" :disabled="!newLink.url.trim()">Adicionar</button>
-          <button type="button" class="pg-btn" @click="Object.assign(newLink, { open: false, error: '' })">Cancelar</button>
-          <p v-if="newLink.error" class="link-error" role="alert">{{ newLink.error }}</p>
-        </form>
-        <ul v-if="materials.length" class="materials">
-          <li v-for="l in materials" :key="l.id">
-            <a :href="l.url" target="_blank" rel="noopener noreferrer" class="material">
-              <span class="link__icon"><i class="fi-rr-link-alt" aria-hidden="true" /></span>
-              <span class="link__text"><strong>{{ l.name || host(l.url) }}</strong><small>{{ host(l.url) }}<template v-if="l.created_by">, adicionado por {{ l.created_by }}</template></small></span>
-            </a>
-            <button v-if="canEdit" type="button" class="rm" :aria-label="`Remover ${l.name || host(l.url)}`" title="Remover" @click="removeLink(l)"><AppIcon name="trash" :size="13" /></button>
-          </li>
-        </ul>
-        <p v-else-if="!newLink.open" class="pg-muted">Nenhum link ainda. Guarde aqui a pasta do Drive, o Figma, o repositório ou documentos do projeto.</p>
-        <template v-if="activeCycle">
-          <h2 class="sec">{{ activeCycle === lateCycle ? 'Ciclo atrasado' : 'Ciclo em andamento' }}</h2>
-          <RouterLink :to="`/projetos/${p.id}/ciclos/${activeCycle.id}`" class="cycle">
-            <ProgressRing :value="tasks.filter((t) => t.cycle === activeCycle.id).length ? tasks.filter((t) => t.cycle === activeCycle.id && t.status === 'done').length / tasks.filter((t) => t.cycle === activeCycle.id).length : 0" :size="38" />
-            <span><strong>{{ activeCycle.name }}</strong><small>{{ activeCycle === lateCycle ? 'terminava em' : 'até' }} {{ new Date(`${activeCycle.end_date}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) }}</small></span>
-          </RouterLink>
-        </template>
       </div>
     </div>
 
@@ -270,12 +282,21 @@ onMounted(async () => {
 <style scoped>
 .ov { display: grid; grid-template-columns: 1fr; min-height: 100%; }
 .ov.has-panel { grid-template-columns: minmax(0, 1fr) 22rem; }
-.main { min-width: 0; }
+.main { min-width: 0; container-type: inline-size; }
 .cover { position: relative; height: 8.5rem; }
 .cover__btns { position: absolute; right: 0.9rem; top: 0.8rem; display: flex; gap: 0.4rem; }
 .cover__btn { display: inline-flex; align-items: center; gap: 0.35rem; height: 28px; padding: 0 0.6rem; border: 1px solid rgb(255 255 255 / 0.12); border-radius: 6px; background: rgb(15 14 13 / 0.6); backdrop-filter: blur(8px); font-size: 12.5px; color: var(--text); cursor: pointer; }
 .cover__btn:hover { background: rgb(15 14 13 / 0.85); }
-.doc { display: flex; flex-direction: column; gap: 0.5rem; width: min(46rem, 100%); padding: 0 2.5rem 4rem; }
+.doc { display: flex; flex-direction: column; gap: 0.5rem; width: min(84rem, 100%); padding: 0 2.5rem 4rem; }
+.doc > :is(.name, .desc) { max-width: 46rem; }
+/* blocos à esquerda e os quadros de entregas ao lado; em tela estreita um embaixo do outro */
+.duo { display: grid; grid-template-columns: minmax(0, 46rem) minmax(0, 1fr); align-items: start; gap: 0 2rem; }
+.col { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.aside-card { margin-top: 1.5rem; }
+@container (max-width: 66rem) {
+  .duo { grid-template-columns: minmax(0, 1fr); }
+  .doc { width: min(46rem, 100%); }
+}
 .icon-wrap { position: relative; margin-top: -1.9rem; }
 .icon { display: grid; place-items: center; width: 3.6rem; height: 3.6rem; padding: 0; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); font-size: 1.9rem; line-height: 1; cursor: pointer; box-shadow: 0 10px 24px rgb(0 0 0 / 0.35); transition: translate 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .icon:not(:disabled):hover { translate: 0 -2px; }
