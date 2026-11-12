@@ -119,8 +119,9 @@ const size = (b) => (b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : b > 1024 ?
 const ICON_OF = { image: 'image', video: 'image', link: 'link', file: 'doc' }
 
 const saving = ref('')
-const titleLen = ref(0)
-watch(() => task.value?.title, (t) => (titleLen.value = t?.length || 0), { immediate: true })
+// rascunho local: com :value="task.title" cada re-render (o contador muda a cada tecla) desfazia o que foi digitado
+const title = ref('')
+watch(() => task.value?.title, (t) => (title.value = t || ''), { immediate: true })
 watch([tab, newest], async () => { await nextTick(); enter(q('.log li')) })
 watch(adding, async (v) => {
   await nextTick()
@@ -356,8 +357,8 @@ function destroy() {
           <span class="code">{{ code(task) }}</span>
           <button v-if="parent" type="button" class="parent-link" @click="openTask(parent)"><AppIcon name="parent" :size="13" />{{ code(parent) }}: {{ parent.title }}</button>
           <span v-if="saving" class="saving">{{ saving }}</span>
-          <textarea class="title" :value="task.title" rows="1" maxlength="200" aria-label="Título" @input="titleLen = $event.target.value.length" @change="set({ title: $event.target.value.trim() || task.title })" />
-          <span class="count" :class="{ full: titleLen >= 200 }">{{ titleLen }}/200</span>
+          <textarea v-model="title" class="title" rows="1" maxlength="200" aria-label="Título" @change="title = title.trim() || task.title; set({ title })" />
+          <span class="count" :class="{ full: title.length >= 200 }">{{ title.length }}/200</span>
         </div>
 
         <div class="bar sec">
