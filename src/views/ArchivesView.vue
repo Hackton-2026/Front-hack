@@ -51,7 +51,7 @@ async function animate() {
   staggerIn(root.value?.querySelectorAll('.pg-row'))
 }
 watch([tab, loading], animate)
-watch(tab, () => selected.clear())
+watch(tab, () => { selected.clear(); q.value = '' })
 onMounted(fetchAll)
 </script>
 

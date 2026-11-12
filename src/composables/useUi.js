@@ -5,6 +5,7 @@ const ui = reactive({
   creating: null,
   chat: null,
   palette: false,
+  help: false,
   crumb: '',
   message: '',
   ask: null,

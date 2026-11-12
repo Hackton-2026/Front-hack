@@ -24,6 +24,7 @@ onUnmounted(() => removeEventListener('keydown', onKey))
 
 <template>
   <Teleport to="body">
+    <Transition name="veil">
     <div v-if="open" class="ov" @click.self="emit('close')">
       <form ref="box" class="box" role="dialog" aria-modal="true" :aria-label="title" @submit.prevent="emit('submit')">
         <header>
@@ -34,6 +35,7 @@ onUnmounted(() => removeEventListener('keydown', onKey))
         <footer><slot name="footer" /></footer>
       </form>
     </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -56,7 +58,7 @@ footer { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25
 .box :deep(:is(input:not([type='checkbox']), textarea, select)) { width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 7px; background: #0f0e0d; font: inherit; color: var(--text); outline: none; }
 .box :deep(:is(input, textarea, select):focus) { border-color: var(--accent); }
 .box :deep(.btn) { padding: 0.5rem 0.95rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); font-weight: 500; color: var(--text); cursor: pointer; }
-.box :deep(.btn.primary) { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.box :deep(.btn.primary) { border-color: #f8f8f8; background: #f8f8f8; color: #000; }
 .box :deep(.btn.danger) { border-color: #d9483b; background: #d9483b; color: #fff; }
 .box :deep(.btn:disabled) { opacity: 0.5; cursor: not-allowed; }
 .box :deep(.chips) { display: flex; flex-wrap: wrap; gap: 0.35rem; }

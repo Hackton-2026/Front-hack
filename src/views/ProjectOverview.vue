@@ -9,6 +9,7 @@ import ProjectIcon from '../components/app/ProjectIcon.vue'
 import { PROJECT_ICONS, iconClass } from '../components/app/projectIcons'
 import Avatars from '../components/app/Avatars.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
+import DeleteProjectDialog from '../components/app/DeleteProjectDialog.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const { state, project, tasksOf, progress, updateProject, postUpdate, projectActivity, STATUSES, today } = useWorkspace()
@@ -55,6 +56,9 @@ const ago = (iso) => {
 
 const materials = ref([])
 const newLink = reactive({ url: '', name: '', open: false, error: '' })
+const deleting = ref(null)
+// mesma regra do menu lateral: só admin, e não em projeto compartilhado
+const canDelete = computed(() => state.isAdmin && !p.value?.shared)
 const canEdit = computed(() => ['edit', 'full'].includes(p.value?.my_permission))
 const host = (url) => { try { return new URL(url).hostname.replace(/^www\./, '') } catch { return url } }
 const linksApi = (path = '', opts) => api(`/api/projects/${pid.value}/links/${path}`, opts)
@@ -179,6 +183,8 @@ onMounted(async () => {
             <i class="fi-rr-arrow-small-right link__go" aria-hidden="true" />
           </RouterLink>
         </div>
+        <button v-if="canDelete" type="button" class="pg-btn del" @click="deleting = p"><AppIcon name="trash" :size="14" />Excluir projeto</button>
+        <DeleteProjectDialog :project="deleting" @close="deleting = null" />
         <div class="sec-row">
           <h2 class="sec">Materiais de apoio</h2>
           <button v-if="canEdit && !newLink.open" type="button" class="add-link" @click="newLink.open = true"><AppIcon name="plus" :size="13" />Adicionar link</button>
@@ -343,6 +349,7 @@ h3 { margin: 0; font: 600 1.05rem/1.3 'Geist', system-ui, sans-serif; color: var
 .upd textarea { width: 100%; padding: 0.55rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); font: inherit; color: var(--text); resize: vertical; outline: none; }
 .upd textarea:focus { border-color: var(--accent); }
 .upd .pg-btn { align-self: flex-end; }
+.del { align-self: flex-start; margin-top: 0.75rem; color: var(--danger, #ff8a80); }
 .upd .pg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .feed { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .feed li { position: relative; display: grid; grid-template-columns: 26px 1fr; gap: 0 0.6rem; padding: 0 0 0.9rem; }

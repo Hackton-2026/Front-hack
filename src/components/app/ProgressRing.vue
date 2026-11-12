@@ -42,5 +42,5 @@ circle { fill: none; stroke-width: 3; }
 .track { stroke: var(--line-strong, #3d3934); }
 .bar { stroke: var(--accent, #e56515); stroke-linecap: round; }
 .bar.is-full { stroke: var(--success, #7fc47a); }
-.pct { position: relative; font-weight: 600; letter-spacing: -0.02em; color: var(--muted, #a29d95); font-variant-numeric: tabular-nums; }
+.pct { position: absolute; inset: 0; display: grid; place-items: center; line-height: 1; font-weight: 600; letter-spacing: -0.02em; color: var(--muted, #a29d95); font-variant-numeric: tabular-nums; }
 </style>

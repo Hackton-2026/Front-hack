@@ -155,7 +155,9 @@ input:hover, input:focus { border-color: var(--line-strong); outline: none; }
 .pick:hover, .pick[aria-expanded='true'] { border-color: var(--line-strong); }
 .etq { display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.1rem 0.4rem; border-radius: 4px; background: var(--surface-2); font-size: 12px; color: var(--text); }
 .etq button { display: inline-flex; padding: 0; border: 0; background: none; color: var(--muted); cursor: pointer; }
-.pop { position: fixed; z-index: 1000; display: flex; flex-direction: column; width: 240px; max-height: 290px; padding: 0.3rem; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 12px 32px rgb(0 0 0 / 0.35); font-size: 13px; color: var(--text); }
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px); } }
+.pop { animation: pop-in 0.18s ease-out; position: fixed; z-index: 1000; display: flex; flex-direction: column; width: 240px; max-height: 290px; padding: 0.3rem; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 12px 32px rgb(0 0 0 / 0.35); font-size: 13px; color: var(--text); }
 .pop > button { display: flex; flex-shrink: 0; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem; border: 0; border-radius: 5px; background: none; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
 .pop > button:hover { background: var(--surface-2); }
 .pop small { font-size: 11.5px; color: var(--muted); }

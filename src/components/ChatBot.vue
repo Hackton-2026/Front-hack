@@ -65,6 +65,7 @@ async function decide(action, ok) {
 
 <template>
   <div class="bot">
+    <Transition name="bot">
     <section v-if="open" class="panel card" aria-label="Assistente">
       <header class="head">
         <strong>Assistente</strong>
@@ -88,6 +89,7 @@ async function decide(action, ok) {
         <BaseButton type="submit" small :disabled="loading || !text.trim()">Enviar</BaseButton>
       </form>
     </section>
+    </Transition>
     <button class="toggle" :aria-expanded="open" aria-label="Abrir assistente" @click="open = !open">
       <FlaticonIcon v-if="open" name="cross-small" :size="20" /><template v-else>IA</template>
     </button>
@@ -95,6 +97,10 @@ async function decide(action, ok) {
 </template>
 
 <style scoped>
+.bot-enter-active { transition: opacity 0.22s ease-out, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1); transform-origin: bottom right; }
+.bot-leave-active { transition: opacity 0.15s ease-in, transform 0.15s ease-in; transform-origin: bottom right; }
+.bot-enter-from, .bot-leave-to { opacity: 0; transform: translateY(10px) scale(0.96); }
+@media (prefers-reduced-motion: reduce) { .bot-enter-active, .bot-leave-active { transition: none; } }
 .bot { position: fixed; right: var(--space-4); bottom: var(--space-4); z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
 .toggle { width: 52px; height: 52px; border: 0; border-radius: 50%; background: var(--color-primary); color: var(--color-on-primary); font: inherit; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-hover); }
 .toggle:hover { background: var(--color-primary-hover); }

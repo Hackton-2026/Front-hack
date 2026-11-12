@@ -80,7 +80,7 @@ onMounted(animate)
     </div>
 
     <div v-if="view === 'cards'" class="grid">
-      <article v-for="r in rows" :key="r.p.id" class="card" :style="{ '--c': r.p.color }">
+      <article v-for="r in rows" :key="r.p.id" class="card open-card" :style="{ '--c': r.p.color }" @click="!$event.target.closest('a, button') && router.push(`/projetos/${r.p.id}`)">
         <header class="card__top">
           <span class="badge"><ProjectIcon v-if="iconClass(r.p.icon)" :icon="r.p.icon" :size="15" /><template v-else>{{ r.p.name.slice(0, 1) }}</template></span>
           <RouterLink :to="`/projetos/${r.p.id}`" class="name">{{ r.p.name }}</RouterLink>
@@ -104,7 +104,7 @@ onMounted(animate)
       </article>
       <form class="card new" novalidate @submit.prevent="create">
         <strong>Novo projeto</strong>
-        <input v-model="name" placeholder="Nome do projeto" aria-label="Nome do projeto" :aria-invalid="!!error" @input="error = ''" />
+        <input id="novo-projeto" v-model="name" placeholder="Nome do projeto" aria-label="Nome do projeto" :aria-invalid="!!error" @input="error = ''" />
         <div class="colors" role="radiogroup" aria-label="Cor">
           <button v-for="c in COLORS" :key="c" type="button" role="radio" :aria-checked="color === c" :style="{ background: c }" :aria-label="`Cor ${c}`" @click="color = c" />
         </div>
@@ -140,6 +140,7 @@ h1 { display: flex; align-items: center; gap: 0.5rem; }
 .count { padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--surface-2); font-size: 12px; font-weight: 500; color: var(--muted); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; padding: 0 1.25rem; }
 .card { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); transition: border-color 0.2s var(--ease), translate 0.25s var(--ease); }
+.open-card { cursor: pointer; }
 .card:not(.new):hover { border-color: var(--line-strong); translate: 0 -2px; }
 .card__top { display: flex; align-items: center; gap: 0.6rem; }
 .badge { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: color-mix(in srgb, var(--c) 22%, transparent); font-weight: 600; color: var(--c); }

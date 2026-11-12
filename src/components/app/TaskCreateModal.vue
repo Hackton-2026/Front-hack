@@ -54,6 +54,7 @@ function save() {
 </script>
 
 <template>
+  <Transition name="veil">
   <div v-if="ui.creating" class="veil" @click.self="closeNew" @keydown.esc="closeNew">
     <form ref="box" class="modal" role="dialog" aria-modal="true" aria-labelledby="new-title" novalidate @submit.prevent="save">
       <header>
@@ -85,6 +86,7 @@ function save() {
       </footer>
     </form>
   </div>
+  </Transition>
 </template>
 
 <style scoped>

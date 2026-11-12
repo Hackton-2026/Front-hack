@@ -28,7 +28,9 @@ state.prefs.board ||= { limits: {}, collapsed: [], hideEmpty: false, group: '', 
 const cfg = state.prefs.board
 
 const visible = computed(() => STATUSES.filter((s) => !cfg.hideEmpty || props.tasks.some((t) => t.status === s.id)))
-const cols = computed(() => visible.value.map((s) => ({ ...s, tasks: props.tasks.filter((t) => t.status === s.id), collapsed: cfg.collapsed.includes(s.id), limit: cfg.limits[s.id] || 0 })))
+// recolhido é por quadro: a chave inclui o projeto (ou 'meu')
+const ckey = (id) => `${props.projectId ?? 'meu'}:${id}`
+const cols = computed(() => visible.value.map((s) => ({ ...s, tasks: props.tasks.filter((t) => t.status === s.id), collapsed: cfg.collapsed.includes(ckey(s.id)), limit: cfg.limits[s.id] || 0 })))
 const template = computed(() => cols.value.map((c) => (c.collapsed ? '2.6rem' : 'minmax(16.5rem, 1fr)')).join(' '))
 
 const lanes = computed(() => {
@@ -92,7 +94,18 @@ function add(status, lane) {
   withFlip(() => createTask({ title, status, projectId: props.projectId, ...props.defaults, ...lane.patch }))
   adding[key] = ''
 }
-const toggleCollapse = (id) => { cfg.collapsed = cfg.collapsed.includes(id) ? cfg.collapsed.filter((x) => x !== id) : [...cfg.collapsed, id]; menu.value = '' }
+// grid-template-columns não interpola minmax(…fr) ↔ rem, então a largura anima por Flip
+let colFlip
+const toggleCollapse = async (id) => {
+  const k = ckey(id)
+  colFlip?.progress(1)
+  const els = () => root.value.querySelectorAll('.col')
+  const st = reduced ? null : Flip.getState(els())
+  cfg.collapsed = cfg.collapsed.includes(k) ? cfg.collapsed.filter((x) => x !== k) : [...cfg.collapsed, k]
+  menu.value = ''
+  await nextTick()
+  if (st) colFlip = Flip.from(st, { targets: els(), duration: DUR.base, ease: EASE.out, scale: false, simple: true })
+}
 const setLimit = (id, v) => { cfg.limits = { ...cfg.limits, [id]: Math.max(0, Number(v) || 0) } }
 
 const closeMenu = () => { menu.value = '' }
@@ -111,9 +124,9 @@ onMounted(() => {
       </label>
       <div class="rel">
         <button type="button" class="pg-btn" :aria-expanded="menu === 'fields'" @click.stop="menu = menu === 'fields' ? '' : 'fields'"><AppIcon name="settings" :size="13" />Campos</button>
-        <div v-if="menu === 'fields'" class="pg-menu fields" @click.stop>
+        <Transition name="pop"><div v-if="menu === 'fields'" class="pg-menu fields" @click.stop>
           <label v-for="(label, k) in FIELDS" :key="k"><input v-model="cfg.fields[k]" type="checkbox" />{{ label }}</label>
-        </div>
+        </div></Transition>
       </div>
       <label class="opt"><input v-model="cfg.hideEmpty" type="checkbox" />Ocultar colunas vazias</label>
       <span class="total pg-muted">{{ tasks.length }} itens, {{ tasks.filter((t) => t.status === 'done').length }} concluídos</span>
@@ -145,10 +158,10 @@ onMounted(() => {
                   <span v-if="late(c) && l.id === shownLanes[0].id" class="chip late" :title="`${late(c)} atrasado(s)`"><AppIcon name="calendar" :size="11" />{{ late(c) }}</span>
                   <div class="rel push">
                     <button type="button" class="pg-icon" :aria-label="`Opções de ${c.name}`" :aria-expanded="menu === c.id + l.id" @click.stop="menu = menu === c.id + l.id ? '' : c.id + l.id"><AppIcon name="more" :size="15" /></button>
-                    <div v-if="menu === c.id + l.id" class="pg-menu" @click.stop>
+                    <Transition name="pop"><div v-if="menu === c.id + l.id" class="pg-menu" @click.stop>
                       <label class="lim">Limite de itens <input type="number" min="0" :value="c.limit || ''" placeholder="sem" @change="setLimit(c.id, $event.target.value)" /></label>
                       <button type="button" @click="toggleCollapse(c.id)"><AppIcon name="chevron" :size="13" />Recolher coluna</button>
-                    </div>
+                    </div></Transition>
                   </div>
                 </div>
                 <p v-if="l.id === shownLanes[0].id" class="col__about">{{ ABOUT[c.id] }}</p>
@@ -194,7 +207,7 @@ onMounted(() => {
                   <Avatars v-if="cfg.fields.assignees && t.assignees.length" :ids="t.assignees" :size="20" class="who" />
                 </div>
               </article>
-              <form v-if="projectId || l.patch?.projectId" class="add" @submit.prevent="add(c.id, l)">
+              <form v-if="projectId || defaults.projectId || l.patch?.projectId" class="add" @submit.prevent="add(c.id, l)">
                 <AppIcon name="plus" :size="13" />
                 <input v-model="adding[`${l.id}:${c.id}`]" placeholder="Adicionar item" :aria-label="`Nova tarefa em ${c.name}`" />
               </form>
@@ -223,6 +236,9 @@ onMounted(() => {
 .lane__head { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font: 600 13px/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .lane__head i { width: 9px; height: 9px; border-radius: 3px; }
 .board { display: grid; gap: 0.85rem; align-items: start; }
+.col__strip, .col__head { animation: kb-fade 0.2s ease-out; }
+@keyframes kb-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .board { transition: none; } .col__strip, .col__head { animation: none; } }
 .col { position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-height: 10rem; padding: 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
 .col.is-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .col.is-full { box-shadow: inset 0 0 0 1px rgb(255 91 77 / 0.45); }

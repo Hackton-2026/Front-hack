@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useAuth } from '../../composables/useAuth'
 import { api } from '../../services/api'
@@ -19,6 +19,15 @@ import SideNav from './SideNav.vue'
 import '../../assets/app-pages.css'
 
 const route = useRoute()
+const router = useRouter()
+// o + de Projetos cria projeto: abre a lista e põe o cursor no formulário de novo projeto
+async function newProject() {
+  if (route.path !== '/projetos') await router.push('/projetos')
+  await nextTick()
+  const f = document.getElementById('novo-projeto')
+  f?.scrollIntoView({ block: 'center' })
+  f?.focus()
+}
 const { user } = useAuth()
 const { count, total } = useOnboarding()
 const { state, unread, load, refreshFeed, touchRecent } = useWorkspace()
@@ -72,7 +81,7 @@ const roleName = computed(() => ROLE_NAMES[state.members.find((m) => m.id === st
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
 const root = ref(null)
-const helpOpen = ref(false)
+const helpOpen = computed({ get: () => ui.help, set: (v) => (ui.help = v) })
 const reduced = prefersReducedMotion()
 
 function subEnter(el, done) {
@@ -155,13 +164,13 @@ onUnmounted(() => {
         </RouterLink>
         <div class="pop">
           <button type="button" class="icon-btn" :aria-expanded="helpOpen" aria-label="Ajuda" @click="helpOpen = !helpOpen"><AppIcon name="help" /></button>
-          <div v-if="helpOpen" class="help">
+          <Transition name="pop"><div v-if="helpOpen" class="help">
             <strong>Atalhos</strong>
             <p><kbd>Ctrl</kbd><kbd>K</kbd> buscar e abrir qualquer coisa</p>
             <p><kbd>N</kbd> nova tarefa</p>
             <p><kbd>Esc</kbd> fechar painéis</p>
             <RouterLink to="/comecar" @click="helpOpen = false">Ver o guia de início</RouterLink>
-          </div>
+          </div></Transition>
         </div>
       </div>
     </header>
@@ -180,7 +189,7 @@ onUnmounted(() => {
             <RouterLink :to="r.to" class="rail__item" :class="{ 'is-active': isActive(r) }" :title="r.label">
               <AppIcon :name="r.icon" :size="18" /><span class="rail__label">{{ r.label }}</span><span v-if="r.badge && unread" class="rail__badge">{{ unread > 9 ? '9+' : unread }}</span>
             </RouterLink>
-            <button v-if="r.tree" type="button" class="rail__add" aria-label="Novo item de trabalho" title="Novo item de trabalho (N)" @click="newTask()"><AppIcon name="plus" :size="15" /></button>
+            <button v-if="r.tree" type="button" class="rail__add" aria-label="Novo projeto" title="Novo projeto" @click="newProject()"><AppIcon name="plus" :size="15" /></button>
           </div>
           <Transition :css="false" @enter="subEnter" @leave="subLeave">
             <div v-if="r.tree && inProjects" class="rail__sub"><SideNav /></div>
@@ -229,7 +238,9 @@ onUnmounted(() => {
     </main>
 
     <Transition name="toast"><p v-if="ui.message" class="toast" role="alert">{{ ui.message }}</p></Transition>
-    <ProjectChat v-if="ui.chat && state.loaded && route.path !== `/projetos/${ui.chat}/chat`" :id="ui.chat" />
+    <Transition name="slide-side">
+      <ProjectChat v-if="ui.chat && state.loaded && route.path !== `/projetos/${ui.chat}/chat`" :id="ui.chat" />
+    </Transition>
     <TaskDrawer />
     <TaskCreateModal />
     <CommandPalette />

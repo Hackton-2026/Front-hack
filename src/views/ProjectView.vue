@@ -16,14 +16,12 @@ import GooeyButton from '../components/GooeyButton.vue'
 import { LAYOUTS, layout } from '../components/app/views/layouts'
 import TaskGantt from '../components/app/views/TaskGantt.vue'
 import TaskTable from '../components/app/views/TaskTable.vue'
-import TaskGallery from '../components/app/views/TaskGallery.vue'
 import TaskStats from '../components/app/views/TaskStats.vue'
 import TaskPeople from '../components/app/views/TaskPeople.vue'
 import TaskMindmap from '../components/app/views/TaskMindmap.vue'
 import ViewWhiteboard from '../components/app/views/ViewWhiteboard.vue'
 import ViewDoc from '../components/app/views/ViewDoc.vue'
 import ViewActivity from '../components/app/views/ViewActivity.vue'
-import CyclesView from './CyclesView.vue'
 import AppModal from '../components/app/AppModal.vue'
 
 const VIEWS = [
@@ -37,7 +35,7 @@ const props = defineProps({ id: { type: String, required: true }, cycle: { type:
 const route = useRoute()
 const router = useRouter()
 const { state, STATUSES, PRIORITIES, project, member, isOverdue, tasksOf, progress, doneRatio, createItem, updateItem, removeItem, updateTask } = useWorkspace()
-const { ui, newTask, openChat, closeChat, toast, confirmAsk, promptAsk } = useUi()
+const { ui, newTask, openChat, closeChat, toast, confirmAsk } = useUi()
 const { complete } = useOnboarding()
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
@@ -49,8 +47,12 @@ const tabs = ref(null)
 const saved = computed(() => props.view && state.views.find((x) => x.id === Number(props.view)))
 const kind = computed(() => saved.value?.type || view.value)
 // Formulário e Linha do tempo saíram do produto: as já criadas somem da barra e o link volta para o projeto
-const REMOVED = ['form', 'timeline']
-watch(saved, (v) => { if (REMOVED.includes(v?.type)) router.replace(`/projetos/${pid.value}`) }, { immediate: true })
+// Galeria também saiu; a visão Ciclos é a mesma página de /projetos/:id/ciclos (a da visão geral)
+const REMOVED = ['form', 'timeline', 'gallery']
+watch(saved, (v) => {
+  if (REMOVED.includes(v?.type)) router.replace(`/projetos/${pid.value}`)
+  else if (v?.type === 'cycles') router.replace(`/projetos/${pid.value}/ciclos`)
+}, { immediate: true })
 const pinned = computed(() => (props.cycle || props.module ? [] : state.views
   .filter((v) => v.project === pid.value && v.is_pinned && !REMOVED.includes(v.type) && (!v.is_private || v.owner === state.me))
   .sort((a, b) => a.order - b.order || a.id - b.id)))
@@ -88,20 +90,9 @@ const closeMenu = (e) => { if (adding.value && !menu.value?.contains(e.target)) 
 onMounted(() => addEventListener('pointerdown', closeMenu))
 onUnmounted(() => removeEventListener('pointerdown', closeMenu))
 
-async function renameView() {
-  const name = await promptAsk('Renomear visualização', saved.value.name)
-  if (name) updateItem('view', saved.value, { name })
-}
 const togglePin = () => updateItem('view', saved.value, { is_pinned: !saved.value.is_pinned })
 async function unpinView(v) {
   if (await updateItem('view', v, { is_pinned: false })) toast(`${v.name} saiu da barra. Para voltar, use + Visualização.`)
-}
-function dropView(v) {
-  if (v === saved.value) router.push(`/projetos/${pid.value}`)
-  removeItem('view', v)
-}
-async function deleteView() {
-  if (await confirmAsk(`Apagar a visualização "${saved.value.name}"?`, { message: 'O que ela guarda (filtros, notas, texto) some junto.' })) dropView(saved.value)
 }
 
 const scope = computed(() => {
@@ -232,7 +223,7 @@ onMounted(() => moveInk(false))
         </details>
         <div ref="menu" class="add-view">
           <button type="button" class="add-btn" :aria-expanded="adding" @click="adding = !adding"><AppIcon name="plus" :size="13" />Visualização</button>
-          <div v-if="adding" class="add-menu" role="dialog" aria-label="Adicionar visualização">
+          <Transition name="pop"><div v-if="adding" class="add-menu" role="dialog" aria-label="Adicionar visualização">
             <label class="add-find"><AppIcon name="search" :size="13" /><input v-model="findLayout" placeholder="Buscar visualizações" aria-label="Buscar visualizações" /></label>
             <template v-for="[group, title] in [['popular', 'Popular'], ['more', 'Mais visualizações']]" :key="group">
               <p v-if="shown(group).length" class="add-group">{{ title }}</p>
@@ -247,13 +238,11 @@ onMounted(() => moveInk(false))
               <label><input v-model="asPrivate" type="checkbox" /> Visualização privada</label>
               <label><input v-model="asPinned" type="checkbox" /> Fixar na barra</label>
             </div>
-          </div>
+          </div></Transition>
         </div>
       </div>
       <div v-if="saved" class="view-actions">
-        <button type="button" @click="renameView">Renomear</button>
         <button type="button" @click="togglePin">{{ saved.is_pinned ? 'Desafixar' : 'Fixar na barra' }}</button>
-        <button type="button" class="danger" @click="deleteView">Apagar</button>
       </div>
       <div v-if="!NO_FILTERS.includes(kind)" class="filters">
         <label class="find"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar pelo título" aria-label="Buscar tarefas pelo título" /></label>
@@ -271,14 +260,12 @@ onMounted(() => moveInk(false))
     <TaskCalendar v-else-if="kind === 'calendar'" :tasks="tasks" :project-id="p.id" :defaults="scope.defaults" />
     <TaskGantt v-else-if="kind === 'gantt'" :tasks="tasks" />
     <TaskTable v-else-if="kind === 'table'" :tasks="tasks" />
-    <TaskGallery v-else-if="kind === 'gallery'" :tasks="tasks" />
     <TaskStats v-else-if="kind === 'dashboard'" :tasks="tasks" />
     <TaskPeople v-else-if="kind === 'workload' || kind === 'team'" :tasks="tasks" :team="kind === 'team'" />
     <TaskMindmap v-else-if="kind === 'mindmap'" :tasks="tasks" :title="saved?.name || p.name" />
     <ViewWhiteboard v-else-if="kind === 'whiteboard' && saved" :key="saved.id" :view="saved" />
     <ViewDoc v-else-if="kind === 'doc' && saved" :view="saved" />
     <ViewActivity v-else-if="kind === 'activity'" :project-id="p.id" />
-    <CyclesView v-else-if="kind === 'cycles'" :id="String(p.id)" />
     <TaskListView v-else :tasks="tasks" :project-id="p.id" :defaults="scope.defaults" />
 
     <AppModal :open="picking" title="Adicionar itens do projeto" @close="picking = false" @submit="addPicked">

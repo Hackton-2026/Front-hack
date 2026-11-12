@@ -164,7 +164,11 @@ function onPreviewClick(e) {
   const btn = e.target.closest('[data-action="task"]')
   if (btn) return newTask({ title: btn.dataset.title || '' })
   const line = e.target.dataset?.line
-  if (line === undefined || doc.value.locked) return
+  if (line === undefined) {
+    if (!doc.value.locked && !e.target.closest('a')) { mode.value = 'edit'; nextTick(() => area.value?.focus()) }
+    return
+  }
+  if (doc.value.locked) return
   doc.value.body = toggleCheck(doc.value.body, Number(line))
   touch()
 }
@@ -242,7 +246,12 @@ function onType() {
   if (m) menu.value = { query: m[1], from: el.selectionStart - m[1].length - 1, top: menu.value?.query != null ? menu.value.top : caretTop(el, el.selectionStart) }
   else if (menu.value?.query != null) menu.value = null
 }
-const onAreaBlur = () => setTimeout(() => { if (menu.value?.query != null && !document.activeElement?.closest('.bm')) menu.value = null })
+// ao sair do campo, mostra o texto já renderizado; clicar nele volta a editar
+const onAreaBlur = () => setTimeout(() => {
+  const inside = document.activeElement?.closest('.bm, .tools, .write')
+  if (menu.value?.query != null && !inside) menu.value = null
+  if (!menu.value && !inside && doc.value?.body.trim()) mode.value = 'view'
+})
 function onAreaKey(e) {
   if (menu.value?.query != null && blockMenu.value?.key(e)) e.preventDefault()
 }

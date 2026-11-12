@@ -311,6 +311,7 @@ function destroy() {
 </script>
 
 <template>
+  <Transition name="veil">
   <div v-if="task" class="veil" :class="{ 'is-wide': wide }" @click.self="close" @keydown.esc="onEsc">
     <aside ref="panel" tabindex="-1" class="drawer" role="dialog" aria-modal="true" :aria-label="`Tarefa ${task.title}`">
       <header class="head">
@@ -547,6 +548,7 @@ function destroy() {
       </div>
     </aside>
   </div>
+  </Transition>
 </template>
 
 <style scoped>

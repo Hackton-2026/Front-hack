@@ -40,7 +40,7 @@ defineExpose({ close: () => (open.value = false) })
     <button v-else type="button" class="acc__btn" :class="{ ring }" :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${Math.round(size * 0.4)}px` }" :aria-expanded="open" aria-haspopup="menu" :aria-label="`Conta de ${fullName}`" @click="toggle">
       <img v-if="pic" :src="pic" alt="" /><template v-else>{{ initials }}</template>
     </button>
-    <div v-if="open" class="acc__menu" :class="{ up }" role="menu">
+    <Transition name="pop"><div v-if="open" class="acc__menu" :class="{ up }" role="menu">
       <div class="acc__card" :style="pic ? { '--bg': `url(${pic})` } : null">
         <span class="acc__av"><img v-if="pic" :src="pic" alt="" /><template v-else>{{ initials }}</template></span>
         <strong>{{ fullName }}</strong>
@@ -51,7 +51,7 @@ defineExpose({ close: () => (open.value = false) })
       <RouterLink v-if="site" to="/" role="menuitem" @click="open = false"><AppIcon name="globe" :size="16" />Ir para o site</RouterLink>
       <hr />
       <button type="button" role="menuitem" class="out" @click="signOut"><AppIcon name="logout" :size="16" />Sair</button>
-    </div>
+    </div></Transition>
   </div>
 </template>
 

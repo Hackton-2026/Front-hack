@@ -24,6 +24,13 @@ function move(k, dir) {
   ;[o[i], o[j]] = [o[j], o[i]]
   dash.order = o
 }
+const dragKey = ref('')
+function dropOn(target) {
+  const o = dash.order.filter((x) => x !== dragKey.value)
+  if (dragKey.value) o.splice(dash.order.indexOf(target), 0, dragKey.value)
+  dash.order = o
+  dragKey.value = ''
+}
 const tasks = computed(() => state.tasks.filter((t) => !t.draft))
 const weekAgo = day(-7)
 const KPIS = computed(() => [
@@ -62,7 +69,8 @@ onMounted(() => {
       <div class="pg-bar__right"><button type="button" class="pg-btn" :class="{ primary: editing }" :aria-pressed="editing" @click="editing = !editing"><AppIcon name="grid" :size="14" />{{ editing ? 'Pronto' : 'Personalizar' }}</button></div>
     </div>
     <div v-if="editing" class="custom" aria-label="Blocos do painel">
-      <div v-for="(k, i) in dash.order" :key="k" class="wd" :class="{ off: !shown(k) }">
+      <div v-for="(k, i) in dash.order" :key="k" class="wd" :class="{ off: !shown(k), dragging: dragKey === k }" :draggable="dragKey === k" @dragover.prevent @drop.prevent="dropOn(k)" @dragend="dragKey = ''">
+        <span class="grip" title="Arraste para reordenar" aria-hidden="true" @mousedown="dragKey = k" @mouseup="dragKey = ''"><AppIcon name="more" :size="14" :style="{ transform: 'rotate(90deg)' }" /></span>
         <label><input type="checkbox" :checked="shown(k)" @change="toggle(k)" />{{ WIDGETS[k] }}</label>
         <button type="button" class="pg-icon" :disabled="i === 0" :aria-label="`Subir ${WIDGETS[k]}`" @click="move(k, -1)"><AppIcon name="chevron" :size="14" :style="{ transform: 'rotate(180deg)' }" /></button>
         <button type="button" class="pg-icon" :disabled="i === dash.order.length - 1" :aria-label="`Descer ${WIDGETS[k]}`" @click="move(k, 1)"><AppIcon name="chevron" :size="14" /></button>
@@ -162,12 +170,14 @@ time.late { color: var(--danger, #ff8a80); }
 .cycles { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.6rem; }
 .cy { display: flex; align-items: center; gap: 0.7rem; padding: 0.75rem; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; transition: border-color 0.2s var(--ease); }
 .cy:hover { border-color: var(--accent); }
-.cy span { display: flex; flex-direction: column; }
+.cy > span:last-child { display: flex; flex-direction: column; }
 .cy small { font-size: 12px; color: var(--muted); }
 :is(.due button, .plist a, .cy):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; border-radius: 6px; }
 .custom { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 1.25rem 0; padding: 0.75rem; border: 1px dashed var(--line-strong); border-radius: 12px; }
 .wd { display: flex; align-items: center; gap: 0.2rem; padding: 0.25rem 0.3rem 0.25rem 0.6rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px; }
 .wd.off { opacity: 0.55; }
+.wd.dragging { opacity: 0.4; }
+.grip { display: grid; place-items: center; width: 18px; color: var(--muted); cursor: grab; }
 .wd label { display: flex; align-items: center; gap: 0.4rem; margin-right: 0.3rem; cursor: pointer; }
 .wd input { accent-color: var(--accent); }
 .pg-icon:disabled { opacity: 0.3; }

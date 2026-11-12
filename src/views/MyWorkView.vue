@@ -16,11 +16,13 @@ const tab = ref('assigned')
 const view = ref('list')
 const q = ref('')
 const weekAgo = day(-7)
-const doneAt = (t) => (t.completedAt || t.updatedAt || '').slice(0, 10)
+// data local da conclusão (o ISO vem em UTC e deslocava o dia)
+const doneAt = (t) => { const d = new Date(t.completedAt || t.updatedAt || Date.now()); return day(Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())) / 864e5)) }
 const created = computed(() => state.tasks.filter((t) => !t.draft && t.creator === state.me))
-const finished = computed(() => mine.value.filter((t) => t.status === 'done' && doneAt(t) >= weekAgo))
-const source = computed(() => ({ assigned: mine.value.filter((t) => t.status !== 'done'), created: created.value.filter((t) => t.status !== 'done'), done: finished.value })[tab.value])
-const tasks = computed(() => source.value.filter((t) => !q.value || `${t.title} ${code(t)}`.toLowerCase().includes(q.value.toLowerCase())))
+// concluídas por mim ou criadas por mim: quem conclui no projeto nem sempre é o responsável
+const finished = computed(() => state.tasks.filter((t) => !t.draft && t.status === 'done' && (t.assignees.includes(state.me) || t.creator === state.me) && doneAt(t) >= weekAgo))
+const source = computed(() => ({ assigned: [...mine.value.filter((t) => t.status !== 'done'), ...finished.value.filter((t) => t.assignees.includes(state.me))], created: [...created.value.filter((t) => t.status !== 'done'), ...finished.value.filter((t) => t.creator === state.me)], done: finished.value })[tab.value])
+const tasks = computed(() => source.value.filter((t) => (!q.value || `${t.title} ${code(t)}`.toLowerCase().includes(q.value.toLowerCase()))))
 
 const open = computed(() => mine.value.filter((t) => t.status !== 'done'))
 const STATS = computed(() => [
@@ -31,9 +33,9 @@ const STATS = computed(() => [
 ])
 const week = computed(() => {
   const offset = (new Date().getDay() + 6) % 7
-  return Array.from({ length: 7 }, (_, i) => { const d = day(i - offset); return { d, n: open.value.filter((t) => t.due === d).length, today: d === day(0) } })
+  return Array.from({ length: 7 }, (_, i) => { const d = day(i - offset); return { d, n: finished.value.filter((t) => doneAt(t) === d).length, today: d === day(0) } })
 })
-const maxDay = computed(() => Math.max(3, ...week.value.map((w) => w.n)))
+const maxDay = computed(() => Math.max(1, ...week.value.map((w) => w.n)))
 
 const endOfWeek = computed(() => week.value[6].d)
 const BUCKETS = [
@@ -81,9 +83,10 @@ onMounted(() => {
       <div class="stats">
         <div v-for="[label, n, ic, tone] in STATS" :key="label" class="stat" :class="n ? tone : 'zero'"><AppIcon :name="ic" :size="15" /><b>{{ n }}</b><span>{{ label }}</span></div>
       </div>
-      <div class="wk" aria-label="Carga da semana">
-        <div v-for="w in week" :key="w.d" class="wk__day" :class="{ today: w.today }" :title="`${w.n} tarefa(s) em ${fmt(w.d)}`">
-          <span class="wk__bar"><i :style="{ height: `${(w.n / maxDay) * 100}%` }" :class="{ over: w.n > 3 }" /></span>
+      <div class="wk" role="img" :aria-label="`Concluídas por dia nesta semana: ${week.map((w) => `${weekday(w.d)} ${w.n}`).join(', ')}`">
+        <div v-for="w in week" :key="w.d" class="wk__day" :class="{ today: w.today }">
+          <span class="wk__tip" aria-hidden="true">{{ w.n }} {{ w.n === 1 ? 'concluída' : 'concluídas' }} · {{ fmt(w.d) }}</span>
+          <span class="wk__bar"><i :style="{ height: `${(w.n / maxDay) * 100}%` }" /></span>
           <small>{{ weekday(w.d) }}</small>
         </div>
       </div>
@@ -116,7 +119,7 @@ onMounted(() => {
         </div>
       </section>
     </template>
-    <div v-else-if="view === 'board'" class="pad"><TaskBoard :tasks="tasks" /></div>
+    <div v-else-if="view === 'board'" class="pad"><TaskBoard :tasks="tasks" :defaults="{ projectId: state.projects[0]?.id ?? null }" /></div>
     <div v-else class="pad"><TaskGantt :tasks="tasks" /></div>
   </div>
 </template>
@@ -131,9 +134,12 @@ onMounted(() => {
 .stat.warn b { color: var(--danger, #ff8a80); } .stat.accent b { color: var(--accent-soft); } .stat.good b { color: var(--success, #7fc47a); }
 .stat.zero b { color: var(--muted); font-weight: 500; }
 .wk { display: flex; gap: 0.35rem; align-items: flex-end; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-.wk__day { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.wk__day { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.wk__tip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translate(-50%, 4px); padding: 0.3rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--text); font-size: 11.5px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s ease-out, transform 0.15s ease-out; z-index: 5; }
+.wk__day:hover .wk__tip { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .wk__tip { transition: none; } }
 .wk__bar { display: flex; align-items: flex-end; width: 18px; height: 52px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
-.wk__bar i { display: block; width: 100%; border-radius: 5px; background: var(--accent-soft); }
+.wk__bar i { transition: height 0.4s ease-out; display: block; width: 100%; border-radius: 5px; background: var(--accent-soft); }
 .wk__bar i.over { background: var(--danger, #ff8a80); }
 .wk__day small { font-size: 10.5px; color: var(--muted); text-transform: capitalize; }
 .wk__day.today small { color: var(--accent-soft); font-weight: 600; }

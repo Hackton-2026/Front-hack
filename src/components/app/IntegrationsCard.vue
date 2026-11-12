@@ -1,6 +1,9 @@
 <script setup>
 import AppIcon from './AppIcon.vue'
 import BrandIcon from './BrandIcon.vue'
+import { useUi } from '../../composables/useUi'
+
+const { ui } = useUi()
 
 const INTEGRATIONS = '/ajustes?tab=integrations'
 const APPS = [
@@ -13,9 +16,9 @@ const APPS = [
   { slug: 'figma', name: 'Figma' },
 ]
 const LINKS = [
-  { icon: 'doc', label: 'Documentação' },
-  { icon: 'user', label: 'Falar com vendas' },
-  { icon: 'chat', label: 'Suporte' },
+  { icon: 'doc', label: 'Documentação', to: '/docs' },
+  { icon: 'user', label: 'Falar com vendas', to: '/contato?assunto=comercial' },
+  { icon: 'chat', label: 'Suporte', to: '/contato' },
   { icon: 'keyboard', label: 'Atalhos de teclado' },
 ]
 </script>
@@ -33,7 +36,10 @@ const LINKS = [
       <RouterLink :to="INTEGRATIONS" class="more">Ver todas as integrações <AppIcon name="arrow" :size="14" /></RouterLink>
     </section>
     <nav class="card links" aria-label="Links úteis">
-      <a v-for="l in LINKS" :key="l.label" href="#" @click.prevent><AppIcon :name="l.icon" :size="16" />{{ l.label }}</a>
+      <template v-for="l in LINKS" :key="l.label">
+        <RouterLink v-if="l.to" :to="l.to"><AppIcon :name="l.icon" :size="16" />{{ l.label }}</RouterLink>
+        <a v-else href="#" role="button" @click.prevent.stop="ui.help = true"><AppIcon :name="l.icon" :size="16" />{{ l.label }}</a>
+      </template>
     </nav>
   </div>
 </template>

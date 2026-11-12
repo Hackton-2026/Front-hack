@@ -103,7 +103,7 @@ onBeforeUnmount(() => (open.value = false))
     <AppIcon name="chevron" :size="14" class="sel__chev" />
   </button>
   <Teleport :to="target">
-    <ul v-if="open" :id="uid" ref="list" class="sel-list" role="listbox" :style="pos">
+    <Transition name="pop"><ul v-if="open" :id="uid" ref="list" class="sel-list" role="listbox" :style="pos">
       <li
         v-for="(o, i) in opts" :id="`${uid}-${i}`" :key="String(o.value)" role="option" :aria-selected="o.value === modelValue" :aria-disabled="o.disabled || undefined"
         :class="{ 'is-active': i === active }" @pointerenter="active = i" @pointerdown.prevent @click="choose(o)"
@@ -112,7 +112,7 @@ onBeforeUnmount(() => (open.value = false))
         <span class="sel-list__label">{{ o.label }}<small v-if="o.hint">{{ o.hint }}</small></span>
         <AppIcon v-if="o.value === modelValue" name="check" :size="13" class="sel-list__check" />
       </li>
-    </ul>
+    </ul></Transition>
   </Teleport>
 </template>
 

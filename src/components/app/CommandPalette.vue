@@ -60,6 +60,7 @@ watch(index, async () => { await nextTick(); box.value?.querySelector('.is-on')?
 </script>
 
 <template>
+  <Transition name="veil">
   <div v-if="ui.palette" class="veil" @click.self="ui.palette = false">
     <div ref="box" class="palette" role="dialog" aria-modal="true" aria-label="Buscar no workspace">
       <label class="field">
@@ -83,6 +84,7 @@ watch(index, async () => { await nextTick(); box.value?.querySelector('.is-on')?
       <footer class="foot"><span><kbd>↑</kbd><kbd>↓</kbd> navegar</span><span><kbd>Enter</kbd> abrir</span></footer>
     </div>
   </div>
+  </Transition>
 </template>
 
 <style scoped>

@@ -84,10 +84,10 @@ onUnmounted(() => ctx?.revert())
       <h2 id="compare-title">Por que times trocam para o Novexo</h2>
       <p class="sub">Compare com as ferramentas que você usa hoje e veja a diferença.</p>
       <div class="card">
-        <a v-for="c in COMPARE" :key="c.slug" href="#" class="compare__chip" @click.prevent>
+        <RouterLink v-for="c in COMPARE" :key="c.slug" to="/precos#comparar" class="compare__chip">
           <img :src="`https://cdn.simpleicons.org/${c.slug}`" alt="" width="15" height="15" loading="lazy" />
           Comparar com o {{ c.name }}
-        </a>
+        </RouterLink>
       </div>
     </section>
   </div>

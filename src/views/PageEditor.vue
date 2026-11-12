@@ -5,6 +5,7 @@ import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
+import { render } from '../utils/markdown'
 
 const props = defineProps({ id: { type: String, required: true }, page: { type: String, required: true } })
 const router = useRouter()
@@ -15,6 +16,15 @@ const pg = computed(() => state.pages.find((x) => x.id === Number(props.page)))
 const saving = ref('')
 const looking = ref(false)
 const body = ref(null)
+const editing = ref(false)
+const showText = computed(() => editing.value || !pg.value?.body.trim())
+async function startEdit() {
+  if (pg.value?.archived) return
+  editing.value = true
+  await nextTick()
+  body.value?.focus()
+  grow()
+}
 const root = ref(null)
 let timer
 let pending = {}
@@ -86,7 +96,8 @@ onUnmounted(flush)
     <p v-if="pg.archived" class="ed__note anim">Esta página está arquivada. Restaure para editar.</p>
     <article class="ed__doc">
       <input class="title anim" :value="pg.title" placeholder="Página sem título" aria-label="Título da página" maxlength="200" :readonly="pg.archived" @input="edit('title', $event.target.value)" />
-      <textarea ref="body" class="body anim" :value="pg.body" placeholder="Escreva aqui: objetivos, decisões, links, atas…" aria-label="Texto da página" :readonly="pg.archived" @input="edit('body', $event.target.value)" />
+      <textarea v-if="showText" ref="body" class="body anim" :value="pg.body" placeholder="Escreva aqui: objetivos, decisões, links, atas…" aria-label="Texto da página" :readonly="pg.archived" @input="edit('body', $event.target.value)" @blur="editing = false" />
+      <div v-else class="body md anim" :tabindex="pg.archived ? -1 : 0" :role="pg.archived ? null : 'button'" aria-label="Texto da página. Clique para editar" @click="!$event.target.closest('a') && startEdit()" @keydown.enter.self="startEdit" v-html="render(pg.body)" />
     </article>
   </div>
   <div v-else-if="looking" class="pg-empty" role="status"><h2>Abrindo a página…</h2></div>
@@ -102,6 +113,8 @@ onUnmounted(flush)
 .ed__note { margin: 1rem auto 0; padding: 0.55rem 0.9rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); font-size: 13px; color: var(--muted); }
 .ed__doc { display: flex; flex-direction: column; gap: 1rem; width: min(46rem, 100%); margin: 0 auto; padding: 3rem 1.5rem 6rem; }
 .title { width: 100%; padding: 0; border: 0; background: none; font: 700 2.2rem/1.15 'Geist', system-ui, sans-serif; letter-spacing: -0.025em; color: var(--text); outline: none; }
+.md.body { cursor: text; overflow-wrap: anywhere; white-space: normal; }
+.md.body:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 4px; }
 .title::placeholder, .body::placeholder { color: #5d5851; }
 .body { width: 100%; min-height: 20rem; padding: 0; border: 0; background: none; font: 400 1rem/1.75 'Geist', system-ui, sans-serif; color: #dcd7cf; resize: none; outline: none; overflow: hidden; }
 </style>

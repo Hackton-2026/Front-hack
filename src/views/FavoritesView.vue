@@ -7,6 +7,7 @@ import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 
 const KINDS = { project: ['Projeto', 'folder'], view: ['Visão', 'layers'], page: ['Página', 'page'], module: ['Módulo', 'module'], cycle: ['Ciclo', 'cycle'], task: ['Tarefa', 'items'] }
+const PLURAL = { project: 'Projetos', view: 'Visões', page: 'Páginas', module: 'Módulos', cycle: 'Ciclos', task: 'Tarefas' }
 const router = useRouter()
 const { state, project, code, toggleStar, starred } = useWorkspace()
 const { openTask } = useUi()
@@ -28,13 +29,16 @@ function resolve(key) {
 const all = computed(() => state.prefs.stars.map(resolve).filter(Boolean))
 const counts = computed(() => Object.fromEntries(Object.keys(KINDS).map((k) => [k, all.value.filter((f) => f.kind === k).length])))
 const shown = computed(() => all.value.filter((f) => !kind.value || f.kind === kind.value))
+const groups = computed(() => Object.keys(KINDS).map((k) => ({ k, items: shown.value.filter((f) => f.kind === k) })).filter((g) => g.items.length))
 const suggestions = computed(() => state.prefs.recents.map((r) => r.key).filter((k) => !state.prefs.stars.includes(k)).map(resolve).filter(Boolean).slice(0, 4))
 const unstar = (f) => { const [k, id] = f.key.split(':'); toggleStar(k, Number(id)) }
 const star = (f) => { const [k, id] = f.key.split(':'); if (!starred(k, Number(id))) toggleStar(k, Number(id)) }
-function move(f, dir) {
+// troca de lugar com o vizinho do mesmo grupo
+function move(f, items, dir) {
+  const n = items[items.indexOf(f) + dir]
+  if (!n) return
   const stars = [...state.prefs.stars]
-  const i = stars.indexOf(f.key), j = i + dir
-  if (j < 0 || j >= stars.length) return
+  const i = stars.indexOf(f.key), j = stars.indexOf(n.key)
   ;[stars[i], stars[j]] = [stars[j], stars[i]]
   state.prefs.stars = stars
 }
@@ -49,7 +53,7 @@ onMounted(() => staggerIn(root.value?.querySelectorAll('.fav, .sug')))
       <div class="pg-tabs" role="tablist">
         <button type="button" role="tab" :aria-selected="!kind" @click="kind = ''">Tudo<span v-if="all.length" class="n">{{ all.length }}</span></button>
         <template v-for="(v, k) in KINDS" :key="k">
-          <button v-if="counts[k]" type="button" role="tab" :aria-selected="kind === k" @click="kind = k">{{ v[0] }}s<span class="n">{{ counts[k] }}</span></button>
+          <button v-if="counts[k]" type="button" role="tab" :aria-selected="kind === k" @click="kind = k">{{ PLURAL[k] }}<span class="n">{{ counts[k] }}</span></button>
         </template>
       </div>
     </div>
@@ -59,20 +63,23 @@ onMounted(() => staggerIn(root.value?.querySelectorAll('.fav, .sug')))
       <h2>Nada com estrela ainda</h2>
       <p>Clique na estrela de um projeto, visão, página, módulo ou tarefa e ele aparece aqui, para abrir em um clique.</p>
     </div>
-    <ol v-else class="list">
-      <li v-for="(f, i) in shown" :key="f.key" class="fav">
+    <section v-for="g in groups" :key="g.k" class="group">
+      <h2 class="group__title">{{ PLURAL[g.k] }}<span class="n">{{ g.items.length }}</span></h2>
+    <ol class="list">
+      <li v-for="(f, i) in g.items" :key="f.key" class="fav">
         <span class="ico" :style="f.color ? { '--c': f.color } : null"><AppIcon :name="f.icon" :size="15" /></span>
         <button type="button" class="main" @click="f.go()">
           <strong>{{ f.title }}</strong>
           <small>{{ f.label }}{{ f.sub ? `, ${f.sub}` : '' }}</small>
         </button>
-        <span v-if="!kind" class="order">
-          <button type="button" class="pg-icon" :disabled="i === 0" :aria-label="`Subir ${f.title}`" @click="move(f, -1)"><AppIcon name="chevron" :size="14" :style="{ transform: 'rotate(180deg)' }" /></button>
-          <button type="button" class="pg-icon" :disabled="i === shown.length - 1" :aria-label="`Descer ${f.title}`" @click="move(f, 1)"><AppIcon name="chevron" :size="14" /></button>
+        <span class="order">
+          <button type="button" class="pg-icon" :disabled="i === 0" :aria-label="`Subir ${f.title}`" @click="move(f, g.items, -1)"><AppIcon name="chevron" :size="14" :style="{ transform: 'rotate(180deg)' }" /></button>
+          <button type="button" class="pg-icon" :disabled="i === g.items.length - 1" :aria-label="`Descer ${f.title}`" @click="move(f, g.items, 1)"><AppIcon name="chevron" :size="14" /></button>
         </span>
         <button type="button" class="pg-icon on" :aria-label="`Tirar ${f.title} dos favoritos`" title="Tirar dos favoritos" @click="unstar(f)"><AppIcon name="star" :size="15" /></button>
       </li>
     </ol>
+    </section>
 
     <section v-if="suggestions.length" class="sugs">
       <h2>Você abre bastante</h2>
@@ -98,7 +105,8 @@ h1 { display: flex; align-items: center; gap: 0.5rem; }
 .main { display: flex; flex: 1; flex-direction: column; gap: 0.1rem; min-width: 0; padding: 0; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; }
 .main strong { overflow: hidden; font-size: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .main small { font-size: 12px; color: var(--muted); }
-.main:hover strong { color: var(--accent-soft); }
+.group__title { display: flex; align-items: center; gap: 0.4rem; margin: 0.5rem 1.25rem 0.25rem; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.group__title .n { font-weight: 500; }
 .order { display: flex; opacity: 0; }
 .fav:hover .order, .order:focus-within { opacity: 1; }
 .pg-icon.on { color: #f2c46d; }

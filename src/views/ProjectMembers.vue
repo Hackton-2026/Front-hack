@@ -8,10 +8,10 @@ import AppIcon from '../components/app/AppIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
 
 const PERMISSIONS = [
-  ['view', 'Ver', 'Vê tarefas, páginas e o chat'],
-  ['comment', 'Comentar', 'Vê e comenta'],
-  ['edit', 'Editar', 'Cria e edita tarefas, ciclos e páginas'],
-  ['full', 'Total', 'Edita e também convida e remove pessoas'],
+  ['view', 'view', 'Vê tarefas, páginas e o chat'],
+  ['comment', 'comment', 'Vê e comenta'],
+  ['edit', 'edit', 'Cria e edita tarefas, ciclos e páginas'],
+  ['full', 'full', 'Edita e também convida e remove pessoas'],
 ]
 const label = (perm) => PERMISSIONS.find((x) => x[0] === perm)?.[1] || perm
 const PERM_OPTIONS = PERMISSIONS.map(([value, l, hint]) => ({ value, label: l, hint }))
@@ -215,7 +215,7 @@ const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit'
             <span v-else-if="m.title" class="role static">{{ m.title }}</span>
             <span class="actions">
               <AppSelect v-if="data.can_manage && m.invited && m.id !== state.me" size="sm" :model-value="m.permission" :options="PERM_OPTIONS" :disabled="busy === `perm-${m.id}`" :aria-label="`Permissão de ${m.name}`" @change="(v) => changePerm(m, v)" />
-              <span v-else class="perm">{{ label(m.permission) }}</span>
+              <span v-else class="perm">{{ m.owner ? 'owner' : label(m.permission) }}</span>
               <template v-if="m.invited && (data.can_manage || m.id === state.me)">
                 <button v-if="confirming !== m.id" type="button" class="pg-btn ghost" @click="confirming = m.id">{{ m.id === state.me ? 'Sair' : 'Remover' }}</button>
                 <button v-else type="button" class="pg-btn danger" :disabled="busy" @click="m.id === state.me ? leave() : remove(m)">{{ m.id === state.me ? 'Confirmar saída' : 'Confirmar remoção' }}</button>
