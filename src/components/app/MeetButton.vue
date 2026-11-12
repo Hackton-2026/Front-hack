@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, ref } from 'vue'
-import { GOOGLE_CLIENT_ID } from '../../config'
+import { GOOGLE_MEET_CLIENT_ID } from '../../config'
 import { loadGoogle } from '../../utils/google'
 import AppIcon from './AppIcon.vue'
 
@@ -18,7 +18,7 @@ let token = null
 function toggle() {
   open.value = !open.value
   note.value = ''
-  if (open.value && GOOGLE_CLIENT_ID) loadGoogle().catch(() => {})
+  if (open.value && GOOGLE_MEET_CLIENT_ID) loadGoogle().catch(() => {})
 }
 
 async function createSpace(accessToken) {
@@ -50,7 +50,7 @@ function createRoom() {
   note.value = ''
   if (token && token.until > Date.now()) return finish(token.value)
   window.google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
+    client_id: GOOGLE_MEET_CLIENT_ID,
     scope: SCOPE,
     callback: (resp) => {
       if (resp.error || !resp.access_token) return fail('google')
@@ -75,7 +75,7 @@ function sendPasted() {
     <div v-if="open" class="meet__pop" role="dialog" aria-label="Chamada no Google Meet" @keydown.esc.stop="open = false">
       <strong>Chamada no Google Meet</strong>
       <p>O link vai para o chat e todo mundo do projeto entra com um clique.</p>
-      <button v-if="GOOGLE_CLIENT_ID" type="button" class="pg-btn primary" :disabled="busy" @click="createRoom"><ArcLoader v-if="busy" />{{ busy ? 'Criando sala…' : 'Criar sala agora' }}</button>
+      <button v-if="GOOGLE_MEET_CLIENT_ID" type="button" class="pg-btn primary" :disabled="busy" @click="createRoom"><ArcLoader v-if="busy" />{{ busy ? 'Criando sala…' : 'Criar sala agora' }}</button>
       <div class="meet__or"><span>ou</span></div>
       <a class="meet__open" href="https://meet.google.com/new" target="_blank" rel="noopener">Abrir o Meet numa aba nova</a>
       <form class="meet__paste" @submit.prevent="sendPasted">
