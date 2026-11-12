@@ -121,7 +121,7 @@ const ICON_OF = { image: 'image', video: 'image', link: 'link', file: 'doc' }
 const saving = ref('')
 // rascunho local: com :value="task.title" cada re-render (o contador muda a cada tecla) desfazia o que foi digitado
 const title = ref('')
-watch(() => task.value?.title, (t) => (title.value = t || ''), { immediate: true })
+watch(() => [ui.taskId, task.value?.title], () => (title.value = task.value?.title || ''), { immediate: true })
 watch([tab, newest], async () => { await nextTick(); enter(q('.log li')) })
 watch(adding, async (v) => {
   await nextTick()
