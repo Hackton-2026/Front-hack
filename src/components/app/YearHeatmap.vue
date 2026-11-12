@@ -43,27 +43,27 @@ const monthAt = (w) => {
 }
 const plural = (n) => `${n} ${n === 1 ? 'tarefa' : 'tarefas'}`
 
-// 3D: cada dia vira um prisma em perspectiva oblíqua (semanas para o lado, dias para trás). Desenha do fundo para a
-// frente e da esquerda para a direita, para a frente e o lado de cada prisma cobrirem os vizinhos de trás.
-const TW = 7.4 // largura de uma semana
-const DX = 5.6 // quanto cada dia anda para o lado...
-const DY = 7.5 // ...e para baixo
-const HMAX = 56
-const S = 0.8 // o prisma ocupa 80% da casa, o resto é o vão entre eles
-const prisms = computed(() => weeks.value.flatMap((col, w) => col.map((c, d) => c && { ...c, w, d }))
+// 3D: cada dia vira um cilindro de pé numa vista dimétrica — semanas para a direita (com uma leve descida, para o
+// plano ficar inclinado), dias para trás-esquerda. Desenha do fundo para a frente para os de trás ficarem cobertos.
+const WX = 7.2 // uma semana para a direita...
+const WY = 0.55 // ...e um tiquinho para baixo
+const DX = -5.0 // um dia para trás vai para a esquerda...
+const DY = 4.4 // ...e para baixo
+const R = 2.7 // raio do cilindro
+const RY = 1.25 // meia-altura da elipse do topo (achatada pela perspectiva)
+const HMAX = 52
+const round = (v) => Math.round(v * 10) / 10
+const cyls = computed(() => weeks.value.flatMap((col, w) => col.map((c, d) => c && { ...c, w, d }))
   .filter(Boolean)
-  .sort((a, b) => a.d - b.d || a.w - b.w)
+  .sort((a, b) => (a.w * WY + a.d * DY) - (b.w * WY + b.d * DY))
   .map((c) => {
-    const x = c.w * TW + c.d * DX
-    const y = c.d * DY + HMAX
-    const h = c.n ? 2 + (c.n / max.value) * HMAX : 0
-    const [cw, dx, dy] = [TW * S, DX * S, DY * S]
-    const top = `${x},${y - h} ${x + cw},${y - h} ${x + cw + dx},${y + dy - h} ${x + dx},${y + dy - h}`
-    const front = `${x + dx},${y + dy - h} ${x + cw + dx},${y + dy - h} ${x + cw + dx},${y + dy} ${x + dx},${y + dy}`
-    const right = `${x + cw},${y - h} ${x + cw + dx},${y + dy - h} ${x + cw + dx},${y + dy} ${x + cw},${y}`
-    return { ...c, top, front, right, lv: level(c.n) }
+    const x = round(6 * -DX + R + 1 + c.w * WX + c.d * DX)
+    const y = round(HMAX + RY + 1 + c.w * WY + c.d * DY)
+    const h = round(c.n ? 3 + (c.n / max.value) * HMAX : 0)
+    const body = `M${round(x - R)},${y - h} L${round(x - R)},${y} A${R},${RY} 0 0 0 ${round(x + R)},${y} L${round(x + R)},${y - h} A${R},${RY} 0 0 1 ${round(x - R)},${y - h} Z`
+    return { ...c, x, y, h, body, lv: level(c.n) }
   }))
-const box = { w: WEEKS * TW + 7 * DX + 2, h: 7 * DY + HMAX + 2 }
+const box = { w: round(6 * -DX + (WEEKS - 1) * WX + 2 * R + 4), h: round(HMAX + RY + (WEEKS - 1) * WY + 6 * DY + RY + 4) }
 </script>
 
 <template>
@@ -94,9 +94,9 @@ const box = { w: WEEKS * TW + 7 * DX + 2, h: 7 * DY + HMAX + 2 }
       </div>
     </div>
     <svg v-else class="yh__3d" :viewBox="`0 0 ${box.w} ${box.h}`" role="img" :aria-label="`${plural(total)} concluídas nos últimos 12 meses, em 3D`">
-      <g v-for="p in prisms" :key="p.key" :class="`l${p.lv}`" :style="{ '--i': p.w }">
+      <g v-for="p in cyls" :key="p.key" :class="`l${p.lv}`" :style="{ '--i': p.w }">
         <title>{{ shortDay(p.key) }}: {{ plural(p.n) }}</title>
-        <polygon class="front" :points="p.front" /><polygon class="right" :points="p.right" /><polygon class="top" :points="p.top" />
+        <path v-if="p.h" class="body" :d="p.body" /><ellipse class="top" :cx="p.x" :cy="p.y - p.h" :rx="R" :ry="RY" />
       </g>
     </svg>
 
@@ -137,10 +137,10 @@ h3 { margin: 0; font: 600 0.95rem/1.3 'Geist', system-ui, sans-serif; color: var
 .yh__3d .l2 { --c: color-mix(in srgb, var(--accent) 52%, var(--surface-2)); }
 .yh__3d .l3 { --c: color-mix(in srgb, var(--accent) 76%, var(--surface-2)); }
 .yh__3d .l4 { --c: var(--accent); }
-.yh__3d .top { fill: var(--c); }
-.yh__3d .front { fill: color-mix(in srgb, var(--c) 72%, #000); }
-.yh__3d .right { fill: color-mix(in srgb, var(--c) 52%, #000); }
+.yh__3d .top { fill: color-mix(in srgb, var(--c) 88%, #fff); }
+.yh__3d .body { fill: color-mix(in srgb, var(--c) 68%, #000); }
 .yh__3d g:hover .top { fill: color-mix(in srgb, var(--c) 70%, #fff); }
+.yh__3d g:hover .body { fill: var(--c); }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 
 .yh__legend { display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 11px; color: var(--muted); }
