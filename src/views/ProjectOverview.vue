@@ -147,7 +147,7 @@ onMounted(async () => {
     <div class="main">
       <div class="cover" :style="{ background: p.cover_image ? `center / cover no-repeat url(${JSON.stringify(p.cover_image)})` : COVERS[p.cover % COVERS.length] }">
         <div class="cover__btns">
-          <template v-if="state.isAdmin">
+          <template v-if="canEdit">
             <input ref="coverInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden @change="uploadCover" />
             <button type="button" class="cover__btn" :disabled="uploadingCover" @click="coverInput.click()"><ArcLoader v-if="uploadingCover" /><AppIcon v-else name="upload" :size="14" />{{ uploadingCover ? 'Enviando…' : p.cover_image ? 'Trocar capa' : 'Enviar capa' }}</button>
             <button v-if="p.cover_image" type="button" class="cover__btn" @click="save({ cover_image: null })"><AppIcon name="trash" :size="14" />Remover</button>
@@ -157,7 +157,7 @@ onMounted(async () => {
       </div>
       <div class="doc">
         <div class="icon-wrap">
-          <button type="button" class="icon" :disabled="!state.isAdmin" :aria-expanded="picking" aria-label="Trocar ícone do projeto" @click="picking = !picking">
+          <button type="button" class="icon" :disabled="!canEdit" :aria-expanded="picking" aria-label="Trocar ícone do projeto" @click="picking = !picking">
             <ProjectIcon :icon="p.icon" :color="p.color" :size="28" />
           </button>
           <div v-if="picking" class="emojis" role="listbox" aria-label="Ícones">
@@ -169,8 +169,8 @@ onMounted(async () => {
             <a class="credit" href="https://www.flaticon.com/uicons" target="_blank" rel="noopener">Uicons by Flaticon</a>
           </div>
         </div>
-        <input class="name" :value="p.name" aria-label="Nome do projeto" maxlength="120" :readonly="!state.isAdmin" @change="$event.target.value.trim() && save({ name: $event.target.value.trim() })" />
-        <textarea ref="desc" class="desc" :value="p.description" rows="2" :readonly="!state.isAdmin" :placeholder="state.isAdmin ? 'Conte do que se trata o projeto, os objetivos e os marcos…' : 'Sem descrição.'" aria-label="Descrição do projeto" @input="grow" @change="save({ description: $event.target.value })" />
+        <input class="name" :value="p.name" aria-label="Nome do projeto" maxlength="120" :readonly="!canEdit" @change="$event.target.value.trim() && save({ name: $event.target.value.trim() })" />
+        <textarea ref="desc" class="desc" :value="p.description" rows="2" :readonly="!canEdit" :placeholder="canEdit ? 'Conte do que se trata o projeto, os objetivos e os marcos…' : 'Sem descrição.'" aria-label="Descrição do projeto" @input="grow" @change="save({ description: $event.target.value })" />
         <h2 class="sec">O que tem neste projeto</h2>
         <div class="links">
           <RouterLink v-for="l in LINKS" :key="l.label" :to="`/projetos/${p.id}${l.to}`" class="link">

@@ -481,8 +481,8 @@ async function onImport(e) {
             <ul class="plans">
               <li v-for="p in billing.plans" :key="p.code" :class="{ on: isCurrent(p) }">
                 <strong>{{ p.name }}</strong><span class="hint">{{ planPrice(p) }}</span>
-                <span v-if="isCurrent(p) && !(p.price_month_cents && current?.current_period_end)" class="hint">Seu plano</span>
-                <RouterLink v-else-if="isAdmin && p.price_month_cents" :to="checkoutLink(p)" class="pg-btn" :class="{ primary: !isCurrent(p) }">{{ isCurrent(p) ? 'Renovar' : 'Assinar' }}</RouterLink>
+                <span v-if="isCurrent(p) && !(p.price_month_cents && (current?.current_period_end || current?.status === 'trialing'))" class="hint">Seu plano</span>
+                <RouterLink v-else-if="isAdmin && p.price_month_cents" :to="checkoutLink(p)" class="pg-btn" :class="{ primary: !isCurrent(p) || current?.status === 'trialing' }">{{ isCurrent(p) && current?.status !== 'trialing' ? 'Renovar' : 'Assinar' }}</RouterLink>
               </li>
             </ul>
             <p class="hint">Pagamento por Pix ou cartão (até 12x no anual), com o valor calculado pelas pessoas do workspace. <RouterLink to="/#planos" class="link">Comparar planos</RouterLink></p>

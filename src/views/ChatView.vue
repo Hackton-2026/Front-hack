@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { api, wsUrl } from '../services/api'
+import { api, refreshAccess, wsUrl } from '../services/api'
 import { useAuth } from '../composables/useAuth'
 import UserAvatar from '../components/UserAvatar.vue'
 import BaseButton from '../components/BaseButton.vue'
@@ -59,9 +59,19 @@ watch(() => props.id, async (id) => {
   }
   if (id !== props.id) return
   scrollDown()
+  connect(id)
+}, { immediate: true })
+
+// caiu (rede, token vencido = 4001): renova o token se preciso e reconecta com backoff
+function connect(id, attempt = 0) {
   const ws = new WebSocket(wsUrl(`/ws/chat/${id}/`))
-  ws.onopen = () => (online.value = true)
-  ws.onclose = () => socket === ws && (online.value = false)
+  ws.onopen = () => { online.value = true; attempt = 0 }
+  ws.onclose = async (e) => {
+    if (socket !== ws) return
+    online.value = false
+    if (e.code === 4001) await refreshAccess().catch(() => {})
+    setTimeout(() => { if (socket === ws && props.id === id) connect(id, attempt + 1) }, Math.min(1000 * 2 ** attempt, 15000))
+  }
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data)
     if (data.type === 'message') {
@@ -70,9 +80,9 @@ watch(() => props.id, async (id) => {
     } else if (data.type === 'error') error.value = data.detail
   }
   socket = ws
-}, { immediate: true })
+}
 
-onBeforeUnmount(() => socket?.close())
+onBeforeUnmount(() => { const ws = socket; socket = null; ws?.close() })
 
 function send() {
   if (!text.value.trim() || !online.value) return

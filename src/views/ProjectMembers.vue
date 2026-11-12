@@ -93,7 +93,8 @@ const link = ref(null)
 const linkUrl = computed(() => link.value && `${location.origin}/entrar/${link.value.token}`)
 const linkApi = (opts) => api(`/api/projects/${pid.value}/invite-link/`, opts)
 // falha de rede não é "sem link": sem o aviso, a tela oferecia criar um link que talvez já existisse
-watch(() => data.value?.can_manage, async (can) => {
+watch(() => [pid.value, data.value?.can_manage], async ([, can]) => {
+  link.value = null
   link.value = can ? await linkApi().catch((e) => { if (e.status !== 404) error.value = `Não deu para carregar o link de convite: ${e.message}`; return null }) : null
 }, { immediate: true })
 const saveLink = (perm, newCode = false) => run('link', async () => { link.value = await linkApi({ method: 'POST', body: { permission: perm, new_code: newCode } }) })

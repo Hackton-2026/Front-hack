@@ -30,8 +30,8 @@ lightQuery.addEventListener('change', onScheme)
 onUnmounted(() => lightQuery.removeEventListener('change', onScheme))
 const light = computed(() => state.prefs.theme === 'light' || (state.prefs.theme === 'auto' && systemLight.value))
 watchEffect(() => (document.documentElement.dataset.calm = state.prefs.calm ? 'on' : ''))
-watch(() => [route.query.task, state.loaded], ([id]) => { if (id && state.tasks.some((t) => t.id === Number(id))) ui.taskId = Number(id) }, { immediate: true })
 const { ui, newTask } = useUi()
+watch(() => [route.query.task, state.loaded], ([id]) => { if (id && state.tasks.some((t) => t.id === Number(id))) ui.taskId = Number(id) }, { immediate: true })
 const photo = computed(() => state.people.find((m) => m.id === state.me)?.avatar || user.value?.avatar || '')
 const hideVerify = ref(false)
 const resending = ref(false)
@@ -140,7 +140,7 @@ onUnmounted(() => {
     :style="{ '--accent': state.prefs.accent }"
   >
     <header class="top">
-      <button type="button" class="search" @click="ui.palette = true">
+      <button type="button" class="search" aria-label="Buscar tarefas, projetos e documentos" @click="ui.palette = true">
         <AppIcon name="search" :size="15" />
         <span>Buscar tarefas, projetos e documentos</span>
         <kbd>Ctrl K</kbd>
@@ -375,7 +375,9 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 @media (max-width: 860px) {
   .app { --rail-w: 64px; }
   .rail, .rail__main { align-items: center; padding-inline: 0.4rem; }
-  :is(.ws__text, .rail__label, .rail__add, .rail__sub, .me__text, .me__switch, .search) { display: none; }
+  :is(.ws__text, .rail__label, .rail__add, .rail__sub, .me__text, .me__switch) { display: none; }
+  .search { flex: 0 0 auto; margin: 0 auto 0 0; }
+  .search :is(span, kbd) { display: none; }
   .ws { margin-bottom: 0.75rem; padding: 0.25rem; }
   .rail__item { padding: 0.55rem; }
   .rail__foot .rail__row { display: flex; flex-direction: column; align-items: center; gap: 2px; }

@@ -121,7 +121,8 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const { user, ready, init } = useAuth()
-  if (!ready.value) await init()
+  // páginas públicas não esperam o /me (servidor lento não pode travar a vitrine)
+  if (!ready.value) { if (to.meta.auth || to.meta.guest) await init(); else init() }
   // conta nova só entra no app depois de confirmar o e-mail (o servidor também recusa): o login mostra esse passo
   const pending = user.value?.must_confirm_email
   if (to.meta.auth && (!user.value || pending)) return { path: '/login', query: { next: to.fullPath } }

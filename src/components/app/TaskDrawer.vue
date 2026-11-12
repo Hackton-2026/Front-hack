@@ -158,11 +158,18 @@ watch(() => ui.taskId, async (id, old) => {
   menu.value = people.value = addingSub.value = false
   tab.value = 'all'
   comment.value = ''
-  if (!id || old || reduced) return
+  if (!id || old) return
   await nextTick()
+  panel.value?.focus({ preventScroll: true }) // sem foco dentro, o Esc não chega no veil
+  if (reduced) return
   gsap.fromTo(panel.value, { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
   gsap.from(panel.value.querySelectorAll('.sec'), { y: 10, autoAlpha: 0, duration: DUR.fast, stagger: 0.04, ease: EASE.soft, delay: 0.08 })
 })
+// Esc dentro de um campo só sai do campo (o blur grava); fora dele fecha
+function onEsc(e) {
+  if (e.target.matches('input, textarea, select')) return e.target.blur()
+  close()
+}
 function close() {
   if (reduced || !panel.value) return closeTask()
   gsap.to(panel.value, { x: 40, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: closeTask })
@@ -304,8 +311,8 @@ function destroy() {
 </script>
 
 <template>
-  <div v-if="task" class="veil" :class="{ 'is-wide': wide }" @click.self="close" @keydown.esc="close">
-    <aside ref="panel" class="drawer" role="dialog" aria-modal="true" :aria-label="`Tarefa ${task.title}`">
+  <div v-if="task" class="veil" :class="{ 'is-wide': wide }" @click.self="close" @keydown.esc="onEsc">
+    <aside ref="panel" tabindex="-1" class="drawer" role="dialog" aria-modal="true" :aria-label="`Tarefa ${task.title}`">
       <header class="head">
         <div class="head__group">
           <button type="button" class="icon" aria-label="Fechar" @click="close"><AppIcon name="arrow" :size="17" /></button>
@@ -545,6 +552,7 @@ function destroy() {
 <style scoped>
 .veil { position: fixed; inset: 0; z-index: 70; display: flex; justify-content: flex-end; background: rgb(0 0 0 / 0.4); }
 .veil.is-wide { justify-content: center; align-items: center; padding: 2rem 1rem; }
+.drawer:focus { outline: none; }
 .drawer { display: flex; flex-direction: column; width: min(92vw, 58rem); height: 100%; border-left: 1px solid var(--line-strong); background: var(--surface); box-shadow: -20px 0 50px rgb(0 0 0 / 0.4); }
 .is-wide .drawer { width: min(100%, 76rem); height: min(100%, 52rem); border: 1px solid var(--line-strong); border-radius: 12px; }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; height: 52px; padding: 0 0.75rem; border-bottom: 1px solid var(--line); }

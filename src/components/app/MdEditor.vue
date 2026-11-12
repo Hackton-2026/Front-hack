@@ -54,7 +54,10 @@ async function attach(e, asImage) {
   busy.value = true
   try {
     const a = await props.upload(file)
-    if (a) emit('update:modelValue', `${props.modelValue}${props.modelValue && !props.modelValue.endsWith('\n') ? '\n' : ''}${asImage && a.kind === 'image' ? '!' : ''}[${a.name}](${a.url})\n`)
+    if (a) {
+      emit('update:modelValue', `${props.modelValue}${props.modelValue && !props.modelValue.endsWith('\n') ? '\n' : ''}${asImage && a.kind === 'image' ? '!' : ''}[${a.name}](${a.url})\n`)
+      nextTick(() => emit('commit'))
+    }
   } finally {
     busy.value = false
   }

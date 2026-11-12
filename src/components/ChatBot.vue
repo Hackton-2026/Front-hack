@@ -2,10 +2,12 @@
 import { nextTick, ref } from 'vue'
 import { api } from '../services/api'
 import { useAuth } from '../composables/useAuth'
+import { useWorkspace } from '../composables/useWorkspace'
 import BaseButton from './BaseButton.vue'
 import FlaticonIcon from './FlaticonIcon.vue'
 
 const { loadMe } = useAuth()
+const { load } = useWorkspace()
 const open = ref(false)
 const messages = ref([])
 const pending = ref([])
@@ -25,7 +27,7 @@ async function send() {
   loading.value = true
   scrollDown()
   try {
-    const { reply, changed, pending: asked = [] } = await api('/api/ai/chat/', { method: 'POST', body: { messages: messages.value } })
+    const { reply, changed, pending: asked = [] } = await api('/api/ai/chat/', { method: 'POST', body: { messages: messages.value.map((m) => ({ ...m, content: m.content.slice(0, 4000) })) } })
     messages.value.push({ role: 'assistant', content: reply })
     pending.value = asked
     if (changed) refresh()
@@ -38,6 +40,7 @@ async function send() {
 }
 
 function refresh() {
+  load()
   loadMe()
   window.dispatchEvent(new Event('products:changed'))
 }

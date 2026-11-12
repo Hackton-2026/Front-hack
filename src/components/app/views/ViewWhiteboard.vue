@@ -4,7 +4,7 @@ import { useWorkspace } from '../../../composables/useWorkspace'
 import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({ view: { type: Object, required: true } })
-const { updateItem, createTask } = useWorkspace()
+const { updateItem, createTask, taskSaved } = useWorkspace()
 const COLORS = ['#f2c46d', '#fba45c', '#7fc47a', '#7cc4f2', '#e9a0d8']
 const notes = ref(JSON.parse(JSON.stringify(props.view.config?.notes || [])))
 let timer
@@ -15,10 +15,10 @@ function add() {
 }
 const remove = (n) => { notes.value.splice(notes.value.indexOf(n), 1); save() }
 const recolor = (n) => { n.color = COLORS[(COLORS.indexOf(n.color) + 1) % COLORS.length]; save() }
-function toTask(n) {
+async function toTask(n) {
   if (!n.text.trim()) return
-  createTask({ projectId: props.view.project, title: n.text.trim().split('\n')[0].slice(0, 200), description: n.text.trim() })
-  remove(n)
+  const t = createTask({ projectId: props.view.project, title: n.text.trim().split('\n')[0].slice(0, 200), description: n.text.trim() })
+  if (await taskSaved(t)) remove(n)
 }
 function drag(n, e) {
   if (e.target.closest('textarea, button')) return

@@ -15,7 +15,8 @@ function inline(s, ctx = {}) {
 
 export const outline = (md) => md.split('\n').map((l) => l.match(/^(#{1,3}) (.+)/)).filter(Boolean).map(([, h, t]) => ({ level: h.length, text: t.trim(), id: slug(t) }))
 
-const https = (u) => /^https:\/\/[^\s"<>]+$/.test(u)
+// new URL rejeita 'https://[x': validar com o próprio parser evita o throw em embed()/media()
+const https = (u) => { try { return new URL(u).protocol === 'https:' && /^https:\/\/[^\s"<>]+$/.test(u) } catch { return false } }
 function video(u) {
   const yt = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/)
   const vimeo = u.match(/vimeo\.com\/(\d+)/)

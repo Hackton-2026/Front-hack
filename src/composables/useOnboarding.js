@@ -38,7 +38,7 @@ export function useOnboarding() {
 
 export function useNotes() {
   const add = (color) => {
-    const note = { id: Date.now().toString(36), text: '', color, at: new Date().toISOString() }
+    const note = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: '', color, at: new Date().toISOString() }
     notes.value = [note, ...notes.value]
     useOnboarding().complete('sticky')
     return note

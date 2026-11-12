@@ -145,6 +145,14 @@ async function load() {
   }
 }
 
+// logout/troca de conta: o singleton não pode mostrar o workspace e os rascunhos da conta anterior
+export function resetWorkspace() {
+  Object.assign(state, {
+    loaded: false, loading: false, error: '', me: null, isAdmin: false, workspaceName: '', slug: '', settings: {},
+    members: [], people: [], invites: [], projects: [], tasks: [], activity: [], inbox: [], cycles: [], modules: [], pages: [], views: [], docs: localDefaults().docs,
+  })
+}
+
 let refreshTimer
 function refreshFeed() {
   clearTimeout(refreshTimer)
@@ -163,6 +171,8 @@ const queues = new Map()
 // clique duplo: um pedido igual em andamento é reaproveitado em vez de criar o item duas vezes
 const inflight = new Map()
 const once = (key, run) => { if (!inflight.has(key)) inflight.set(key, run().finally(() => inflight.delete(key))); return inflight.get(key) }
+
+const saving = new WeakMap()
 
 export function useWorkspace() {
   const project = (id) => state.projects.find((p) => p.id === id)
@@ -187,9 +197,11 @@ export function useWorkspace() {
     })
     if (!task.projectId) task.draft = true
     state.tasks.push(task)
-    if (!task.draft) save(task)
+    if (!task.draft) saving.set(task, save(task))
     return task
   }
+  // resolve true/false quando o POST da tarefa termina (quem precisa saber se a criação deu certo)
+  const taskSaved = (task) => saving.get(task) ?? Promise.resolve(true)
   async function save(task) {
     const tmp = task.id
     try {
@@ -198,9 +210,11 @@ export function useWorkspace() {
       const ui = useUi().ui
       if (ui.taskId === tmp) ui.taskId = task.id
       refreshFeed()
+      return true
     } catch (e) {
       state.tasks.splice(state.tasks.indexOf(task), 1)
       fail(e)
+      return false
     }
   }
   async function updateTask(task, fields) {
@@ -401,7 +415,7 @@ export function useWorkspace() {
   const taskComments = (id) => api(`/api/tasks/${id}/comments/`)
   function createDoc(fields = {}) {
     const now = new Date().toISOString()
-    const d = reactive({ id: `doc-${Date.now().toString(36)}`, title: 'Sem título', body: '', createdAt: now, updatedAt: now, ...fields })
+    const d = reactive({ id: `doc-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, title: 'Sem título', body: '', createdAt: now, updatedAt: now, ...fields })
     state.docs.unshift(d)
     return d
   }
@@ -462,7 +476,7 @@ export function useWorkspace() {
 
   return {
     state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
-    load, refreshFeed, createTask, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, createDoc, progress, clearLocal,
+    load, refreshFeed, createTask, taskSaved, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
     starred, toggleStar, doneRatio, touchRecent, peopleOf,
     projectMembers, inviteToProject, cancelInvite, setProjectPermission, setProjectRole, rolesOf, removeProjectMember, inviteInfo, acceptInvite, declineInvite,

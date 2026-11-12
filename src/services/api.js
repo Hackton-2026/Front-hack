@@ -23,7 +23,7 @@ function errorText(data) {
 // o refresh agora é de uso único: dois 401 ao mesmo tempo gastavam o mesmo refresh e o segundo deslogava.
 // Todos esperam a mesma renovação.
 let refreshing = null
-function refreshAccess() {
+export function refreshAccess() {
   refreshing ||= renew().finally(() => { refreshing = null })
   return refreshing
 }
@@ -42,6 +42,8 @@ async function renew() {
     throw new Error(errorText(null))
   }
   // outra aba renovou primeiro e já salvou o refresh novo: o nosso foi queimado, mas a sessão continua
+  // 5xx: servidor instável não é sessão vencida; os tokens ficam
+  if (res.status >= 500) throw new Error(errorText(null))
   if (!res.ok) return tokens.refresh !== sent
   tokens.set(await res.json())
   return true

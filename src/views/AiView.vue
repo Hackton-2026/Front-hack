@@ -51,7 +51,7 @@ async function send(content = text.value.trim()) {
   complete('ai')
   animateLast(); scroll()
   try {
-    const history = messages.value.filter((m) => m.content?.trim()).map(({ role, content }) => ({ role, content }))
+    const history = messages.value.filter((m) => m.content?.trim()).map(({ role, content }) => ({ role, content: content.slice(0, 4000) })) // o backend recusa mensagem acima de 4000, inclusive a da IA
     const { reply, changed, pending: toConfirm = [], items = [], form: toAsk = null } = await api('/api/ai/chat/', { method: 'POST', body: { messages: history, wiki: wikiContext() } })
     messages.value.push({ role: 'assistant', content: reply, items: applyItems(items) })
     pending.value = toConfirm

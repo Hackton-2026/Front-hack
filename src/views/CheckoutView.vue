@@ -149,16 +149,22 @@ watch(yearly, () => { if (!yearly.value) card.value.installments = 1 })
 
 const brickBox = ref(null)
 let brick
+let gen = 0 // cada desmontagem invalida montagens em andamento
+let building = -1
+function unmountBrick() { gen++; brick?.unmount?.(); brick = null }
 async function mountBrick() {
-  if (!cfg.value.public_key || method.value !== 'card' || brick) return
+  if (!cfg.value.public_key || method.value !== 'card' || brick || building === gen) return
+  const g = gen
+  building = g
   if (!window.MercadoPago) {
     await new Promise((ok, fail) => { const s = document.createElement('script'); s.src = 'https://sdk.mercadopago.com/js/v2'; s.onload = ok; s.onerror = fail; document.head.append(s) })
       .catch(() => { error.value = 'Não foi possível carregar o formulário do Mercado Pago.' })
-    if (!window.MercadoPago) return
+    if (!window.MercadoPago) { building = -1; return }
   }
   await nextTick()
+  if (g !== gen) return
   const mp = new window.MercadoPago(cfg.value.public_key, { locale: 'pt-BR' })
-  brick = await mp.bricks().create('cardPayment', 'mp-card-brick', {
+  const made = await mp.bricks().create('cardPayment', 'mp-card-brick', {
     initialization: { amount: total.value / 100, payer: { email: payer.value.email } },
     customization: { visual: { style: { theme: 'dark' } }, paymentMethods: { maxInstallments: yearly.value ? cfg.value.max_installments : 1 } },
     callbacks: {
@@ -167,9 +173,12 @@ async function mountBrick() {
       onSubmit: (f) => pay('card', { token: f.token, payment_method_id: f.payment_method_id, installments: f.installments, issuer_id: f.issuer_id }),
     },
   })
+  if (g !== gen) { made?.unmount?.(); return }
+  brick = made
 }
-watch([method, () => cfg.value.public_key], mountBrick)
-watch(total, () => { brick?.unmount?.(); brick = null; mountBrick() })
+watch([method, () => cfg.value.public_key], () => { if (method.value !== 'card') unmountBrick(); mountBrick() })
+watch(total, () => { unmountBrick(); mountBrick() })
+watch([planCode, yearly, seats, method], () => { attemptKey = null })
 
 const successBox = ref(null)
 const REDIRECT_MS = 4000

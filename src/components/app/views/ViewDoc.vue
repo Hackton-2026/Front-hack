@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useWorkspace } from '../../../composables/useWorkspace'
 import AppSelect from '../AppSelect.vue'
 
@@ -14,12 +14,29 @@ async function create() {
 }
 const saved = ref('')
 let timer
+let pending = {}
+let target // página dona do pending
+async function flush() {
+  clearTimeout(timer)
+  const fields = pending
+  const tgt = target
+  pending = {}
+  target = null
+  if (!tgt || !Object.keys(fields).length) return
+  await updateItem('page', tgt, fields)
+  saved.value = 'Salvo'
+}
 function edit(field, value) {
+  if (target && target !== page.value) flush()
+  target = page.value
   page.value[field] = value
+  pending[field] = value
   saved.value = 'Salvando…'
   clearTimeout(timer)
-  timer = setTimeout(async () => { await updateItem('page', page.value, { [field]: value }); saved.value = 'Salvo' }, 600)
+  timer = setTimeout(flush, 600)
 }
+watch(() => props.view.config?.page, flush)
+onUnmounted(flush)
 </script>
 
 <template>

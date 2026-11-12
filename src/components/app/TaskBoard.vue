@@ -65,11 +65,14 @@ function onDragStart(e, task) {
   e.dataTransfer.effectAllowed = 'move'
   e.dataTransfer.setData('text/plain', task.id)
 }
+// membro precisa da nota de conclusão, pedida no drawer
+const needsNote = (task, status) => status === 'done' && !state.isAdmin && !task.draft && (openTask(task), true)
 function onDrop(status, lane) {
   const task = dragging.value
   over.value = null
   dragging.value = null
   if (!task) return
+  if (task.status !== status && needsNote(task, status)) return
   const patch = { ...(task.status !== status && { status }), ...(lane.patch && !lane.has(task) && lane.patch) }
   if (!Object.keys(patch).length) return
   withFlip(() => updateTask(task, patch))
@@ -80,7 +83,7 @@ function onDrop(status, lane) {
 }
 function moveBy(task, dir) {
   const i = STATUSES.findIndex((s) => s.id === task.status) + dir
-  if (STATUSES[i]) withFlip(() => updateTask(task, { status: STATUSES[i].id }))
+  if (STATUSES[i] && !needsNote(task, STATUSES[i].id)) withFlip(() => updateTask(task, { status: STATUSES[i].id }))
 }
 function add(status, lane) {
   const key = `${lane.id}:${status}`
@@ -191,7 +194,7 @@ onMounted(() => {
                   <Avatars v-if="cfg.fields.assignees && t.assignees.length" :ids="t.assignees" :size="20" class="who" />
                 </div>
               </article>
-              <form class="add" @submit.prevent="add(c.id, l)">
+              <form v-if="projectId || l.patch?.projectId" class="add" @submit.prevent="add(c.id, l)">
                 <AppIcon name="plus" :size="13" />
                 <input v-model="adding[`${l.id}:${c.id}`]" placeholder="Adicionar item" :aria-label="`Nova tarefa em ${c.name}`" />
               </form>

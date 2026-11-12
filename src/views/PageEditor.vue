@@ -18,6 +18,7 @@ const body = ref(null)
 const root = ref(null)
 let timer
 let pending = {}
+let target // página dona do pending: pg já pode apontar para outra
 
 const words = computed(() => (pg.value?.body.trim() ? pg.value.body.trim().split(/\s+/).length : 0))
 function grow() {
@@ -26,6 +27,8 @@ function grow() {
   body.value.style.height = `${body.value.scrollHeight}px`
 }
 function edit(field, value) {
+  if (target && target !== pg.value) flush()
+  target = pg.value
   pg.value[field] = value
   pending[field] = value
   saving.value = 'saving'
@@ -36,9 +39,11 @@ function edit(field, value) {
 async function flush() {
   clearTimeout(timer)
   const fields = pending
+  const tgt = target
   pending = {}
-  if (!Object.keys(fields).length || !pg.value) return
-  saving.value = (await updateItem('page', pg.value, fields)) ? 'saved' : ''
+  target = null
+  if (!Object.keys(fields).length || !tgt) return
+  saving.value = (await updateItem('page', tgt, fields)) ? 'saved' : ''
 }
 async function archive() {
   await flush()
@@ -63,6 +68,7 @@ onMounted(async () => {
   if (!pg.value?.title) root.value?.querySelector('.title')?.focus()
   if (!prefersReducedMotion() && root.value) gsap.from(root.value.querySelectorAll('.anim'), { y: 12, opacity: 0, duration: DUR.base, stagger: 0.07, ease: EASE.out })
 })
+watch(() => props.page, flush)
 onUnmounted(flush)
 </script>
 
