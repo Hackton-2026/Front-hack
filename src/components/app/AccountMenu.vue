@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
 import AppIcon from './AppIcon.vue'
 
-const props = defineProps({ size: { type: Number, default: 28 }, photo: { type: String, default: '' }, ring: Boolean, up: Boolean, site: Boolean })
+const props = defineProps({ size: { type: Number, default: 28 }, photo: { type: String, default: '' }, ring: Boolean, up: Boolean })
 const emit = defineEmits(['open'])
 const { user, logout } = useAuth()
 const router = useRouter()
@@ -48,7 +48,6 @@ defineExpose({ close: () => (open.value = false) })
       </div>
       <RouterLink to="/ajustes?tab=profile" role="menuitem" @click="open = false"><AppIcon name="settings" :size="16" />Ajustes</RouterLink>
       <RouterLink to="/ajustes?tab=prefs" role="menuitem" @click="open = false"><AppIcon name="sliders" :size="16" />Preferências</RouterLink>
-      <RouterLink v-if="site" to="/" role="menuitem" @click="open = false"><AppIcon name="globe" :size="16" />Ir para o site</RouterLink>
       <hr />
       <button type="button" role="menuitem" class="out" @click="signOut"><AppIcon name="logout" :size="16" />Sair</button>
     </div></Transition>

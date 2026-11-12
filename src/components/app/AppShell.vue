@@ -198,11 +198,12 @@ onUnmounted(() => {
         </template>
       </div>
       <div class="rail__foot">
+        <RouterLink to="/" class="rail__item" title="Ir para o site"><AppIcon name="globe" :size="18" /><span class="rail__label">Ir para o site</span></RouterLink>
         <div class="rail__row">
           <RouterLink to="/ajustes" class="rail__item" :class="{ 'is-active': route.meta.area === 'settings' }" title="Ajustes"><AppIcon name="settings" :size="18" /><span class="rail__label">Ajustes</span></RouterLink>
           <NotesDock class="rail__dock" />
         </div>
-        <AccountMenu v-slot="{ pic, initials, label }" up site :photo="photo" class="me-wrap" @open="helpOpen = false">
+        <AccountMenu v-slot="{ pic, initials, label }" up :photo="photo" class="me-wrap" @open="helpOpen = false">
           <span class="me">
             <span class="me__av"><img v-if="pic" :src="pic" alt="" /><template v-else>{{ initials }}</template></span>
             <span class="me__text"><strong>{{ label }}</strong><small>{{ roleName }}</small></span>
