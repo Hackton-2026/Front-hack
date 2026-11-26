@@ -130,11 +130,12 @@ router.beforeEach(async (to) => {
 })
 
 const SITE_ORIGIN = 'https://www.novexo.cloud'
-const DEFAULT_TITLE = 'Novexo — Gestão de projetos, tarefas, wiki e IA para times'
+const DEFAULT_TITLE = 'Novexo'
+const DEFAULT_SEO_TITLE = 'Novexo — Gestão de projetos, tarefas, wiki e IA para times'
 const DEFAULT_DESC = 'Novexo é a plataforma de gestão de projetos, tarefas, quadros Kanban, calendário, chat em tempo real, documentos wiki e inteligência artificial para equipes.'
 
 const ROUTE_SEO = {
-  '/': { title: DEFAULT_TITLE, desc: DEFAULT_DESC },
+  '/': { title: DEFAULT_SEO_TITLE, desc: DEFAULT_DESC },
   '/precos': { title: 'Preços e planos | Novexo', desc: 'Conheça os planos Gratuito, Essencial, Business e Enterprise do Novexo com 14 dias grátis de teste.' },
   '/sobre': { title: 'Sobre | Novexo', desc: 'Conheça a história e a proposta do Novexo para organizar projetos, tarefas e comunicação de equipes.' },
   '/blog': { title: 'Blog Novexo | Novidades, ideias e próximos passos', desc: 'Artigos práticos sobre produtividade, gestão de projetos, ciclos, wiki de equipe e organização de tarefas no Novexo.' },
@@ -182,17 +183,17 @@ function setCanonical(url) {
 router.afterEach((to) => {
   const isPrivate = Boolean(to.meta?.auth || to.meta?.guest || to.path.startsWith('/convite/') || to.path.startsWith('/entrar/') || to.path === '/verificar-email')
   const seo = ROUTE_SEO[to.path]
-  const title = seo?.title || (to.meta?.title ? `${to.meta.title} | Novexo` : DEFAULT_TITLE)
+  const seoTitle = seo?.title || DEFAULT_SEO_TITLE
   const desc = seo?.desc || DEFAULT_DESC
   const canonical = `${SITE_ORIGIN}${to.path === '/' ? '/' : to.path}`
 
-  document.title = title
+  document.title = DEFAULT_TITLE
   setMeta('meta[name="description"]', ['name', 'description'], desc)
   setMeta('meta[name="robots"]', ['name', 'robots'], isPrivate ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')
-  setMeta('meta[property="og:title"]', ['property', 'og:title'], title)
+  setMeta('meta[property="og:title"]', ['property', 'og:title'], seoTitle)
   setMeta('meta[property="og:description"]', ['property', 'og:description'], desc)
   setMeta('meta[property="og:url"]', ['property', 'og:url'], canonical)
-  setMeta('meta[name="twitter:title"]', ['name', 'twitter:title'], title)
+  setMeta('meta[name="twitter:title"]', ['name', 'twitter:title'], seoTitle)
   setMeta('meta[name="twitter:description"]', ['name', 'twitter:description'], desc)
   setCanonical(canonical)
 })
