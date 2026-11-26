@@ -1,7 +1,8 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { api, refreshAccess, wsUrl } from '../services/api'
+import { api, tokens } from '../services/api'
+import { supabase, syncRealtimeAuth } from '../services/supabase'
 import { useAuth } from '../composables/useAuth'
 import UserAvatar from '../components/UserAvatar.vue'
 import BaseButton from '../components/BaseButton.vue'
@@ -16,11 +17,14 @@ const users = ref([])
 const messages = ref([])
 const text = ref('')
 const online = ref(false)
+const sending = ref(false)
 const error = ref('')
 const list = ref()
-let socket = null
+let channel = null
+let pollTimer = null
 
 const byUsername = computed(() => Object.fromEntries(users.value.map((u) => [u.username, u])))
+const byId = computed(() => Object.fromEntries(users.value.map((u) => [u.id, u])))
 const others = computed(() => users.value.filter((u) => u.id !== user.value.id))
 const otherIn = (conv) => conv.participants.find((p) => p !== user.value.username) || user.value.username
 const current = computed(() => conversations.value.find((c) => String(c.id) === props.id))
@@ -37,7 +41,7 @@ loadSidebar()
 async function startWith(userId) {
   if (!userId) return
   try {
-    const conv = await api('/api/chat/conversations/', { method: 'POST', body: { participant_id: Number(userId) } })
+    const conv = await api('/api/chat/conversations/', { method: 'POST', body: { participant_id: userId } })
     await loadSidebar()
     router.push(`/chat/${conv.id}`)
   } catch (e) {
@@ -47,10 +51,26 @@ async function startWith(userId) {
 
 const scrollDown = () => nextTick(() => list.value?.scrollTo({ top: list.value.scrollHeight, behavior: 'smooth' }))
 
+function pushUnique(msg) {
+  if (messages.value.some((m) => m.id === msg.id)) return
+  messages.value.push(msg)
+  scrollDown()
+}
+
+function cleanupRealtime() {
+  clearInterval(pollTimer)
+  pollTimer = null
+  if (channel && supabase) {
+    supabase.removeChannel(channel)
+    channel = null
+  }
+  online.value = false
+}
+
 watch(() => props.id, async (id) => {
-  socket?.close()
-  socket = null
+  cleanupRealtime()
   messages.value = []
+  error.value = ''
   if (!id) return
   try {
     messages.value = await api(`/api/chat/conversations/${id}/messages/`)
@@ -62,32 +82,60 @@ watch(() => props.id, async (id) => {
   connect(id)
 }, { immediate: true })
 
-// caiu (rede, token vencido = 4001): renova o token se preciso e reconecta com backoff
-function connect(id, attempt = 0) {
-  const ws = new WebSocket(wsUrl(`/ws/chat/${id}/`))
-  ws.onopen = () => { online.value = true; attempt = 0 }
-  ws.onclose = async (e) => {
-    if (socket !== ws) return
-    online.value = false
-    if (e.code === 4001) await refreshAccess().catch(() => {})
-    setTimeout(() => { if (socket === ws && props.id === id) connect(id, attempt + 1) }, Math.min(1000 * 2 ** attempt, 15000))
+function connect(id) {
+  if (supabase) {
+    syncRealtimeAuth(tokens.access)
+    channel = supabase
+      .channel(`chat:${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${id}` },
+        (payload) => {
+          const row = payload.new
+          const sender = row.sender_id === user.value?.id ? user.value.username : byId.value[row.sender_id]?.username || ''
+          pushUnique({
+            id: row.id,
+            conversation: row.conversation_id,
+            sender,
+            content: row.content,
+            timestamp: row.created_at,
+          })
+        },
+      )
+      .subscribe((status) => {
+        online.value = status === 'SUBSCRIBED'
+      })
+  } else {
+    online.value = true
+    pollTimer = setInterval(async () => {
+      if (document.hidden || props.id !== id) return
+      try {
+        const fresh = await api(`/api/chat/conversations/${id}/messages/`)
+        for (const m of fresh) pushUnique(m)
+      } catch { }
+    }, 3000)
   }
-  ws.onmessage = (e) => {
-    const data = JSON.parse(e.data)
-    if (data.type === 'message') {
-      messages.value.push(data)
-      scrollDown()
-    } else if (data.type === 'error') error.value = data.detail
-  }
-  socket = ws
 }
 
-onBeforeUnmount(() => { const ws = socket; socket = null; ws?.close() })
+onBeforeUnmount(cleanupRealtime)
 
-function send() {
-  if (!text.value.trim() || !online.value) return
-  socket.send(JSON.stringify({ content: text.value }))
-  text.value = ''
+async function send() {
+  const content = text.value.trim()
+  if (!content || sending.value || !props.id) return
+  sending.value = true
+  error.value = ''
+  try {
+    const saved = await api(`/api/chat/conversations/${props.id}/messages/`, {
+      method: 'POST',
+      body: { content },
+    })
+    text.value = ''
+    pushUnique(saved)
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    sending.value = false
+  }
 }
 </script>
 
@@ -106,7 +154,7 @@ function send() {
       <template v-if="id">
         <header class="room-head">
           <strong>{{ current ? otherIn(current) : '…' }}</strong>
-          <span class="small" :class="online ? 'on' : 'muted'">{{ online ? '● conectado' : '○ desconectado' }}</span>
+          <span class="small" :class="online ? 'on' : 'muted'">{{ online ? '● tempo real' : '○ conectando…' }}</span>
         </header>
         <div ref="list" class="messages">
           <div v-for="m in messages" :key="m.id" class="msg" :class="{ mine: m.sender === user.username }">
@@ -117,7 +165,7 @@ function send() {
         <p v-if="error" class="alert alert-error">{{ error }}</p>
         <form class="composer" @submit.prevent="send">
           <input v-model="text" placeholder="Escreva uma mensagem…" aria-label="Mensagem" />
-          <BaseButton type="submit" small :disabled="!online">Enviar</BaseButton>
+          <BaseButton type="submit" small :disabled="sending">Enviar</BaseButton>
         </form>
       </template>
       <div v-else class="empty">Escolha uma conversa ou comece uma nova.</div>

@@ -5,5 +5,7 @@ export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 // o "Criar sala" do Meet pode usar outro cliente OAuth (com a Google Meet REST API ligada); sem ele, usa o do login
 export const GOOGLE_MEET_CLIENT_ID = import.meta.env.VITE_GOOGLE_MEET_CLIENT_ID || GOOGLE_CLIENT_ID
 export const API_URL = import.meta.env.VITE_API_URL || ''
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
+export const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
 // Cloudflare Turnstile no cadastro; sem a chave o widget não aparece (o servidor só exige com TURNSTILE_SECRET_KEY)
 export const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''

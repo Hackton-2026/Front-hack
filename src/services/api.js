@@ -1,4 +1,5 @@
 import { API_URL } from '../config'
+import { syncRealtimeAuth } from './supabase'
 
 export const tokens = {
   get access() { return localStorage.getItem('access') },
@@ -6,12 +7,16 @@ export const tokens = {
   set({ access, refresh }) {
     localStorage.setItem('access', access)
     if (refresh) localStorage.setItem('refresh', refresh)
+    syncRealtimeAuth(access)
   },
   clear() {
     localStorage.removeItem('access')
     localStorage.removeItem('refresh')
+    syncRealtimeAuth(null)
   },
 }
+
+if (tokens.access) syncRealtimeAuth(tokens.access)
 
 function errorText(data) {
   if (!data) return 'Não foi possível falar com o servidor.'

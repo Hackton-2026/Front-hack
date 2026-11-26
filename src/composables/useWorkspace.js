@@ -440,7 +440,7 @@ export function useWorkspace() {
   }
   const rolesOf = (pid) => {
     const groups = {}
-    for (const [id, title] of Object.entries(project(pid)?.titles || {})) (groups[title] ||= []).push(Number(id))
+    for (const [id, title] of Object.entries(project(pid)?.titles || {})) (groups[title] ||= []).push(id)
     return Object.entries(groups).map(([title, ids]) => ({ title, ids })).sort((a, b) => a.title.localeCompare(b.title))
   }
   async function removeProjectMember(pid, userId) {

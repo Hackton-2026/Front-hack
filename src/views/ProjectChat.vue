@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { api } from '../services/api'
+import { api, tokens } from '../services/api'
+import { supabase, syncRealtimeAuth } from '../services/supabase'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
@@ -29,6 +30,7 @@ let asked = 0
 const list = ref(null)
 const input = ref(null)
 let timer
+let rtChannel = null
 let generation = 0
 
 const lastId = () => messages.value.at(-1)?.id
@@ -62,6 +64,7 @@ async function start() {
   generation++
   const gen = generation
   clearInterval(timer)
+  if (rtChannel && supabase) { supabase.removeChannel(rtChannel); rtChannel = null }
   messages.value = []
   pending.value = []
   form.value = null
@@ -75,12 +78,19 @@ async function start() {
     error.value = e.status === 404 ? 'Projeto não encontrado ou você não participa mais dele.' : e.message
     return
   }
-  timer = setInterval(poll, POLL_MS)
+  if (supabase) {
+    syncRealtimeAuth(tokens.access)
+    rtChannel = supabase
+      .channel(`project-chat:${pid.value}:${peer.value?.id || 'general'}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'project_messages', filter: `space_id=eq.${pid.value}` }, () => poll())
+      .subscribe()
+  }
+  timer = setInterval(poll, supabase ? 15000 : POLL_MS)
 }
 watch(pid, () => { peer.value = null; start() })
 watch(peer, start)
 onMounted(() => { start(); document.addEventListener('visibilitychange', poll) })
-onUnmounted(() => { generation++; clearInterval(timer); document.removeEventListener('visibilitychange', poll) })
+onUnmounted(() => { generation++; clearInterval(timer); if (rtChannel && supabase) { supabase.removeChannel(rtChannel); rtChannel = null }; document.removeEventListener('visibilitychange', poll) })
 
 const mention = ref(null)
 const pick = ref(0)
