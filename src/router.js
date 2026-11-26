@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import { CUSTOM_PLAN_PATH, canEnterCustomPlan } from './utils/customPlanEntry'
+import { HOME_SEO, SEO_BY_PATH, SITE_NAME, SITE_ORIGIN } from './data/seo'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -129,36 +130,6 @@ router.beforeEach(async (to) => {
   if (to.meta.guest && user.value && !pending) return '/comecar'
 })
 
-const SITE_ORIGIN = 'https://www.novexo.cloud'
-const DEFAULT_TITLE = 'Novexo'
-const DEFAULT_SEO_TITLE = 'Novexo — Gestão de projetos, tarefas, wiki e IA para times'
-const DEFAULT_DESC = 'Novexo é a plataforma de gestão de projetos, tarefas, quadros Kanban, calendário, chat em tempo real, documentos wiki e inteligência artificial para equipes.'
-
-const ROUTE_SEO = {
-  '/': { title: DEFAULT_SEO_TITLE, desc: DEFAULT_DESC },
-  '/precos': { title: 'Preços e planos | Novexo', desc: 'Conheça os planos Gratuito, Essencial, Business e Enterprise do Novexo com 14 dias grátis de teste.' },
-  '/sobre': { title: 'Sobre | Novexo', desc: 'Conheça a história e a proposta do Novexo para organizar projetos, tarefas e comunicação de equipes.' },
-  '/blog': { title: 'Blog Novexo | Novidades, ideias e próximos passos', desc: 'Artigos práticos sobre produtividade, gestão de projetos, ciclos, wiki de equipe e organização de tarefas no Novexo.' },
-  '/blog/como-funciona': { title: 'Como funciona o Novexo | Blog Novexo', desc: 'Veja na prática como o Novexo conecta tarefas, quadros, calendário, chat e IA no dia a dia do seu time.' },
-  '/docs': { title: 'Documentação | Novexo', desc: 'Documentação oficial do Novexo: API pública, webhooks, integrações e guias de uso do workspace.' },
-  '/seguranca': { title: 'Segurança | Novexo', desc: 'Saiba como o Novexo protege seus dados com autenticação robusta, isolamento por workspace e criptografia.' },
-  '/casos-de-uso': { title: 'Casos de uso | Novexo', desc: 'Descubra como times de engenharia, agências, operações e educação usam o Novexo no dia a dia.' },
-  '/contato': { title: 'Contato | Novexo', desc: 'Fale com o time do Novexo para tirar dúvidas, solicitar demonstração ou montar um plano Enterprise.' },
-  '/status': { title: 'Status | Novexo', desc: 'Acompanhe a disponibilidade em tempo real dos serviços e da API do Novexo.' },
-  '/produto/tarefas': { title: 'Tarefas | Novexo', desc: 'Organize tarefas, subtarefas, prioridades, checklists e prazos com clareza para todo o time no Novexo.' },
-  '/produto/quadros': { title: 'Quadros Kanban | Novexo', desc: 'Visualize o fluxo do time em quadros Kanban, lista, calendário e Gantt no Novexo.' },
-  '/produto/calendario': { title: 'Calendário | Novexo', desc: 'Planeje entregas e ciclos da equipe no calendário integrado às tarefas do Novexo.' },
-  '/produto/chat': { title: 'Chat de projetos | Novexo', desc: 'Converse em tempo real por projeto e chame a @novexo IA dentro do próprio chat.' },
-  '/produto/ia': { title: 'Novexo IA | Inteligência artificial no seu workspace', desc: 'Use a Novexo IA para criar tarefas, estruturar projetos, resumir conversas e acelerar o trabalho do time.' },
-  '/produto/documentos': { title: 'Documentos e Wiki | Novexo', desc: 'Centralize briefings, processos e documentação do time em páginas colaborativas no Novexo.' },
-  '/produto/automacoes': { title: 'Automações | Novexo', desc: 'Automatize lembretes, ciclos e fluxos de tarefas repetitivos com o Novexo.' },
-  '/produto/integracoes': { title: 'Integrações | Novexo', desc: 'Conecte o Novexo à sua stack com API pública, webhooks, Google Meet e WhatsApp.' },
-  '/solucoes/engenharia': { title: 'Novexo para Engenharia', desc: 'Ciclos, módulos, quadros, documentação técnica e IA integrados para times de engenharia e software.' },
-  '/solucoes/agencias': { title: 'Novexo para Agências', desc: 'Gerencie projetos de clientes, briefings, entregas e aprovações em um único lugar com o Novexo.' },
-  '/solucoes/operacoes': { title: 'Novexo para Operações', desc: 'Padronize processos, acompanhe prazos e mantenha a operação sincronizada no Novexo.' },
-  '/solucoes/educacao': { title: 'Novexo para Educação', desc: 'Organize turmas, projetos acadêmicos, tarefas e materiais colaborativos com o Novexo.' },
-}
-
 function setMeta(selector, attr, value) {
   let el = document.head.querySelector(selector)
   if (!el) {
@@ -181,19 +152,29 @@ function setCanonical(url) {
 }
 
 router.afterEach((to) => {
-  const isPrivate = Boolean(to.meta?.auth || to.meta?.guest || to.path.startsWith('/convite/') || to.path.startsWith('/entrar/') || to.path === '/verificar-email')
-  const seo = ROUTE_SEO[to.path]
-  const seoTitle = seo?.title || DEFAULT_SEO_TITLE
-  const desc = seo?.desc || DEFAULT_DESC
+  const isPrivate = Boolean(
+    to.meta?.auth ||
+    to.path.startsWith('/convite/') ||
+    to.path.startsWith('/entrar/') ||
+    to.path === '/verificar-email'
+  )
+  const seo = SEO_BY_PATH[to.path]
+  const pageTitle = to.path === '/' || isPrivate ? SITE_NAME : (seo?.title || SITE_NAME)
+  const ogTitle = seo?.ogTitle || seo?.title || HOME_SEO.ogTitle
+  const desc = seo?.description || HOME_SEO.description
   const canonical = `${SITE_ORIGIN}${to.path === '/' ? '/' : to.path}`
 
-  document.title = DEFAULT_TITLE
+  document.title = pageTitle
   setMeta('meta[name="description"]', ['name', 'description'], desc)
-  setMeta('meta[name="robots"]', ['name', 'robots'], isPrivate ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')
-  setMeta('meta[property="og:title"]', ['property', 'og:title'], seoTitle)
+  setMeta(
+    'meta[name="robots"]',
+    ['name', 'robots'],
+    isPrivate ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+  )
+  setMeta('meta[property="og:title"]', ['property', 'og:title'], ogTitle)
   setMeta('meta[property="og:description"]', ['property', 'og:description'], desc)
   setMeta('meta[property="og:url"]', ['property', 'og:url'], canonical)
-  setMeta('meta[name="twitter:title"]', ['name', 'twitter:title'], seoTitle)
+  setMeta('meta[name="twitter:title"]', ['name', 'twitter:title'], ogTitle)
   setMeta('meta[name="twitter:description"]', ['name', 'twitter:description'], desc)
   setCanonical(canonical)
 })
