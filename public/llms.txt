@@ -1,0 +1,29 @@
+# Novexo
+
+> Novexo é uma plataforma brasileira de gestão de projetos, tarefas, quadros Kanban, calendário, chat em tempo real, documentos wiki e inteligência artificial para equipes.
+
+Site oficial: https://www.novexo.cloud/
+
+## Produto
+- [Tarefas](https://www.novexo.cloud/produto/tarefas): gestão de demandas, subtarefas, prioridades, checklists e prazos.
+- [Quadros](https://www.novexo.cloud/produto/quadros): visualização Kanban, lista, calendário e cronograma Gantt.
+- [Calendário](https://www.novexo.cloud/produto/calendario): planejamento semanal e mensal integrado aos ciclos do time.
+- [Chat](https://www.novexo.cloud/produto/chat): comunicação em tempo real por projeto e mensagens diretas com menção à Novexo IA (`@novexo`).
+- [Novexo IA](https://www.novexo.cloud/produto/ia): assistente de IA integrado ao workspace para criar tarefas, resumir projetos e responder dúvidas da equipe.
+- [Documentos](https://www.novexo.cloud/produto/documentos): wiki colaborativa e páginas do projeto com histórico.
+- [Automações](https://www.novexo.cloud/produto/automacoes): ciclos, regras automáticas e lembretes recorrentes.
+- [Integrações](https://www.novexo.cloud/produto/integracoes): API pública, webhooks, Google Meet e WhatsApp.
+
+## Soluções
+- [Engenharia](https://www.novexo.cloud/solucoes/engenharia)
+- [Agências](https://www.novexo.cloud/solucoes/agencias)
+- [Operações](https://www.novexo.cloud/solucoes/operacoes)
+- [Educação](https://www.novexo.cloud/solucoes/educacao)
+
+## Informações
+- [Preços e Planos](https://www.novexo.cloud/precos): plano Gratuito, Essencial, Business e Enterprise com 14 dias grátis de teste.
+- [Sobre o Novexo](https://www.novexo.cloud/sobre)
+- [Blog](https://www.novexo.cloud/blog)
+- [Documentação](https://www.novexo.cloud/docs)
+- [Segurança](https://www.novexo.cloud/seguranca)
+- [Contato](https://www.novexo.cloud/contato)

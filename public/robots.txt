@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /checkout
+Disallow: /comecar
+Disallow: /projetos
+Disallow: /meu-trabalho
+Disallow: /caixa-de-entrada
+Disallow: /favoritos
+Disallow: /notas
+Disallow: /ciclos
+Disallow: /analises
+Disallow: /arquivados
+Disallow: /paineis
+Disallow: /wiki
+Disallow: /ia
+Disallow: /ajustes
+Disallow: /chat
+Disallow: /perfil
+Disallow: /convite/
+Disallow: /entrar/
+Disallow: /verificar-email
+
+Sitemap: https://www.novexo.cloud/sitemap.xml
