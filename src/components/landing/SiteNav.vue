@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import GooeyButton from '../GooeyButton.vue'
@@ -26,12 +26,7 @@ const scheduleClose = () => {
 }
 const toggle = (id) => (active.value = active.value === id ? null : id)
 
-let lastScrollY = 0
-const onScroll = () => {
-  scrolled.value = scrollY > 8
-  if (active.value && Math.abs(scrollY - lastScrollY) > 28) active.value = null
-  lastScrollY = scrollY
-}
+const onScroll = () => (scrolled.value = scrollY > 8)
 const onKey = (e) => {
   if (e.key === 'Escape') {
     active.value = null
@@ -58,7 +53,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
     <div class="nav__glossy" aria-hidden="true" />
 
     <div class="nav__bar">
-      <RouterLink to="/#topo" class="nav__logo" aria-label="Novexo, inÃ­cio">NOVEXO</RouterLink>
+      <RouterLink to="/#topo" class="nav__logo" aria-label="Novexo, início">NOVEXO</RouterLink>
 
       <nav class="nav__menu" aria-label="Principal" @mouseleave="scheduleClose">
         <div
@@ -168,14 +163,9 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
           </div>
         </div>
         <RouterLink :to="item.feature.to || '#topo'" class="mm__feature" @click="active = null">
-          <img v-if="item.feature.art" :src="item.feature.art" alt="" class="mm__art" loading="lazy" />
-          <div v-else class="mm__feature-head">
-            <span v-if="item.feature.icon" class="mm__feature-ico" aria-hidden="true"><svg class="mm__icon" viewBox="0 0 24 24"><path :d="ICONS[item.feature.icon]" /></svg></span>
-            <span v-if="item.feature.eyebrow" class="mm__feature-eyebrow">{{ item.feature.eyebrow }}</span>
-          </div>
+          <img :src="item.feature.art" alt="" class="mm__art" loading="lazy" />
           <span class="mm__feature-title">{{ item.feature.title }}</span>
-          <span v-if="item.feature.desc" class="mm__feature-desc">{{ item.feature.desc }}</span>
-          <span class="mm__feature-cta">{{ item.feature.cta }} <FlaticonIcon name="arrow-up-right" :size="12" /></span>
+          <span class="mm__feature-cta">{{ item.feature.cta }}</span>
         </RouterLink>
       </div>
     </div>
@@ -264,8 +254,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 .nav__glossy {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(6 6 6 / 0.9) 0%, rgb(6 6 6 / 0.78) 100%);
-  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  background: rgb(0 0 0 / 0.1);
   backdrop-filter: blur(12px) saturate(1.4);
   -webkit-backdrop-filter: blur(12px) saturate(1.4);
   opacity: 0;
@@ -363,7 +352,7 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 .mm {
   position: fixed;
   left: 50%;
-  top: 56px;
+  top: 26px;
   z-index: 60;
   padding-top: 1.5rem;
   transform: translate(-50%, 20px);
@@ -500,16 +489,9 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
   flex-direction: column;
   justify-content: flex-end;
   gap: 0.75rem;
-  width: 244px;
-  min-height: 290px;
-  padding: 1.35rem;
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background:
-    radial-gradient(circle at 88% 12%, rgb(229 101 21 / 0.34), transparent 56%),
-    radial-gradient(circle at 12% 90%, rgb(251 164 92 / 0.14), transparent 50%),
-    linear-gradient(165deg, #1b130d 0%, #0d0b0a 100%);
-
-  border-radius: 10px;
+  width: 220px;
+  min-height: 300px;
+  padding: 1rem;
   overflow: hidden;
   border-radius: 8px;
   color: var(--lp-white);
@@ -517,34 +499,23 @@ watch(mobileOpen, (v) => (document.documentElement.style.overflow = v ? 'hidden'
 }
 .mm__art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transform: scale(1.45); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
 .mm__feature:hover .mm__art { transform: scale(1.52); }
-.mm__feature::after { content: ''; position: absolute; inset: 40% 0 0; z-index: -1; background: linear-gradient(transparent, rgb(0 0 0 / 0.85)); pointer-events: none; }
-.mm__feature:not(:has(.mm__art))::after { display: none; }
-.mm__feature-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: auto; }
-.mm__feature-ico { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgb(229 101 21 / 0.45); border-radius: 9px; background: rgb(229 101 21 / 0.14); }
-.mm__feature-ico .mm__icon { width: 17px; height: 17px; stroke: var(--lp-orange-soft); }
-.mm__feature-eyebrow { font: 600 0.6875rem/1 var(--lp-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--lp-orange-soft); }
-.mm__feature-desc { font: 400 0.8125rem/1.45 var(--lp-sans); color: rgb(248 248 248 / 0.68); }
+.mm__feature::after { content: ''; position: absolute; inset: 40% 0 0; z-index: -1; background: linear-gradient(transparent, rgb(0 0 0 / 0.9)); }
 .mm__item, .mm__plain, .mm__feature { transition: opacity 0.25s; }
 .mm__panel:has(:is(.mm__item, .mm__plain, .mm__feature):is(:hover, :focus-visible)) :is(.mm__item, .mm__plain, .mm__feature):not(:hover, :focus-visible) { opacity: 0.35; }
 .mm__feature-title { font: 600 1.125rem/1.2 var(--lp-sans); }
 .mm__feature-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
   align-self: flex-start;
-  margin-top: 0.35rem;
-  padding: 0.45rem 1.05rem;
+  padding: 0.35rem 1rem;
   border-radius: 999px;
-  border: 1.5px solid var(--lp-white);
-  background: var(--lp-white);
-  color: #000;
-  font: 500 0.875rem/1.3 var(--lp-sans);
-  transition: background 0.25s, border-color 0.25s, color 0.25s;
+  border: 1.5px solid rgb(255 255 255 / 0.35);
+  font: 500 0.9375rem/1.3 var(--lp-sans);
+  transition:
+    background 0.3s,
+    color 0.3s;
 }
 .mm__feature:hover .mm__feature-cta {
-  background: var(--lp-orange);
-  border-color: var(--lp-orange);
-  color: #fff;
+  background: var(--lp-white);
+  color: #000;
 }
 
 .burger {

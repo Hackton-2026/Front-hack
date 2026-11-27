@@ -1,3 +1,7 @@
+import elche from '../../assets/landing/nav/elche.webp'
+import malaga from '../../assets/landing/nav/malaga.webp'
+import salamanca from '../../assets/landing/nav/salamanca.webp'
+
 export const ICONS = {
   tasks: 'M4 4h16v16H4z M8 12l3 3 5-6',
   board: 'M4 4h4v16H4z M10 4h4v10h-4z M16 4h4v7h-4z',
@@ -7,8 +11,6 @@ export const ICONS = {
   docs: 'M6 3h9l4 4v14H6z M14 3v5h5 M9 13h7 M9 17h7',
   bolt: 'M13 2L4 14h7l-1 8 9-12h-7z',
   plug: 'M9 2v6 M15 2v6 M6 8h12v4a6 6 0 0 1-12 0z M12 18v4',
-  spark: 'M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6-5.6-1.9 5.6-1.9z',
-  shield: 'M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z M9.5 12l1.8 1.8 3.5-3.8',
   marketing: 'M3 10v4h4l8 5V5L7 10z M18 9a3 3 0 0 1 0 6',
   code: 'M8 7l-5 5 5 5 M16 7l5 5-5 5 M14 4l-4 16',
   pen: 'M4 20l4-1 11-11-3-3L5 16z M14 6l3 3',
@@ -58,23 +60,11 @@ export const MENU = [
       [
         {
           group: 'Destaques',
-          items: [
-            { icon: 'spark', title: 'Novexo IA', desc: 'Assistente conectado aos seus projetos', to: '/produto/ia' },
-            { icon: 'terminal', title: 'Documentação', desc: 'API REST, tokens e webhooks', to: '/docs' },
-            { icon: 'shield', title: 'Segurança', desc: 'Permissões, hashes e transparência', to: '/seguranca' },
-            { icon: 'users', title: 'Casos de uso', desc: 'Como cada time adapta o Novexo', to: '/casos-de-uso' },
-          ],
+          links: ['Novexo IA'],
         },
       ],
     ],
-    feature: {
-      eyebrow: 'Guia rápido',
-      icon: 'play',
-      title: 'Novo no Novexo? Aprenda o básico.',
-      desc: 'Crie seu primeiro projeto, organize o quadro e convide o time em minutos.',
-      cta: 'Começar',
-      to: '/blog/como-funciona',
-    },
+    feature: { title: 'Novo no Novexo? Aprenda o básico.', cta: 'Começar', art: elche, to: '/blog/como-funciona' },
   },
   {
     id: 'solucoes',
@@ -97,14 +87,7 @@ export const MENU = [
         },
       ],
     ],
-    feature: {
-      eyebrow: 'Equipes & clientes',
-      icon: 'users',
-      title: 'Dá para usar o Novexo com clientes?',
-      desc: 'Convide por link e defina permissões sob medida para cada projeto.',
-      cta: 'Veja como',
-      to: '/casos-de-uso',
-    },
+    feature: { title: 'Dá para usar o Novexo com clientes?', cta: 'Veja como', art: malaga, to: '/casos-de-uso' },
   },
   {
     id: 'aprender',
@@ -116,14 +99,7 @@ export const MENU = [
         { icon: 'users', title: 'Novexo Inc', desc: 'A empresa e a visão por trás da plataforma.', to: '/blog/conheca-a-novexo-inc' },
       ] }],
     ],
-    feature: {
-      eyebrow: 'Passo a passo',
-      icon: 'book',
-      title: 'Como funciona o Novexo',
-      desc: 'Veja na prática como tarefas, quadros e wiki trabalham juntos.',
-      cta: 'Explorar guia',
-      to: '/blog/como-funciona',
-    },
+    feature: { title: 'Como funciona o Novexo', cta: 'Veja o passo a passo', art: salamanca, to: '/blog/como-funciona' },
   },
   { id: 'planos', label: 'Preços', href: '/precos' },
   { id: 'contato', label: 'Contato', href: '/contato' },
