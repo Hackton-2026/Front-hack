@@ -19,11 +19,13 @@ const DEFAULT_PRESETS = [
 
 const props = defineProps({
   modelValue: { type: String, default: '#e56515' },
-  presets: { type: Array, default: () => DEFAULT_PRESETS },
+  presets: { type: Array, default: null },
   defaultHex: { type: String, default: '#e56515' },
   showReset: { type: Boolean, default: true },
   compact: Boolean,
 })
+
+const presetList = computed(() => (props.presets?.length ? props.presets : DEFAULT_PRESETS))
 
 const emit = defineEmits(['update:modelValue', 'change', 'commit'])
 
@@ -88,7 +90,7 @@ function hsvToHex(hue, sat, val) {
 }
 
 const currentHex = computed(() => normalizeHex(props.modelValue) || props.defaultHex)
-const isPreset = computed(() => props.presets.some(([, hex]) => hex.toLowerCase() === currentHex.value))
+const isPreset = computed(() => presetList.value.some(([, hex]) => hex.toLowerCase() === currentHex.value))
 const huePure = computed(() => `hsl(${h.value} 100% 50%)`)
 
 function syncFromProp(hex) {
@@ -220,7 +222,7 @@ onBeforeUnmount(() => {
   <div class="nvx-cp" :class="{ 'is-compact': compact }">
     <div class="nvx-cp__list">
       <button
-        v-for="[name, hex] in presets"
+        v-for="[name, hex] in presetList"
         :key="hex"
         type="button"
         class="nvx-cp__sw"
