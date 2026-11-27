@@ -14,6 +14,7 @@ import FlaticonIcon from '../components/FlaticonIcon.vue'
 import AppSelect from '../components/app/AppSelect.vue'
 import BlockMenu from '../components/app/BlockMenu.vue'
 import AppModal from '../components/app/AppModal.vue'
+import AppReadingToc from '../components/landing/AppReadingToc.vue'
 
 const DOC_DEFAULTS = { icon: '', collectionId: 'geral', parentId: null, archived: false, locked: false, favorite: false, fullWidth: false, labels: [], versions: [] }
 const ICONS = ['', '📄', '📌', '✅', '🚀', '💡', '📚', '🧭', '🛠️', '📈', '🗓️', '🔒', '🎯', '🧪', '👋']
@@ -98,6 +99,9 @@ function ctx(seen = new Set()) {
 }
 const html = computed(() => (doc.value ? render(doc.value.body, ctx(new Set([doc.value.id]))) : ''))
 const toc = computed(() => (doc.value ? outline(doc.value.body) : []))
+const pageEl = ref(null)
+const tocItems = computed(() => toc.value.map((h) => ({ id: h.id, label: h.text, level: h.level })))
+const onTocSelect = (item) => { mode.value = 'view'; nextTick(() => jump(item.id)) }
 const words = computed(() => (doc.value?.body.trim().match(/\S+/g) || []).length)
 const when = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 const hello = computed(() => {
@@ -425,7 +429,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
       <button type="button" class="add-col" @click="addCollection"><AppIcon name="plus" :size="13" /> Nova coleção</button>
     </aside>
 
-    <div v-if="doc" class="page" :class="{ wide: doc.fullWidth }">
+    <div v-if="doc" ref="pageEl" class="page" :class="{ wide: doc.fullWidth }">
       <article ref="editor" class="editor">
         <header class="bar">
           <nav class="crumbs" aria-label="Caminho">
@@ -507,8 +511,8 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
           </div>
         </template>
         <template v-else-if="toc.length">
-          <h3>Sumário</h3>
-          <button v-for="h in toc" :key="h.id + h.text" type="button" class="toc" :style="{ paddingLeft: `${(h.level - 1) * 0.75}rem` }" @click="mode = 'view'; $nextTick(() => jump(h.id))">{{ h.text }}</button>
+          <AppReadingToc tag="div" title="Sumário" :items="tocItems" :scroll-container="pageEl" :target="editor" :sticky="false" as-buttons compact :offset="120" nav-label="Sumário da página" @select="onTocSelect" />
+
         </template>
       </aside>
     </div>

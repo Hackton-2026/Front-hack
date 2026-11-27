@@ -49,7 +49,7 @@ export function useEditorialMotion(root, { page, items } = {}) {
     }
 
     const intro = gsap.timeline({ defaults: { duration: DUR.mid, ease: EASE.out, clearProps: 'transform,opacity,visibility' } })
-    if (!isBlog) intro.from(select('.breadcrumbs'), { y: 12, autoAlpha: 0 }, 0)
+    if (!isBlog) intro.from(select('.app-breadcrumbs, .breadcrumbs'), { y: 12, autoAlpha: 0 }, 0)
     const introContent = isBlog ? [] : select('.article-head__lead, .article-head__byline')
     if (introContent.length) {
       intro.from(introContent, {
@@ -78,8 +78,8 @@ export function useEditorialMotion(root, { page, items } = {}) {
       const next = select('.news-next')[0]
       reveal(select('.news-next > *'), next, { stagger: 0.12 })
     } else {
-      const sidebar = select('.reading-sidebar')[0]
-      reveal(select('.reading-sidebar__sticky > *'), sidebar, { x: -12, y: 0, stagger: 0.08 })
+      const sidebar = select('.reading-toc, .reading-sidebar')[0]
+      reveal(select('.reading-toc__inner > *, .reading-sidebar__sticky > *'), sidebar, { x: -12, y: 0, stagger: 0.08 })
       select('.article-section').forEach(section => {
         reveal([...section.children], section, { y: 20, stagger: 0.065 })
       })

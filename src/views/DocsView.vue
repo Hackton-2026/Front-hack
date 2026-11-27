@@ -1,17 +1,24 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
+import AppReadingToc from '../components/landing/AppReadingToc.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
 import { API_URL } from '../config'
 import { vReveal } from '../utils/motion'
+import { usePageTitle } from '../composables/usePageTitle'
 
 const BASE = `${API_URL || window.location.origin}/api`
 
-const TOC = [['comecar', 'Começar'], ['autenticacao', 'Autenticação'], ['referencia', 'Referência'], ['limites', 'Limites e erros'], ['webhooks', 'Webhooks']]
+const TOC = [
+  { id: 'comecar', label: '01. Começar' },
+  { id: 'autenticacao', label: '02. Autenticação' },
+  { id: 'referencia', label: '03. Referência' },
+  { id: 'limites', label: '04. Limites e erros' },
+  { id: 'webhooks', label: '05. Webhooks' },
+]
 
 const ENDPOINTS = [
   ['GET', '/projects/', 'Projetos que você pode ver.'],
@@ -32,9 +39,7 @@ const LIMITS = [
   ['Código do WhatsApp', '5 pedidos por minuto'],
 ]
 
-let previousTitle
-onMounted(() => { previousTitle = document.title; document.title = 'Documentação | Novexo' })
-onUnmounted(() => { document.title = previousTitle })
+usePageTitle('Documentação | Novexo')
 </script>
 
 <template>
@@ -48,9 +53,15 @@ onUnmounted(() => { document.title = previousTitle })
         </div>
         <div v-reveal.now="0.15">
           <p class="ip-lead">A API é a mesma que o app usa: <strong>REST, JSON e as mesmas permissões</strong> que você tem na tela.</p>
-          <nav class="docs-toc" aria-label="Nesta página">
-            <a v-for="([id, label], i) in TOC" :key="id" :href="`#${id}`"><span class="ip-num">{{ String(i + 1).padStart(2, '0') }}</span>{{ label }}</a>
-          </nav>
+          <AppReadingToc
+            class="docs-toc"
+            title="Nesta página"
+            :items="TOC"
+            :sticky="false"
+            :show-progress="false"
+            nav-label="Nesta página"
+            aside-label="Índice da documentação"
+          />
         </div>
       </section>
 
@@ -134,9 +145,7 @@ curl -X POST {{ BASE }}/tasks/ \
 </template>
 
 <style scoped>
-.docs-toc { display: grid; margin-top: 30px; border-top: 1px solid var(--ip-line); }
-.docs-toc a { display: flex; gap: 16px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--ip-line); color: #d8d0c7; font-size: 13px; text-decoration: none; transition: color .2s, padding .25s; }
-.docs-toc a:hover { color: var(--lp-orange-soft); padding-left: 6px; }
+.docs-toc { margin-top: 28px; }
 .docs-anchor { scroll-margin-top: 90px; }
 .docs-p { margin: 0 0 4px; color: var(--ip-muted); font-size: 13px; line-height: 1.85; }
 .docs-p + .ip-table, .ip-table + .docs-p { margin-top: 20px; }

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { ref } from 'vue'
 import '../assets/landing.css'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
@@ -7,12 +7,23 @@ import GooeyButton from '../components/GooeyButton.vue'
 import WorkflowDemo from '../components/landing/WorkflowDemo.vue'
 import StepMotion from '../components/landing/StepMotion.vue'
 import AppFaq from '../components/landing/AppFaq.vue'
+import AppReadingToc from '../components/landing/AppReadingToc.vue'
+import AppBreadcrumbs from '../components/landing/AppBreadcrumbs.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
 import sunset from '../assets/landing/footer-sunset.webp'
 import { useEditorialMotion } from '../composables/useEditorialMotion'
+import { usePageTitle } from '../composables/usePageTitle'
 
 const pageRoot = ref(null)
+const article = ref(null)
 useEditorialMotion(pageRoot, { page: 'guide' })
+usePageTitle('Como funciona o Novexo | Blog Novexo')
+
+const breadcrumbs = [
+  { label: 'Início', to: '/' },
+  { label: 'Blog', to: '/blog' },
+  { label: 'Como funciona' },
+]
 
 const sections = [
   { id: 'visao-geral', label: 'O trabalho ganha contexto' },
@@ -23,44 +34,13 @@ const sections = [
   { id: 'primeiros-passos', label: 'Seus primeiros passos' },
   { id: 'perguntas', label: 'Perguntas frequentes' },
 ]
+
 const faqs = [
   { question: 'Por onde começar no Novexo?', answer: 'Entre na sua conta e abra a área Projetos. Crie um projeto com um objetivo claro e adicione sua primeira tarefa. Depois, defina um responsável, uma prioridade e um prazo para dar contexto ao trabalho.' },
   { question: 'Qual é a diferença entre um projeto e uma tarefa?', answer: 'O projeto reúne o trabalho necessário para alcançar um objetivo, como lançar uma campanha. A tarefa representa uma ação desse projeto, como revisar o texto do anúncio. Dividir a entrega em tarefas ajuda o time a entender o próximo passo.' },
   { question: 'Preciso escolher entre lista, quadro e calendário?', answer: 'Cada visualização ajuda em um momento: a lista facilita revisar detalhes, o quadro mostra o andamento e o calendário organiza os prazos. Você pode mudar a forma de olhar para as tarefas conforme a necessidade.' },
   { question: 'Esta demonstração altera meus projetos?', answer: 'Não. O exemplo deste guia é interativo e ilustrativo. Você pode trocar entre quadro e lista e avançar as tarefas à vontade. Para trabalhar com seus próprios projetos, entre na sua conta.' },
 ]
-const activeSection = ref(sections[0].id)
-const progress = ref(0)
-const article = ref(null)
-let frame = 0
-let previousTitle
-
-function updateReading() {
-  frame = 0
-  if (!article.value) return
-  const rect = article.value.getBoundingClientRect()
-  const distance = rect.height - innerHeight + 130
-  progress.value = Math.max(0, Math.min(100, (130 - rect.top) / Math.max(1, distance) * 100))
-  let current = sections[0].id
-  for (const section of sections) {
-    if (document.getElementById(section.id)?.getBoundingClientRect().top <= 180) current = section.id
-  }
-  activeSection.value = current
-}
-function onScroll() { if (!frame) frame = requestAnimationFrame(updateReading) }
-onMounted(() => {
-  previousTitle = document.title
-  document.title = 'Como funciona o Novexo | Blog Novexo'
-  updateReading()
-  addEventListener('scroll', onScroll, { passive: true })
-  addEventListener('resize', onScroll)
-})
-onUnmounted(() => {
-  document.title = previousTitle
-  removeEventListener('scroll', onScroll)
-  removeEventListener('resize', onScroll)
-  cancelAnimationFrame(frame)
-})
 </script>
 
 <template>
@@ -69,7 +49,7 @@ onUnmounted(() => {
     <SiteNav />
     <main id="conteudo" ref="pageRoot" class="journal__main">
       <header class="article-head">
-        <nav class="breadcrumbs" aria-label="Caminho da página"><RouterLink to="/">Início</RouterLink><span aria-hidden="true">/</span><RouterLink to="/blog">Blog</RouterLink><span aria-hidden="true">/</span><span aria-current="page">Como funciona</span></nav>
+        <AppBreadcrumbs :items="breadcrumbs" />
         <h1>Como funciona<br><em>o Novexo.</em></h1>
         <p class="article-head__lead">Da primeira ideia à próxima entrega: descubra como organizar seus projetos, conectar seu time e fazer o trabalho fluir com o Novexo.</p>
         <div class="article-head__byline"><span class="author-mark" aria-hidden="true">N</span><div><strong>Equipe Novexo</strong></div></div>
@@ -83,14 +63,17 @@ onUnmounted(() => {
       </figure>
 
       <div class="reading-layout">
-        <aside class="reading-sidebar" aria-label="Navegação do artigo">
-          <div class="reading-sidebar__sticky">
-            <span class="toc-title">Neste guia</span>
-            <nav aria-label="Índice do guia"><a v-for="section in sections" :key="section.id" :href="`#${section.id}`" :class="{ 'is-active': activeSection === section.id }" :aria-current="activeSection === section.id ? 'location' : undefined">{{ section.label }}</a></nav>
-            <div class="reading-progress" role="progressbar" :aria-valuenow="Math.round(progress)" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso da leitura"><span :style="{ width: `${progress}%` }" /></div>
+        <AppReadingToc
+          title="Neste guia"
+          :items="sections"
+          :target="article"
+          nav-label="Índice do guia"
+          aside-label="Navegação do artigo"
+        >
+          <template #footer>
             <RouterLink to="/login" class="sidebar-cta">Seu próximo projeto<br>começa aqui. <span aria-hidden="true"><FlaticonIcon name="arrow-up-right" /></span></RouterLink>
-          </div>
-        </aside>
+          </template>
+        </AppReadingToc>
 
         <article ref="article" class="article-body" aria-label="Como funciona o Novexo">
           <section id="visao-geral" class="article-section intro-section">
@@ -163,12 +146,13 @@ onUnmounted(() => {
 .journal { --article-muted: #aaa8a4; --article-line: #ffffff26; }
 .journal :is(a, button, summary):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 5px; }
 .skip-link { position: fixed; top: 12px; left: 20px; z-index: 100; padding: 12px 20px; background: var(--lp-white); color: #000; transform: translateY(-160%); }.skip-link:focus { transform: none; }
-.journal__main { max-width: 1320px; padding: 142px 48px 0; margin: auto; }.breadcrumbs { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; color: #a4a19d; font-size: 12px; }.breadcrumbs a { color: inherit; text-decoration: none; }.breadcrumbs a:hover { color: var(--lp-orange-soft); }.breadcrumbs > span:last-child { color: #e0deda; }.breadcrumbs > span[aria-hidden] { color: #625e59; }
+.journal__main { max-width: 1320px; padding: 142px 48px 0; margin: auto; }
 .article-head { max-width: 990px; }
 .article-head h1 { margin: 25px 0; font: 600 clamp(48px, 6.4vw, 84px)/1.06 var(--lp-hero); letter-spacing: -.065em; color: var(--lp-white); }.article-head h1 em { font-family: var(--font-serif); font-weight: 400; letter-spacing: -.035em; color: var(--lp-orange-soft); }.article-head__lead { max-width: 670px; margin: 0; color: #b7b3af; font-size: clamp(15px, 1.5vw, 18px); line-height: 1.75; }
 .article-head__byline { display: flex; align-items: center; gap: 12px; margin: 30px 0 42px; font-size: 11px; }.author-mark { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 1px solid #ffffff26; border-radius: 50%; font: 800 17px var(--lp-display); }.article-head__byline strong { font-weight: 500; font-size: 12px; }
 .article-cover { position: relative; isolation: isolate; display: grid; grid-template-columns: .85fr 1.3fr; align-items: center; gap: 25px; min-height: 490px; margin: 0; padding: 52px 45px 75px; border: 1px solid #ffffff24; border-radius: 12px; overflow: hidden; background: #492516; }.article-cover__photo, .article-cover__shade { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; }.article-cover__shade { z-index: -1; background: linear-gradient(90deg, #180b04cc, #6c2c0d55), linear-gradient(0deg, #140c08ee, transparent 50%); }.article-cover__words > p { margin: 0; font: 600 clamp(28px, 3vw, 42px)/1.1 var(--lp-hero); letter-spacing: -.05em; color: #fff; }.article-cover__demo { transform: perspective(1500px) rotateY(-5deg) rotateZ(1deg); min-width: 0; }
-.reading-layout { display: grid; grid-template-columns: 245px minmax(0, 720px); justify-content: space-between; gap: 60px; margin: 85px 0 100px; }.reading-sidebar__sticky { position: sticky; top: 125px; }.toc-title { color: #e5e1dc; font-size: 12px; }.reading-sidebar nav { display: flex; flex-direction: column; margin-top: 20px; border-left: 1px solid #ffffff24; }.reading-sidebar nav a { display: block; padding: 10px 0 10px 17px; margin-left: -1px; border-left: 2px solid transparent; font-size: 12px; text-decoration: none; color: #a6a29d; transition: color .2s, border-color .2s; }.reading-sidebar nav a:hover, .reading-sidebar nav a.is-active { color: var(--lp-orange-soft); }.reading-sidebar nav a.is-active { border-color: var(--lp-orange); }.reading-progress { height: 2px; margin-top: 27px; overflow: hidden; background: #ffffff1a; }.reading-progress > span { display: block; height: 100%; background: var(--lp-orange); }.sidebar-cta { display: block; position: relative; margin-top: 32px; border-top: 1px solid var(--article-line); padding-top: 24px; font-size: 16px; line-height: 1.4; letter-spacing: -.02em; color: #f8f8f8; text-decoration: none; }.sidebar-cta > span { position: absolute; right: 0; bottom: 4px; font-size: 22px; color: var(--lp-orange-soft); }
+.reading-layout { display: grid; grid-template-columns: 245px minmax(0, 720px); justify-content: space-between; gap: 60px; margin: 85px 0 100px; }
+.sidebar-cta { display: block; position: relative; font-size: 16px; line-height: 1.4; letter-spacing: -.02em; color: #f8f8f8; text-decoration: none; }.sidebar-cta > span { position: absolute; right: 0; bottom: 4px; font-size: 22px; color: var(--lp-orange-soft); }
 .article-body { min-width: 0; }.article-section { padding: 52px 0; border-bottom: 1px solid var(--article-line); scroll-margin-top: 125px; }.article-section:first-child { padding-top: 0; }.article-section h2 { color: #f3f1ee; margin: 19px 0 23px; font: 500 clamp(27px, 3vw, 36px)/1.18 var(--lp-hero); letter-spacing: -.045em; text-wrap: balance; }.article-section p { color: #b6b2ac; font-size: 15px; line-height: 1.85; margin: 0 0 18px; }.article-section p strong { color: #e7e3df; font-weight: 500; }.article-section > p:last-child { margin-bottom: 0; }.article-section blockquote { margin: 34px 0; padding: 7px 0 7px 23px; border-left: 2px solid var(--lp-orange); font-size: 22px; letter-spacing: -.03em; line-height: 1.45; color: #f3f1ee; }.overview-path { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 35px; padding: 22px 0 0; border-top: 1px solid #ffffff1c; font-size: 12px; }.overview-path small { display: block; margin-bottom: 6px; color: var(--lp-orange-soft); font: 11px var(--font-mono); }.overview-path b { color: #77716b; font-size: 17px; font-weight: 400; }
 .step-label { display: inline-flex; align-items: center; gap: 15px; color: var(--lp-orange-soft); font: 11px var(--font-mono); }.project-example { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 28px 0; padding: 24px; border: 1px solid #ffffff26; border-radius: 8px; background: #111110; }.project-example__icon { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #e5651555; border-radius: 10px; color: var(--lp-orange-soft); background: #e5651512; font-size: 24px; }.project-example > div:nth-child(2) { flex: 1; min-width: 160px; }.project-example h3 { margin: 0 0 8px; color: #f2efeb; font-size: 16px; font-weight: 500; }.project-example p { margin: 0; font-size: 11px; line-height: 1.6; }.project-example__badge { border: 1px solid #e5651533; border-radius: 4px; padding: 4px 8px; color: var(--lp-orange-soft); font-size: 11px; }.article-section .editor-note { display: flex; gap: 10px; color: #a8a19a; font-size: 12px; }
 .task-anatomy { padding: 28px; margin-top: 28px; border: 1px solid #ffffff26; border-radius: 8px; background: #111110; }.task-anatomy__title { display: flex; gap: 10px; align-items: center; }.task-anatomy__title > span { color: var(--lp-orange-soft); font-size: 21px; }.task-anatomy h3 { color: #f5f2ee; font-size: 17px; font-weight: 500; margin: 0; letter-spacing: -.02em; }.task-anatomy > p { margin: 15px 0 25px; font-size: 12px; }.task-anatomy dl { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 12px; padding-block: 20px; margin: 0; border-top: 1px solid #ffffff19; }.task-anatomy dt { color: #a7a19a; font-size: 11px; margin-bottom: 12px; }.task-anatomy dd { display: flex; align-items: center; gap: 7px; margin: 0; color: #e5e0d9; font-size: 11px; min-height: 24px; }.person-dot { display: grid; place-items: center; width: 22px; height: 22px; background: #353e34; color: #c8d5c9; border-radius: 50%; font-size: 11px; }.priority-dot { width: 6px; height: 6px; background: var(--lp-orange); border-radius: 50%; }.example-caption { display: block; font-size: 11px; color: #a7a19a; }
@@ -176,7 +160,7 @@ onUnmounted(() => {
 .starting-list { margin: 28px 0 32px; padding: 0; list-style: none; }.starting-list li { display: flex; align-items: baseline; gap: 20px; padding: 16px 0; border-bottom: 1px solid #ffffff19; }.starting-list li > span { color: var(--lp-orange-soft); font: 11px var(--font-mono); }.starting-list strong { color: #ece7e0; font-size: 14px; font-weight: 500; }.starting-list p { margin: 5px 0 0; font-size: 12px; }
 .explore-section { padding: 50px 0 90px; border-top: 1px solid var(--article-line); }.explore-section__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 35px; }.explore-section h2 { margin: 14px 0 0; color: #f4f0eb; font: 500 clamp(30px, 3.2vw, 43px)/1.1 var(--lp-hero); letter-spacing: -.04em; }.explore-section__head > a { color: #d2cbc3; font-size: 12px; text-decoration: none; }.explore-section__head > a > span { margin-left: 12px; color: var(--lp-orange-soft); }.explore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }.explore-card { display: block; text-decoration: none; }.explore-card__art { position: relative; display: flex; align-items: center; justify-content: center; height: 225px; margin-bottom: 22px; padding: 30px; border: 1px solid #ffffff26; border-radius: 8px; overflow: hidden; transition: border-color .2s; }.explore-card:hover .explore-card__art { border-color: var(--lp-orange); }.explore-card h3 { display: block; position: relative; margin-top: 0; color: #eee8e0; font-size: clamp(17px, 1.8vw, 23px); font-weight: 500; line-height: 1.3; letter-spacing: -.03em; }.explore-card h3 > span { position: absolute; right: 4px; top: 0; color: var(--lp-orange-soft); }.art-tasks { flex-direction: column; gap: 9px; background: #1a130e; }.art-tasks > span { display: block; width: 75%; padding: 10px 14px; border: 1px solid #ffffff1c; background: #201c18; border-radius: 5px; color: #d1c5b8; font-size: 12px; transform: rotate(-5deg); }.art-tasks > span:last-child { color: var(--lp-orange-soft); border-color: #e5651544; transform: rotate(-5deg) translateX(12px); }.art-views { gap: 13px; background: #c66329; }.art-views > span { position: absolute; bottom: -35px; width: 25%; height: 80%; border: 1px solid #ffffff50; border-radius: 50px 50px 0 0; background: #ffffff13; transform: rotate(25deg); }.art-views > span:first-child { left: 10%; height: 60%; }.art-views > span:nth-child(2) { left: 38%; }.art-views > span:nth-child(3) { left: 66%; height: 100%; }
 @media (min-width: 1600px) { .journal__main { max-width: 1400px; }.reading-layout { grid-template-columns: 260px minmax(0, 760px); } }
-@media (max-width: 1050px) { .journal__main { padding: 110px 30px 0; }.article-cover { padding: 36px 25px 65px; min-height: 420px; gap: 20px; grid-template-columns: .65fr 1.3fr; }.article-cover__words > p { font-size: 29px; }.reading-layout { grid-template-columns: 190px minmax(0, 1fr); gap: 40px; }.reading-sidebar nav a { font-size: 11px; padding-left: 12px; }.project-example__badge { display: none; } }
-@media (max-width: 760px) { .journal__main { padding: 95px 20px 0; }.article-head h1 { font-size: clamp(44px, 9vw, 65px); }.article-head__lead { font-size: 15px; }.article-cover { grid-template-columns: 1fr; padding: 30px 22px 65px; gap: 30px; }.article-cover__words > p { font-size: 32px; }.article-cover__demo { transform: none; }.reading-layout { grid-template-columns: 1fr; gap: 35px; margin: 45px 0 65px; }.reading-sidebar__sticky { position: static; }.reading-sidebar nav { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; margin-top: 12px; }.reading-sidebar nav a { padding: 8px 0 8px 13px; font-size: 11px; }.reading-progress, .sidebar-cta { display: none; }.article-section { padding: 40px 0; scroll-margin-top: 85px; }.article-section h2 { font-size: 29px; }.article-section p { font-size: 14px; }.article-section blockquote { font-size: 19px; padding-left: 18px; }.explore-section { padding: 35px 0 55px; }.explore-section__head { align-items: flex-start; flex-direction: column; gap: 20px; }.explore-grid { gap: 24px; }.explore-card__art { height: 180px; padding: 15px; }.art-tasks > span { width: 100%; font-size: 11px; padding: 8px; }.view-comparison { gap: 15px; }.view-comparison p { font-size: 11px; } }
-@media (max-width: 440px) { .journal__main { padding-inline: 16px; }.article-head h1 { font-size: 46px; }.article-cover { padding-inline: 10px; }.article-cover__words { padding-inline: 12px; }.article-cover__words > p { font-size: 28px; }.reading-sidebar nav { column-gap: 10px; }.task-anatomy { padding: 20px; }.task-anatomy dl { grid-template-columns: 1fr 1fr; row-gap: 18px; }.task-anatomy h3 { font-size: 15px; }.overview-path { font-size: 11px; }.view-comparison { gap: 12px; }.view-comparison h3 { font-size: 13px; }.explore-grid { grid-template-columns: 1fr; }.explore-card__art { height: 205px; }.art-tasks > span { width: 70%; font-size: 12px; } }
+@media (max-width: 1050px) { .journal__main { padding: 110px 30px 0; }.article-cover { padding: 36px 25px 65px; min-height: 420px; gap: 20px; grid-template-columns: .65fr 1.3fr; }.article-cover__words > p { font-size: 29px; }.reading-layout { grid-template-columns: 190px minmax(0, 1fr); gap: 40px; }.project-example__badge { display: none; } }
+@media (max-width: 760px) { .journal__main { padding: 95px 20px 0; }.article-head h1 { font-size: clamp(44px, 9vw, 65px); }.article-head__lead { font-size: 15px; }.article-cover { grid-template-columns: 1fr; padding: 30px 22px 65px; gap: 30px; }.article-cover__words > p { font-size: 32px; }.article-cover__demo { transform: none; }.reading-layout { grid-template-columns: 1fr; gap: 35px; margin: 45px 0 65px; }.article-section { padding: 40px 0; scroll-margin-top: 85px; }.article-section h2 { font-size: 29px; }.article-section p { font-size: 14px; }.article-section blockquote { font-size: 19px; padding-left: 18px; }.explore-section { padding: 35px 0 55px; }.explore-section__head { align-items: flex-start; flex-direction: column; gap: 20px; }.explore-grid { gap: 24px; }.explore-card__art { height: 180px; padding: 15px; }.art-tasks > span { width: 100%; font-size: 11px; padding: 8px; }.view-comparison { gap: 15px; }.view-comparison p { font-size: 11px; } }
+@media (max-width: 440px) { .journal__main { padding-inline: 16px; }.article-head h1 { font-size: 46px; }.article-cover { padding-inline: 10px; }.article-cover__words { padding-inline: 12px; }.article-cover__words > p { font-size: 28px; }.task-anatomy { padding: 20px; }.task-anatomy dl { grid-template-columns: 1fr 1fr; row-gap: 18px; }.task-anatomy h3 { font-size: 15px; }.overview-path { font-size: 11px; }.view-comparison { gap: 12px; }.view-comparison h3 { font-size: 13px; }.explore-grid { grid-template-columns: 1fr; }.explore-card__art { height: 205px; }.art-tasks > span { width: 70%; font-size: 12px; } }
 </style>
