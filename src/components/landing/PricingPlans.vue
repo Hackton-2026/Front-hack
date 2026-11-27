@@ -23,7 +23,7 @@ const ctaLabel = (p) => (user.value && p.month ? 'Assinar' : p.cta)
       <div class="toggle" role="group" aria-label="Período de cobrança">
         <span class="toggle__thumb" :class="{ right: yearly }" aria-hidden="true" />
         <button type="button" :aria-pressed="!yearly" @click="yearly = false">Mensal</button>
-        <button type="button" :aria-pressed="yearly" @click="yearly = true">Anual <em>até −20%</em></button>
+        <button type="button" :aria-pressed="yearly" @click="yearly = true">Anual <em>−20%</em></button>
       </div>
     </div>
 
