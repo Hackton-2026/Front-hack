@@ -2,7 +2,7 @@ import { BLOG_POSTS } from './blog.js'
 
 export const SITE_NAME = 'Novexo'
 export const SITE_ORIGIN = 'https://www.novexo.cloud'
-export const DEFAULT_IMAGE = `${SITE_ORIGIN}/motion/projetos-poster.jpg`
+export const DEFAULT_IMAGE = `${SITE_ORIGIN}/og-image.jpg?v=1`
 
 export const HOME_SEO = {
   path: '/',
