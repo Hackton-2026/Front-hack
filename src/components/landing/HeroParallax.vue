@@ -19,11 +19,13 @@ function parallax() {
   frame = 0
   const el = hero.value
   if (!el) return
-  const s = Math.min(Math.max(-el.getBoundingClientRect().top, 0), el.offsetHeight - innerHeight)
+  const max = Math.max(1, el.offsetHeight - innerHeight)
+  const s = Math.min(Math.max(-el.getBoundingClientRect().top, 0), max)
   for (const layer of layers) {
     layer.style.transform = `translate3d(0, ${(-s * layer.dataset.speed).toFixed(1)}px, 0)`
   }
-  el.style.setProperty('--text-fade', Math.max(0, 1 - s / (innerHeight * 0.4)).toFixed(3))
+  el.style.setProperty('--text-fade', Math.max(0, 1 - s / (innerHeight * 0.55)).toFixed(3))
+  el.style.setProperty('--bottom-fade', Math.max(0, (s / max - 0.55) / 0.45).toFixed(3))
 }
 const onScroll = () => { frame ||= requestAnimationFrame(parallax) }
 
@@ -71,8 +73,9 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.hero { position: relative; height: 178vh; height: 178svh; }
+.hero { position: relative; height: 200vh; height: 200svh; }
 .hero__stick { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: #000; }
+.hero__stick::after { content: ''; position: absolute; inset: auto 0 0; z-index: 5; height: 26vh; pointer-events: none; background: linear-gradient(180deg, transparent 0%, #000 100%); opacity: var(--bottom-fade, 0); }
 .hero__sky, .hero__hill, .hero__inner { will-change: transform; }
 .hero__sky {
   position: absolute;
