@@ -27,12 +27,6 @@ export const BLOG_POSTS = [
           'O Novexo é o carro-chefe da Novexo Inc: uma plataforma unificada que reúne tarefas, quadros, calendário, cronograma Gantt, ciclos, wiki colaborativa, chat por projeto, integrações com WhatsApp e Google Meet, além de API aberta e webhooks para desenvolvedores.',
           'Seguimos evoluindo o ecossistema da Novexo Inc com ciclos curtos de engenharia, ouvindo de perto quem usa a ferramenta todos os dias. Nosso compromisso é manter uma base transparente, segura e acessível, construída no Brasil com padrão global de qualidade.',
         ],
-        callout: {
-          eyebrow: 'Site oficial da Novexo Inc',
-          text: 'Quer acompanhar novidades institucionais, projetos do grupo, cultura de engenharia e próximos lançamentos da empresa? Visite a página oficial da Novexo Inc.',
-          href: 'https://official.novexo.cloud',
-          label: 'Acessar official.novexo.cloud',
-        },
       },
     ],
     cta: {
@@ -131,7 +125,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'arquitetura-em-tempo-real-no-novexo', category: 'Engenharia', date: '2026-11-16', art: 'orbit',
+    slug: 'arquitetura-em-tempo-real-no-novexo', category: 'Engenharia', date: '2026-11-16', art: 'wiki',
     title: 'Por baixo do capô: como tornamos o quadro e o chat instantâneos.',
     excerpt: 'Os bastidores da engenharia da Novexo Inc para eliminar latência no drag-and-drop, otimizar autenticação na borda e sincronizar eventos em tempo real.',
     coverLine: ['Milissegundos', 'importam muito.'],
@@ -188,7 +182,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'cronograma-gantt-e-dependencias', category: 'Guias', date: '2026-11-10', art: 'calendar',
+    slug: 'cronograma-gantt-e-dependencias', category: 'Guias', date: '2026-11-10', art: 'tasks',
     title: 'Gantt sem planilhas quebradas: enxergue dependências antes do atraso.',
     excerpt: 'Quando uma entrega bloqueia outra, ver início, duração e relações na linha do tempo evita surpresas na reta final.',
     coverLine: ['Do início ao fim,', 'sem surpresas.'],
@@ -216,7 +210,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'chat-por-projeto-sem-ruido', category: 'Equipes', date: '2026-11-06', art: 'team',
+    slug: 'chat-por-projeto-sem-ruido', category: 'Equipes', date: '2026-11-06', art: 'notes',
     title: 'Chat conectado ao projeto: o fim das decisões perdidas no grupo.',
     excerpt: 'Conversar ao lado do quadro e das tarefas reduz interrupções, mantém o assunto focado e facilita retomar qualquer decisão.',
     coverLine: ['Conversa certa,', 'no lugar certo.'],
@@ -244,7 +238,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'integrando-novexo-com-whatsapp-e-webhooks', category: 'Produto', date: '2026-11-02', art: 'tasks',
+    slug: 'integrando-novexo-com-whatsapp-e-webhooks', category: 'Produto', date: '2026-11-02', art: 'orbit',
     title: 'WhatsApp, Google Meet e Webhooks: o Novexo conectado à sua rotina.',
     excerpt: 'Receba avisos essenciais no celular, crie reuniões em um clique e integre eventos do workspace aos sistemas da sua empresa.',
     coverLine: ['Tudo conectado,', 'no seu fluxo.'],

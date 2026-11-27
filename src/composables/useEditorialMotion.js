@@ -49,7 +49,8 @@ export function useEditorialMotion(root, { page, items } = {}) {
     }
 
     const intro = gsap.timeline({ defaults: { duration: DUR.mid, ease: EASE.out, clearProps: 'transform,opacity,visibility' } })
-    if (!isBlog) intro.from(select('.app-breadcrumbs, .breadcrumbs'), { y: 12, autoAlpha: 0 }, 0)
+    const crumbs = select('.app-breadcrumbs, .breadcrumbs')
+    if (crumbs.length) intro.from(crumbs, { y: 12, autoAlpha: 0 }, 0)
     const introContent = isBlog ? [] : select('.article-head__lead, .article-head__byline')
     if (introContent.length) {
       intro.from(introContent, {
