@@ -207,13 +207,13 @@ onBeforeUnmount(() => (open.value = false))
 .nvx-cal__nav {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
-  border: 0;
-  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line, rgb(255 255 255 / 0.12));
+  border-radius: 7px;
   background: none;
-  color: var(--muted, #9b958e);
-  font-size: 17px;
+  color: var(--text, #f8f8f8);
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
 }

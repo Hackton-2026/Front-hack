@@ -28,7 +28,7 @@ const TITLES = Object.fromEntries(GROUPS.flatMap((g) => g.tabs))
 const THEMES = [['light', 'Claro'], ['dark', 'Escuro'], ['auto', 'Auto']]
 const ACCENTS = [
   ['Laranja', '#e56515'], ['Roxo', '#7b68ee'], ['Azul', '#3b82f6'], ['Rosa', '#ec4899'], ['Violeta', '#a855f7'],
-  ['Anil', '#6366f1'], ['Azul-petróleo', '#0d9488'], ['Bronze', '#b7791f'], ['Menta', '#34d399'],
+  ['Rubi', '#ef4444'], ['Azul-petróleo', '#0d9488'], ['Bronze', '#b7791f'], ['Menta', '#34d399'],
 ]
 const PREF_TOGGLES = [
   ['contrast', 'Alto contraste', 'Texto e bordas mais fortes.'],
@@ -364,7 +364,7 @@ async function onImport(e) {
             <div class="actions">
               <GooeyButton type="submit" variant="primary" :disabled="savingProfile"><ArcLoader v-if="savingProfile" />{{ savingProfile ? 'Salvando…' : 'Salvar perfil' }}</GooeyButton>
               <RouterLink v-if="!user" to="/login?next=/ajustes" class="link">Entrar</RouterLink>
-              <button v-else type="button" class="link" @click="logout">Sair da conta</button>
+              <button v-else type="button" class="logout-btn" @click="logout">Sair da conta</button>
             </div>
           </form>
         </template>
@@ -605,7 +605,7 @@ async function onImport(e) {
             <form v-if="isAdmin" class="row" @submit.prevent="addHoliday">
               <AppDateInput v-model="holiday.date" placeholder="Data da folga" aria-label="Data da folga" />
               <input v-model="holiday.name" placeholder="Nome (ex.: Natal)" aria-label="Nome da folga" />
-              <button type="submit" class="pg-btn">Adicionar</button>
+              <button type="submit" class="pg-btn primary">Adicionar</button>
             </form>
             <ul v-if="schedule.holidays.length" class="rows">
               <li v-for="h in schedule.holidays" :key="h.date + h.name"><span class="grow">{{ fmtDate(h.date) }}, {{ h.name }}</span><button v-if="isAdmin" type="button" class="link rm" @click="setSetting('schedule', 'holidays', schedule.holidays.filter((x) => x !== h))">Remover</button></li>
@@ -727,6 +727,13 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
   overscroll-behavior: contain;
   padding-right: 0.4rem;
   scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.tabs::-webkit-scrollbar, .panel::-webkit-scrollbar { width: 6px; }
+.tabs::-webkit-scrollbar-track, .panel::-webkit-scrollbar-track { background: transparent; }
+.tabs::-webkit-scrollbar-thumb, .panel::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--line-strong); }
+.tabs::-webkit-scrollbar-thumb:hover, .panel::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+.tabs::-webkit-scrollbar-button, .panel::-webkit-scrollbar-button { display: none; width: 0; height: 0;
 }
 .tabs__group {
   display: flex;
@@ -789,6 +796,7 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
   border-radius: 14px;
   background: var(--surface);
   scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
 }
 .panel__head {
   display: flex;
@@ -821,6 +829,8 @@ h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text);
 .hint code { padding: 0.1rem 0.35rem; border-radius: 5px; background: var(--bg); }
 .muted { color: var(--muted); }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.logout-btn { margin-left: auto; padding: 0.45rem 0.9rem; border: 1px solid var(--line-strong); border-radius: 8px; background: none; font: 500 13px/1.2 inherit; color: var(--muted); cursor: pointer; transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease; }
+.logout-btn:hover { border-color: rgb(255 91 77 / 0.55); background: rgb(255 91 77 / 0.1); color: var(--danger, #ff8a80); }
 .link { padding: 0; border: 0; background: none; font-size: 13.5px; color: var(--accent-soft); text-decoration: none; cursor: pointer; }
 .link:hover { text-decoration: underline; }
 

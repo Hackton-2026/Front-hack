@@ -81,7 +81,7 @@ const RAIL = [
 ]
 const rail = computed(() => RAIL.filter((r) => !r.area || state.settings.products?.[r.area] !== false))
 const inProjects = computed(() => route.meta.area === 'work' && route.path !== '/meu-trabalho')
-const isActive = (r) => (r.tree ? inProjects.value : r.to === '/meu-trabalho' ? route.path === r.to : route.meta.area === r.area)
+const isActive = (r) => (r.tree ? route.path === '/projetos' : r.to === '/meu-trabalho' ? route.path === r.to : route.meta.area === r.area)
 const ROLE_NAMES = { owner: 'Dono', admin: 'Admin', member: 'Membro', limited: 'Membro limitado', guest: 'Convidado' }
 const roleName = computed(() => ROLE_NAMES[state.members.find((m) => m.id === state.me)?.role] || 'Membro')
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`

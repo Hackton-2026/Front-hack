@@ -204,7 +204,7 @@ onMounted(() => {
               <header class="col__head">
                 <div class="col__title">
                   <StatusBadge :status="c.id" />
-                  <span v-if="cellTasks.length || c.limit" class="count" :class="{ over: c.limit && c.tasks.length > c.limit }" :title="c.limit ? 'Itens / limite' : 'Itens'">{{ cellTasks.length }}<template v-if="c.limit"> / {{ c.limit }}</template></span>
+                  <span class="count" :class="{ over: c.limit && c.tasks.length > c.limit, 'is-zero': !cellTasks.length && !c.limit }" :title="c.limit ? 'Itens / limite' : 'Itens'">{{ cellTasks.length }}<template v-if="c.limit"> / {{ c.limit }}</template></span>
                   <span v-if="c.lateCount && row.isFirst" class="chip late" :title="`${c.lateCount} atrasado(s)`"><AppIcon name="calendar" :size="11" />{{ c.lateCount }}</span>
                   <div class="rel push">
                     <button type="button" class="pg-icon" :aria-label="`Opções de ${c.name}`" :aria-expanded="menu === c.id + row.lane.id" @click.stop="menu = menu === c.id + row.lane.id ? '' : c.id + row.lane.id"><AppIcon name="more" :size="15" /></button>
@@ -288,7 +288,7 @@ onMounted(() => {
 .lane__head { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font: 600 13px/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .lane__head i { width: 9px; height: 9px; border-radius: 3px; }
 .board { display: grid; gap: 0.85rem; align-items: start; }
-.col { position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-height: 10rem; padding: 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); contain: layout style; transition: border-color 0.15s ease, background 0.15s ease; }
+.col { position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-height: 10rem; padding: 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 55%, var(--surface)); contain: layout style; transition: border-color 0.15s ease, background 0.15s ease; }
 .col.is-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .col.is-full { box-shadow: inset 0 0 0 1px rgb(255 91 77 / 0.45); }
 .col.is-collapsed { padding: 0; }
@@ -302,9 +302,10 @@ onMounted(() => {
 .col__bar { height: 3px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .col__bar i { display: block; height: 100%; background: var(--c); transition: width 0.25s ease-out; }
 .count { padding: 0 0.4rem; border-radius: 999px; background: var(--surface-2); font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.count.is-zero { opacity: 0.6; }
 .count.over { background: rgb(255 91 77 / 0.18); color: var(--danger, #ff8a80); }
 .empty { margin: 0; padding: 1rem 0.5rem; border: 1px dashed var(--line); border-radius: 8px; font-size: 12px; color: var(--muted); text-align: center; }
-.card { position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 0.65rem 0.75rem 0.65rem 0.85rem; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); cursor: grab; transition: border-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease; }
+.card { position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 0.65rem 0.75rem 0.65rem 0.85rem; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); box-shadow: 0 2px 6px rgb(0 0 0 / 0.16); cursor: grab; transition: border-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease; }
 .card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--p); }
 .kb:not(.is-dragging-any) .card:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--line-strong)); transform: translateY(-1px); }
 .card:active { cursor: grabbing; }
