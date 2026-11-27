@@ -6,6 +6,8 @@ import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
+import AppFaq from '../components/landing/AppFaq.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 import { useContactMotion } from '../composables/useContactMotion'
 
 const route = useRoute()
@@ -14,11 +16,17 @@ const tabs = [
   { id: 'suporte', label: 'Dúvidas e suporte', icon: 'comment-alt' },
   { id: 'comercial', label: 'Para sua empresa', icon: 'briefcase' },
 ]
+const teamSizeOptions = [
+  '1 a 10 pessoas',
+  '11 a 50 pessoas',
+  '51 a 200 pessoas',
+  'Mais de 200 pessoas',
+]
 const selected = ref(route.query.assunto === 'comercial' ? 'comercial' : 'suporte')
 const commercial = computed(() => selected.value === 'comercial')
 const fields = reactive({ name: '', email: '', company: '', size: '', message: '' })
 const prepared = ref(false)
-const { revealFields, revealAnswer } = useContactMotion(root)
+const { revealFields } = useContactMotion(root)
 
 watch(() => route.query.assunto, value => { selected.value = value === 'comercial' ? 'comercial' : 'suporte' })
 watch(selected, async () => { prepared.value = false; await nextTick(); revealFields() })
@@ -118,13 +126,7 @@ onUnmounted(() => { document.title = previousTitle })
                 </div>
                 <div v-if="commercial" class="contact-field">
                   <label for="contact-size">Tamanho do time <span class="contact-field__optional">(opcional)</span></label>
-                  <div class="contact-select">
-                    <select id="contact-size" v-model="fields.size" name="size">
-                      <option disabled value="">Selecione uma opção</option>
-                      <option>1 a 10 pessoas</option><option>11 a 50 pessoas</option><option>51 a 200 pessoas</option><option>Mais de 200 pessoas</option>
-                    </select>
-                    <FlaticonIcon name="angle-small-down" :size="18" />
-                  </div>
+                  <AppSelect id="contact-size" v-model="fields.size" :options="teamSizeOptions" placeholder="Selecione uma opção" size="lg" block />
                 </div>
                 <div class="contact-field contact-field--full">
                   <label for="contact-message">{{ commercial ? 'O que você procura para seu time?' : 'Sua mensagem' }} <span aria-hidden="true">*</span></label>
@@ -145,11 +147,8 @@ onUnmounted(() => { document.title = previousTitle })
         <div class="contact-faq__heading" data-contact-reveal>
           <h2 id="contact-faq-title">Talvez sua resposta<br>esteja aqui.</h2>
         </div>
-        <div class="contact-faq__list">
-          <details v-for="item in questions" :key="item.question" data-contact-reveal @toggle="revealAnswer">
-            <summary><span>{{ item.question }}</span><FlaticonIcon name="plus" :size="16" /></summary>
-            <div class="contact-faq__answer"><p>{{ item.answer }}</p><RouterLink v-if="item.link" :to="item.link">{{ item.label }} <FlaticonIcon name="arrow-up-right" :size="12" /></RouterLink></div>
-          </details>
+        <div class="contact-faq__list" data-contact-reveal>
+          <AppFaq :items="questions" />
         </div>
       </section>
     </main>
@@ -160,7 +159,7 @@ onUnmounted(() => { document.title = previousTitle })
 <style scoped>
 .contact { --contact-line: rgb(255 255 255 / .14); }
 .contact-main { max-width: 1320px; margin-inline: auto; padding: 166px 48px 32px; }
-.contact :is(a, button, input, textarea, select, summary):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 5px; }
+.contact :is(a, button, input, textarea, summary):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 5px; }
 .contact-skip { position: fixed; z-index: 100; top: 12px; left: 20px; padding: 12px 20px; background: #fff; color: #000; transform: translateY(-170%); }
 .contact-skip:focus { transform: none; }
 .contact-hero { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(40px, 6vw, 90px); align-items: start; }
@@ -191,35 +190,19 @@ onUnmounted(() => { document.title = previousTitle })
 .contact-field label { display: block; margin-bottom: 9px; color: #d5cec5; font-size: 11px; }
 .contact-field label > span:not(.contact-field__optional) { color: var(--lp-orange-soft); margin-left: 2px; }
 .contact-field__optional { color: #989188; font-size: 11px; }
-.contact-field :is(input, textarea, select) { display: block; width: 100%; min-height: 45px; padding: 12px 13px; border: 1px solid #ffffff26; border-radius: 7px; background: #ffffff03; color: #f2ece6; caret-color: var(--lp-orange-soft); font: 400 12px/1.5 var(--lp-sans); transition: border-color .2s, background .2s; }
+.contact-field :is(input, textarea) { display: block; width: 100%; min-height: 45px; padding: 12px 13px; border: 1px solid #ffffff26; border-radius: 7px; background: #ffffff03; color: #f2ece6; caret-color: var(--lp-orange-soft); font: 400 12px/1.5 var(--lp-sans); transition: border-color .2s, background .2s; color-scheme: dark; }
+.contact-field :deep(.sel) { min-height: 45px; height: 45px; border-radius: 7px; border-color: #ffffff26; background: #ffffff03; font-size: 12.5px; }
 .contact-field :is(input, textarea)::placeholder { color: #8f8880; opacity: 1; }
-.contact-field :is(input, textarea, select):focus-visible { outline: none; border-color: #fba45c99; background: #ffffff06; box-shadow: 0 0 0 2px #fba45c12; }
-.contact-field :is(input, textarea, select) { color-scheme: dark; }
+.contact-field :is(input, textarea):focus-visible { outline: none; border-color: #fba45c99; background: #ffffff06; box-shadow: 0 0 0 2px #fba45c12; }
 .contact-field :is(input, textarea):is(:autofill, :-webkit-autofill) { -webkit-text-fill-color: #f2ece6; caret-color: var(--lp-orange-soft); box-shadow: inset 0 0 0 1000px #17120e; }
 .contact-field :is(input, textarea):is(:autofill, :-webkit-autofill):focus { border-color: #fba45c99; box-shadow: inset 0 0 0 1000px #17120e, 0 0 0 2px #fba45c12; }
 .contact-field textarea { min-height: 132px; resize: vertical; max-height: 360px; }
-.contact-field select { appearance: none; padding-right: 32px; color-scheme: dark; }
-.contact-field select option { background: #17120e; color: #f2ece6; }
-.contact-field select option:disabled { color: #8f8880; }
-.contact-field select option:checked { background: #3b2414; color: var(--lp-orange-soft); }
-.contact-select { position: relative; }
-.contact-select > .flaticon { position: absolute; right: 11px; top: 14px; pointer-events: none; color: #aaa095; }
 .contact-submit { display: flex; flex-direction: column; align-items: flex-start; gap: 13px; margin-top: 25px; }
 .contact-submit > p { max-width: 320px; margin: 0; color: #9c9389; font-size: 11px; line-height: 1.7; }
 .contact-feedback { margin: 18px 0 0; padding-top: 15px; border-top: 1px solid var(--contact-line); color: #d5c4b3; font-size: 12px; line-height: 1.7; }
 .contact-feedback a { color: var(--lp-orange-soft); }
 .contact-faq { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(40px, 6vw, 90px); margin-top: 115px; padding-top: 55px; border-top: 1px solid var(--contact-line); }
 .contact-faq h2 { margin: 0; color: #eae4dd; font: 500 clamp(30px, 3vw, 40px)/1.12 var(--lp-hero); letter-spacing: -.055em; }
-.contact-faq details { border-bottom: 1px solid var(--contact-line); }
-.contact-faq summary { list-style: none; display: flex; gap: 18px; align-items: center; min-height: 78px; padding: 19px 0; color: #e3ddd5; font-size: 13px; line-height: 1.6; cursor: pointer; }
-.contact-faq summary::-webkit-details-marker { display: none; }
-.contact-faq summary > span { flex: 1; }
-.contact-faq summary > .flaticon { color: var(--lp-orange-soft); transition: transform .25s; }
-.contact-faq details[open] summary > .flaticon { transform: rotate(45deg); }
-.contact-faq__answer { padding: 0 28px 25px 0; }
-.contact-faq__answer p { margin: 0; color: #aaa198; font-size: 12px; line-height: 1.9; }
-.contact-faq__answer a { display: inline-flex; gap: 10px; align-items: center; margin-top: 15px; color: var(--lp-orange-soft); font-size: 12px; text-decoration: none; }
-.contact-faq__answer a:hover { text-decoration: underline; }
 @media (max-width: 1050px) {
   .contact-main { padding: 130px 30px 25px; }
   .contact-hero, .contact-faq { grid-template-columns: .85fr 1.15fr; gap: 35px; }
@@ -242,7 +225,7 @@ onUnmounted(() => { document.title = previousTitle })
   .contact-shortcut > span:nth-child(2) > span { font-size: 11px; }
   .contact-panel { padding-inline: 25px; }
   .contact-tabs button { font-size: 12px; gap: 9px; }
-  .contact-field :is(input, textarea, select) { font-size: 16px; }
+  .contact-field :is(input, textarea) { font-size: 16px; }
   .contact-faq { margin-top: 75px; padding-top: 35px; gap: 18px; }
 }
 @media (max-width: 440px) {
@@ -254,7 +237,6 @@ onUnmounted(() => { document.title = previousTitle })
   .contact-fields { grid-template-columns: 1fr; gap: 18px; }
   .contact-panel__heading h2 { font-size: 23px; }
   .contact-submit :deep(.gb) { width: 100%; }
-  .contact-faq summary { gap: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .contact :is(*, *::before, *::after) { transition: none !important; }

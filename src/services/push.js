@@ -58,5 +58,5 @@ export async function disablePush() {
 export async function onForegroundPush(handler) {
   if (!pushConfigured || !pushSupported || !savedToken()) return
   const { fcm, instance } = await firebase()
-  fcm.onMessage(instance, ({ data = {} }) => handler(data))
+  return fcm.onMessage(instance, ({ data = {} }) => handler(data))
 }

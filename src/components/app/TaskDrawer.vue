@@ -6,6 +6,7 @@ import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import Avatars from './Avatars.vue'
 import AppSelect from './AppSelect.vue'
+import AppDateInput from './AppDateInput.vue'
 import StatusBadge from './StatusBadge.vue'
 import MdEditor from './MdEditor.vue'
 import ReactionBar from './ReactionBar.vue'
@@ -382,8 +383,8 @@ function destroy() {
               </button>
             </div>
           </div>
-          <label class="cell" title="Data de início"><AppIcon name="calendar" :size="15" /><input type="date" :value="task.start || ''" :max="task.due || undefined" aria-label="Data de início" @change="set({ start: $event.target.value || null })" /></label>
-          <label class="cell" title="Prazo"><AppIcon name="calendar" :size="15" /><input type="date" :value="task.due || ''" :min="task.start || undefined" aria-label="Prazo" @change="set({ due: $event.target.value || null })" /></label>
+          <div class="cell" title="Data de início"><AppDateInput size="sm" block :model-value="task.start || ''" placeholder="Início" aria-label="Data de início" @change="(v) => set({ start: v || null })" /></div>
+          <div class="cell" title="Prazo"><AppDateInput size="sm" block :model-value="task.due || ''" placeholder="Prazo" aria-label="Prazo" @change="(v) => set({ due: v || null })" /></div>
         </div>
 
         <div class="sec">
@@ -581,6 +582,7 @@ function destroy() {
 .title { display: block; width: 100%; margin-top: 0.5rem; padding: 0; border: 0; background: none; font: 600 1.375rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); resize: none; field-sizing: content; outline: none; }
 .bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); border-block: 1px solid var(--line); position: relative; z-index: 6; } .cell { display: flex; align-items: center; gap: 0.3rem; min-width: 0; padding: 0.35rem 0.5rem; color: var(--muted); }
 .cell + .cell { border-left: 1px solid var(--line); }
+.cell :deep(.nvx-date) { border-color: transparent; background: none; padding-inline: 0.35rem; }
 .cell input { flex: 1; min-width: 0; padding: 0 0.2rem; }
 .cell__btn { display: flex; flex: 1; align-items: center; gap: 0.4rem; min-width: 0; height: 30px; padding: 0 0.2rem; border: 0; border-radius: 6px; background: none; font-size: 13px; color: var(--text); cursor: pointer; }
 .cell__btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

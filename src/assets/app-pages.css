@@ -11,6 +11,10 @@
 .app .pg-btn:hover { border-color: var(--accent); }
 .app .pg-btn.primary { border-color: #f8f8f8; background: #f8f8f8; color: #000; }
 .app .pg-btn.primary:hover { border-color: var(--accent); background: #fff; }
+.app.is-light .pg-btn.primary { border-color: var(--text); background: var(--text); color: var(--bg); }
+.app.is-light .pg-btn.primary:hover { border-color: var(--accent); background: var(--accent); color: #fff; }
+.app .md input[type='checkbox'] { appearance: none; width: 15px; height: 15px; margin: 0 0.4rem 0 0; vertical-align: -2px; border: 1.5px solid var(--line-strong); border-radius: 4px; background: var(--bg); cursor: pointer; transition: background 0.14s ease, border-color 0.14s ease; }
+.app .md input[type='checkbox']:checked { border-color: var(--accent); background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.2 6.2L4.8 8.8L9.8 3.3' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/10px no-repeat; }
 .app .pg-icon { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
 .app .pg-icon:hover, .app .pg-icon[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
 .app .pg-icon.is-on { color: var(--accent-soft); }

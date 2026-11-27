@@ -9,6 +9,7 @@ import AppIcon from '../components/app/AppIcon.vue'
 import ProjectIcon from '../components/app/ProjectIcon.vue'
 import Avatars from '../components/app/Avatars.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import AppCheckbox from '../components/app/AppCheckbox.vue'
 import TaskListView from '../components/app/TaskListView.vue'
 import TaskBoard from '../components/app/TaskBoard.vue'
 import TaskCalendar from '../components/app/TaskCalendar.vue'
@@ -235,8 +236,8 @@ onMounted(() => moveInk(false))
               </div>
             </template>
             <div class="add-foot">
-              <label><input v-model="asPrivate" type="checkbox" /> Visualização privada</label>
-              <label><input v-model="asPinned" type="checkbox" /> Fixar na barra</label>
+              <AppCheckbox v-model="asPrivate" size="sm" label="Visualização privada" />
+              <AppCheckbox v-model="asPinned" size="sm" label="Fixar na barra" />
             </div>
           </div></Transition>
         </div>
@@ -272,12 +273,12 @@ onMounted(() => moveInk(false))
       <input v-model="pickQ" type="search" placeholder="Buscar pelo nome ou código" aria-label="Buscar itens do projeto" />
       <ul v-if="candidates.length" class="pick">
         <li v-for="t in candidates" :key="t.id">
-          <label>
-            <input v-model="picked" type="checkbox" :value="t.id" />
+          <AppCheckbox v-model="picked" :value="t.id" size="sm" class="pick__row">
+
             <span class="pick__code">{{ t.code }}</span>
             <span class="pick__title">{{ t.title }}</span>
             <small v-if="t.cycle" class="pick__from">em {{ cycleName(t.cycle) }}</small>
-          </label>
+          </AppCheckbox>
         </li>
       </ul>
       <p v-else class="pick__empty">{{ pickQ ? `Nenhum item com "${pickQ}".` : 'Todos os itens abertos do projeto já estão neste ciclo.' }}</p>

@@ -23,6 +23,7 @@ const q = ref('')
 const sort = ref('updated')
 const menu = ref(null)
 const root = ref(null)
+const adding = ref(false)
 
 const inTab = (pg, t) => (t === 'archived' ? pg.archived : !pg.archived && (t === 'private') === pg.is_private)
 const mine = computed(() => state.pages.filter((pg) => pg.project === pid.value))
@@ -34,8 +35,14 @@ const list = computed(() => {
 const when = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 
 async function add() {
-  const pg = await createItem('page', { project: pid.value, title: '', body: '', is_private: tab.value === 'private' })
-  if (pg) router.push(`/projetos/${pid.value}/paginas/${pg.id}`)
+  if (adding.value) return
+  adding.value = true
+  try {
+    const pg = await createItem('page', { project: pid.value, title: '', body: '', is_private: tab.value === 'private' })
+    if (pg) router.push(`/projetos/${pid.value}/paginas/${pg.id}`)
+  } finally {
+    adding.value = false
+  }
 }
 async function set(pg, fields) {
   menu.value = null
@@ -67,7 +74,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
       <div class="pg-bar__right">
         <label class="pg-search"><AppIcon name="search" :size="14" /><input v-model="q" placeholder="Buscar páginas" aria-label="Buscar páginas" /></label>
         <AppSelect v-model="sort" :options="[{ value: 'updated', label: 'Modificadas' }, { value: 'created', label: 'Criadas' }, { value: 'name', label: 'Nome' }]" size="sm" aria-label="Ordenar" />
-        <button type="button" class="pg-btn primary" @click="add"><AppIcon name="plus" :size="14" />Adicionar página</button>
+        <button type="button" class="pg-btn primary" :disabled="adding" @click="add"><AppIcon name="plus" :size="14" />{{ adding ? 'Criando…' : 'Adicionar página' }}</button>
       </div>
     </div>
 
@@ -100,7 +107,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
       <span class="pg-empty__art"><AppIcon name="page" :size="36" /></span>
       <h2>{{ q ? 'Nenhuma página com esse nome' : tab === 'archived' ? 'Nada arquivado' : tab === 'private' ? 'Nenhuma página privada' : 'Documente o projeto em páginas' }}</h2>
       <p>Páginas guardam especificações, atas e decisões junto das tarefas. As privadas só você vê.</p>
-      <button v-if="!q && tab !== 'archived'" type="button" class="pg-btn primary" @click="add"><AppIcon name="plus" :size="14" />Criar página</button>
+      <button v-if="!q && tab !== 'archived'" type="button" class="pg-btn primary" :disabled="adding" @click="add"><AppIcon name="plus" :size="14" />{{ adding ? 'Criando…' : 'Criar página' }}</button>
     </div>
   </div>
   <div v-else class="pg-empty"><h2>Esse projeto não existe mais.</h2><RouterLink to="/projetos" class="pg-btn">Ver projetos</RouterLink></div>

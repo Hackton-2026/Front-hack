@@ -18,6 +18,7 @@ const { complete } = useOnboarding()
 const name = ref('')
 const color = ref(COLORS[0])
 const error = ref('')
+const creating = ref(false)
 const root = ref(null)
 const q = ref('')
 const filter = ref('all')
@@ -48,11 +49,17 @@ const fmt = (d) => (d === today() ? 'hoje' : d === day(1) ? 'amanhã' : new Date
 const daysLeft = (c) => Math.max(0, Math.round((new Date(`${c.end_date}T12:00`) - new Date(`${today()}T12:00`)) / 864e5))
 
 async function create() {
+  if (creating.value) return
   if (!name.value.trim()) { error.value = 'Dê um nome ao projeto.'; return }
-  const p = await createProject(name.value.trim(), color.value)
-  if (!p) return
-  complete('project')
-  router.push(`/projetos/${p.id}`)
+  creating.value = true
+  try {
+    const p = await createProject(name.value.trim(), color.value)
+    if (!p) return
+    complete('project')
+    router.push(`/projetos/${p.id}`)
+  } finally {
+    creating.value = false
+  }
 }
 async function animate() {
   await nextTick()
@@ -109,7 +116,7 @@ onMounted(animate)
           <button v-for="c in COLORS" :key="c" type="button" role="radio" :aria-checked="color === c" :style="{ background: c }" :aria-label="`Cor ${c}`" @click="color = c" />
         </div>
         <p v-if="error" class="error">{{ error }}</p>
-        <GooeyButton type="submit" variant="primary">Criar projeto</GooeyButton>
+        <GooeyButton type="submit" variant="primary" :disabled="creating">{{ creating ? 'Criando…' : 'Criar projeto' }}</GooeyButton>
       </form>
     </div>
 

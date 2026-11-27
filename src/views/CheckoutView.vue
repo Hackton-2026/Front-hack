@@ -9,6 +9,7 @@ import { brandOf, brl, cardLength, cpfValid, digits, expValid, formatCard, forma
 import { PLANS } from '../components/landing/plans'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
+import AppSelect from '../components/app/AppSelect.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -132,7 +133,7 @@ const cardErrors = computed(() => ({
   cvv: digits(card.value.cvv).length === brand.value.cvv ? '' : 'CVV inválido.',
 }))
 const cardTouched = ref({})
-const installmentOptions = computed(() => Array.from({ length: yearly.value ? cfg.value.max_installments : 1 }, (_, i) => i + 1))
+const installmentOptions = computed(() => Array.from({ length: yearly.value ? cfg.value.max_installments : 1 }, (_, i) => { const n = i + 1; return { value: n, label: `${n}x de ${brl(Math.round(total.value / n))}${n > 1 ? ' sem juros' : ''}` } }))
 const shownNumber = computed(() => {
   const groups = brand.value.groups
   const d = digits(card.value.number).padEnd(cardLength(brand.value), '•')
@@ -357,7 +358,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
                 <div class="row three">
                   <label class="f"><span>Validade</span><input :value="card.exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" @input="card.exp = formatExp($event.target.value); $event.target.value = card.exp" @blur="cardTouched.exp = true" /><small v-if="cardTouched.exp && cardErrors.exp">{{ cardErrors.exp }}</small></label>
                   <label class="f"><span>CVV</span><input :value="card.cvv" inputmode="numeric" autocomplete="cc-csc" :placeholder="brand.cvv === 4 ? '0000' : '000'" @input="card.cvv = digits($event.target.value).slice(0, brand.cvv); $event.target.value = card.cvv" @focus="flipped = true" @blur="flipped = false; cardTouched.cvv = true" /><small v-if="cardTouched.cvv && cardErrors.cvv">{{ cardErrors.cvv }}</small></label>
-                  <label class="f"><span>Parcelas</span><select v-model.number="card.installments" :disabled="!yearly"><option v-for="n in installmentOptions" :key="n" :value="n">{{ n }}x de {{ brl(Math.round(total / n)) }}{{ n > 1 ? ' sem juros' : '' }}</option></select></label>
+                  <label class="f"><span>Parcelas</span><AppSelect v-model="card.installments" :options="installmentOptions" :disabled="!yearly" size="lg" block /></label>
                 </div>
                 <GooeyButton type="submit" variant="primary" size="lg" block :disabled="busy"><ArcLoader v-if="busy" />{{ busy ? 'Processando…' : `Pagar ${brl(total)}` }}</GooeyButton>
               </form>

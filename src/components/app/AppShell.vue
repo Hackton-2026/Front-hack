@@ -21,8 +21,10 @@ import '../../assets/app-pages.css'
 
 const route = useRoute()
 const router = useRouter()
+const mobileNav = ref(false)
 // o + de Projetos cria projeto: abre a lista e põe o cursor no formulário de novo projeto
 async function newProject() {
+  mobileNav.value = false
   if (route.path !== '/projetos') await router.push('/projetos')
   await nextTick()
   const f = document.getElementById('novo-projeto')
@@ -99,7 +101,7 @@ function onKey(e) {
   if (!state.prefs.shortcuts && e.key !== 'Escape') return
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); ui.palette = !ui.palette }
   else if (!typing && e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && !ui.creating) { e.preventDefault(); newTask() }
-  else if (e.key === 'Escape') helpOpen.value = false
+  else if (e.key === 'Escape') { helpOpen.value = false; mobileNav.value = false }
 }
 function onClick(e) {
   if (!e.target.closest('.pop')) helpOpen.value = false
@@ -107,11 +109,13 @@ function onClick(e) {
 
 watch(() => route.path, async () => {
   ui.crumb = ''
-  if (reduced) return
+  mobileNav.value = false
   await nextTick()
-  const page = root.value?.querySelector('.main__scroll > *')
+  const scroller = root.value?.querySelector('.main__scroll')
+  if (scroller) scroller.scrollTop = 0
+  if (reduced) return
+  const page = scroller?.firstElementChild
   if (page) gsap.fromTo(page, { y: -8, opacity: 0 }, { y: 0, opacity: 1, duration: DUR.fast, ease: EASE.soft })
-  root.value.querySelector('.main__scroll').scrollTop = 0
 })
 
 watch(() => ui.taskId, (id) => typeof id === 'number' && touchRecent('task', id))
@@ -121,10 +125,14 @@ watch(() => route.path, (path) => {
 }, { immediate: true })
 
 let ctx
+let unsubPush
+let mounted = true
 const inboxTimer = setInterval(() => !document.hidden && state.loaded && refreshFeed(), 30000)
 onMounted(() => {
   load()
   onForegroundPush((data) => { useUi().toast(data.body ? `${data.title}: ${data.body}` : data.title); refreshFeed() })
+    .then((u) => { if (!mounted) u?.(); else unsubPush = u })
+    .catch(() => {})
   addEventListener('keydown', onKey)
   addEventListener('click', onClick)
   if (reduced) return
@@ -135,6 +143,8 @@ onMounted(() => {
   }, root.value)
 })
 onUnmounted(() => {
+  mounted = false
+  unsubPush?.()
   clearInterval(inboxTimer)
   ctx?.revert()
   removeEventListener('keydown', onKey)
@@ -146,10 +156,15 @@ onUnmounted(() => {
   <div
     ref="root"
     class="app"
-    :class="{ 'is-compact': state.prefs.density === 'compact', 'is-light': light, 'is-contrast': state.prefs.contrast, 'is-calm': state.prefs.calm, 'no-ids': !state.prefs.showIds, 'no-hand': !state.prefs.handCursor }"
+    :class="{ 'is-compact': state.prefs.density === 'compact', 'is-light': light, 'is-contrast': state.prefs.contrast, 'is-calm': state.prefs.calm, 'no-ids': !state.prefs.showIds, 'no-hand': !state.prefs.handCursor, 'nav-open': mobileNav }"
     :style="{ '--accent': state.prefs.accent }"
   >
+    <div v-if="mobileNav" class="rail-backdrop" aria-hidden="true" @click="mobileNav = false" />
+
     <header class="top">
+      <button type="button" class="icon-btn mob-menu" :aria-expanded="mobileNav" aria-label="Abrir navegação" @click="mobileNav = !mobileNav">
+        <AppIcon name="sidebar" :size="18" />
+      </button>
       <button type="button" class="search" aria-label="Buscar tarefas, projetos e documentos" @click="ui.palette = true">
         <AppIcon name="search" :size="15" />
         <span>Buscar tarefas, projetos e documentos</span>
@@ -309,7 +324,9 @@ onUnmounted(() => {
 .app :deep(::selection) { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
 kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radius: 4px; font: 500 11px/1.3 'Geist Mono', monospace; color: var(--muted); }
 
-.top { grid-area: top; position: relative; z-index: 70; display: flex; align-items: center; gap: 1rem; padding: 0 0.75rem 0 1rem; }
+.top { grid-area: top; position: relative; z-index: 70; display: flex; align-items: center; gap: 0.75rem; padding: 0 0.75rem 0 1rem; }
+.mob-menu { display: none; }
+.rail-backdrop { display: none; }
 .search { display: flex; align-items: center; gap: 0.5rem; flex: 0 1 26rem; margin: 0 auto; padding: 0 0.6rem; height: 30px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--muted); cursor: pointer; text-align: left; transition: border-color 0.2s var(--ease); }
 .search:hover { border-color: var(--line-strong); }
 .search span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -361,7 +378,6 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .me__text strong { font-size: 13.5px; font-weight: 600; }
 .me__switch { flex: none; color: var(--muted); }
 
-
 .main { grid-area: main; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--line); border-width: 1px 0 0 1px; border-radius: 10px 0 0 0; background: var(--bg); }
 .verify { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0; padding: 0.55rem 1.5rem; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); font-size: 13px; color: var(--text); }
 .verify strong { font-weight: 600; overflow-wrap: anywhere; }
@@ -387,17 +403,20 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 
 @media (max-width: 860px) {
   .app { --rail-w: 64px; }
-  .rail, .rail__main { align-items: center; padding-inline: 0.4rem; }
-  :is(.ws__text, .rail__label, .rail__add, .rail__sub, .me__text, .me__switch) { display: none; }
+  .mob-menu { display: grid; }
+  .app:not(.nav-open) .rail, .app:not(.nav-open) .rail__main { align-items: center; padding-inline: 0.4rem; }
+  .app:not(.nav-open) :is(.ws__text, .rail__label, .rail__add, .rail__sub, .me__text, .me__switch) { display: none; }
+  .app.nav-open .rail-backdrop { display: block; position: fixed; inset: 0; z-index: 75; background: rgb(0 0 0 / 0.5); }
+  .app.nav-open .rail { position: fixed; inset: 0 auto 0 0; z-index: 80; width: 256px; background: var(--bg); border-right: 1px solid var(--line); box-shadow: 12px 0 40px rgb(0 0 0 / 0.5); }
   .search { flex: 0 0 auto; margin: 0 auto 0 0; }
   .search :is(span, kbd) { display: none; }
-  .ws { margin-bottom: 0.75rem; padding: 0.25rem; }
-  .rail__item { padding: 0.55rem; }
-  .rail__foot .rail__row { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .rail__dock { position: static; }
-  .me { padding: 0.25rem; border-radius: 50%; }
+  .app:not(.nav-open) .ws { margin-bottom: 0.75rem; padding: 0.25rem; }
+  .app:not(.nav-open) .rail__item { padding: 0.55rem; }
+  .app:not(.nav-open) .rail__foot .rail__row { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .app:not(.nav-open) .rail__dock { position: static; }
+  .app:not(.nav-open) .me { padding: 0.25rem; border-radius: 50%; }
   .rail__item { position: relative; }
-  .rail__badge { position: absolute; top: 3px; right: 4px; min-width: 15px; height: 15px; padding: 0 3px; font-size: 9.5px; line-height: 15px; }
+  .app:not(.nav-open) .rail__badge { position: absolute; top: 3px; right: 4px; min-width: 15px; height: 15px; padding: 0 3px; font-size: 9.5px; line-height: 15px; }
   .me-wrap :deep(.acc__menu) { right: auto; width: 17.5rem; }
 }
 </style>

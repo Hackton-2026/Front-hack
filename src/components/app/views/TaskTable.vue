@@ -4,6 +4,7 @@ import { useWorkspace } from '../../../composables/useWorkspace'
 import { useUi } from '../../../composables/useUi'
 import Avatars from '../Avatars.vue'
 import AppSelect from '../AppSelect.vue'
+import AppDateInput from '../AppDateInput.vue'
 import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({ tasks: { type: Array, required: true } })
@@ -101,7 +102,7 @@ onBeforeUnmount(() => { pop.value = null })
               <Avatars v-if="t.assignees.length" :ids="t.assignees" /><AppIcon v-else name="user" :size="15" class="muted" />
             </button>
           </td>
-          <td><input type="date" :value="t.due || ''" :class="{ late: isOverdue(t) }" aria-label="Prazo" @change="updateTask(t, { due: $event.target.value || null })" /></td>
+          <td><AppDateInput size="sm" :model-value="t.due || ''" placeholder="—" :class="{ late: isOverdue(t) }" aria-label="Prazo" @change="(v) => updateTask(t, { due: v || null })" /></td>
           <td>
             <button type="button" class="pick pick--tags" aria-haspopup="dialog" :aria-expanded="pop?.kind === 'tags' && pop.id === t.id" :aria-label="`Etiquetas de ${t.title}`" @click="togglePop('tags', t, $event)">
               <template v-if="t.tags.length"><span v-for="tag in t.tags" :key="tag" class="etq">{{ tag }}</span></template>

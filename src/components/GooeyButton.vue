@@ -27,10 +27,11 @@ const COLORS = {
   dark: { fill: '#e56515', bg: '#000000' },
 }
 
+const root = ref(null)
 const canvas = ref(null)
 const ring = ref(null)
 const active = ref(false)
-let progress = 0, tween = 0, ringRaf = 0, angle = 140
+let progress = 0, tween = 0, ringRaf = 0, angle = 140, inView = true
 const canHover = matchMedia('(hover: hover)').matches
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -60,7 +61,7 @@ function draw() {
 
 function animateTo(target) {
   cancelAnimationFrame(tween)
-  if (reduced) { progress = target; return draw() }
+  if (reduced || document.documentElement.dataset.calm === 'on') { progress = target; return draw() }
   const from = progress, dur = target ? 1200 : 1080, start = performance.now()
   const step = (now) => {
     // o horário do rAF é o início do quadro e pode vir antes do performance.now() do start: t < 0 dava raio negativo no ellipse
@@ -77,30 +78,52 @@ const leave = () => { active.value = false; animateTo(0) }
 const pointerEnter = () => canHover && enter()
 const pointerLeave = () => canHover && leave()
 
-let resizeObs
+function startSpin() {
+  if (ringRaf || props.variant !== 'secondary' || !ring.value || reduced || !inView || document.hidden || document.documentElement.dataset.calm === 'on') return
+  const spin = () => {
+    if (!inView || document.hidden || document.documentElement.dataset.calm === 'on') { ringRaf = 0; return }
+    angle = (angle + 0.5) % 360
+    ring.value?.style.setProperty('--angle', `${angle}deg`)
+    ringRaf = requestAnimationFrame(spin)
+  }
+  ringRaf = requestAnimationFrame(spin)
+}
+function stopSpin() {
+  cancelAnimationFrame(ringRaf)
+  ringRaf = 0
+}
+const onVis = () => (document.hidden ? stopSpin() : startSpin())
+
+let resizeObs, io
 onMounted(() => {
   draw()
   resizeObs = new ResizeObserver(draw)
   resizeObs.observe(canvas.value.parentElement)
   if (props.variant === 'secondary' && ring.value && !reduced) {
-    const spin = () => {
-      angle = (angle + 0.5) % 360
-      ring.value?.style.setProperty('--angle', `${angle}deg`)
-      ringRaf = requestAnimationFrame(spin)
+    if ('IntersectionObserver' in window && root.value) {
+      io = new IntersectionObserver(([entry]) => {
+        inView = entry.isIntersecting
+        inView ? startSpin() : stopSpin()
+      })
+      io.observe(root.value)
+    } else {
+      startSpin()
     }
-    ringRaf = requestAnimationFrame(spin)
+    document.addEventListener('visibilitychange', onVis)
   }
 })
 watch(() => props.disabled, (d) => d && leave())
 onBeforeUnmount(() => {
   cancelAnimationFrame(tween)
-  cancelAnimationFrame(ringRaf)
+  stopSpin()
   resizeObs?.disconnect()
+  io?.disconnect()
+  document.removeEventListener('visibilitychange', onVis)
 })
 </script>
 
 <template>
-  <span class="gb" :class="[`gb--${variant}`, `gb--${size}`, { 'gb--block': block, 'gb--disabled': disabled }, attrs.class]" :style="attrs.style">
+  <span ref="root" class="gb" :class="[`gb--${variant}`, `gb--${size}`, { 'gb--block': block, 'gb--disabled': disabled }, attrs.class]" :style="attrs.style">
     <span v-if="variant === 'secondary'" ref="ring" class="gb__ring" aria-hidden="true" />
     <component
       :is="tag"
@@ -160,6 +183,9 @@ onBeforeUnmount(() => {
 .gb--primary .gb__btn { background: #f8f8f8; color: #000; }
 .gb--secondary .gb__btn { color: #f8f8f8; }
 .gb--dark .gb__btn { background: #000; color: #fff; }
+:global(.app.is-light) .gb--secondary .gb__btn { color: var(--text); border: 1px solid var(--line-strong); background: var(--surface-2); }
+:global(.app.is-light) .gb--secondary .gb__ring { display: none; }
+:global(.app.is-light) .gb--primary .gb__btn { border: 1px solid var(--line-strong); }
 .gb__btn:focus-visible { outline: 2px solid #fba45c; outline-offset: 3px; }
 
 .gb__canvas { position: absolute; top: -1px; left: -1px; z-index: 0; display: block; width: calc(100% + 2px); height: calc(100% + 2px); border-radius: inherit; pointer-events: none; }

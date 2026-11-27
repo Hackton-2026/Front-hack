@@ -1,7 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
-import { Flip } from 'gsap/Flip'
-import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
@@ -9,28 +7,57 @@ import StatusBadge from './StatusBadge.vue'
 import PriorityFlag from './PriorityFlag.vue'
 import Avatars from './Avatars.vue'
 import AppSelect from './AppSelect.vue'
-
-gsap.registerPlugin(Flip)
+import AppCheckbox from './AppCheckbox.vue'
 
 const props = defineProps({ tasks: { type: Array, required: true }, projectId: { type: [String, Number], default: null }, defaults: { type: Object, default: () => ({}) } })
-const { state, STATUSES, PRIORITIES, code, isOverdue, updateTask, createTask, today, project, member } = useWorkspace()
+const { state, STATUSES, PRIORITIES, code, isOverdue, updateTask, createTask, today, member } = useWorkspace()
 const { openTask } = useUi()
 const root = ref(null)
-const dragging = ref(null)
+const draggingId = ref(null)
+let draggedTask = null
 const over = ref(null)
+const movedId = ref(null)
+let movedTimer = 0
 const adding = reactive({})
 const menu = ref('')
-const reduced = prefersReducedMotion()
 
 const ABOUT = { todo: 'Ainda não começou', doing: 'Alguém está trabalhando nisso', review: 'Esperando revisão', done: 'Pronto e entregue' }
 const FIELDS = { project: 'Projeto', tags: 'Etiquetas', sub: 'Subtarefas', assignees: 'Responsáveis', dates: 'Datas', priority: 'Prioridade', cycle: 'Ciclo' }
 state.prefs.board ||= { limits: {}, collapsed: [], hideEmpty: false, group: '', fields: Object.fromEntries(Object.keys(FIELDS).map((k) => [k, true])) }
 const cfg = state.prefs.board
 
+// Mapas pré-indexados para eliminar buscas O(N²) durante drag & render
+const prioMap = new Map(PRIORITIES.map((p) => [p.id, p]))
+const projectMap = computed(() => new Map(state.projects.map((p) => [p.id, p])))
+const cycleMap = computed(() => new Map(state.cycles.map((c) => [c.id, c.name])))
+const subStats = computed(() => {
+  const map = new Map()
+  for (const x of state.tasks) {
+    if (!x.parent || x.draft) continue
+    let entry = map.get(x.parent)
+    if (!entry) { entry = { done: 0, total: 0 }; map.set(x.parent, entry) }
+    entry.total++
+    if (x.status === 'done') entry.done++
+  }
+  return map
+})
+
+const doneCount = computed(() => props.tasks.reduce((n, t) => n + (t.status === 'done' ? 1 : 0), 0))
+const todayStr = computed(() => today())
+
 const visible = computed(() => STATUSES.filter((s) => !cfg.hideEmpty || props.tasks.some((t) => t.status === s.id)))
 // recolhido é por quadro: a chave inclui o projeto (ou 'meu')
 const ckey = (id) => `${props.projectId ?? 'meu'}:${id}`
-const cols = computed(() => visible.value.map((s) => ({ ...s, tasks: props.tasks.filter((t) => t.status === s.id), collapsed: cfg.collapsed.includes(ckey(s.id)), limit: cfg.limits[s.id] || 0 })))
+const cols = computed(() => visible.value.map((s) => {
+  const colTasks = props.tasks.filter((t) => t.status === s.id)
+  return {
+    ...s,
+    tasks: colTasks,
+    lateCount: colTasks.reduce((n, t) => n + (isOverdue(t) ? 1 : 0), 0),
+    collapsed: cfg.collapsed.includes(ckey(s.id)),
+    limit: cfg.limits[s.id] || 0,
+  }
+}))
 const template = computed(() => cols.value.map((c) => (c.collapsed ? '2.6rem' : 'minmax(16.5rem, 1fr)')).join(' '))
 
 const lanes = computed(() => {
@@ -43,81 +70,102 @@ const lanes = computed(() => {
   return [{ id: 'all', label: '', has: () => true }]
 })
 const groupOptions = computed(() => [{ value: '', label: 'Nada' }, { value: 'priority', label: 'Prioridade' }, { value: 'assignee', label: 'Responsável' }, ...(props.projectId ? [] : [{ value: 'project', label: 'Projeto' }])])
-const shownLanes = computed(() => lanes.value.filter((l) => !cfg.group || props.tasks.some(l.has)))
-const inLane = (c, l) => c.tasks.filter(l.has)
 
-const fmt = (d) => (d === today() ? 'Hoje' : new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }))
+const boardLanes = computed(() => {
+  const active = lanes.value.filter((l) => !cfg.group || props.tasks.some(l.has))
+  return active.map((l, idx) => {
+    let laneTotal = 0
+    const cells = cols.value.map((c) => {
+      const list = cfg.group ? c.tasks.filter(l.has) : c.tasks
+      laneTotal += list.length
+      return { col: c, tasks: list }
+    })
+    return { lane: l, isFirst: idx === 0, total: laneTotal, cells }
+  })
+})
+
+const dateCache = new Map()
+const fmt = (d) => {
+  if (d === todayStr.value) return 'Hoje'
+  let v = dateCache.get(d)
+  if (!v) {
+    v = new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    dateCache.set(d, v)
+  }
+  return v
+}
 const hue = (s) => [...s].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 360, 7)
-const subs = (t) => state.tasks.filter((x) => x.parent === t.id && !x.draft)
-const cycleName = (t) => t.cycle && state.cycles.find((c) => c.id === t.cycle)?.name
-const prio = (id) => PRIORITIES.find((p) => p.id === id)
-const late = (c) => c.tasks.filter(isOverdue).length
 
-let flip
-async function withFlip(change) {
-  flip?.progress(1)
-  const st = reduced ? null : Flip.getState(root.value.querySelectorAll('.card'))
-  change()
-  await nextTick()
-  if (st) flip = Flip.from(st, { targets: root.value.querySelectorAll('.card'), duration: DUR.base, ease: EASE.out, onEnter: (els) => gsap.from(els, { scale: 0.9, autoAlpha: 0, duration: DUR.fast }) })
+function flashMoved(id) {
+  movedId.value = id
+  clearTimeout(movedTimer)
+  movedTimer = setTimeout(() => { if (movedId.value === id) movedId.value = null }, 650)
 }
 
 function onDragStart(e, task) {
-  dragging.value = task
+  draggedTask = task
+  draggingId.value = task.id
   e.dataTransfer.effectAllowed = 'move'
-  e.dataTransfer.setData('text/plain', task.id)
+  e.dataTransfer.setData('text/plain', String(task.id))
+}
+function onDragEnd() {
+  draggedTask = null
+  draggingId.value = null
+  over.value = null
+}
+function onDragOver(key) {
+  if (over.value !== key) over.value = key
+}
+function onDragLeave(e, key) {
+  if (over.value === key && !e.currentTarget.contains(e.relatedTarget)) over.value = null
 }
 // membro precisa da nota de conclusão, pedida no drawer
 const needsNote = (task, status) => status === 'done' && !state.isAdmin && !task.draft && (openTask(task), true)
 function onDrop(status, lane) {
-  const task = dragging.value
+  const task = draggedTask
+  draggedTask = null
+  draggingId.value = null
   over.value = null
-  dragging.value = null
   if (!task) return
   if (task.status !== status && needsNote(task, status)) return
   const patch = { ...(task.status !== status && { status }), ...(lane.patch && !lane.has(task) && lane.patch) }
   if (!Object.keys(patch).length) return
-  withFlip(() => updateTask(task, patch))
-  nextTick(() => {
-    const el = root.value.querySelector(`[data-flip-id="${task.id}"]`)
-    if (el && !reduced) gsap.fromTo(el, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0.9)' }, { boxShadow: '0 0 0 2px rgb(229 101 21 / 0)', duration: DUR.long, delay: 0.3 })
-  })
+  updateTask(task, patch)
+  flashMoved(task.id)
 }
 function moveBy(task, dir) {
   const i = STATUSES.findIndex((s) => s.id === task.status) + dir
-  if (STATUSES[i] && !needsNote(task, STATUSES[i].id)) withFlip(() => updateTask(task, { status: STATUSES[i].id }))
+  if (STATUSES[i] && !needsNote(task, STATUSES[i].id)) {
+    updateTask(task, { status: STATUSES[i].id })
+    flashMoved(task.id)
+  }
 }
 function add(status, lane) {
   const key = `${lane.id}:${status}`
   const title = (adding[key] || '').trim()
   if (!title) return
-  withFlip(() => createTask({ title, status, projectId: props.projectId, ...props.defaults, ...lane.patch }))
+  createTask({ title, status, projectId: props.projectId, ...props.defaults, ...lane.patch })
   adding[key] = ''
 }
-// grid-template-columns não interpola minmax(…fr) ↔ rem, então a largura anima por Flip
-let colFlip
-const toggleCollapse = async (id) => {
+const toggleCollapse = (id) => {
   const k = ckey(id)
-  colFlip?.progress(1)
-  const els = () => root.value.querySelectorAll('.col')
-  const st = reduced ? null : Flip.getState(els())
   cfg.collapsed = cfg.collapsed.includes(k) ? cfg.collapsed.filter((x) => x !== k) : [...cfg.collapsed, k]
   menu.value = ''
-  await nextTick()
-  if (st) colFlip = Flip.from(st, { targets: els(), duration: DUR.base, ease: EASE.out, scale: false, simple: true })
 }
 const setLimit = (id, v) => { cfg.limits = { ...cfg.limits, [id]: Math.max(0, Number(v) || 0) } }
 
 const closeMenu = () => { menu.value = '' }
-onUnmounted(() => window.removeEventListener('click', closeMenu))
+onUnmounted(() => {
+  window.removeEventListener('click', closeMenu)
+  clearTimeout(movedTimer)
+})
 onMounted(() => {
   window.addEventListener('click', closeMenu)
-  if (!reduced) gsap.from(root.value.querySelectorAll('.col'), { y: 14, autoAlpha: 0, duration: DUR.base, stagger: 0.07, ease: EASE.soft })
 })
 </script>
 
 <template>
-  <div ref="root" class="kb">
+  <div ref="root" class="kb" :class="{ 'is-dragging-any': !!draggingId }">
     <div class="kb__bar">
       <label class="opt"><AppIcon name="layers" :size="13" />Agrupar por
         <AppSelect v-model="cfg.group" :options="groupOptions" size="sm" aria-label="Agrupar por" />
@@ -125,27 +173,29 @@ onMounted(() => {
       <div class="rel">
         <button type="button" class="pg-btn" :aria-expanded="menu === 'fields'" @click.stop="menu = menu === 'fields' ? '' : 'fields'"><AppIcon name="settings" :size="13" />Campos</button>
         <Transition name="pop"><div v-if="menu === 'fields'" class="pg-menu fields" @click.stop>
-          <label v-for="(label, k) in FIELDS" :key="k"><input v-model="cfg.fields[k]" type="checkbox" />{{ label }}</label>
+          <div v-for="(label, k) in FIELDS" :key="k" class="fields__row">
+            <AppCheckbox v-model="cfg.fields[k]" size="sm" :label="label" />
+          </div>
         </div></Transition>
       </div>
-      <label class="opt"><input v-model="cfg.hideEmpty" type="checkbox" />Ocultar colunas vazias</label>
-      <span class="total pg-muted">{{ tasks.length }} itens, {{ tasks.filter((t) => t.status === 'done').length }} concluídos</span>
+      <AppCheckbox v-model="cfg.hideEmpty" size="sm" class="opt" label="Ocultar colunas vazias" />
+      <span class="total pg-muted">{{ tasks.length }} itens, {{ doneCount }} concluídos</span>
     </div>
 
     <div class="kb__scroll">
-      <div v-for="l in shownLanes" :key="l.id" class="lane">
-        <h3 v-if="cfg.group" class="lane__head"><i :style="{ background: l.color }" />{{ l.label }}<span v-if="tasks.some(l.has)" class="count">{{ tasks.filter(l.has).length }}</span></h3>
+      <div v-for="row in boardLanes" :key="row.lane.id" class="lane">
+        <h3 v-if="cfg.group" class="lane__head"><i :style="{ background: row.lane.color }" />{{ row.lane.label }}<span v-if="row.total" class="count">{{ row.total }}</span></h3>
         <div class="board" :style="{ gridTemplateColumns: template }">
           <section
-            v-for="c in cols"
+            v-for="{ col: c, tasks: cellTasks } in row.cells"
             :key="c.id"
             class="col"
-            :class="{ 'is-over': over === `${l.id}:${c.id}`, 'is-collapsed': c.collapsed, 'is-full': c.limit && c.tasks.length > c.limit }"
+            :class="{ 'is-over': over === `${row.lane.id}:${c.id}`, 'is-collapsed': c.collapsed, 'is-full': c.limit && c.tasks.length > c.limit }"
             :style="{ '--c': c.color }"
             :aria-label="c.name"
-            @dragover.prevent="over = `${l.id}:${c.id}`"
-            @dragleave.self="over = null"
-            @drop.prevent="onDrop(c.id, l)"
+            @dragover.prevent="onDragOver(`${row.lane.id}:${c.id}`)"
+            @dragleave="onDragLeave($event, `${row.lane.id}:${c.id}`)"
+            @drop.prevent="onDrop(c.id, row.lane)"
           >
             <button v-if="c.collapsed" type="button" class="col__strip" :aria-label="`Expandir ${c.name}`" @click="toggleCollapse(c.id)">
               <i class="dot" /><span>{{ c.name }}</span><b>{{ c.tasks.length }}</b>
@@ -154,32 +204,31 @@ onMounted(() => {
               <header class="col__head">
                 <div class="col__title">
                   <StatusBadge :status="c.id" />
-                  <span v-if="inLane(c, l).length || c.limit" class="count" :class="{ over: c.limit && c.tasks.length > c.limit }" :title="c.limit ? 'Itens / limite' : 'Itens'">{{ inLane(c, l).length }}<template v-if="c.limit"> / {{ c.limit }}</template></span>
-                  <span v-if="late(c) && l.id === shownLanes[0].id" class="chip late" :title="`${late(c)} atrasado(s)`"><AppIcon name="calendar" :size="11" />{{ late(c) }}</span>
+                  <span v-if="cellTasks.length || c.limit" class="count" :class="{ over: c.limit && c.tasks.length > c.limit }" :title="c.limit ? 'Itens / limite' : 'Itens'">{{ cellTasks.length }}<template v-if="c.limit"> / {{ c.limit }}</template></span>
+                  <span v-if="c.lateCount && row.isFirst" class="chip late" :title="`${c.lateCount} atrasado(s)`"><AppIcon name="calendar" :size="11" />{{ c.lateCount }}</span>
                   <div class="rel push">
-                    <button type="button" class="pg-icon" :aria-label="`Opções de ${c.name}`" :aria-expanded="menu === c.id + l.id" @click.stop="menu = menu === c.id + l.id ? '' : c.id + l.id"><AppIcon name="more" :size="15" /></button>
-                    <Transition name="pop"><div v-if="menu === c.id + l.id" class="pg-menu" @click.stop>
+                    <button type="button" class="pg-icon" :aria-label="`Opções de ${c.name}`" :aria-expanded="menu === c.id + row.lane.id" @click.stop="menu = menu === c.id + row.lane.id ? '' : c.id + row.lane.id"><AppIcon name="more" :size="15" /></button>
+                    <Transition name="pop"><div v-if="menu === c.id + row.lane.id" class="pg-menu" @click.stop>
                       <label class="lim">Limite de itens <input type="number" min="0" :value="c.limit || ''" placeholder="sem" @change="setLimit(c.id, $event.target.value)" /></label>
                       <button type="button" @click="toggleCollapse(c.id)"><AppIcon name="chevron" :size="13" />Recolher coluna</button>
                     </div></Transition>
                   </div>
                 </div>
-                <p v-if="l.id === shownLanes[0].id" class="col__about">{{ ABOUT[c.id] }}</p>
-                <span v-if="l.id === shownLanes[0].id" class="col__bar" :title="`${Math.round((c.tasks.length / Math.max(1, tasks.length)) * 100)}% dos itens`"><i :style="{ width: `${(c.tasks.length / Math.max(1, tasks.length)) * 100}%` }" /></span>
+                <p v-if="row.isFirst" class="col__about">{{ ABOUT[c.id] }}</p>
+                <span v-if="row.isFirst" class="col__bar" :title="`${Math.round((c.tasks.length / Math.max(1, tasks.length)) * 100)}% dos itens`"><i :style="{ width: `${(c.tasks.length / Math.max(1, tasks.length)) * 100}%` }" /></span>
               </header>
-              <p v-if="!inLane(c, l).length" class="empty">Solte um card aqui</p>
+              <p v-if="!cellTasks.length" class="empty">Solte um card aqui</p>
               <article
-                v-for="t in inLane(c, l)"
+                v-for="t in cellTasks"
                 :key="t.id"
-                :data-flip-id="t.id"
                 class="card"
-                :class="{ 'is-dragging': dragging === t, 'is-late': isOverdue(t), 'is-done': t.status === 'done' }"
-                :style="{ '--p': prio(t.priority)?.color || 'transparent' }"
+                :class="{ 'is-dragging': draggingId === t.id, 'is-moved': movedId === t.id, 'is-late': isOverdue(t), 'is-done': t.status === 'done' }"
+                :style="{ '--p': prioMap.get(t.priority)?.color || 'transparent' }"
                 draggable="true"
                 tabindex="0"
                 :aria-label="`${t.title}. Setas esquerda e direita mudam o status.`"
                 @dragstart="onDragStart($event, t)"
-                @dragend="dragging = null; over = null"
+                @dragend="onDragEnd"
                 @click="openTask(t)"
                 @keydown.enter="openTask(t)"
                 @keydown.left.prevent="moveBy(t, -1)"
@@ -187,29 +236,32 @@ onMounted(() => {
               >
                 <div class="card__top">
                   <StatusBadge :status="t.status" compact />
-                  <span v-if="cfg.fields.project && !projectId && project(t.projectId)" class="proj"><i :style="{ background: project(t.projectId).color }" />{{ project(t.projectId).prefix || project(t.projectId).name }}</span>
+                  <span v-if="cfg.fields.project && !projectId && projectMap.get(t.projectId)" class="proj"><i :style="{ background: projectMap.get(t.projectId).color }" />{{ projectMap.get(t.projectId).prefix || projectMap.get(t.projectId).name }}</span>
                   <span class="card__code">{{ code(t) }}</span>
                   <button v-if="t.status !== 'done'" type="button" class="next" :aria-label="`Mover ${t.title} para a próxima coluna`" title="Próxima coluna" @click.stop="moveBy(t, 1)"><AppIcon name="arrow" :size="12" /></button>
                 </div>
                 <p class="card__title">{{ t.title }}</p>
                 <div v-if="cfg.fields.tags && t.tags.length" class="card__tags"><span v-for="tag in t.tags" :key="tag" :style="{ '--h': hue(tag) }">{{ tag }}</span></div>
-                <div v-if="cfg.fields.sub && (subs(t).length || t.checklist.length)" class="sub">
-                  <template v-for="[label, done, total] in [['Subtarefas', subs(t).filter((x) => x.status === 'done').length, subs(t).length], ['Checklist', t.checklist.filter((i) => i.done).length, t.checklist.length]]" :key="label">
-                    <span v-if="total" class="sub__row" :title="`${label}: ${done} de ${total}`">
-                      <span class="sub__bar"><i :style="{ width: `${(done / total) * 100}%` }" /></span><small>{{ done }}/{{ total }}</small>
-                    </span>
-                  </template>
+                <div v-if="cfg.fields.sub && (subStats.has(t.id) || t.checklist.length)" class="sub">
+                  <span v-if="subStats.has(t.id)" class="sub__row" :title="`Subtarefas: ${subStats.get(t.id).done} de ${subStats.get(t.id).total}`">
+                    <span class="sub__bar"><i :style="{ width: `${(subStats.get(t.id).done / subStats.get(t.id).total) * 100}%` }" /></span>
+                    <small>{{ subStats.get(t.id).done }}/{{ subStats.get(t.id).total }}</small>
+                  </span>
+                  <span v-if="t.checklist.length" class="sub__row" :title="`Checklist: ${t.checklist.filter((i) => i.done).length} de ${t.checklist.length}`">
+                    <span class="sub__bar"><i :style="{ width: `${(t.checklist.filter((i) => i.done).length / t.checklist.length) * 100}%` }" /></span>
+                    <small>{{ t.checklist.filter((i) => i.done).length }}/{{ t.checklist.length }}</small>
+                  </span>
                 </div>
                 <div class="chips">
-                  <span v-if="cfg.fields.priority && t.priority" class="chip prio"><PriorityFlag :priority="t.priority" />{{ prio(t.priority)?.name }}</span>
-                  <span v-if="cfg.fields.cycle && cycleName(t)" class="chip"><AppIcon name="cycle" :size="11" />{{ cycleName(t) }}</span>
+                  <span v-if="cfg.fields.priority && t.priority" class="chip prio"><PriorityFlag :priority="t.priority" />{{ prioMap.get(t.priority)?.name }}</span>
+                  <span v-if="cfg.fields.cycle && t.cycle && cycleMap.get(t.cycle)" class="chip"><AppIcon name="cycle" :size="11" />{{ cycleMap.get(t.cycle) }}</span>
                   <span v-if="cfg.fields.dates && t.due" class="chip" :class="{ late: isOverdue(t) }"><AppIcon name="calendar" :size="11" />{{ t.start ? `${fmt(t.start)} a ` : '' }}{{ fmt(t.due) }}</span>
                   <Avatars v-if="cfg.fields.assignees && t.assignees.length" :ids="t.assignees" :size="20" class="who" />
                 </div>
               </article>
-              <form v-if="projectId || defaults.projectId || l.patch?.projectId" class="add" @submit.prevent="add(c.id, l)">
+              <form v-if="projectId || defaults.projectId || row.lane.patch?.projectId" class="add" @submit.prevent="add(c.id, row.lane)">
                 <AppIcon name="plus" :size="13" />
-                <input v-model="adding[`${l.id}:${c.id}`]" placeholder="Adicionar item" :aria-label="`Nova tarefa em ${c.name}`" />
+                <input v-model="adding[`${row.lane.id}:${c.id}`]" placeholder="Adicionar item" :aria-label="`Nova tarefa em ${c.name}`" />
               </form>
             </template>
           </section>
@@ -221,25 +273,22 @@ onMounted(() => {
 
 <style scoped>
 .kb { display: flex; flex-direction: column; gap: 0.75rem; }
-.kb__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.kb__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
 .opt { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 12.5px; color: var(--muted); cursor: pointer; }
-.opt input[type='checkbox'], .fields input { accent-color: var(--accent); }
 .total { margin-left: auto; font-size: 12px; }
 .rel { position: relative; }
 .push { margin-left: auto; }
-.fields { left: 0; right: auto; gap: 0.1rem; }
-.fields label { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border-radius: 5px; font-size: 13px; cursor: pointer; }
-.fields label:hover { background: var(--surface-2); }
+.fields { left: 0; right: auto; gap: 0.1rem; min-width: 11rem; }
+.fields__row { padding: 0.3rem 0.5rem; border-radius: 5px; }
+.fields__row:hover { background: var(--surface-2); }
+.fields__row :deep(.nvx-chk) { width: 100%; font-size: 13px; }
 .lim { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.35rem 0.55rem; font-size: 13px; }
 .lim input { width: 3.6rem; height: 26px; padding: 0 0.4rem; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--bg); font: inherit; color: var(--text); }
 .kb__scroll { display: flex; flex-direction: column; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
 .lane__head { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font: 600 13px/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .lane__head i { width: 9px; height: 9px; border-radius: 3px; }
 .board { display: grid; gap: 0.85rem; align-items: start; }
-.col__strip, .col__head { animation: kb-fade 0.2s ease-out; }
-@keyframes kb-fade { from { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .board { transition: none; } .col__strip, .col__head { animation: none; } }
-.col { position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-height: 10rem; padding: 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
+.col { position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-height: 10rem; padding: 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); contain: layout style; transition: border-color 0.15s ease, background 0.15s ease; }
 .col.is-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .col.is-full { box-shadow: inset 0 0 0 1px rgb(255 91 77 / 0.45); }
 .col.is-collapsed { padding: 0; }
@@ -251,15 +300,20 @@ onMounted(() => {
 .col__title { display: flex; align-items: center; gap: 0.45rem; }
 .col__about { margin: 0; font-size: 11.5px; color: var(--muted); }
 .col__bar { height: 3px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
-.col__bar i { display: block; height: 100%; background: var(--c); transition: width 0.4s var(--ease); }
+.col__bar i { display: block; height: 100%; background: var(--c); transition: width 0.25s ease-out; }
 .count { padding: 0 0.4rem; border-radius: 999px; background: var(--surface-2); font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--muted); }
 .count.over { background: rgb(255 91 77 / 0.18); color: var(--danger, #ff8a80); }
 .empty { margin: 0; padding: 1rem 0.5rem; border: 1px dashed var(--line); border-radius: 8px; font-size: 12px; color: var(--muted); text-align: center; }
-.card { position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 0.65rem 0.75rem 0.65rem 0.85rem; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); cursor: grab; transition: border-color 0.2s var(--ease), translate 0.2s var(--ease), box-shadow 0.2s var(--ease), opacity 0.2s; }
+.card { position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 0.65rem 0.75rem 0.65rem 0.85rem; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); cursor: grab; transition: border-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease; }
 .card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--p); }
-.card:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--line-strong)); translate: 0 -1px; box-shadow: 0 8px 20px rgb(0 0 0 / 0.25); }
+.kb:not(.is-dragging-any) .card:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--line-strong)); transform: translateY(-1px); }
 .card:active { cursor: grabbing; }
-.card.is-dragging { opacity: 0.4; }
+.card.is-dragging { opacity: 0.35; }
+.card.is-moved { animation: kb-flash 0.55s ease-out; }
+@keyframes kb-flash {
+  0% { border-color: var(--accent); box-shadow: 0 0 0 2px rgb(229 101 21 / 0.45); }
+  100% { border-color: var(--line-strong); box-shadow: 0 0 0 0 rgb(229 101 21 / 0); }
+}
 .card.is-done .card__title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
 .card:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .card__top { display: flex; align-items: center; gap: 0.4rem; min-height: 18px; }
@@ -286,5 +340,6 @@ onMounted(() => {
 .add:focus-within { border: 1px solid var(--accent); background: var(--bg); color: var(--accent-soft); }
 .add input { flex: 1; height: 32px; padding: 0; border: 0; background: none; font: inherit; color: var(--text); outline: none; }
 .add input::placeholder { color: var(--muted); }
-:is(.col__strip, .opt input):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+:is(.col__strip):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .card.is-moved { animation: none; } .col__bar i, .card, .col { transition: none; } }
 </style>

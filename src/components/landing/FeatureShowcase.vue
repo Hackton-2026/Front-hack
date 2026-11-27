@@ -6,7 +6,7 @@ import { useAuth } from '../../composables/useAuth'
 
 const { user } = useAuth()
 
-const props = defineProps({
+defineProps({
   feature: { type: Object, required: true },
   reverse: Boolean,
 })
@@ -14,20 +14,20 @@ const props = defineProps({
 const video = ref(null)
 const parado = prefersReducedMotion()
 
-const ESPERA = 500
+const ESPERA = 400
 const PAUSA_FIM = 2000
-let checagem = 0
+let esperaTimer = 0
 let recomeco = 0
-let inteiroDesde = 0
 let jaComecou = false
 let naTela = false
+let observer
 
 const play = () => video.value?.play().catch(() => {})
 function sair() {
+  clearTimeout(esperaTimer)
   clearTimeout(recomeco)
   naTela = false
   jaComecou = false
-  inteiroDesde = 0
   if (!video.value) return
   video.value.pause()
   video.value.currentTime = 0
@@ -40,28 +40,37 @@ function terminou() {
     play()
   }, PAUSA_FIM)
 }
-function conferir() {
+onMounted(() => {
   const el = video.value
   if (!el) return
-  const r = el.getBoundingClientRect()
-  const visivel = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)
-  if (visivel <= 0) {
-    if (naTela) sair()
-    return
-  }
-  naTela = true
-  if (parado || jaComecou) return
-  const inteiro = visivel >= r.height * 0.95 || visivel >= innerHeight * 0.9
-  if (!inteiro) { inteiroDesde = 0; return }
-  inteiroDesde ||= performance.now()
-  if (performance.now() - inteiroDesde >= ESPERA) { jaComecou = true; play() }
-}
-onMounted(() => {
-  if (!video.value) return
-  video.value.muted = true
-  checagem = setInterval(conferir, 150)
+  el.muted = true
+  if (parado || !('IntersectionObserver' in window)) return
+  observer = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry.isIntersecting) {
+        if (naTela) sair()
+        return
+      }
+      naTela = true
+      if (jaComecou) return
+      if (entry.intersectionRatio >= 0.6) {
+        clearTimeout(esperaTimer)
+        esperaTimer = setTimeout(() => {
+          if (!naTela) return
+          jaComecou = true
+          play()
+        }, ESPERA)
+      }
+    },
+    { threshold: [0, 0.6] },
+  )
+  observer.observe(el)
 })
-onBeforeUnmount(() => { clearInterval(checagem); clearTimeout(recomeco) })
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  clearTimeout(esperaTimer)
+  clearTimeout(recomeco)
+})
 </script>
 
 <template>
@@ -84,7 +93,7 @@ onBeforeUnmount(() => { clearInterval(checagem); clearTimeout(recomeco) })
           :poster="feature.poster || undefined"
           muted
           playsinline
-          preload="auto"
+          preload="metadata"
           aria-hidden="true"
           @ended="terminou"
         />

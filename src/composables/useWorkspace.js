@@ -103,9 +103,18 @@ const state = reactive({
   prefs: local.prefs,
 })
 
-watch(() => [state.tasks.filter((t) => t.draft), state.docs, state.prefs], ([drafts, docs, prefs]) => {
-  try { localStorage.setItem(LOCAL_KEY, JSON.stringify({ drafts, docs, prefs })) } catch { }
-}, { deep: true })
+// persiste prefs, docs e rascunhos com debounce (nunca roda JSON.stringify/localStorage ao arrastar tarefas normais)
+let persistTimer
+function schedulePersist() {
+  clearTimeout(persistTimer)
+  persistTimer = setTimeout(() => {
+    try {
+      const drafts = state.tasks.filter((t) => t.draft)
+      localStorage.setItem(LOCAL_KEY, JSON.stringify({ drafts, docs: state.docs, prefs: state.prefs }))
+    } catch { }
+  }, 500)
+}
+watch(() => [state.docs, state.prefs], schedulePersist, { deep: true })
 
 const fromApi = (t) => ({
   id: t.id, number: t.number, code: t.code, projectId: t.project, title: t.title, description: t.description, status: t.status,
@@ -163,11 +172,14 @@ function refreshFeed() {
       state.inbox = inbox
       state.invites = invites
     } catch { }
-  }, 300)
+  }, 2500)
 }
 
 const fail = (e) => useUi().toast(e.message || 'Não foi possível salvar. Tente de novo.')
-const queues = new Map()
+// coalescing + versionamento por tarefa: drags rápidos nunca pulam de volta quando uma resposta atrasada chega
+const taskVersions = new Map()
+const pendingPatches = new Map()
+const inFlightTasks = new Map()
 // clique duplo: um pedido igual em andamento é reaproveitado em vez de criar o item duas vezes
 const inflight = new Map()
 const once = (key, run) => { if (!inflight.has(key)) inflight.set(key, run().finally(() => inflight.delete(key))); return inflight.get(key) }
@@ -197,7 +209,8 @@ export function useWorkspace() {
     })
     if (!task.projectId) task.draft = true
     state.tasks.push(task)
-    if (!task.draft) saving.set(task, save(task))
+    if (task.draft) schedulePersist()
+    else saving.set(task, save(task))
     return task
   }
   // resolve true/false quando o POST da tarefa termina (quem precisa saber se a criação deu certo)
@@ -209,6 +222,7 @@ export function useWorkspace() {
       Object.assign(task, fromApi(data))
       const ui = useUi().ui
       if (ui.taskId === tmp) ui.taskId = task.id
+      schedulePersist()
       refreshFeed()
       return true
     } catch (e) {
@@ -220,31 +234,65 @@ export function useWorkspace() {
   async function updateTask(task, fields) {
     if (task.draft) {
       Object.assign(task, fields, { updatedAt: new Date().toISOString() })
+      schedulePersist()
       if (fields.draft === false && task.projectId) save(task)
       return true
     }
+    const id = task.id
+    const ver = (taskVersions.get(id) || 0) + 1
+    taskVersions.set(id, ver)
+
     const before = Object.fromEntries(Object.keys(fields).map((k) => [k, structuredClone(toRaw(task[k]) ?? null)]))
     Object.assign(task, fields, { updatedAt: new Date().toISOString() })
-    if (typeof task.id !== 'number') return true
-    const run = async () => {
-      try {
-        const data = await api(`/api/tasks/${task.id}/`, { method: 'PATCH', body: toApi(fields) })
-        Object.assign(task, fromApi(data))
-        refreshFeed()
-        return true
-      } catch (e) {
-        Object.assign(task, before)
-        fail(e)
-        return e.message
+    if (typeof id !== 'number') return true
+
+    // mescla edições rápidas da mesma tarefa em um único próximo PATCH sem sobrescrever o estado otimista mais recente
+    const queued = pendingPatches.get(id)
+    if (queued) {
+      Object.assign(queued.fields, fields)
+      for (const [k, v] of Object.entries(before)) {
+        if (!(k in queued.before)) queued.before[k] = v
       }
+    } else {
+      pendingPatches.set(id, { fields: { ...fields }, before })
     }
-    const next = (queues.get(task.id) || Promise.resolve()).then(run)
-    queues.set(task.id, next)
-    return next
+
+    if (inFlightTasks.has(id)) return inFlightTasks.get(id)
+
+    const flush = (async () => {
+      let lastResult = true
+      while (pendingPatches.has(id)) {
+        const batch = pendingPatches.get(id)
+        pendingPatches.delete(id)
+        const sentVer = taskVersions.get(id)
+        try {
+          const data = await api(`/api/tasks/${id}/`, { method: 'PATCH', body: toApi(batch.fields) })
+          // só aplica a resposta do servidor se nenhuma mudança mais nova do usuário entrou na fila
+          if (taskVersions.get(id) === sentVer && !pendingPatches.has(id)) {
+            Object.assign(task, fromApi(data))
+          }
+          refreshFeed()
+          lastResult = true
+        } catch (e) {
+          if (taskVersions.get(id) === sentVer && !pendingPatches.has(id)) {
+            Object.assign(task, batch.before)
+          }
+          fail(e)
+          lastResult = e.message
+        }
+      }
+      return lastResult
+    })().finally(() => {
+      inFlightTasks.delete(id)
+    })
+
+    inFlightTasks.set(id, flush)
+    return flush
   }
   async function removeTask(task) {
     state.tasks.splice(state.tasks.indexOf(task), 1)
-    if (task.draft || typeof task.id !== 'number') return
+    if (task.draft) { schedulePersist(); return }
+    if (typeof task.id !== 'number') return
     try {
       await api(`/api/tasks/${task.id}/`, { method: 'DELETE' })
       refreshFeed()
@@ -472,6 +520,7 @@ export function useWorkspace() {
   function clearLocal() {
     state.tasks = state.tasks.filter((t) => !t.draft)
     state.docs = localDefaults().docs
+    schedulePersist()
   }
 
   return {

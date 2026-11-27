@@ -195,7 +195,7 @@ async function decide(action, ok) {
 .hint kbd { margin: 0 1px; }
 .send { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; background: var(--ai-shark); color: #000; cursor: pointer; transition: background 0.2s var(--ease); }
 .send:hover:not(:disabled) { background: var(--ai-shark-soft); }
-.send:disabled { background: rgb(255 255 255 / 0.08); color: var(--ai-muted); cursor: default; }
+.send:disabled { background: var(--ai-glass-line); color: var(--ai-muted); cursor: default; }
 
 .sugs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
 .sug { padding: 0.45rem 0.8rem; border: 1px solid var(--ai-glass-line); border-radius: 999px; background: var(--ai-glass); font-size: 13px; color: var(--ai-muted); cursor: pointer; transition: color 0.2s var(--ease), border-color 0.2s var(--ease); }

@@ -27,9 +27,13 @@ const target = ref('body')
 
 function place() {
   const r = btn.value.getBoundingClientRect()
-  const height = Math.min(opts.value.length * 34 + 10, 300)
+  const height = Math.min(opts.value.length * 36 + 12, 300)
   const below = innerHeight - r.bottom > height + 8 || r.top < height + 8
-  pos.value = { left: `${Math.min(r.left, innerWidth - Math.max(r.width, 180) - 8)}px`, minWidth: `${Math.max(r.width, 180)}px`, ...(below ? { top: `${r.bottom + 4}px` } : { bottom: `${innerHeight - r.top + 4}px` }) }
+  pos.value = {
+    left: `${Math.min(r.left, innerWidth - Math.max(r.width, 180) - 8)}px`,
+    minWidth: `${Math.max(r.width, 180)}px`,
+    ...(below ? { top: `${r.bottom + 4}px` } : { bottom: `${innerHeight - r.top + 4}px` }),
+  }
 }
 async function show() {
   if (props.disabled) return
@@ -100,10 +104,10 @@ onBeforeUnmount(() => (open.value = false))
   >
     <i v-if="current?.color" class="sel__dot" :style="{ background: current.color }" />
     <span class="sel__label" :class="{ 'is-empty': !current }">{{ current?.label ?? placeholder }}</span>
-    <AppIcon name="chevron" :size="14" class="sel__chev" />
+    <AppIcon name="chevron" :size="size === 'lg' ? 15 : 14" class="sel__chev" />
   </button>
   <Teleport :to="target">
-    <Transition name="pop"><ul v-if="open" :id="uid" ref="list" class="sel-list" role="listbox" :style="pos">
+    <Transition name="sel-pop"><ul v-if="open" :id="uid" ref="list" class="sel-list" role="listbox" :style="pos">
       <li
         v-for="(o, i) in opts" :id="`${uid}-${i}`" :key="String(o.value)" role="option" :aria-selected="o.value === modelValue" :aria-disabled="o.disabled || undefined"
         :class="{ 'is-active': i === active }" @pointerenter="active = i" @pointerdown.prevent @click="choose(o)"
@@ -117,32 +121,79 @@ onBeforeUnmount(() => (open.value = false))
 </template>
 
 <style scoped>
-.sel { display: inline-flex; align-items: center; gap: 0.45rem; max-width: 100%; height: 32px; padding: 0 0.5rem 0 0.65rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface); font: inherit; font-size: 13px; color: var(--text); text-align: left; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
+.sel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  height: 32px;
+  padding: 0 0.55rem 0 0.7rem;
+  border: 1px solid var(--line-strong, rgb(255 255 255 / 0.16));
+  border-radius: 7px;
+  background: var(--surface, #161412);
+  font: inherit;
+  font-size: 13px;
+  color: var(--text, #f8f8f8);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
 .sel--sm { height: 28px; padding: 0 0.4rem 0 0.55rem; font-size: 12.5px; }
+.sel--lg { height: 44px; padding: 0 0.75rem 0 0.9rem; border-radius: 10px; font-size: 14.5px; }
 .sel--block { display: flex; width: 100%; }
 .sel--ghost { border-color: transparent; background: none; }
 .sel--ghost .sel__chev { opacity: 0; transition: opacity 0.15s ease, rotate 0.2s ease; }
 .sel--ghost:hover .sel__chev, .sel--ghost.is-open .sel__chev, .sel--ghost:focus-visible .sel__chev { opacity: 1; }
-.sel:hover:not(:disabled), .sel.is-open { border-color: var(--muted); background: var(--surface-2); }
-.sel:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+.sel:hover:not(:disabled), .sel.is-open {
+  border-color: var(--accent, #e56515);
+  background: var(--surface-2, #1f1c19);
+}
+.sel:focus-visible { outline: 2px solid var(--accent-soft, #fba45c); outline-offset: 2px; }
 .sel:disabled { opacity: 0.55; cursor: default; }
 .sel__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sel__label.is-empty { color: var(--muted); }
-.sel__chev { flex-shrink: 0; color: var(--muted); transition: rotate 0.2s ease; }
+.sel__label.is-empty { color: var(--muted, #9b958e); }
+.sel__chev { flex-shrink: 0; color: var(--muted, #9b958e); transition: rotate 0.2s ease; }
 .is-open .sel__chev { rotate: 180deg; }
 .sel__dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; }
 </style>
 
 <style>
-.sel-list { position: fixed; z-index: 1000; width: max-content; max-width: min(320px, calc(100vw - 16px)); max-height: 300px; margin: 0; padding: 4px; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); box-shadow: 0 14px 34px rgb(0 0 0 / 0.42); list-style: none; font-size: 13px; color: var(--text); animation: sel-in 0.12s ease-out; }
-.sel-list li { display: flex; align-items: center; gap: 0.5rem; min-height: 30px; padding: 0.3rem 0.55rem; border-radius: 6px; cursor: pointer; }
-.sel-list li.is-active { background: var(--surface-2); }
-.sel-list li[aria-selected='true'] { font-weight: 500; }
+.sel-list {
+  position: fixed;
+  z-index: 2000;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 16px));
+  max-height: 300px;
+  margin: 0;
+  padding: 5px;
+  overflow-y: auto;
+  border: 1px solid var(--line-strong, rgb(255 255 255 / 0.16));
+  border-radius: 10px;
+  background: var(--surface, #161412);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.5);
+  list-style: none;
+  font-family: 'Geist', 'Inter', system-ui, sans-serif;
+  font-size: 13.5px;
+  color: var(--text, #f8f8f8);
+}
+.sel-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 32px;
+  padding: 0.35rem 0.6rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.sel-list li.is-active { background: var(--surface-2, #24201c); }
+.sel-list li[aria-selected='true'] { font-weight: 500; color: var(--text, #f8f8f8); }
 .sel-list li[aria-disabled='true'] { opacity: 0.45; cursor: default; }
 .sel-list__label { display: flex; flex: 1; flex-direction: column; min-width: 0; }
-.sel-list__label small { font-size: 11.5px; color: var(--muted); }
-.sel-list__check { flex-shrink: 0; color: var(--text); }
+.sel-list__label small { font-size: 11.5px; color: var(--muted, #9b958e); }
+.sel-list__check { flex-shrink: 0; color: var(--accent, #e56515); }
 .sel-list .sel__dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; }
-@keyframes sel-in { from { opacity: 0; transform: translateY(-3px); } }
-@media (prefers-reduced-motion: reduce) { .sel-list { animation: none; } }
+.sel-pop-enter-active, .sel-pop-leave-active { transition: opacity 0.14s ease, transform 0.16s cubic-bezier(0.22, 1, 0.36, 1); }
+.sel-pop-enter-from, .sel-pop-leave-to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .sel-pop-enter-active, .sel-pop-leave-active { transition: none; } }
 </style>

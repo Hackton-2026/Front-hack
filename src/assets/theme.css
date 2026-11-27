@@ -108,7 +108,7 @@ html { scrollbar-color: rgb(140 132 124 / 0.55) transparent; caret-color: var(--
 .tag-green { background: var(--pastel-green); color: var(--pastel-green-text); }
 .tag-yellow { background: var(--pastel-yellow); color: var(--pastel-yellow-text); }
 
-:where(input:not([type='file']):not([type='checkbox']), textarea, select) {
+:where(input:not([type='file']):not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select) {
   font: inherit;
   font-size: var(--font-size-sm);
   padding: 0.6rem 0.85rem;

@@ -6,6 +6,7 @@ import { useOnboarding } from '../../composables/useOnboarding'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import AppSelect from './AppSelect.vue'
+import AppDateInput from './AppDateInput.vue'
 import GooeyButton from '../GooeyButton.vue'
 
 const { state, STATUSES, PRIORITIES, createTask, code, peopleOf, rolesOf } = useWorkspace()
@@ -67,8 +68,8 @@ function save() {
         <div class="field"><span>Projeto</span><AppSelect v-model="form.projectId" block :options="projectOptions" aria-label="Projeto" /></div>
         <div class="field"><span>Status</span><AppSelect v-model="form.status" block :options="statusOptions" aria-label="Status" /></div>
         <div class="field"><span>Prioridade</span><AppSelect v-model="form.priority" block :options="priorityOptions" aria-label="Prioridade" /></div>
-        <label>Início <input v-model="form.start" type="date" :max="form.due || undefined" /></label>
-        <label>Prazo <input v-model="form.due" type="date" :min="form.start || undefined" /></label>
+        <div class="field"><span>Início</span><AppDateInput v-model="form.start" block placeholder="Início" aria-label="Início" /></div>
+        <div class="field"><span>Prazo</span><AppDateInput v-model="form.due" block placeholder="Prazo" aria-label="Prazo" /></div>
       </div>
       <fieldset class="people">
         <legend>Responsáveis</legend>
@@ -103,7 +104,7 @@ textarea { padding: 0.6rem 0.7rem; resize: vertical; }
 textarea:focus, .row input:focus { border-color: var(--accent); }
 .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.6rem; }
 .row label, .field { display: flex; flex-direction: column; gap: 0.3rem; font-size: 12px; font-weight: 500; color: var(--muted); }
-.field :deep(.sel) { height: 34px; background: var(--bg); }
+.field :deep(.sel), .field :deep(.nvx-date) { height: 34px; background: var(--bg); }
 .chip.role small { color: var(--muted); }
 .sep { width: 1px; align-self: stretch; margin: 0 0.2rem; background: var(--line-strong); }
 .people { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; border: 0; }

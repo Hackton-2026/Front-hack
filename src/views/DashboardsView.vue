@@ -6,6 +6,7 @@ import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import ProjectIcon from '../components/app/ProjectIcon.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
+import AppCheckbox from '../components/app/AppCheckbox.vue'
 
 const { state, progress, tasksOf, isOverdue, today, day, project, code, doneRatio, member } = useWorkspace()
 const { openTask } = useUi()
@@ -71,7 +72,7 @@ onMounted(() => {
     <div v-if="editing" class="custom" aria-label="Blocos do painel">
       <div v-for="(k, i) in dash.order" :key="k" class="wd" :class="{ off: !shown(k), dragging: dragKey === k }" :draggable="dragKey === k" @dragover.prevent @drop.prevent="dropOn(k)" @dragend="dragKey = ''">
         <span class="grip" title="Arraste para reordenar" aria-hidden="true" @mousedown="dragKey = k" @mouseup="dragKey = ''"><AppIcon name="more" :size="14" :style="{ transform: 'rotate(90deg)' }" /></span>
-        <label><input type="checkbox" :checked="shown(k)" @change="toggle(k)" />{{ WIDGETS[k] }}</label>
+        <AppCheckbox size="sm" :checked="shown(k)" :label="WIDGETS[k]" class="wd__chk" @change="toggle(k)" />
         <button type="button" class="pg-icon" :disabled="i === 0" :aria-label="`Subir ${WIDGETS[k]}`" @click="move(k, -1)"><AppIcon name="chevron" :size="14" :style="{ transform: 'rotate(180deg)' }" /></button>
         <button type="button" class="pg-icon" :disabled="i === dash.order.length - 1" :aria-label="`Descer ${WIDGETS[k]}`" @click="move(k, 1)"><AppIcon name="chevron" :size="14" /></button>
       </div>

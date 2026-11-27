@@ -12,12 +12,12 @@ import { useEditorialMotion } from '../composables/useEditorialMotion'
 
 const category = ref('Todas')
 const query = ref('')
-const visibleLimit = ref(6)
+const visibleLimit = ref(9)
 const filtered = computed(() => filterPosts(category.value, query.value))
 const visible = computed(() => filtered.value.slice(0, visibleLimit.value))
 const pageRoot = ref(null)
 useEditorialMotion(pageRoot, { page: 'blog', items: visible })
-watch([category, query], () => { visibleLimit.value = 6 })
+watch([category, query], () => { visibleLimit.value = 9 })
 function resetFilters() { category.value = 'Todas'; query.value = '' }
 let previousTitle
 onMounted(() => {
@@ -47,7 +47,7 @@ onUnmounted(() => { document.title = previousTitle })
         <p class="sr-only" role="status">{{ filtered.length }} {{ filtered.length === 1 ? 'publicação encontrada' : 'publicações encontradas' }}. Mostrando {{ visible.length }}.</p>
         <div v-if="visible.length" class="news-grid"><BlogCard v-for="post in visible" :key="post.slug" :post="post" /></div>
         <div v-else class="news-empty"><FlaticonIcon name="search" framed :size="22" /><h3>Nenhuma publicação encontrada.</h3><p>Tente outro termo ou explore todas as publicações.</p><button type="button" @click="resetFilters">Limpar filtros <span aria-hidden="true"><FlaticonIcon name="arrow-up-right" /></span></button></div>
-        <div v-if="filtered.length" class="news-pagination"><span>Mostrando {{ visible.length }} de {{ filtered.length }} publicações</span><GooeyButton v-if="filtered.length > 6" variant="secondary" :disabled="visible.length >= filtered.length" @click="visibleLimit += 6">{{ visible.length >= filtered.length ? 'Tudo carregado' : 'Carregar mais' }} <FlaticonIcon :name="visible.length >= filtered.length ? 'check' : 'plus'" :size="14" /></GooeyButton></div>
+        <div v-if="filtered.length" class="news-pagination"><span>Mostrando {{ visible.length }} de {{ filtered.length }} publicações</span><GooeyButton v-if="filtered.length > 9" variant="secondary" :disabled="visible.length >= filtered.length" @click="visibleLimit += 9">{{ visible.length >= filtered.length ? 'Tudo carregado' : 'Carregar mais' }} <FlaticonIcon :name="visible.length >= filtered.length ? 'check' : 'plus'" :size="14" /></GooeyButton></div>
       </section>
 
       <section class="news-next" aria-labelledby="next-title"><div><h2 id="next-title">Boas ideias merecem<br>um próximo passo.</h2><GooeyButton to="/login" variant="primary" size="lg">Começar no Novexo <span aria-hidden="true"><FlaticonIcon name="arrow-up-right" /></span></GooeyButton></div></section>

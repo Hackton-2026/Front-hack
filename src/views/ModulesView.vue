@@ -9,6 +9,7 @@ import AppModal from '../components/app/AppModal.vue'
 import Avatars from '../components/app/Avatars.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import AppDateInput from '../components/app/AppDateInput.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 const router = useRouter()
@@ -129,8 +130,8 @@ onUnmounted(() => removeEventListener('click', onDoc))
       <label class="f"><span>Nome</span><input v-model="form.name" placeholder="Ex.: Onboarding" maxlength="120" /></label>
       <label class="f"><span>Descrição</span><textarea v-model="form.description" rows="2" placeholder="O que entra neste módulo (opcional)" /></label>
       <div class="row2">
-        <label class="f"><span>Início</span><input v-model="form.start_date" type="date" /></label>
-        <label class="f"><span>Data final</span><input v-model="form.due_date" type="date" /></label>
+        <div class="f"><span>Início</span><AppDateInput v-model="form.start_date" block aria-label="Início" /></div>
+        <div class="f"><span>Data final</span><AppDateInput v-model="form.due_date" block aria-label="Data final" /></div>
       </div>
       <div class="row2">
         <label class="f"><span>Situação</span><AppSelect v-model="form.state" :options="stateOptions" block /></label>

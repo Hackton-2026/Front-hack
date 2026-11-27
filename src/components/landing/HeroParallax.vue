@@ -14,20 +14,22 @@ const words = (t) => t.split(' ').map((w) => [...w])
 
 const hero = ref(null)
 let frame = 0
+let layers = []
 function parallax() {
   frame = 0
   const el = hero.value
   if (!el) return
   const s = Math.min(Math.max(-el.getBoundingClientRect().top, 0), el.offsetHeight - innerHeight)
-  el.querySelectorAll('[data-speed]').forEach((layer) => {
+  for (const layer of layers) {
     layer.style.transform = `translate3d(0, ${(-s * layer.dataset.speed).toFixed(1)}px, 0)`
-  })
+  }
   el.style.setProperty('--text-fade', Math.max(0, 1 - s / (innerHeight * 0.55)).toFixed(3))
 }
 const onScroll = () => { frame ||= requestAnimationFrame(parallax) }
 
 let ctx
 onMounted(() => {
+  layers = hero.value ? [...hero.value.querySelectorAll('[data-speed]')] : []
   if (prefersReducedMotion()) return
   parallax()
   addEventListener('scroll', onScroll, { passive: true })
@@ -49,7 +51,7 @@ onUnmounted(() => {
   <section ref="hero" class="hero">
     <div class="hero__stick">
       <div class="hero__sky" data-speed="0.08" aria-hidden="true" />
-      <div class="hero__hill far" data-speed="0.08" aria-hidden="true"><img :src="hillFar" alt="" /></div>
+      <div class="hero__hill far" data-speed="0.08" aria-hidden="true"><img :src="hillFar" alt="" width="2400" height="800" fetchpriority="high" decoding="async" /></div>
       <div class="hero__inner" data-speed="-0.18">
         <h1 class="hero__title" :aria-label="HERO_LINES.map((l) => l.text).join(' ')">
           <span v-for="l in HERO_LINES" :key="l.text" class="hero__line" :class="{ serif: l.serif }" aria-hidden="true">
@@ -62,8 +64,8 @@ onUnmounted(() => {
           Começar grátis
         </GooeyButton>
       </div>
-      <div class="hero__hill back" data-speed="0.22" aria-hidden="true"><img :src="hillBack" alt="" /></div>
-      <div class="hero__hill front" data-speed="0.42" aria-hidden="true"><img :src="hillFront" alt="" /></div>
+      <div class="hero__hill back" data-speed="0.22" aria-hidden="true"><img :src="hillBack" alt="" width="2400" height="800" fetchpriority="high" decoding="async" /></div>
+      <div class="hero__hill front" data-speed="0.42" aria-hidden="true"><img :src="hillFront" alt="" width="2400" height="800" fetchpriority="high" decoding="async" /></div>
     </div>
   </section>
 </template>
@@ -80,13 +82,13 @@ onUnmounted(() => {
     radial-gradient(ellipse 90% 40% at 50% 80%, rgb(251 164 92 / 0.55), transparent 75%),
     linear-gradient(180deg, #140803 0%, #3a1505 20%, #82310a 40%, #d2600f 56%, #f39243 68%, #ffc07a 78%, #ffdcaa 86%);
 }
-.hero__hill { position: absolute; left: 50%; top: 76vh; top: 76svh; width: max(100%, 165vh); aspect-ratio: 1024 / 341; translate: -50% 0; }
-.hero__hill img { display: block; width: 100%; height: 100%; }
-.hero__hill.far { z-index: 1; mask-image: linear-gradient(180deg, transparent 0%, #000 55%); }
+.hero__hill { position: absolute; left: 50%; top: 76vh; top: 76svh; width: max(100%, 165vh); aspect-ratio: 3 / 1; translate: -50% 0; }
+.hero__hill img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.hero__hill.far { z-index: 1; mask-image: linear-gradient(180deg, transparent 0%, #000 44%); }
 .hero__hill.back { z-index: 3; }
 .hero__hill.front { z-index: 4; }
-.hero__hill.front img { translate: 0 -0.7%; } .hero__hill.front::after { content: ''; position: absolute; inset: 50% 0 0; background: linear-gradient(180deg, transparent, #000); }
-.hero__hill.front::before { content: ''; position: absolute; top: calc(100% - 1px); left: 0; right: 0; height: 120vh; background: #000; }
+.hero__hill.front::after { content: ''; position: absolute; inset: 54% 0 0; background: linear-gradient(180deg, transparent, #000); }
+.hero__hill.front::before { content: ''; position: absolute; top: calc(100% - 2px); left: 0; right: 0; height: 120vh; background: #000; }
 @media (max-width: 640px) { .hero__hill { top: 82svh; } }
 
 .hero__inner { position: absolute; inset: 0 0 auto; z-index: 2; display: flex; flex-direction: column; align-items: center; max-width: 52rem; margin: 0 auto; padding: 8.75rem 1.25rem 0; text-align: center; opacity: var(--text-fade, 1); }

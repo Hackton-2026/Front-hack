@@ -4,6 +4,7 @@ import { staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
+import AppCheckbox from '../components/app/AppCheckbox.vue'
 
 const { state, project, archivedProjects, trashedTasks, restoreProject, restoreTask, updateItem } = useWorkspace()
 const { toast } = useUi()
@@ -16,6 +17,7 @@ const tab = ref('projects')
 const projects = ref([])
 const trash = ref([])
 const loading = ref(true)
+const restoring = ref(false)
 const root = ref(null)
 const q = ref('')
 const selected = reactive(new Set())
@@ -33,18 +35,30 @@ async function fetchAll() {
   try { [projects.value, trash.value] = await Promise.all([archivedProjects(), trashedTasks()]) } catch { toast('Não foi possível carregar os arquivados.') } finally { loading.value = false }
 }
 async function restore(kind, item, quiet) {
-  const ok = kind === 'projects' ? await restoreProject(item) : kind === 'tasks' ? await restoreTask(item) : await updateItem('page', item, { archived: false })
-  if (!ok) return
-  if (kind === 'projects') projects.value = projects.value.filter((p) => p.id !== item.id)
-  if (kind === 'tasks') trash.value = trash.value.filter((t) => t.id !== item.id)
-  selected.delete(item.id)
-  if (!quiet) toast(`${item.name || item.title || 'Item'} foi restaurado.`)
-  return ok
+  if (!quiet && restoring.value) return
+  if (!quiet) restoring.value = true
+  try {
+    const ok = kind === 'projects' ? await restoreProject(item) : kind === 'tasks' ? await restoreTask(item) : await updateItem('page', item, { archived: false })
+    if (!ok) return
+    if (kind === 'projects') projects.value = projects.value.filter((p) => p.id !== item.id)
+    if (kind === 'tasks') trash.value = trash.value.filter((t) => t.id !== item.id)
+    selected.delete(item.id)
+    if (!quiet) toast(`${item.name || item.title || 'Item'} foi restaurado.`)
+    return ok
+  } finally {
+    if (!quiet) restoring.value = false
+  }
 }
 async function restoreSelected() {
-  const items = rows.value.filter((r) => selected.has(r.id))
-  const ok = (await Promise.all(items.map((r) => restore(tab.value, r, true)))).filter(Boolean).length
-  toast(`${ok} de ${items.length} restaurado(s).`)
+  if (restoring.value) return
+  restoring.value = true
+  try {
+    const items = rows.value.filter((r) => selected.has(r.id))
+    const ok = (await Promise.all(items.map((r) => restore(tab.value, r, true)))).filter(Boolean).length
+    toast(`${ok} de ${items.length} restaurado(s).`)
+  } finally {
+    restoring.value = false
+  }
 }
 async function animate() {
   await nextTick()
@@ -67,13 +81,21 @@ onMounted(fetchAll)
       </div>
     </div>
     <div v-if="canRestore && rows.length" class="bulk">
-      <label class="box"><input type="checkbox" :checked="allSelected" aria-label="Selecionar todos" @change="toggleAll" />{{ selected.size ? `${selected.size} selecionado(s)` : 'Selecionar todos' }}</label>
-      <button v-if="selected.size" type="button" class="pg-btn primary" @click="restoreSelected"><AppIcon name="undo" :size="14" />Restaurar selecionados</button>
+      <AppCheckbox
+        class="box"
+        :checked="allSelected"
+        :indeterminate="selected.size > 0 && !allSelected"
+        aria-label="Selecionar todos"
+        @change="toggleAll"
+      >
+        {{ selected.size ? `${selected.size} selecionado(s)` : 'Selecionar todos' }}
+      </AppCheckbox>
+      <button v-if="selected.size" type="button" class="pg-btn primary" :disabled="restoring" @click="restoreSelected"><AppIcon name="undo" :size="14" />{{ restoring ? 'Restaurando…' : 'Restaurar selecionados' }}</button>
     </div>
     <p v-if="loading" class="pg-muted pad"><ArcLoader />Carregando…</p>
     <div v-else-if="rows.length" class="pg-rows">
       <div v-for="r in rows" :key="r.id" class="pg-row" :class="{ sel: selected.has(r.id) }">
-        <label v-if="canRestore" class="box"><input type="checkbox" :checked="selected.has(r.id)" :aria-label="`Selecionar ${r.name || r.title}`" @change="toggleSel(r)" /></label>
+        <AppCheckbox v-if="canRestore" class="box" :checked="selected.has(r.id)" :aria-label="`Selecionar ${r.name || r.title}`" @change="toggleSel(r)" />
         <AppIcon :name="tab === 'projects' ? 'folder' : tab === 'tasks' ? 'items' : 'page'" :size="17" class="ico" />
         <div class="pg-row__main">
           <span v-if="tab === 'tasks'" class="code">{{ r.code }}</span>
@@ -82,7 +104,7 @@ onMounted(fetchAll)
         </div>
         <div class="pg-row__side">
           <span class="pg-muted pg-hide-sm">{{ tab === 'pages' ? `editada em ${when(r.updated_at)}` : tab === 'tasks' ? `criada em ${when(r.createdAt)}` : `criado em ${when(r.created_at)}` }}</span>
-          <button v-if="canRestore" type="button" class="pg-btn" @click="restore(tab, r)"><AppIcon name="undo" :size="14" />Restaurar</button>
+          <button v-if="canRestore" type="button" class="pg-btn" :disabled="restoring" @click="restore(tab, r)"><AppIcon name="undo" :size="14" />Restaurar</button>
         </div>
       </div>
     </div>
@@ -101,7 +123,6 @@ onMounted(fetchAll)
 .code { flex: 0 0 auto; font: 500 12px/1 'Geist Mono', monospace; color: var(--muted); }
 .pg-btn:disabled { opacity: 0.5; }
 .bulk { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1.25rem; }
-.box { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 13px; color: var(--muted); cursor: pointer; }
-.box input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.box { font-size: 13px; color: var(--muted); }
 .pg-row.sel { box-shadow: inset 2px 0 var(--accent); background: var(--surface); }
 </style>

@@ -37,7 +37,7 @@ export const MENU = [
             { icon: 'tasks', title: 'Tarefas', desc: 'Listas, subtarefas e prioridades' },
             { icon: 'board', title: 'Quadros', desc: 'Kanban para cada fluxo do time' },
             { icon: 'calendar', title: 'Calendário', desc: 'Prazos e entregas lado a lado' },
-            { icon: 'goals', title: 'Metas', desc: 'Objetivos ligados ao trabalho real' },
+            { icon: 'goals', title: 'Metas', desc: 'Objetivos ligados ao trabalho real', to: '/produto/tarefas' },
           ],
         },
       ],
@@ -74,6 +74,7 @@ export const MENU = [
         {
           items: [
             { icon: 'code', title: 'Engenharia', desc: 'Sprints, bugs e roadmap' },
+            { icon: 'briefcase', title: 'Agências', desc: 'Clientes, briefings e aprovações' },
           ],
         },
       ],
@@ -81,11 +82,12 @@ export const MENU = [
         {
           items: [
             { icon: 'sliders', title: 'Operações', desc: 'Processos padronizados e medidos' },
+            { icon: 'cap', title: 'Educação', desc: 'Turmas, projetos e entregas acadêmicas' },
           ],
         },
       ],
     ],
-    feature: { title: 'Dá para usar o Novexo com clientes?', cta: 'Veja como', art: malaga },
+    feature: { title: 'Dá para usar o Novexo com clientes?', cta: 'Veja como', art: malaga, to: '/casos-de-uso' },
   },
   {
     id: 'aprender',
@@ -94,6 +96,7 @@ export const MENU = [
       [{ items: [
         { icon: 'book', title: 'Como funciona', desc: 'Seu primeiro projeto, passo a passo.', to: '/blog/como-funciona' },
         { icon: 'news', title: 'Blog', desc: 'Produtividade e gestão de times.', to: '/blog' },
+        { icon: 'users', title: 'Novexo Inc', desc: 'A empresa e a visão por trás da plataforma.', to: '/blog/conheca-a-novexo-inc' },
       ] }],
     ],
     feature: { title: 'Como funciona o Novexo', cta: 'Veja o passo a passo', art: salamanca, to: '/blog/como-funciona' },
@@ -115,4 +118,5 @@ export const PRODUCT_LINKS = {
   Tarefas: '/produto/tarefas',
   Quadros: '/produto/quadros',
   Calendário: '/produto/calendario',
+  Metas: '/produto/tarefas',
 }

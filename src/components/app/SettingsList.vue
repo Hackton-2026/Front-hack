@@ -4,6 +4,8 @@ import { api } from '../../services/api'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppSelect from './AppSelect.vue'
+import AppCheckbox from './AppCheckbox.vue'
+import AppDateInput from './AppDateInput.vue'
 
 const props = defineProps({
   path: { type: String, required: true },
@@ -19,6 +21,7 @@ const { state, member } = useWorkspace()
 const rows = ref([])
 const error = ref('')
 const loading = ref(true)
+const saving = ref(false)
 const editing = ref(null)
 const revealed = ref('')
 const form = reactive({})
@@ -85,9 +88,11 @@ function body() {
   return out
 }
 async function submit() {
+  if (saving.value) return
   const missing = inputs.value.find((f) => f.required && ['select', 'task'].includes(f.type) && form[f.key] === '')
   if (missing) return (error.value = `Escolha ${missing.label.toLowerCase()}.`)
   error.value = ''
+  saving.value = true
   try {
     if (editing.value) {
       const updated = await api(`${props.path}${editing.value}/`, { method: 'PATCH', body: body() })
@@ -100,6 +105,8 @@ async function submit() {
     cancel()
   } catch (e) {
     error.value = e.data && typeof e.data === 'object' && !e.data.detail ? Object.values(e.data).flat().join(' ') : e.message
+  } finally {
+    saving.value = false
   }
 }
 async function remove(row) {
@@ -126,20 +133,21 @@ defineExpose({ rows })
     </p>
 
     <form v-if="canWrite" class="sl__form" @submit.prevent="submit">
-      <label v-for="f in inputs" :key="f.key" :class="{ wide: ['textarea', 'members', 'multi'].includes(f.type) }">
-        {{ f.label }}
-        <textarea v-if="f.type === 'textarea'" v-model="form[f.key]" rows="2" :required="f.required" />
-        <AppSelect v-else-if="f.type === 'select'" v-model="form[f.key]" :options="f.options" placeholder="Escolher" block />
-        <AppSelect v-else-if="f.type === 'task'" v-model="form[f.key]" :options="taskOptions" placeholder="Escolher tarefa" block />
+      <div v-for="f in inputs" :key="f.key" class="sl__field" :class="{ wide: ['textarea', 'members', 'multi'].includes(f.type) }">
+        <span class="sl__label">{{ f.label }}</span>
+        <textarea v-if="f.type === 'textarea'" v-model="form[f.key]" rows="2" :required="f.required" :aria-label="f.label" />
+        <AppSelect v-else-if="f.type === 'select'" v-model="form[f.key]" :options="f.options" placeholder="Escolher" block :aria-label="f.label" />
+        <AppSelect v-else-if="f.type === 'task'" v-model="form[f.key]" :options="taskOptions" placeholder="Escolher tarefa" block :aria-label="f.label" />
         <span v-else-if="f.type === 'members' || f.type === 'multi'" class="sl__chips">
           <button v-for="o in f.type === 'members' ? state.members.map((m) => ({ value: m.id, label: m.name })) : f.options" :key="o.value" type="button" :aria-pressed="form[f.key].includes(o.value)" @click="toggleIn(form[f.key], o.value)">{{ o.label }}</button>
         </span>
-        <input v-else-if="f.type === 'check'" v-model="form[f.key]" type="checkbox" class="sl__check" />
-        <input v-else-if="f.type === 'hours'" v-model="form[f.key]" type="number" min="0.25" max="24" step="0.25" :required="f.required" />
-        <input v-else v-model="form[f.key]" :type="f.type || 'text'" :required="f.required" />
-      </label>
+        <AppCheckbox v-else-if="f.type === 'check'" v-model="form[f.key]" class="sl__check" :label="form[f.key] ? 'Sim' : 'Não'" />
+        <AppDateInput v-else-if="f.type === 'date'" v-model="form[f.key]" block :aria-label="f.label" />
+        <input v-else-if="f.type === 'hours'" v-model="form[f.key]" type="number" min="0.25" max="24" step="0.25" :required="f.required" :aria-label="f.label" />
+        <input v-else v-model="form[f.key]" :type="f.type || 'text'" :required="f.required" :aria-label="f.label" />
+      </div>
       <div class="sl__actions">
-        <button type="submit" class="sl__save">{{ editing ? 'Salvar' : `Adicionar ${noun}` }}</button>
+        <button type="submit" class="sl__save" :disabled="saving">{{ saving ? 'Salvando…' : editing ? 'Salvar' : `Adicionar ${noun}` }}</button>
         <button v-if="editing" type="button" class="link" @click="cancel">Cancelar</button>
       </div>
     </form>
@@ -168,19 +176,21 @@ defineExpose({ rows })
 
 <style scoped>
 .sl { display: flex; flex-direction: column; gap: 0.75rem; }
-.sl__form { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.6rem 0.8rem; align-items: end; padding: 0.75rem; border: 1px solid var(--line); border-radius: 8px; }
-.sl__form label { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; font-size: 12px; font-weight: 500; color: var(--muted); }
-.sl__form label.wide { grid-column: 1 / -1; }
-.sl__form :is(input:not(.sl__check), textarea) { min-height: 32px; padding: 0.35rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
+.sl__form { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.75rem 0.9rem; align-items: end; padding: 0.95rem; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 50%, var(--surface)); }
+.sl__field { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.sl__label { font-size: 12px; font-weight: 500; color: var(--muted); }
+.sl__field.wide { grid-column: 1 / -1; }
+.sl__form :is(input, textarea) { min-height: 34px; padding: 0.35rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
 .sl__form :is(input, textarea):focus { border-color: var(--accent); }
-.sl__check { width: 16px; height: 16px; accent-color: var(--accent); }
+.sl__check { min-height: 32px; color: var(--text); }
 .sl__chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .sl__chips button { padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .sl__chips button[aria-pressed='true'] { border-color: var(--accent); color: var(--text); background: color-mix(in srgb, var(--accent) 18%, transparent); }
 .sl__actions { display: flex; align-items: center; gap: 0.75rem; }
-.sl__save { height: 32px; padding: 0 0.85rem; border: 0; border-radius: 6px; background: var(--accent); font-size: 13px; font-weight: 500; color: var(--on-accent); cursor: pointer; }
+.sl__save { height: 34px; padding: 0 0.95rem; border: 0; border-radius: 6px; background: var(--accent); font-size: 13px; font-weight: 500; color: var(--on-accent); cursor: pointer; }
+.sl__save:disabled { opacity: 0.55; cursor: not-allowed; }
 .sl__table { display: flex; flex-direction: column; overflow-x: auto; font-size: 13px; }
-.sl__row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(7rem, 1fr); gap: 0.75rem; align-items: center; padding: 0.45rem 0.25rem; border-top: 1px solid var(--line); }
+.sl__row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(7rem, 1fr); gap: 0.75rem; align-items: center; padding: 0.5rem 0.35rem; border-top: 1px solid var(--line); }
 .sl__row > span { min-width: 0; overflow-wrap: anywhere; }
 .sl__row.on { background: var(--surface-2); }
 .sl__head { border-top: 0; font-size: 11.5px; font-weight: 600; color: var(--muted); }

@@ -1,6 +1,306 @@
-export const BLOG_CATEGORIES = ['Todas', 'Produto', 'Guias', 'Produtividade', 'Equipes']
+export const BLOG_CATEGORIES = ['Todas', 'Novexo Inc', 'Produto', 'Engenharia', 'Guias', 'Produtividade', 'Equipes']
 
 export const BLOG_POSTS = [
+  {
+    slug: 'conheca-a-novexo-inc', category: 'Novexo Inc', date: '2026-11-26', art: 'orbit',
+    title: 'Conheça a Novexo Inc: a empresa por trás da plataforma e da nossa visão.',
+    excerpt: 'Como nasceu a Novexo Inc, os princípios de engenharia e design que guiam nossos produtos e por que construímos software pensado para tirar o peso da rotina.',
+    coverLine: ['Novexo Inc.', 'Software sem atrito.'],
+    sections: [
+      {
+        title: 'Por que a Novexo Inc existe',
+        text: [
+          'A Novexo Inc nasceu de um incômodo real vivido por equipes de produto, engenharia e operações todos os dias: o trabalho moderno foi fragmentado em dezenas de ferramentas lentas, caras e desconectadas. Uma tarefa ficava em um aplicativo, o briefing em outro, a conversa em um terceiro e o acompanhamento de prazos em planilhas improvisadas.',
+          'Em vez de aceitar que coordenar um time precisa ser burocrático, fundamos a Novexo Inc com uma missão direta: criar produtos digitais rápidos, elegantes e integrados de ponta a ponta, onde clareza operacional vem de fábrica — do primeiro projeto individual até operações com centenas de pessoas.',
+        ],
+      },
+      {
+        title: 'Nossos pilares: velocidade, clareza e autonomia',
+        text: [
+          'Na Novexo Inc, tratamos performance como respeito ao tempo de quem usa o software. Cada tela, quadro Kanban, busca instantânea e mensagem em tempo real é construída para responder em milissegundos, sem telas de carregamento desnecessárias nem menus labirínticos.',
+          'Também acreditamos em inteligência artificial útil de verdade. Em vez de enfeites que atrapalham o fluxo, projetamos a Novexo IA para entender o contexto real dos projetos — resumindo conversas, estruturando listas de tarefas e ajudando equipes a destravarem decisões mantendo total controle humano.',
+        ],
+      },
+      {
+        title: 'Um ecossistema feito para crescer com você',
+        text: [
+          'O Novexo é o carro-chefe da Novexo Inc: uma plataforma unificada que reúne tarefas, quadros, calendário, cronograma Gantt, ciclos, wiki colaborativa, chat por projeto, integrações com WhatsApp e Google Meet, além de API aberta e webhooks para desenvolvedores.',
+          'Seguimos evoluindo o ecossistema da Novexo Inc com ciclos curtos de engenharia, ouvindo de perto quem usa a ferramenta todos os dias. Nosso compromisso é manter uma base transparente, segura e acessível, construída no Brasil com padrão global de qualidade.',
+        ],
+        callout: {
+          eyebrow: 'Site oficial da Novexo Inc',
+          text: 'Quer acompanhar novidades institucionais, projetos do grupo, cultura de engenharia e próximos lançamentos da empresa? Visite a página oficial da Novexo Inc.',
+          href: 'https://official.novexo.cloud',
+          label: 'Acessar official.novexo.cloud',
+        },
+      },
+    ],
+    cta: {
+      title: 'Conheça o ecossistema da Novexo Inc.',
+      text: 'Explore nossa história, iniciativas e produtos no portal institucional oficial ou comece gratuitamente no Novexo agora mesmo.',
+      href: 'https://official.novexo.cloud',
+      label: 'Visitar Novexo Inc',
+      external: true,
+    },
+  },
+  {
+    slug: 'novexo-ia-na-pratica', category: 'Produto', date: '2026-11-24', art: 'focus',
+    title: 'Novexo IA na prática: menos trabalho repetitivo, mais foco na decisão.',
+    excerpt: 'Veja como usar inteligência artificial dentro das tarefas, documentos e conversas do projeto sem perder o controle das entregas.',
+    coverLine: ['IA com contexto.', 'Decisão no comando.'],
+    sections: [
+      {
+        title: 'IA que entende o projeto antes de responder',
+        text: [
+          'Copiar e colar contexto em chats genéricos fora da ferramenta de trabalho desperdiça tempo e quebra o sigilo operacional. A Novexo IA foi projetada pelo time da Novexo Inc para ler os projetos, tarefas, prazos e documentos do seu workspace apenas quando você autoriza.',
+          'Ao mencionar @novexo no chat do projeto ou abrir o assistente dedicado, você pode pedir um resumo do que mudou na semana, identificar tarefas atrasadas ou quebrar uma entrega grande em subtarefas concretas em segundos.',
+        ],
+      },
+      {
+        title: 'Do briefing solto ao plano executável',
+        text: [
+          'Uma das maiores travas no início de um projeto é transformar uma ideia ampla em tarefas claras. Com o modo de estruturação da Novexo IA, você descreve o objetivo — por exemplo, lançar uma nova página comercial — e recebe sugestões de etapas com prioridades e checklists prontos para ajustar.',
+          'Nada é publicado no escuro: você revisa, edita responsáveis e aprova cada item antes de levar para o quadro do time.',
+        ],
+      },
+      {
+        title: 'Controle total nas mãos do administrador',
+        text: [
+          'Cada empresa tem políticas próprias sobre uso de IA. Em Ajustes → Produtos → Novexo IA, administradores podem ligar ou desligar o assistente e definir se ele pode consultar dados do workspace.',
+          'Tecnologia boa serve ao ritmo da equipe, nunca o contrário.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'kanban-sem-gargalos-limites-wip', category: 'Guias', date: '2026-11-22', art: 'board',
+    title: 'Kanban sem gargalos: como limites de colunas fazem seu time entregar mais.',
+    excerpt: 'Começar menos tarefas ao mesmo tempo parece contraintuitivo — até o quadro começar a fluir sem travas nem acumular revisões.',
+    coverLine: ['Menos aberto.', 'Mais entregue.'],
+    sections: [
+      {
+        title: 'O custo escondido de ter dez tarefas “em andamento”',
+        text: [
+          'Quando uma coluna Em andamento acumula quinze cards para um time de quatro pessoas, ninguém está realmente mais produtivo. O que acontece na prática é troca constante de contexto, revisões atrasadas e uma sensação permanente de correria sem entregas fechadas.',
+          'No quadro Kanban do Novexo, você pode definir um limite de itens por coluna clicando no menu da própria coluna. Quando o número passa do combinado, o quadro destaca visualmente o excesso antes que o atraso se espalhe.',
+        ],
+      },
+      {
+        title: 'Como escolher um bom primeiro limite',
+        text: [
+          'Uma regra simples para começar: defina o limite da coluna Em andamento como o número de pessoas do time mais um, e o limite de Revisão ainda menor. Isso cria um incentivo saudável para destravar o que está quase pronto antes de puxar algo novo.',
+          'Combine o limite com raias agrupadas por prioridade ou responsável para enxergar rapidamente quem precisa de apoio.',
+        ],
+      },
+      {
+        title: 'Olhe o quadro da direita para a esquerda',
+        text: [
+          'Nas revisões rápidas com a equipe, comece pela coluna mais próxima de Concluído. Perguntar “o que falta para fechar o que está em revisão?” acelera muito mais o fluxo do que listar novas demandas na coluna A fazer.',
+          'Um quadro saudável tem movimento constante para a direita, não pilhas de boas intenções paradas no meio.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'como-rodar-sprints-com-ciclos', category: 'Engenharia', date: '2026-11-19', art: 'calendar',
+    title: 'Como rodar sprints saudáveis com Ciclos e gráfico de burn-down.',
+    excerpt: 'Defina um recorte realista para a quinzena, acompanhe o ritmo real da entrega e transforme encerramentos em aprendizado contínuo.',
+    coverLine: ['Ritmo claro.', 'Entregas previsíveis.'],
+    sections: [
+      {
+        title: 'Por que trabalhar em janelas curtas funciona',
+        text: [
+          'Listas infinitas de tarefas desmotivam qualquer equipe. Os Ciclos do Novexo criam uma janela fechada — normalmente de uma ou duas semanas — com objetivo claro, data de início, data de término e um conjunto combinado de entregas.',
+          'Quando o time olha para um ciclo focado, fica evidente o que precisa entrar agora e o que pode esperar o próximo recorte sem gerar culpa ou ruído.',
+        ],
+      },
+      {
+        title: 'Lendo o gráfico de burn-down sem neurose',
+        text: [
+          'O burn-down compara o ritmo ideal de conclusão com o avanço real do ciclo. Ele não existe para cobrar horas, mas para dar sinal precoce: se na metade da semana a linha real ainda não desceu, talvez as tarefas estejam grandes demais ou bloqueadas por uma dependência externa.',
+          'Ajustar o escopo no quarto dia do ciclo é sinal de maturidade operacional, não de falha.',
+        ],
+      },
+      {
+        title: 'Fechando um ciclo e abrindo o próximo em um clique',
+        text: [
+          'No Novexo, o botão Próximo ciclo aproveita a duração do ciclo anterior e já sugere datas sequenciais. O que ficou pendente continua seguro no projeto, pronto para ser priorizado ou descartado com consciência.',
+          'Com o tempo, o histórico de ciclos mostra a capacidade real da equipe — e estimar prazos deixa de ser adivinhação.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'arquitetura-em-tempo-real-no-novexo', category: 'Engenharia', date: '2026-11-16', art: 'orbit',
+    title: 'Por baixo do capô: como tornamos o quadro e o chat instantâneos.',
+    excerpt: 'Os bastidores da engenharia da Novexo Inc para eliminar latência no drag-and-drop, otimizar autenticação na borda e sincronizar eventos em tempo real.',
+    coverLine: ['Milissegundos', 'importam muito.'],
+    sections: [
+      {
+        title: 'Por que cada 100ms faz diferença na sensação do app',
+        text: [
+          'Quando você arrasta um card de uma coluna para outra e a interface engasga ou devolve o item para trás por meio segundo, a confiança na ferramenta cai imediatamente. A equipe de engenharia da Novexo Inc trata fluidez de interação como requisito de primeira classe.',
+          'Para eliminar travamentos, combinamos atualizações otimistas com controle de versão por tarefa: mesmo que você mova vários cards em sequência rápida, alterações pendentes são mescladas com segurança e respostas antigas da rede nunca sobrescrevem o estado mais recente.',
+        ],
+      },
+      {
+        title: 'Verificação criptográfica na borda e trabalho em segundo plano',
+        text: [
+          'No servidor, substituímos checagens externas repetitivas por validação local de assinatura JWT via Web Crypto com chaves públicas em cache. Também movemos registro de histórico e notificações de seguidores para execução assíncrona fora do caminho crítico da resposta.',
+          'O resultado é uma API enxuta, que confirma mudanças de tarefa muito mais rápido enquanto o restante do time recebe atualizações ao vivo via canais Realtime.',
+        ],
+      },
+      {
+        title: 'Menos trabalho no navegador a cada quadro',
+        text: [
+          'No front-end, pré-indexamos contadores de subtarefas, prioridades e ciclos em memória e removemos gravações síncronas pesadas no armazenamento local durante cada edição. Assim, o navegador mantém 60 quadros por segundo mesmo em projetos grandes.',
+          'Você pode acompanhar todas essas entregas em detalhes na nossa página de Engenharia e changelog público.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'gestao-de-projetos-para-agencias', category: 'Equipes', date: '2026-11-13', art: 'team',
+    title: 'Agências sem caos: gerenciando múltiplos clientes sem perder prazos.',
+    excerpt: 'Como separar projetos por cliente, manter briefings acessíveis e equilibrar a carga de trabalho da equipe criativa.',
+    coverLine: ['Vários clientes.', 'Um único controle.'],
+    sections: [
+      {
+        title: 'Um projeto por cliente ou campanha, nunca um balaio único',
+        text: [
+          'Em agências de design, marketing ou software, misturar contas diferentes no mesmo quadro cria confusão de prioridades e risco de vazamento de informações. No Novexo, cada projeto tem permissões próprias, prefixo de identificação, chat dedicado e documentos vinculados.',
+          'Assim, você pode convidar clientes ou freelancers apenas para o projeto específico em que colaboram, preservando o restante do workspace.',
+        ],
+      },
+      {
+        title: 'Enxergue a carga real antes de aceitar mais um prazo',
+        text: [
+          'A visão de Painéis e a aba de Pessoas mostram quantos itens abertos e atrasados estão com cada membro do time em todos os projetos simultaneamente. Isso evita sobrecarregar quem já está no limite enquanto outro colega tem margem para ajudar.',
+          'Combinar essa leitura com modelos de tarefa reduz pela metade o tempo de abertura de cada novo cliente.',
+        ],
+      },
+      {
+        title: 'Aprovações registradas junto da entrega',
+        text: [
+          'Em vez de caçar aprovações em áudios espalhados, registre links finais, anexos e comentários de revisão diretamente no painel da tarefa. Quando surgir uma dúvida meses depois, o histórico mostra exatamente o que foi combinado e quando.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'cronograma-gantt-e-dependencias', category: 'Guias', date: '2026-11-10', art: 'calendar',
+    title: 'Gantt sem planilhas quebradas: enxergue dependências antes do atraso.',
+    excerpt: 'Quando uma entrega bloqueia outra, ver início, duração e relações na linha do tempo evita surpresas na reta final.',
+    coverLine: ['Do início ao fim,', 'sem surpresas.'],
+    sections: [
+      {
+        title: 'Quando a lista não basta para enxergar o caminho crítico',
+        text: [
+          'Projetos de lançamento, eventos ou desenvolvimento de produto costumam ter tarefas encadeadas: o layout precisa terminar antes da implementação, que precisa terminar antes dos testes. Em uma lista simples, essa ordem fica invisível.',
+          'A visualização Gantt do Novexo posiciona automaticamente cada tarefa que tem data de início e prazo em uma linha do tempo interativa, deixando evidente onde há sobreposição ou folga.',
+        ],
+      },
+      {
+        title: 'Use relações de bloqueio para proteger entregas sensíveis',
+        text: [
+          'Dentro do painel da tarefa, adicione relações do tipo “Bloqueia” ou “Bloqueada por”. O Novexo impede que uma tarefa bloqueada seja concluída por engano antes do pré-requisito e avisa automaticamente os responsáveis assim que o bloqueio é liberado.',
+          'É uma camada leve de proteção que economiza horas de coordenação manual.',
+        ],
+      },
+      {
+        title: 'Mantenha o cronograma vivo em 5 minutos por semana',
+        text: [
+          'Um Gantt só funciona quando reflete a realidade. Toda semana, ajuste as datas das entregas que mudaram e confira os módulos ativos. Se o cronograma é simples de atualizar, ele vira ferramenta diária de decisão — e não um slide esquecido.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'chat-por-projeto-sem-ruido', category: 'Equipes', date: '2026-11-06', art: 'team',
+    title: 'Chat conectado ao projeto: o fim das decisões perdidas no grupo.',
+    excerpt: 'Conversar ao lado do quadro e das tarefas reduz interrupções, mantém o assunto focado e facilita retomar qualquer decisão.',
+    coverLine: ['Conversa certa,', 'no lugar certo.'],
+    sections: [
+      {
+        title: 'O problema dos grupos genéricos onde tudo se mistura',
+        text: [
+          'Quando a mesma janela de chat mistura avisos de almoço, bugs urgentes, dúvidas de design e links de cliente, tudo vira ruído. As pessoas silenciam notificações e informações críticas passam batido.',
+          'No Novexo, cada projeto possui seu próprio chat lateral acessível com um clique — além de mensagens diretas para alinhamentos pontuais. Quem entra no projeto vê na hora tanto o quadro quanto o histórico recente das conversas daquela iniciativa.',
+        ],
+      },
+      {
+        title: 'Do chat direto para a ação',
+        text: [
+          'Conversou sobre um ajuste necessário? Transforme a decisão em tarefa no mesmo minuto ou mencione @novexo para resumir os pontos combinados na thread.',
+          'Decisões que viram tarefas com dono e prazo param de depender da memória de quem leu a mensagem por último.',
+        ],
+      },
+      {
+        title: 'Respeite o tempo de foco do time',
+        text: [
+          'Com o contexto organizado no projeto, ninguém precisa mandar “oi, tudo bem? tem 5 minutinhos?” só para saber em que pé está uma entrega. O status já responde o básico, e o chat fica livre para o que realmente exige troca humana.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'integrando-novexo-com-whatsapp-e-webhooks', category: 'Produto', date: '2026-11-02', art: 'tasks',
+    title: 'WhatsApp, Google Meet e Webhooks: o Novexo conectado à sua rotina.',
+    excerpt: 'Receba avisos essenciais no celular, crie reuniões em um clique e integre eventos do workspace aos sistemas da sua empresa.',
+    coverLine: ['Tudo conectado,', 'no seu fluxo.'],
+    sections: [
+      {
+        title: 'Alertas importantes direto no WhatsApp',
+        text: [
+          'Nem todo mundo fica com o navegador aberto o dia inteiro, especialmente times de operações, comercial e liderança em trânsito. Conectando seu número em Ajustes → WhatsApp, você recebe lembretes de prazos, menções e tarefas críticas onde já acompanha mensagens.',
+          'Você escolhe quais avisos fazem sentido para não transformar conveniência em excesso de notificações.',
+        ],
+      },
+      {
+        title: 'Reuniões rápidas com Google Meet e agenda sincronizada',
+        text: [
+          'Quando uma tarefa realmente precisa de conversa ao vivo, você pode abrir uma chamada com Google Meet ou enviar o prazo da entrega para o Google Agenda diretamente do painel da tarefa.',
+          'Depois da ligação, a ata e os próximos passos ficam registrados na própria tarefa ou documento do projeto.',
+        ],
+      },
+      {
+        title: 'API pública e Webhooks para ir além',
+        text: [
+          'Times técnicos podem gerar tokens de API e cadastrar webhooks em Ajustes → Desenvolvedores para conectar o Novexo a pipelines de deploy, CRMs internos ou painéis analíticos próprios.',
+          'A documentação completa está sempre disponível em /docs para sua equipe integrar sem fricção.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'seguranca-e-governanca-em-times-que-crescem', category: 'Engenharia', date: '2026-10-29', art: 'wiki',
+    title: 'Permissões, auditoria e isolamento: organizando times que crescem rápido.',
+    excerpt: 'Como equilibrar autonomia e segurança com acesso granular por projeto, governança de workspace e proteção de dados desde o dia um.',
+    coverLine: ['Autonomia com', 'proteção real.'],
+    sections: [
+      {
+        title: 'Segurança que não trava a colaboração',
+        text: [
+          'À medida que uma equipe cresce de cinco para cinquenta pessoas, deixar todo mundo como administrador total vira um risco desnecessário — basta um clique acidental para arquivar um projeto importante ou expor um documento sensível.',
+          'No Novexo, cada pessoa recebe papéis claros tanto no workspace quanto por projeto (visualizar, editar ou gerenciar), garantindo que cada colaborador tenha exatamente o acesso necessário para trabalhar bem.',
+        ],
+      },
+      {
+        title: 'Isolamento de dados e políticas de entrada',
+        text: [
+          'Nossa arquitetura aplica políticas de segurança em nível de linha no banco de dados (RLS), garantindo isolamento rigoroso entre workspaces. Em Ajustes → Identidade e Governança, administradores podem restringir quem cria projetos, quem apaga tarefas e se páginas públicas estão liberadas.',
+          'Essas travas simples protegem o negócio sem criar filas de aprovação para tarefas corriqueiras.',
+        ],
+      },
+      {
+        title: 'Histórico transparente e recuperação sem pânico',
+        text: [
+          'Todas as mudanças relevantes em tarefas ficam registradas na aba de Histórico, e projetos, itens ou páginas arquivados podem ser restaurados com facilidade na área de Arquivados.',
+          'Segurança madura dá tranquilidade para o time experimentar, entregar e crescer sem medo.',
+        ],
+      },
+    ],
+  },
   {
     slug: 'seu-trabalho-em-uma-so-visao', category: 'Produto', date: '2026-10-23', art: 'orbit',
     title: 'Seu trabalho merece uma visão mais clara.',

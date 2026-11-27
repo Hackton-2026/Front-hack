@@ -3,6 +3,8 @@ import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from
 import '../assets/landing.css'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
+import AppSelect from '../components/app/AppSelect.vue'
+import AppCheckbox from '../components/app/AppCheckbox.vue'
 import { formatBRL } from '../data/plans'
 import {
   CUSTOM_PLAN_STEPS, CUSTOM_PLAN_QUESTIONS, CUSTOM_PLAN_RESOURCES,
@@ -16,6 +18,7 @@ const form = ref(null)
 const step = ref(0)
 const visited = ref(0)
 const reviewing = ref(false)
+const chartOpen = ref(true)
 const budget = ref(0)
 const answers = reactive(createCustomPlanAnswers())
 const errors = ref({})
@@ -129,11 +132,36 @@ onUnmounted(() => {
               <fieldset v-if="question.type === 'choices'" :aria-describedby="errors[question.id] ? `error-${question.id}` : 'custom-priority-hint'" :aria-invalid="!!errors[question.id]">
                 <legend>{{ question.label }}</legend>
                 <p id="custom-priority-hint" class="custom-field-hint">{{ question.hint }}</p>
-                <div class="custom-priorities"><label v-for="resource in CUSTOM_PLAN_RESOURCES" :key="resource.id" :class="{ 'is-selected': answers.priorities.includes(resource.id) }"><input :id="`custom-priority-${resource.id}`" v-model="answers.priorities" type="checkbox" :value="resource.id" @change="clearError(question)" /><FlaticonIcon :name="resource.icon" :size="14" /><span>{{ resource.name }}</span></label></div>
+                <div class="custom-priorities">
+                  <AppCheckbox
+                    v-for="resource in CUSTOM_PLAN_RESOURCES"
+                    :id="`custom-priority-${resource.id}`"
+                    :key="resource.id"
+                    v-model="answers.priorities"
+                    :value="resource.id"
+                    size="sm"
+                    class="custom-priority-tile"
+                    :class="{ 'is-selected': answers.priorities.includes(resource.id) }"
+                    @change="clearError(question)"
+                  >
+                    <span class="custom-priority-inner"><FlaticonIcon :name="resource.icon" :size="14" /><span>{{ resource.name }}</span></span>
+                  </AppCheckbox>
+                </div>
               </fieldset>
               <template v-else>
                 <label :for="`custom-${question.id}`">{{ question.label }}</label>
-                <div v-if="question.type === 'select'" class="custom-select"><select :id="`custom-${question.id}`" v-model="answers[question.id]" :name="question.id" required :aria-invalid="!!errors[question.id]" :aria-describedby="errors[question.id] ? `error-${question.id}` : undefined" @change="clearError(question)"><option disabled value="">Selecione uma opção</option><option v-for="option in question.options" :key="option">{{ option }}</option></select><FlaticonIcon name="angle-small-down" :size="18" /></div>
+                <AppSelect
+                  v-if="question.type === 'select'"
+                  :id="`custom-${question.id}`"
+                  v-model="answers[question.id]"
+                  :options="question.options"
+                  placeholder="Selecione uma opção"
+                  size="lg"
+                  block
+                  :aria-invalid="!!errors[question.id]"
+                  :aria-describedby="errors[question.id] ? `error-${question.id}` : undefined"
+                  @change="clearError(question)"
+                />
                 <textarea v-else-if="question.type === 'textarea'" :id="`custom-${question.id}`" v-model.trim="answers[question.id]" :name="question.id" :placeholder="question.placeholder" :maxlength="question.max" rows="4" required :aria-invalid="!!errors[question.id]" :aria-describedby="errors[question.id] ? `error-${question.id}` : undefined" @input="clearError(question)" />
                 <input v-else :id="`custom-${question.id}`" v-model.trim="answers[question.id]" :name="question.id" :type="question.type" :autocomplete="question.autocomplete" :placeholder="question.placeholder" :min="question.type === 'number' ? question.min : undefined" :max="question.type === 'number' ? question.max : undefined" :maxlength="question.type === 'number' ? undefined : question.max" :step="question.type === 'number' ? 1 : undefined" required :aria-invalid="!!errors[question.id]" :aria-describedby="errors[question.id] ? `error-${question.id}` : undefined" @input="clearError(question)" />
               </template>
@@ -162,7 +190,18 @@ onUnmounted(() => {
               <div class="custom-preview__heading"><span>Para {{ formatBRL(budget) }} / mês</span><h2 id="custom-preview-title">{{ preview.band.title }}</h2></div>
               <p>{{ preview.band.description }}</p>
               <ul class="custom-preview__features"><li><FlaticonIcon name="check" :size="11" />Base de colaboração do Novexo</li><li v-for="resource in previewHighlights" :key="resource.id"><FlaticonIcon name="check" :size="11" />{{ resource.name }}</li></ul>
-              <details class="custom-chart" open><summary>Como o escopo evolui<FlaticonIcon name="angle-small-down" :size="17" /></summary><p>As barras ilustram a configuração sugerida. Os itens marcados são suas prioridades.</p><div v-for="resource in preview.resources" :key="resource.id" class="custom-resource" :class="{ 'is-priority': answers.priorities.includes(resource.id) }"><div><span><FlaticonIcon :name="resource.icon" :size="12" />{{ resource.name }}</span><span v-if="answers.priorities.includes(resource.id)" class="custom-resource__priority">Prioridade</span><span v-else-if="!resource.included" class="custom-resource__threshold">R$ {{ resource.from }}+</span></div><div class="custom-resource__track" role="progressbar" :aria-label="`Escopo sugerido para ${resource.name}`" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="resource.level" :aria-valuetext="resource.included ? 'Considerado nesta faixa de orçamento' : `Considerado a partir de R$ ${resource.from}`"><span :style="{ transform: `scaleX(${resource.level / 100})` }" /></div></div></details>
+              <div class="custom-chart" :class="{ 'is-open': chartOpen }">
+                <button type="button" class="custom-chart__btn" :aria-expanded="chartOpen" @click="chartOpen = !chartOpen">
+                  <span>Como o escopo evolui</span>
+                  <FlaticonIcon name="angle-small-down" :size="17" />
+                </button>
+                <div class="custom-chart__body">
+                  <div class="custom-chart__inner">
+                    <p>As barras ilustram a configuração sugerida. Os itens marcados são suas prioridades.</p>
+                    <div v-for="resource in preview.resources" :key="resource.id" class="custom-resource" :class="{ 'is-priority': answers.priorities.includes(resource.id) }"><div><span><FlaticonIcon :name="resource.icon" :size="12" />{{ resource.name }}</span><span v-if="answers.priorities.includes(resource.id)" class="custom-resource__priority">Prioridade</span><span v-else-if="!resource.included" class="custom-resource__threshold">R$ {{ resource.from }}+</span></div><div class="custom-resource__track" role="progressbar" :aria-label="`Escopo sugerido para ${resource.name}`" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="resource.level" :aria-valuetext="resource.included ? 'Considerado nesta faixa de orçamento' : `Considerado a partir de R$ ${resource.from}`"><span :style="{ transform: `scaleX(${resource.level / 100})` }" /></div></div>
+                  </div>
+                </div>
+              </div>
               <p class="custom-preview__note">Simulação de escopo. Valores, capacidade por equipe e condições são confirmados na proposta comercial.</p>
             </section>
           </Transition>
@@ -180,7 +219,7 @@ onUnmounted(() => {
 .custom-logo { color: #f8f8f8; font: 800 25px/1 var(--lp-display); letter-spacing: -.04em; text-decoration: none; }
 .custom-nav > a:last-child { display: inline-flex; align-items: center; gap: 9px; color: #b2a69a; font-size: 12px; text-decoration: none; }
 .custom-nav > a:hover { color: var(--lp-orange-soft); }
-.custom-plan :is(a, button, input, textarea, select, summary):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 5px; }
+.custom-plan :is(a, button, input, textarea):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 5px; }
 .custom-skip { position: fixed; z-index: 100; top: 12px; left: 20px; padding: 12px 20px; background: #fff; color: #000; transform: translateY(-170%); }
 .custom-skip:focus { transform: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -206,27 +245,23 @@ onUnmounted(() => {
 .custom-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 25px 18px; }
 .custom-question { min-width: 0; }
 .custom-question--full { grid-column: 1 / -1; }
-.custom-question label:not(.custom-priorities label), .custom-question legend { display: flex; align-items: baseline; gap: 7px; margin-bottom: 10px; color: #d4c5b5; font-size: 11px; line-height: 1.6; }
-.custom-question :is(input:not([type='checkbox']), textarea, select), .custom-exact input { display: block; width: 100%; min-width: 0; min-height: 45px; padding: 12px; border: 1px solid #ffffff24; border-radius: 7px; background: #ffffff03; color: #f2e9e0; caret-color: var(--lp-orange-soft); font: 400 12px/1.5 var(--lp-sans); color-scheme: dark; transition: border-color .2s; }
+.custom-question > label, .custom-question legend { display: flex; align-items: baseline; gap: 7px; margin-bottom: 10px; color: #d4c5b5; font-size: 11px; line-height: 1.6; }
+.custom-question :is(input:not([type='checkbox']), textarea), .custom-exact input { display: block; width: 100%; min-width: 0; min-height: 45px; padding: 12px; border: 1px solid #ffffff24; border-radius: 7px; background: #ffffff03; color: #f2e9e0; caret-color: var(--lp-orange-soft); font: 400 12px/1.5 var(--lp-sans); color-scheme: dark; transition: border-color .2s; }
+.custom-question :deep(.sel) { min-height: 45px; height: 45px; border-radius: 7px; border-color: #ffffff24; background: #ffffff03; font-size: 12.5px; }
+.custom-question :deep(.sel[aria-invalid='true']) { border-color: #fba45c99; }
 .custom-question :is(input, textarea)::placeholder { color: #8d8276; opacity: 1; }
-.custom-question :is(input, textarea, select):focus-visible, .custom-exact input:focus-visible { outline: none; border-color: #fba45c99; box-shadow: 0 0 0 2px #fba45c12; }
-.custom-question :is(input, textarea, select)[aria-invalid='true'] { border-color: #fba45c99; }
+.custom-question :is(input, textarea):focus-visible, .custom-exact input:focus-visible { outline: none; border-color: #fba45c99; box-shadow: 0 0 0 2px #fba45c12; }
+.custom-question :is(input, textarea)[aria-invalid='true'] { border-color: #fba45c99; }
 .custom-question :is(input, textarea):is(:autofill, :-webkit-autofill) { -webkit-text-fill-color: #f2e9e0; box-shadow: inset 0 0 0 1000px #17120e; }
 .custom-question textarea { resize: vertical; min-height: 110px; max-height: 240px; }
-.custom-select { position: relative; }
-.custom-select select { appearance: none; padding-right: 32px; }
-.custom-select > .flaticon { position: absolute; right: 10px; top: 14px; pointer-events: none; color: #a18c76; }
-.custom-select option { background: #17120e; color: #f2e9e0; }
-.custom-select option:disabled { color: #948574; }
-.custom-select option:checked { background: #3b2414; color: #fba45c; }
 .custom-question fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .custom-question legend { padding: 0; }
 .custom-field-hint { margin: -4px 0 13px; color: #978877; font-size: 11px; }
 .custom-priorities { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.custom-priorities label { display: flex; align-items: center; gap: 8px; padding: 12px 9px; border: 1px solid #ffffff1f; border-radius: 7px; color: #bdac9a; font-size: 11px; cursor: pointer; transition: border-color .2s, background .2s; }
-.custom-priorities label.is-selected { background: #e5651512; border-color: #fba45c66; color: #f0d2b3; }
-.custom-priorities input { width: 13px; height: 13px; margin: 0; accent-color: var(--lp-orange-soft); flex-shrink: 0; }
-.custom-priorities .flaticon { color: #c4935f; }
+.custom-priority-tile { width: 100%; padding: 12px 10px; border: 1px solid #ffffff1f; border-radius: 7px; color: #bdac9a; font-size: 11.5px; transition: border-color .2s, background .2s, color .2s; }
+.custom-priority-tile.is-selected { background: #e5651512; border-color: #fba45c66; color: #f0d2b3; }
+.custom-priority-inner { display: inline-flex; align-items: center; gap: 7px; }
+.custom-priority-inner .flaticon { color: #c4935f; flex-shrink: 0; }
 .custom-error { margin: 9px 0 0; color: #fba45c; font-size: 11px; line-height: 1.6; }
 .custom-form__actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 32px; padding-top: 25px; border-top: 1px solid var(--custom-line); }
 .custom-form__actions :deep(.gb__btn), .custom-review__actions :deep(.gb__btn) { font-size: 13px; min-height: 44px; }
@@ -266,10 +301,13 @@ onUnmounted(() => {
 .custom-preview__features li { display: flex; align-items: center; gap: 9px; color: #d5bea4; font-size: 11px; }
 .custom-preview__features .flaticon { color: var(--lp-orange-soft); }
 .custom-chart { border-top: 1px solid #e6ad6626; padding-top: 16px; }
-.custom-chart summary { display: flex; align-items: center; justify-content: space-between; gap: 15px; list-style: none; color: #dcc4a8; font-size: 11px; cursor: pointer; }
-.custom-chart summary::-webkit-details-marker { display: none; }
-.custom-chart[open] summary > .flaticon { transform: rotate(180deg); }
-.custom-chart > p { color: #96816b; font-size: 11px; line-height: 1.8; margin-block: 13px 20px; }
+.custom-chart__btn { display: flex; align-items: center; justify-content: space-between; gap: 15px; width: 100%; padding: 0; border: 0; background: none; color: #dcc4a8; font: 500 11.5px/1.4 var(--lp-sans); cursor: pointer; text-align: left; }
+.custom-chart__btn > .flaticon { transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+.custom-chart.is-open .custom-chart__btn > .flaticon { transform: rotate(180deg); }
+.custom-chart__body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .36s cubic-bezier(.22, 1, .36, 1); }
+.custom-chart.is-open .custom-chart__body { grid-template-rows: 1fr; }
+.custom-chart__inner { overflow: hidden; min-height: 0; }
+.custom-chart__inner > p { color: #96816b; font-size: 11px; line-height: 1.8; margin-block: 13px 20px; }
 .custom-resource + .custom-resource { margin-top: 16px; }
 .custom-resource > div:first-child { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
 .custom-resource > div:first-child > span:first-child { display: inline-flex; gap: 8px; align-items: center; color: #b7a28c; font-size: 11px; }
@@ -313,7 +351,7 @@ onUnmounted(() => {
   .custom-sidebar { position: static; order: -1; }
   .custom-budget { padding: 23px; }
   .custom-budget__amount output { font-size: 43px; }
-  .custom-question :is(input:not([type='checkbox']), textarea, select), .custom-exact input { font-size: 16px; }
+  .custom-question :is(input:not([type='checkbox']), textarea), .custom-exact input { font-size: 16px; }
   .custom-preview { padding: 23px; }
 }
 @media (max-width: 400px) {
@@ -323,8 +361,8 @@ onUnmounted(() => {
   .custom-form__actions { gap: 12px; }
   .custom-form__required { max-width: 110px; }
   .custom-form__actions :deep(.gb__btn) { padding-inline: 15px; font-size: 12px; }
-  .custom-priorities label { gap: 6px; padding-inline: 7px; }
-  .custom-priorities .flaticon { display: none; }
+  .custom-priority-tile { padding-inline: 7px; }
+  .custom-priority-inner .flaticon { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .custom-plan *, .custom-plan *::before, .custom-plan *::after { transition: none !important; } }
 </style>

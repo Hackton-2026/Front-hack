@@ -56,7 +56,7 @@ const steps = [
             autoplay
             muted
             loop
-            preload="auto"
+            preload="metadata"
             playsinline
             :aria-label="step.caption"
           />

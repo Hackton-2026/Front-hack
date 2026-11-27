@@ -7,15 +7,19 @@ import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
 import PricingPlans from '../components/landing/PricingPlans.vue'
+import AppFaq from '../components/landing/AppFaq.vue'
+import AppCheckbox from '../components/app/AppCheckbox.vue'
 import { PRICING_PLANS, COMPARISON_GROUPS, annualTotal, annualSavings, formatBRL } from '../data/plans'
 import { usePricingMotion } from '../composables/usePricingMotion'
+import { useAuth } from '../composables/useAuth'
 import { openCustomPlan } from '../utils/customPlanEntry'
 
 const root = ref(null)
 const router = useRouter()
+const { user } = useAuth()
 const yearly = ref(true)
 const differencesOnly = ref(false)
-const { revealAnswer } = usePricingMotion(root, yearly)
+usePricingMotion(root, yearly)
 const [free, essential, business, enterprise] = PRICING_PLANS
 const standardPlans = PRICING_PLANS.filter(plan => plan.month !== undefined)
 const automationRatio = business.limits.automationRuns / essential.limits.automationRuns
@@ -24,8 +28,13 @@ const comparisonGroups = computed(() => COMPARISON_GROUPS.map(group => ({
   rows: group.rows.filter(row => !differencesOnly.value || new Set(row.values).size > 1),
 })).filter(group => group.rows.length))
 const comparedRows = computed(() => comparisonGroups.value.reduce((total, group) => total + group.rows.length, 0))
-// "Testar 14 dias" abre o cadastro: o teste começa quando o workspace é criado
-const destination = plan => plan.id === 'enterprise' ? undefined : { path: '/login', query: { modo: 'cadastro' } }
+const destination = (plan) => {
+  if (plan.id === 'enterprise') return undefined
+  if (user.value) {
+    return plan.month ? { path: '/checkout', query: { plano: plan.id, ciclo: yearly.value ? 'anual' : 'mensal' } } : '/inicio'
+  }
+  return { path: '/login', query: { modo: 'cadastro' } }
+}
 const enterCustomPlan = () => openCustomPlan(router)
 
 const enterpriseSteps = [
@@ -70,7 +79,7 @@ onUnmounted(() => { document.title = previousTitle })
       <section id="comparar" class="pricing-comparison" aria-labelledby="comparison-title">
         <div class="pricing-section-head" data-pricing-reveal>
           <h2 id="comparison-title">Veja o que muda<br>de um plano para o outro.</h2>
-          <label class="pricing-differences"><input v-model="differencesOnly" type="checkbox" /><span>Mostrar só as diferenças</span></label>
+          <AppCheckbox v-model="differencesOnly" class="pricing-differences" label="Mostrar só as diferenças" />
         </div>
         <p class="sr-only" role="status">Comparando {{ comparedRows }} recursos entre os quatro planos.</p>
         <p id="comparison-help" class="pricing-table-hint"><FlaticonIcon name="arrows-h" :size="15" />Deslize para comparar os quatro planos.</p>
@@ -111,7 +120,7 @@ onUnmounted(() => { document.title = previousTitle })
 
       <section class="pricing-faq" aria-labelledby="pricing-faq-title">
         <div class="pricing-faq__heading" data-pricing-reveal><h2 id="pricing-faq-title">Antes de escolher,<br>tire suas dúvidas.</h2><RouterLink to="/contato">Fale com a gente<FlaticonIcon name="arrow-up-right" :size="13" /></RouterLink></div>
-        <div class="pricing-faq__list"><details v-for="item in questions" :key="item.question" data-pricing-reveal @toggle="revealAnswer"><summary><span>{{ item.question }}</span><FlaticonIcon name="plus" :size="15" /></summary><div class="pricing-faq__answer"><p>{{ item.answer }}</p><RouterLink v-if="item.link" :to="item.link">{{ item.label }}<FlaticonIcon name="arrow-up-right" :size="12" /></RouterLink></div></details></div>
+        <div class="pricing-faq__list" data-pricing-reveal><AppFaq :items="questions" /></div>
       </section>
     </main>
     <SiteFooter blend-from-black />
@@ -139,8 +148,7 @@ onUnmounted(() => { document.title = previousTitle })
 .pricing-comparison, .pricing-details { margin-top: 95px; }
 .pricing-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 32px; }
 .pricing-section-head h2 { margin: 0; color: #f0e9e1; font: 500 clamp(30px, 3.5vw, 44px)/1.1 var(--lp-hero); letter-spacing: -.055em; }
-.pricing-differences { display: flex; align-items: center; gap: 9px; flex-shrink: 0; padding-bottom: 4px; color: #c5b9ab; font-size: 11px; cursor: pointer; }
-.pricing-differences input { width: 15px; height: 15px; margin: 0; accent-color: var(--lp-orange-soft); cursor: pointer; }
+.pricing-differences { flex-shrink: 0; padding-bottom: 4px; color: #c5b9ab; font-size: 12px; }
 .pricing-table-hint { display: none; align-items: center; gap: 7px; color: #a59a8e; font-size: 11px; }
 .pricing-table-wrap { position: relative; overflow-x: auto; border: 1px solid var(--pricing-line); border-radius: 12px; scrollbar-color: #7e5635 #15110e; }
 .pricing-table { width: 100%; min-width: 780px; border-spacing: 0; table-layout: fixed; }
@@ -181,15 +189,7 @@ onUnmounted(() => { document.title = previousTitle })
 .pricing-enterprise__steps p { margin: 0; color: #ae9b88; font-size: 11px; line-height: 1.85; }
 .pricing-faq { display: grid; grid-template-columns: .8fr 1.2fr; gap: 70px; margin-top: 100px; padding-top: 45px; border-top: 1px solid var(--pricing-line); }
 .pricing-faq h2 { margin: 0 0 23px; color: #e9dfd5; font: 500 clamp(30px, 3.2vw, 40px)/1.1 var(--lp-hero); letter-spacing: -.055em; }
-.pricing-faq__heading > a, .pricing-faq__answer > a { display: inline-flex; align-items: center; gap: 9px; color: var(--lp-orange-soft); font-size: 12px; text-decoration: none; }
-.pricing-faq details { border-bottom: 1px solid var(--pricing-line); }
-.pricing-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; list-style: none; padding: 23px 0; color: #ded2c5; font-size: 13px; line-height: 1.7; cursor: pointer; }
-.pricing-faq summary::-webkit-details-marker { display: none; }
-.pricing-faq summary > .flaticon { color: var(--lp-orange-soft); transition: transform .25s; }
-.pricing-faq details[open] summary > .flaticon { transform: rotate(45deg); }
-.pricing-faq__answer { padding: 0 25px 24px 0; }
-.pricing-faq__answer > p { margin: 0; color: #ab9d8f; font-size: 12px; line-height: 1.9; }
-.pricing-faq__answer > a { margin-top: 17px; }
+.pricing-faq__heading > a { display: inline-flex; align-items: center; gap: 9px; color: var(--lp-orange-soft); font-size: 12px; text-decoration: none; }
 @media (max-width: 1150px) {
   .pricing-main { padding-inline: 30px; }
   .pricing-enterprise { padding: 35px; gap: 35px; }

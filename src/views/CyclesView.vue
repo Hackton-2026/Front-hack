@@ -7,6 +7,7 @@ import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppModal from '../components/app/AppModal.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import AppDateInput from '../components/app/AppDateInput.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
 
 const props = defineProps({ id: { type: String, default: '' } })
@@ -255,8 +256,8 @@ onUnmounted(() => removeEventListener('click', onDoc))
       <label v-if="!pid && editing === 'new'" class="f"><span>Projeto</span><AppSelect v-model="form.project" :options="state.projects.map((x) => ({ value: x.id, label: x.name }))" block /></label>
       <label class="f"><span>Descrição</span><textarea v-model="form.description" rows="2" placeholder="Objetivo do ciclo (opcional)" /></label>
       <div class="row2">
-        <label class="f"><span>Começa</span><input v-model="form.start_date" type="date" required /></label>
-        <label class="f"><span>Termina</span><input v-model="form.end_date" type="date" required /></label>
+        <div class="f"><span>Começa</span><AppDateInput v-model="form.start_date" block :clearable="false" aria-label="Começa" /></div>
+        <div class="f"><span>Termina</span><AppDateInput v-model="form.end_date" block :clearable="false" aria-label="Termina" /></div>
       </div>
       <p v-if="err" class="err" role="alert">{{ err }}</p>
       <template #footer>

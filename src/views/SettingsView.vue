@@ -12,15 +12,17 @@ import GooeyButton from '../components/GooeyButton.vue'
 import SettingsList from '../components/app/SettingsList.vue'
 import WhatsAppSettings from '../components/app/WhatsAppSettings.vue'
 import AppSelect from '../components/app/AppSelect.vue'
+import AppIcon from '../components/app/AppIcon.vue'
+import AppDateInput from '../components/app/AppDateInput.vue'
 import IntegrationsPanel from '../components/app/IntegrationsPanel.vue'
 import DeleteProjectDialog from '../components/app/DeleteProjectDialog.vue'
 
 const GROUPS = [
-  { label: 'Minha conta', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações'], ['whatsapp', 'WhatsApp']] },
-  { label: 'Administração', tabs: [['general', 'Geral'], ['members', 'Pessoas'], ['billing', 'Planos e cobrança'], ['import', 'Importar'], ['export', 'Exportar'], ['worklogs', 'Registros de horas'], ['identity', 'Identidade'], ['governance', 'Governança'], ['schedule', 'Cronograma de trabalho']] },
-  { label: 'Produtos', tabs: [['wiki', 'Documentos'], ['ai', 'Novexo IA']] },
-  { label: 'Recursos', tabs: [['projects', 'Projetos'], ['teams', 'Times'], ['initiatives', 'Iniciativas'], ['customers', 'Clientes'], ['templates', 'Modelos'], ['tags', 'Etiquetas'], ['integrations', 'Integrações'], ['releases', 'Lançamentos']] },
-  { label: 'Desenvolvedores', tabs: [['webhooks', 'Webhooks'], ['tokens', 'Tokens de API']] },
+  { label: 'Minha conta', icon: 'user', tabs: [['profile', 'Perfil'], ['prefs', 'Preferências'], ['notify', 'Notificações'], ['whatsapp', 'WhatsApp']] },
+  { label: 'Administração', icon: 'settings', tabs: [['general', 'Geral'], ['members', 'Pessoas'], ['billing', 'Planos e cobrança'], ['import', 'Importar'], ['export', 'Exportar'], ['worklogs', 'Registros de horas'], ['identity', 'Identidade'], ['governance', 'Governança'], ['schedule', 'Cronograma de trabalho']] },
+  { label: 'Produtos', icon: 'ai', tabs: [['wiki', 'Documentos'], ['ai', 'Novexo IA']] },
+  { label: 'Recursos', icon: 'layers', tabs: [['projects', 'Projetos'], ['teams', 'Times'], ['initiatives', 'Iniciativas'], ['customers', 'Clientes'], ['templates', 'Modelos'], ['tags', 'Etiquetas'], ['integrations', 'Integrações'], ['releases', 'Lançamentos']] },
+  { label: 'Desenvolvedores', icon: 'bolt', tabs: [['webhooks', 'Webhooks'], ['tokens', 'Tokens de API']] },
 ]
 const TITLES = Object.fromEntries(GROUPS.flatMap((g) => g.tabs))
 const THEMES = [['light', 'Claro'], ['dark', 'Escuro'], ['auto', 'Auto']]
@@ -43,7 +45,6 @@ const NOTIFY = [
 ]
 const VIEWS = [['list', 'Lista'], ['board', 'Quadro'], ['calendar', 'Calendário']]
 const ROLES = [['admin', 'Admin'], ['member', 'Membro'], ['limited', 'Membro limitado'], ['guest', 'Convidado']]
-const ROLE_NAMES = { owner: 'Dono', ...Object.fromEntries(ROLES) }
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['pages', 'Documentos do projeto']]
 
@@ -101,6 +102,7 @@ const { state, PRIORITIES, STATUSES, project, member, saveWorkspace, updateProje
 const route = useRoute()
 const tab = ref(route.query.tab || 'profile')
 watch(() => route.query.tab, (t) => { if (t) tab.value = t })
+const activeGroup = computed(() => GROUPS.find((g) => g.tabs.some(([id]) => id === tab.value))?.label || 'Ajustes')
 const panel = ref(null)
 const status = ref('')
 const deleting = ref(null)
@@ -283,14 +285,14 @@ function exportCsv() {
 }
 
 const importProject = ref('')
-const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase()
+const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
 const byName = (list, v) => list.find((x) => norm(x.name) === norm(v) || x.id === norm(v))?.id
 async function onImport(e) {
   const file = e.target.files[0]
   e.target.value = ''
   if (!file) return
-  const projectId = importProject.value || state.projects[0]?.id
-  if (!projectId) { status.value = 'Crie um projeto antes de importar.'; return }
+  const pid = importProject.value || state.projects[0]?.id
+  if (!pid) { status.value = 'Crie um projeto antes de importar.'; return }
   const [header, ...lines] = parseCsv(await file.text())
   const col = (...names) => header.findIndex((h) => names.includes(norm(h)))
   const c = { title: col('titulo', 'title', 'nome', 'name'), status: col('status'), priority: col('prioridade', 'priority'), due: col('prazo', 'due', 'data'), tags: col('etiquetas', 'tags') }
@@ -301,7 +303,7 @@ async function onImport(e) {
     const title = r[c.title]?.trim()
     if (!title) continue
     createTask({
-      projectId, title,
+      projectId: pid, title,
       status: (c.status >= 0 && byName(STATUSES, r[c.status] || '')) || 'todo',
       priority: (c.priority >= 0 && byName(PRIORITIES, r[c.priority] || '')) || '',
       due: c.due >= 0 ? toDate(r[c.due]?.trim() || '') : null,
@@ -309,23 +311,34 @@ async function onImport(e) {
     })
     n++
   }
-  status.value = `${n} tarefas importadas para ${project(projectId)?.name}.`
+  status.value = `${n} tarefas importadas para ${project(pid)?.name}.`
 }
 </script>
 
 <template>
   <div class="page">
-    <h1>Ajustes</h1>
+    <header class="page__head">
+      <h1>Ajustes</h1>
+      <span class="page__sub">Gerencie sua conta, preferências, planos e configurações do workspace.</span>
+    </header>
     <div class="layout">
       <nav class="tabs" aria-label="Seções dos ajustes">
         <div v-for="g in GROUPS" :key="g.label" class="tabs__group">
-          <span class="tabs__label">{{ g.label }}</span>
-          <button v-for="[id, label] in g.tabs" :key="id" type="button" :aria-current="tab === id ? 'page' : undefined" @click="tab = id">{{ label }}</button>
+          <div class="tabs__label">
+            <AppIcon :name="g.icon" :size="13" />
+            <span>{{ g.label }}</span>
+          </div>
+          <div class="tabs__list">
+            <button v-for="[id, label] in g.tabs" :key="id" type="button" :aria-current="tab === id ? 'page' : undefined" @click="tab = id">{{ label }}</button>
+          </div>
         </div>
       </nav>
 
       <section ref="panel" class="panel">
-        <h2>{{ TITLES[tab] }}</h2>
+        <div class="panel__head">
+          <span class="panel__eyebrow">{{ activeGroup }}</span>
+          <h2>{{ TITLES[tab] }}</h2>
+        </div>
         <p v-if="!isAdmin && ['general', 'billing', 'identity', 'governance', 'schedule', 'wiki', 'ai', 'webhooks'].includes(tab)" class="hint">Só administradores mudam esta seção.</p>
 
         <template v-if="tab === 'profile'">
@@ -358,13 +371,13 @@ async function onImport(e) {
 
         <template v-else-if="tab === 'prefs'">
           <div class="cols">
-            <fieldset class="group">
+            <fieldset class="group card-sub">
               <legend>Aparência</legend>
               <div class="seg">
                 <label v-for="[id, label] in THEMES" :key="id"><input v-model="state.prefs.theme" type="radio" name="theme" :value="id" />{{ label }}</label>
               </div>
             </fieldset>
-            <fieldset class="group">
+            <fieldset class="group card-sub">
               <legend>Cor do tema</legend>
               <div class="swatches">
                 <button v-for="[name, hex] in ACCENTS" :key="hex" type="button" class="swatch" :style="{ background: hex }" :aria-pressed="state.prefs.accent === hex" :aria-label="name" :title="name" @click="state.prefs.accent = hex" />
@@ -509,20 +522,25 @@ async function onImport(e) {
               <AppSelect v-model="importProject" :options="[{ value: '', label: state.projects[0]?.name || 'Nenhum projeto' }, ...state.projects.slice(1).map((p) => ({ value: p.id, label: p.name }))]" block />
             </label>
           </div>
-          <label v-if="canWrite" class="link file">Escolher arquivo CSV<input type="file" accept=".csv,text/csv" @change="onImport" /></label>
+          <label v-if="canWrite" class="pg-btn primary file">Escolher arquivo CSV<input type="file" accept=".csv,text/csv" @change="onImport" /></label>
         </template>
 
         <template v-else-if="tab === 'export'">
-          <p class="hint">Baixe os dados do workspace para análise ou backup off-line.</p>
-          <div class="actions">
-            <GooeyButton variant="primary" @click="exportCsv">Tarefas em planilha (CSV)</GooeyButton>
-            <button type="button" class="link" @click="exportJson">Tudo em JSON</button>
+          <div class="card-sub">
+            <h3>Exportar workspace</h3>
+            <p class="hint">Baixe os dados do workspace para análise ou backup off-line.</p>
+            <div class="actions">
+              <GooeyButton variant="primary" @click="exportCsv">Tarefas em planilha (CSV)</GooeyButton>
+              <button type="button" class="pg-btn" @click="exportJson">Tudo em JSON</button>
+            </div>
           </div>
-          <h3>Dados deste navegador</h3>
-          <p class="hint">Rascunhos, documentos da wiki, notas e preferências ficam só neste navegador.</p>
-          <div class="actions">
-            <button type="button" class="link" @click="load().then(() => (status = 'Dados recarregados do servidor.'))">Recarregar do servidor</button>
-            <button type="button" class="danger" @click="twice('local', () => { clearLocal(); status = 'Rascunhos e documentos locais limpos.' })">{{ confirm2 === 'local' ? 'Clique de novo para confirmar' : 'Limpar rascunhos e documentos locais' }}</button>
+          <div class="card-sub">
+            <h3>Dados deste navegador</h3>
+            <p class="hint">Rascunhos, documentos da wiki, notas e preferências ficam só neste navegador.</p>
+            <div class="actions">
+              <button type="button" class="pg-btn" @click="load().then(() => (status = 'Dados recarregados do servidor.'))">Recarregar do servidor</button>
+              <button type="button" class="danger" @click="twice('local', () => { clearLocal(); status = 'Rascunhos e documentos locais limpos.' })">{{ confirm2 === 'local' ? 'Clique de novo para confirmar' : 'Limpar rascunhos e documentos locais' }}</button>
+            </div>
           </div>
         </template>
 
@@ -559,33 +577,35 @@ async function onImport(e) {
             <p v-else class="hint">Nenhum domínio ainda.</p>
             <form v-if="isAdmin" class="row" @submit.prevent="addDomain">
               <input v-model="newDomain" placeholder="empresa.com.br" aria-label="Novo domínio" />
-              <button type="submit" class="link">Adicionar domínio</button>
+              <button type="submit" class="pg-btn">Adicionar domínio</button>
             </form>
           </template>
         </template>
 
         <template v-else-if="tab === 'schedule'">
-          <fieldset class="group">
-            <legend>Dias úteis</legend>
-            <div class="days">
-              <button v-for="(d, i) in WEEKDAYS" :key="d" type="button" :aria-pressed="schedule.days.includes(i)" :disabled="!isAdmin" @click="toggleDay(i)">{{ d }}</button>
-            </div>
-          </fieldset>
-          <fieldset class="group">
-            <legend>Horário de trabalho</legend>
-            <div class="row">
-              <input :value="schedule.start" type="time" aria-label="Início do expediente" :disabled="!isAdmin" @change="setSetting('schedule', 'start', $event.target.value)" />
-              <span class="hint">até</span>
-              <input :value="schedule.end" type="time" aria-label="Fim do expediente" :disabled="!isAdmin" @change="setSetting('schedule', 'end', $event.target.value)" />
-              <span class="hint">{{ fmtHours(dailyHours) }} por dia, {{ fmtHours(dailyHours * schedule.days.length) }} por semana</span>
-            </div>
-          </fieldset>
-          <fieldset class="group">
+          <div class="cols">
+            <fieldset class="group card-sub">
+              <legend>Dias úteis</legend>
+              <div class="days">
+                <button v-for="(d, i) in WEEKDAYS" :key="d" type="button" :aria-pressed="schedule.days.includes(i)" :disabled="!isAdmin" @click="toggleDay(i)">{{ d }}</button>
+              </div>
+            </fieldset>
+            <fieldset class="group card-sub">
+              <legend>Horário de trabalho</legend>
+              <div class="row">
+                <input :value="schedule.start" type="time" aria-label="Início do expediente" :disabled="!isAdmin" @change="setSetting('schedule', 'start', $event.target.value)" />
+                <span class="hint">até</span>
+                <input :value="schedule.end" type="time" aria-label="Fim do expediente" :disabled="!isAdmin" @change="setSetting('schedule', 'end', $event.target.value)" />
+                <span class="hint">{{ fmtHours(dailyHours) }} por dia, {{ fmtHours(dailyHours * schedule.days.length) }} por semana</span>
+              </div>
+            </fieldset>
+          </div>
+          <fieldset class="group card-sub">
             <legend>Dias não úteis</legend>
             <form v-if="isAdmin" class="row" @submit.prevent="addHoliday">
-              <input v-model="holiday.date" type="date" aria-label="Data da folga" required />
+              <AppDateInput v-model="holiday.date" placeholder="Data da folga" aria-label="Data da folga" />
               <input v-model="holiday.name" placeholder="Nome (ex.: Natal)" aria-label="Nome da folga" />
-              <button type="submit" class="link">Adicionar</button>
+              <button type="submit" class="pg-btn">Adicionar</button>
             </form>
             <ul v-if="schedule.holidays.length" class="rows">
               <li v-for="h in schedule.holidays" :key="h.date + h.name"><span class="grow">{{ fmtDate(h.date) }}, {{ h.name }}</span><button v-if="isAdmin" type="button" class="link rm" @click="setSetting('schedule', 'holidays', schedule.holidays.filter((x) => x !== h))">Remover</button></li>
@@ -617,8 +637,8 @@ async function onImport(e) {
               <label>Nome <input :key="proj.id" :value="proj.name" @change="updateProject(proj, { name: $event.target.value.trim() || proj.name })" /></label>
               <label>Identificador <input :key="`p${proj.id}`" :value="proj.prefix" maxlength="8" @change="updateProject(proj, { prefix: $event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })" /></label>
             </div>
-            <fieldset class="group">
-              <legend>Cor</legend>
+            <fieldset class="group card-sub">
+              <legend>Cor do projeto</legend>
               <div class="swatches">
                 <button v-for="[name, hex] in ACCENTS" :key="hex" type="button" class="swatch" :style="{ background: hex }" :aria-pressed="proj.color === hex" :aria-label="name" :title="name" @click="updateProject(proj, { color: hex })" />
               </div>
@@ -627,9 +647,13 @@ async function onImport(e) {
             <ul class="toggles">
               <li v-for="[key, label] in FEATURES" :key="key"><span>{{ label }}</span><button type="button" role="switch" class="switch" :aria-checked="state.prefs.features[key]" :aria-label="label" @click="setFeature(key)"><span /></button></li>
             </ul>
-            <h3>Zona de perigo</h3>
-            <button type="button" class="danger" @click="twice('archive', () => archiveProject(proj).then((ok) => ok && (status = 'Projeto arquivado. Ele fica em Arquivados.')))">{{ confirm2 === 'archive' ? 'Clique de novo para arquivar' : 'Arquivar projeto' }}</button>
-            <button v-if="state.isAdmin" type="button" class="danger" @click="deleting = proj">Excluir projeto</button>
+            <div class="card-sub danger-zone">
+              <h3>Zona de perigo</h3>
+              <div class="actions">
+                <button type="button" class="danger" @click="twice('archive', () => archiveProject(proj).then((ok) => ok && (status = 'Projeto arquivado. Ele fica em Arquivados.')))">{{ confirm2 === 'archive' ? 'Clique de novo para arquivar' : 'Arquivar projeto' }}</button>
+                <button v-if="state.isAdmin" type="button" class="danger" @click="deleting = proj">Excluir projeto</button>
+              </div>
+            </div>
             <DeleteProjectDialog :project="deleting" @close="deleting = null" />
           </template>
         </template>
@@ -663,101 +687,230 @@ async function onImport(e) {
 </template>
 
 <style scoped>
-.page { box-sizing: border-box; display: flex; flex-direction: column; gap: 1rem; max-width: 68rem; height: 100%; padding: 1.25rem 1.5rem; }
-h1 { margin: 0; font: 650 1.375rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); }
-.layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-.tabs, .panel { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
-.tabs { padding-right: 0.25rem; scrollbar-width: thin; }
-@media (max-width: 760px) {
-  .page { height: auto; }
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .tabs, .panel { max-height: none; overflow: visible; }
-  .tabs__group { flex-direction: row; flex-wrap: wrap; }
+.page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: none;
+  min-height: 100%;
+  padding: 1.5rem 2rem 2.5rem;
 }
-.tabs { display: flex; flex-direction: column; gap: 0.75rem; }
-.tabs__group { display: flex; flex-direction: column; gap: 1px; }
-.tabs__label { padding: 0 0.6rem 0.2rem; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-.tabs button { padding: 0.32rem 0.6rem; border: 0; border-radius: 6px; background: none; font-size: 13px; text-align: left; color: var(--muted); cursor: pointer; }
-.tabs button:hover { color: var(--text); }
-.tabs button[aria-current='page'] { background: var(--surface-2); color: var(--text); }
-.panel { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-h2 { margin: 0; font: 600 1rem/1.2 'Geist', system-ui, sans-serif; color: var(--text); }
-h3 { margin: 0.25rem 0 0; font-size: 12px; font-weight: 600; color: var(--muted); }
-.form { display: flex; flex-direction: column; gap: 0.7rem; max-width: 26rem; }
-.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.7rem 1rem; max-width: none; }
-.form label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 12px; font-weight: 500; color: var(--muted); }
-:is(.form input, .row input, .rows input) { height: 32px; padding: 0 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13.5px; color: var(--text); outline: none; }
+.page__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1rem;
+}
+h1 { margin: 0; font: 650 1.6rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.025em; color: var(--text); }
+.page__sub { font-size: 13px; color: var(--muted); }
+
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 16.5rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+.tabs {
+  position: sticky;
+  top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+}
+.tabs__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.tabs__label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.48rem 0.7rem;
+  margin-bottom: 0.25rem;
+  border-radius: 7px;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, var(--surface-2));
+  font: 700 11px/1.2 'Geist', system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.tabs__label :deep(.app-icon) { color: var(--accent-soft); }
+.tabs__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tabs button {
+  padding: 0.46rem 0.75rem;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  font-size: 13.5px;
+  text-align: left;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.tabs button:hover {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  color: var(--text);
+}
+.tabs button[aria-current='page'] {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 550;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - 9.5rem);
+  padding: 1.85rem 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.panel__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.panel__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+}
+h2 { margin: 0; font: 650 1.4rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); }
+h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text); }
+
+.form { display: flex; flex-direction: column; gap: 1.1rem; width: 100%; max-width: none; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem 1.35rem; width: 100%; max-width: none; }
+.form label { display: flex; flex-direction: column; gap: 0.4rem; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+:is(.form input, .row input, .rows input) { height: 38px; padding: 0 0.75rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); font: inherit; font-size: 14px; color: var(--text); outline: none; }
+.form :deep(.sel) { height: 38px; border-radius: 8px; font-size: 13.5px; }
 :is(.form input, .row input, .rows input):focus { border-color: var(--accent); }
 :is(input, button):disabled { opacity: 0.55; cursor: not-allowed; }
-.prefix-input { display: flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); }
-.prefix-input span { padding-left: 0.6rem; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
-.form .prefix-input input { flex: 1; min-width: 0; border: 0; padding-left: 0.1rem; }
-.hint { margin: 0; font-size: 12px; color: var(--muted); }
-.hint code { padding: 0.05rem 0.3rem; border-radius: 4px; background: var(--bg); }
+.prefix-input { display: flex; align-items: center; height: 38px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); }
+.prefix-input span { padding-left: 0.75rem; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.form .prefix-input input { flex: 1; min-width: 0; height: 100%; border: 0; padding-left: 0.15rem; background: none; }
+.hint { margin: 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
+.hint code { padding: 0.1rem 0.35rem; border-radius: 5px; background: var(--bg); }
 .muted { color: var(--muted); }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
-.link { padding: 0; border: 0; background: none; font-size: 13px; color: var(--accent-soft); text-decoration: none; cursor: pointer; }
-.group { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; border: 0; min-width: 0; }
-.group legend { margin-bottom: 0.45rem; padding: 0; font-size: 12px; font-weight: 500; color: var(--muted); }
-.seg { display: inline-flex; align-self: flex-start; padding: 2px; border: 1px solid var(--line-strong); border-radius: 7px; }
-.seg label { position: relative; padding: 0.25rem 0.75rem; border-radius: 5px; font-size: 13px; color: var(--muted); cursor: pointer; }
-.seg label:has(input:checked) { background: var(--surface-2); color: var(--text); }
+.link { padding: 0; border: 0; background: none; font-size: 13.5px; color: var(--accent-soft); text-decoration: none; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+
+.card-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--bg) 50%, var(--surface));
+}
+.danger-zone { border-color: rgb(255 91 77 / 0.3); }
+
+.group { display: flex; flex-direction: column; gap: 0.65rem; margin: 0; min-width: 0; }
+.group:not(.card-sub) { padding: 0; border: 0; }
+.group legend { padding: 0; font-size: 12.5px; font-weight: 600; color: var(--text); }
+.group.card-sub legend { float: left; margin-bottom: 0.4rem; }
+.seg { display: inline-flex; align-self: flex-start; padding: 3px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); }
+.seg label { position: relative; padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+.seg label:has(input:checked) { background: var(--surface-2); color: var(--text); font-weight: 500; }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--accent-soft); }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
-.swatches { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.swatch { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; }
+.swatches { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+.swatch { width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; transition: transform 0.14s ease; }
+.swatch:hover { transform: scale(1.1); }
 .swatch[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
-.toggles { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0 1.5rem; margin: 0; padding: 0; list-style: none; }
-.toggles li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-top: 1px solid var(--line); font-size: 13px; }
-.toggles small { display: block; margin-top: 0.1rem; font-size: 11.5px; color: var(--muted); }
-.switch { position: relative; flex-shrink: 0; width: 32px; height: 18px; padding: 0; border: 0; border-radius: 999px; background: var(--line-strong); cursor: pointer; transition: background 0.2s var(--ease); }
-.switch span { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--text); transition: translate 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.toggles { display: grid; grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr)); gap: 0.85rem; margin: 0; padding: 0; list-style: none; }
+.toggles li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 50%, var(--surface)); font-size: 13.5px; }
+.toggles small { display: block; margin-top: 0.2rem; font-size: 12px; color: var(--muted); }
+.switch { position: relative; flex-shrink: 0; width: 36px; height: 20px; padding: 0; border: 0; border-radius: 999px; background: var(--line-strong); cursor: pointer; transition: background 0.2s var(--ease); }
+.switch span { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--text); transition: translate 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 .switch[aria-checked='true'] { background: var(--accent); }
-.switch[aria-checked='true'] span { translate: 14px 0; }
-.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 0.55rem 0.75rem; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
-.bar.push { margin-top: 0.6rem; }
+.switch[aria-checked='true'] span { translate: 16px 0; background: #fff; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 50%, var(--surface)); font-size: 13.5px; }
+.bar.push { margin-top: 0; }
 .push__msg, .push__devices { flex-basis: 100%; }
 .push__devices li { justify-content: space-between; }
 .rows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-.rows li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 13px; }
+.rows li { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.25rem; font-size: 13.5px; }
 .rows li + li { border-top: 1px solid var(--line); }
 .grow { flex: 1; min-width: 0; }
 .rm { margin-left: auto; color: var(--muted); }
 .rm:hover { color: var(--danger, #ff8a80); }
-.av { display: grid; place-items: center; flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; font: 700 10px/1 'Lexend', system-ui, sans-serif; color: #000; }
-.plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
-.plans li { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
-.plans li.on { border-color: var(--accent); }
-.plans li .pg-btn { justify-content: center; margin-top: 0.35rem; text-decoration: none; }
-.billing-seg { margin: 0.75rem 0; }
-.billing-seg small { margin-left: 0.3rem; color: var(--muted); }
-.pay-title { margin: 1.25rem 0 0.4rem; font-size: 13px; font-weight: 600; color: var(--text); }
+.av { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; font: 700 11px/1 'Lexend', system-ui, sans-serif; color: #000; }
+
+.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr)); gap: 0.9rem; margin: 0; padding: 0; list-style: none; }
+.plans li { display: flex; flex-direction: column; gap: 0.45rem; padding: 1.25rem 1.35rem; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--bg) 50%, var(--surface)); font-size: 14px; }
+.plans li strong { font-size: 15px; }
+.plans li.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.plans li .pg-btn { justify-content: center; margin-top: auto; padding-top: 0.45rem; padding-bottom: 0.45rem; text-decoration: none; }
+.billing-seg { margin: 0.25rem 0; }
+.billing-seg small { margin-left: 0.3rem; color: var(--accent-soft); }
+.pay-title { margin: 0.5rem 0 0; font-size: 14px; font-weight: 600; color: var(--text); }
 .pays li { flex-wrap: wrap; }
 .pay-when { width: 8.5rem; color: var(--muted); white-space: nowrap; }
 .pay-what { flex: 1; min-width: 10rem; }
 .pay-how { color: var(--muted); }
-.pay-status { padding: 0.1rem 0.45rem; border-radius: 5px; background: var(--surface-2); font-size: 11.5px; }
+.pay-status { padding: 0.15rem 0.55rem; border-radius: 6px; background: var(--surface-2); font-size: 12px; }
 .pay-status.ok { color: var(--success, #7fc47a); }
 .pay-status.wait { color: #f2c46d; }
 .pay-status.bad { color: var(--danger, #ff8a80); }
-.days { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.days button { min-width: 2.75rem; padding: 0.3rem 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+
+.days { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.days button { min-width: 3.1rem; padding: 0.4rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--bg); font-size: 13px; color: var(--muted); cursor: pointer; }
 .days button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent); color: #fff; }
-.row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.file { position: relative; align-self: flex-start; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
+.file { position: relative; align-self: flex-start; cursor: pointer; }
 .file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .file:focus-within { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-.danger { align-self: flex-start; padding: 0.4rem 0.75rem; border: 1px solid rgb(255 91 77 / 0.4); border-radius: 6px; background: none; font-size: 13px; color: var(--danger, #ff8a80); cursor: pointer; }
-.danger:hover { background: rgb(255 91 77 / 0.1); }
-.status { margin: 0; font-size: 12.5px; color: var(--accent-soft); }
+.danger { align-self: flex-start; padding: 0.5rem 0.9rem; border: 1px solid rgb(255 91 77 / 0.45); border-radius: 8px; background: none; font-size: 13.5px; color: var(--danger, #ff8a80); cursor: pointer; }
+.danger:hover { background: rgb(255 91 77 / 0.12); }
+.status { margin: 0; font-size: 13px; color: var(--accent-soft); }
 :is(.tabs button, .link, .switch, .danger, .swatch, .days button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .block { display: block; }
-.photo { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
-.photo__av { display: grid; place-items: center; flex-shrink: 0; width: 64px; height: 64px; overflow: hidden; border-radius: 50%; background: var(--surface-2); font: 600 20px/1 'Geist', system-ui, sans-serif; color: var(--text); transition: opacity 0.2s ease; }
+.photo { display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--bg) 50%, var(--surface)); }
+.photo__av { display: grid; place-items: center; flex-shrink: 0; width: 72px; height: 72px; overflow: hidden; border-radius: 50%; background: var(--surface-2); font: 600 22px/1 'Geist', system-ui, sans-serif; color: var(--text); transition: opacity 0.2s ease; }
 .photo__av.busy { opacity: 0.5; }
 .photo__av img { width: 100%; height: 100%; object-fit: cover; }
-.photo__txt { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
-.photo__txt small { font-size: 12.5px; color: var(--muted); }
-.photo__btns { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; }
+.photo__txt { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.photo__txt small { font-size: 13px; color: var(--muted); }
+.photo__btns { display: flex; align-items: center; gap: 0.85rem; margin-top: 0.4rem; }
+
+@media (max-width: 900px) {
+  .page { padding: 1.25rem; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .tabs { position: static; max-height: none; overflow: visible; }
+  .tabs__list { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+  .panel { min-height: 0; padding: 1.25rem; }
+  .toggles { grid-template-columns: 1fr; }
+}
 </style>
