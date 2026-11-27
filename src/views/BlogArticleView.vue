@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import '../assets/landing.css'
 import SiteNav from '../components/landing/SiteNav.vue'
@@ -12,8 +12,10 @@ import AppBreadcrumbs from '../components/landing/AppBreadcrumbs.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
 import { BLOG_POSTS, formatPostDate } from '../data/blog'
 import { usePageTitle } from '../composables/usePageTitle'
+import { EASE, gsap, prefersReducedMotion } from '../utils/motion'
 
 const route = useRoute()
+const pageRoot = ref(null)
 const article = ref(null)
 const post = computed(() => BLOG_POSTS.find(item => item.slug === route.params.slug))
 const related = computed(() => BLOG_POSTS.filter(item => item.slug !== post.value?.slug).sort((a, b) => Number(b.category === post.value?.category) - Number(a.category === post.value?.category)).slice(0, 3))
@@ -32,17 +34,65 @@ const tocItems = computed(() =>
 )
 
 usePageTitle(() =>
-  post.value ? `${post.value.title} | Blog Novexo` : 'Publicação não encontrada | Blog Novexo'
+  post.value ? post.value.title : 'Publicação não encontrada'
 )
+
+let motionCtx
+function runMotion() {
+  motionCtx?.revert()
+  motionCtx = null
+  if (!pageRoot.value || !post.value || prefersReducedMotion()) return
+  motionCtx = gsap.context(() => {
+    const intro = gsap.timeline({
+      defaults: { autoAlpha: 0, ease: EASE.out, clearProps: 'transform,opacity,visibility' },
+    })
+    intro
+      .from('.app-breadcrumbs', { y: 8, duration: 0.34 }, 0)
+      .from('.story__intro > *', { y: 12, duration: 0.42, stagger: 0.05 }, 0.04)
+      .from('.story__cover', { y: 12, scale: 0.985, duration: 0.46 }, 0.08)
+      .from('.reading-toc', { x: -10, duration: 0.38 }, 0.14)
+
+    gsap.utils.toArray('.story__body > section, .story__closing').forEach((section) => {
+      gsap.from(section, {
+        autoAlpha: 0,
+        y: 12,
+        duration: 0.42,
+        ease: EASE.out,
+        clearProps: 'transform,opacity,visibility',
+        scrollTrigger: { trigger: section, start: 'top 92%', once: true },
+      })
+    })
+
+    const relatedCards = gsap.utils.toArray('.story__related .blog-card')
+    if (relatedCards.length) {
+      gsap.from(relatedCards, {
+        autoAlpha: 0,
+        y: 14,
+        duration: 0.42,
+        stagger: 0.05,
+        ease: EASE.out,
+        clearProps: 'transform,opacity,visibility',
+        scrollTrigger: { trigger: '.story__related', start: 'top 92%', once: true },
+      })
+    }
+  }, pageRoot.value)
+}
+
+onMounted(runMotion)
+watch(() => route.params.slug, async () => {
+  await nextTick()
+  runMotion()
+})
+onBeforeUnmount(() => motionCtx?.revert())
 </script>
 
 <template>
   <div id="topo" class="lp story">
     <a class="story__skip" href="#artigo">Pular para o artigo</a>
     <SiteNav />
-    <main v-if="post" class="story__main">
+    <main v-if="post" ref="pageRoot" class="story__main">
       <AppBreadcrumbs :items="breadcrumbs" />
-      <header class="story__header"><div class="story__intro"><h1>{{ post.title }}</h1><p>{{ post.excerpt }}</p><div class="story__author"><span aria-hidden="true">N</span><div><strong>Equipe Novexo</strong><time :datetime="post.date">{{ formatPostDate(post.date) }}</time></div></div></div><div class="story__cover"><EditorialArt :kind="post.art" :lines="post.coverLine" /></div></header>
+      <header class="story__header"><div class="story__intro"><h1>{{ post.title }}</h1><p>{{ post.excerpt }}</p><div class="story__author"><span aria-hidden="true">N</span><div><strong>Equipe Novexo</strong><time :datetime="post.date">{{ formatPostDate(post.date) }}</time></div></div></div><div class="story__cover"><EditorialArt :key="post.slug" :kind="post.art" :lines="post.coverLine" animated /></div></header>
 
       <div class="story__layout">
         <AppReadingToc
