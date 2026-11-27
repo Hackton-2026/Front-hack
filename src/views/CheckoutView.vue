@@ -412,14 +412,14 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 .tag { padding: 0.15rem 0.45rem; border-radius: 999px; background: var(--lp-orange); font-size: 0.6875rem; font-weight: 600; color: #000; }
 
 .plan { position: relative; display: flex; flex-direction: column; padding: 1.9rem 1.75rem; border-radius: 14px; background: var(--card); border: 1px solid rgb(255 255 255 / 0.06); }
-.plan.popular { background: linear-gradient(180deg, #2a1306 0%, #111111 60%); border-color: var(--lp-orange); box-shadow: 0 30px 80px -40px rgb(229 101 21 / 0.6); }
+.plan.popular { background: #131211; border-color: rgb(229 101 21 / 0.65); box-shadow: inset 0 1px 0 rgb(251 164 92 / 0.22); }
 .plan__badge { position: absolute; top: -0.8rem; left: 1.75rem; padding: 0.3rem 0.8rem; border-radius: 999px; background: var(--lp-orange); font: 600 0.75rem/1 var(--lp-sans); color: #000; }
 .plan__top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .plan__name { margin: 0 0 0.4rem; color: var(--lp-white); font: 800 1.6rem/1 var(--lp-display); text-transform: uppercase; }
 .plan__desc { margin: 0; max-width: 18rem; font-size: 0.9375rem; line-height: 1.35; color: rgb(248 248 248 / 0.55); }
 .plan__price { display: flex; align-items: baseline; gap: 0.35rem; margin: 1.5rem 0 1.25rem; }
 .plan__cur { font: 600 1.125rem/1 var(--lp-sans); }
-.plan__val { display: inline-block; overflow: hidden; font: 900 3.5rem/1 var(--lp-display); letter-spacing: -0.03em; }
+.plan__val { display: inline-block; overflow: hidden; font: 900 3.5rem/1 var(--lp-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .plan__val > span { display: inline-block; }
 .plan__per { font-size: 0.875rem; color: rgb(248 248 248 / 0.55); }
 .toggle { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 999px; background: #161616; border: 1px solid var(--line); }

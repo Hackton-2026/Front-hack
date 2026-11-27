@@ -67,19 +67,24 @@ const ctaLabel = (p) => (user.value && p.month ? 'Assinar' : p.cta)
 .toggle__thumb.right { transform: translateX(100%); }
 
 .plans__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); gap: 1rem; max-width: 80rem; margin: 0 auto; }
-.plan { position: relative; display: flex; flex-direction: column; padding: 2rem 1.75rem; border-radius: 12px; background: #111111; border: 1px solid rgb(255 255 255 / 0.06); transition: border-color 0.3s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-.plan:hover { border-color: rgb(255 255 255 / 0.16); transform: translateY(-4px); }
-.plan.popular { background: linear-gradient(180deg, #2a1306 0%, #111111 55%); border-color: var(--lp-orange); }
+.plan { position: relative; display: flex; flex-direction: column; padding: 2rem 1.75rem; border-radius: 12px; background: #0d0d0c; border: 1px solid rgb(255 255 255 / 0.08); transition: border-color 160ms ease, background-color 160ms ease; }
+@media (hover: hover) and (pointer: fine) {
+  .plan:hover { border-color: rgb(255 255 255 / 0.18); background: #111110; }
+}
+.plan.popular { background: #131211; border-color: rgb(229 101 21 / 0.65); box-shadow: inset 0 1px 0 rgb(251 164 92 / 0.22); }
+@media (hover: hover) and (pointer: fine) {
+  .plan.popular:hover { border-color: var(--lp-orange); background: #161412; }
+}
 .plan__badge { position: absolute; top: -0.8rem; left: 1.75rem; padding: 0.3rem 0.8rem; border-radius: 999px; background: var(--lp-orange); font: 600 0.75rem/1 var(--lp-sans); color: #000; }
 .plan__name { margin: 0 0 0.5rem; font: 800 1.5rem/1 var(--lp-display); text-transform: uppercase; color: var(--lp-white); }
 .plan__desc { margin: 0 0 1.75rem; min-height: 2.6em; font: 400 0.9375rem/1.35 var(--lp-sans); color: rgb(248 248 248 / 0.55); }
 .plan__price { display: flex; align-items: baseline; gap: 0.35rem; min-height: 3.5rem; color: var(--lp-white); }
 .plan__cur { font: 600 1.125rem/1 var(--lp-sans); }
-.plan__val { display: inline-block; overflow: hidden; font: 900 3.25rem/1 var(--lp-display); letter-spacing: -0.03em; }
+.plan__val { display: inline-block; overflow: hidden; font: 900 3.25rem/1 var(--lp-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .plan__val > span { display: inline-block; }
 .plan__val.custom { font-size: 2.25rem; }
 .plan__per { font: 400 0.875rem/1.2 var(--lp-sans); color: rgb(248 248 248 / 0.55); }
-.plan__bill { margin: 0.5rem 0 1.5rem; font: 400 0.8125rem/1.3 var(--lp-sans); color: var(--lp-grey); }
+.plan__bill { margin: 0.5rem 0 1.5rem; font: 400 0.8125rem/1.3 var(--lp-sans); font-variant-numeric: tabular-nums; color: var(--lp-grey); }
 .plan__cta { margin-bottom: 1.75rem; }
 .plan__list { display: flex; flex-direction: column; gap: 0.7rem; margin: 0; padding: 1.5rem 0 0; list-style: none; border-top: 1px solid rgb(255 255 255 / 0.08); }
 .plan__list li { display: flex; align-items: flex-start; gap: 0.6rem; font: 400 0.9375rem/1.35 var(--lp-sans); color: rgb(248 248 248 / 0.85); }
