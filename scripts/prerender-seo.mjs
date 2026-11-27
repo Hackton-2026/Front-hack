@@ -72,7 +72,7 @@ function buildFallbackBody(page) {
       `<li><a href="${s.path}" style="color:#fba45c;text-decoration:none;font-weight:600">${escapeHtml(s.name)}</a> — ${escapeHtml(s.description)}</li>`,
   ).join('')
 
-  return `<div id="app">
+  return `<noscript>
       <main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:Inter,system-ui,sans-serif;color:#f8f8f8;background:#000">
         <p><a href="/" style="color:#fba45c;text-decoration:none;font-weight:700">${SITE_NAME}</a></p>
         <h1>${escapeHtml(page.name)}</h1>
@@ -81,7 +81,7 @@ function buildFallbackBody(page) {
           <ul style="line-height:1.8;padding-left:20px">${navLinks}</ul>
         </nav>
       </main>
-    </div>`
+    </noscript>`
 }
 
 let count = 0
@@ -129,7 +129,7 @@ for (const page of ALL_PUBLIC_SEO_PAGES) {
     /<script\s+type="application\/ld\+json">[\s\S]*?<\/script>/i,
     `<script type="application/ld+json">${jsonLd}</script>`,
   )
-  html = html.replace(/<div id="app">[\s\S]*?<\/div>(?=\s*<script)/i, buildFallbackBody(page))
+  html = html.replace(/<noscript>[\s\S]*?<\/noscript>/i, buildFallbackBody(page))
 
   const relDir = page.path.replace(/^\/+/, '')
   const outDir = path.join(distDir, relDir)

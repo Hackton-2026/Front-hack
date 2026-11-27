@@ -300,6 +300,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 :global(html:has(.app)), :global(html:has(.app) body) { background: #0f0e0d; }
+:global(html:has(.app.is-light)), :global(html:has(.app.is-light) body) { background: #f7f5f2; }
 :global(html:has(.app)) { scrollbar-color: rgb(162 157 149 / 0.55) transparent; }
 .app { color-scheme: dark; }
 .app.is-light {
