@@ -1,5 +1,7 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { Flip } from 'gsap/Flip'
+import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
@@ -8,6 +10,8 @@ import PriorityFlag from './PriorityFlag.vue'
 import Avatars from './Avatars.vue'
 import AppSelect from './AppSelect.vue'
 import AppCheckbox from './AppCheckbox.vue'
+
+gsap.registerPlugin(Flip)
 
 const props = defineProps({ tasks: { type: Array, required: true }, projectId: { type: [String, Number], default: null }, defaults: { type: Object, default: () => ({}) } })
 const { state, STATUSES, PRIORITIES, code, isOverdue, updateTask, createTask, today, member } = useWorkspace()
@@ -180,10 +184,17 @@ function add(status, lane) {
   createTask({ title, status, projectId: props.projectId, ...props.defaults, ...lane.patch })
   adding[key] = ''
 }
-const toggleCollapse = (id) => {
+// grid-template-columns não interpola minmax(…fr) ↔ rem, então a largura anima por Flip
+let colFlip
+const toggleCollapse = async (id) => {
   const k = ckey(id)
+  colFlip?.progress(1)
+  const els = () => root.value?.querySelectorAll('.col') || []
+  const st = prefersReducedMotion() ? null : Flip.getState(els())
   cfg.collapsed = cfg.collapsed.includes(k) ? cfg.collapsed.filter((x) => x !== k) : [...cfg.collapsed, k]
   menu.value = ''
+  await nextTick()
+  if (st) colFlip = Flip.from(st, { targets: els(), duration: DUR.base, ease: EASE.out, scale: false, simple: true })
 }
 const setLimit = (id, v) => { cfg.limits = { ...cfg.limits, [id]: Math.max(0, Number(v) || 0) } }
 
@@ -191,6 +202,7 @@ const closeMenu = () => { menu.value = '' }
 onUnmounted(() => {
   window.removeEventListener('click', closeMenu)
   clearTimeout(movedTimer)
+  colFlip?.kill()
 })
 onMounted(() => {
   window.addEventListener('click', closeMenu)
@@ -326,6 +338,8 @@ onMounted(() => {
 .lane__head { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font: 600 13px/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .lane__head i { width: 9px; height: 9px; border-radius: 3px; }
 .board { display: grid; gap: 0.85rem; align-items: start; }
+.col__strip, .col__head { animation: kb-fade 0.2s ease-out; }
+@keyframes kb-fade { from { opacity: 0; } }
 .col { position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-height: 10rem; padding: 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 55%, var(--surface)); contain: layout style; transition: border-color 0.15s ease, background 0.15s ease; }
 .col.is-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .col.is-full { box-shadow: inset 0 0 0 1px rgb(255 91 77 / 0.45); }
@@ -380,5 +394,5 @@ onMounted(() => {
 .add input { flex: 1; height: 32px; padding: 0; border: 0; background: none; font: inherit; color: var(--text); outline: none; }
 .add input::placeholder { color: var(--muted); }
 :is(.col__strip):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .card.is-moved { animation: none; } .col__bar i, .card, .col { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .card.is-moved, .col__strip, .col__head { animation: none; } .col__bar i, .card, .col { transition: none; } }
 </style>
