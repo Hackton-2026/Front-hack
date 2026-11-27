@@ -56,7 +56,7 @@ function prepareEmail(event) {
     ...(commercial.value ? [`Empresa: ${fields.company}`, `Tamanho do time: ${fields.size || 'Não informado'}`] : []),
     '', fields.message,
   ].join('\n')
-  window.location.href = `mailto:contato@novexo.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  window.location.href = `mailto:contato@novexo.cloud?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   prepared.value = true
 }
 
@@ -79,13 +79,13 @@ onUnmounted(() => { document.title = previousTitle })
     <main ref="root" class="contact-main">
       <section class="contact-hero" aria-labelledby="contact-title">
         <div class="contact-intro">
-          <h1 id="contact-title">Fale com<br><em>a gente.</em></h1>
+          <h1 id="contact-title">Fale com <br><em>a gente.</em></h1>
           <p class="contact-intro__lead">Tire dúvidas sobre o Novexo ou converse com a gente sobre o uso na sua empresa.</p>
 
           <div class="contact-shortcuts">
-            <a class="contact-shortcut" href="mailto:contato@novexo.app">
+            <a class="contact-shortcut" href="mailto:contato@novexo.cloud">
               <FlaticonIcon name="envelope" framed :size="19" />
-              <span><strong>Prefere escrever direto?</strong><span>contato@novexo.app</span></span>
+              <span><strong>Prefere escrever direto?</strong><span>contato@novexo.cloud</span></span>
               <FlaticonIcon name="arrow-up-right" :size="15" />
             </a>
             <RouterLink class="contact-shortcut" to="/blog/como-funciona">
@@ -137,7 +137,7 @@ onUnmounted(() => { document.title = previousTitle })
                 <GooeyButton type="submit" variant="primary" size="lg">Continuar por e-mail <FlaticonIcon name="arrow-up-right" :size="15" /></GooeyButton>
                 <p>Abre seu aplicativo de e-mail com a mensagem pronta para revisar e enviar.</p>
               </div>
-              <p v-if="prepared" class="contact-feedback" role="status">Rascunho preparado. Se o aplicativo não abriu, escreva para <a href="mailto:contato@novexo.app">contato@novexo.app</a>.</p>
+              <p v-if="prepared" class="contact-feedback" role="status">Rascunho preparado. Se o aplicativo não abriu, escreva para <a href="mailto:contato@novexo.cloud">contato@novexo.cloud</a>.</p>
             </form>
           </div>
         </div>
@@ -145,7 +145,7 @@ onUnmounted(() => { document.title = previousTitle })
 
       <section class="contact-faq" aria-labelledby="contact-faq-title">
         <div class="contact-faq__heading" data-contact-reveal>
-          <h2 id="contact-faq-title">Talvez sua resposta<br>esteja aqui.</h2>
+          <h2 id="contact-faq-title">Talvez sua resposta <br>esteja aqui.</h2>
         </div>
         <div class="contact-faq__list" data-contact-reveal>
           <AppFaq :items="questions" />
@@ -197,6 +197,7 @@ onUnmounted(() => { document.title = previousTitle })
 .contact-field :is(input, textarea):is(:autofill, :-webkit-autofill) { -webkit-text-fill-color: #f2ece6; caret-color: var(--lp-orange-soft); box-shadow: inset 0 0 0 1000px #17120e; }
 .contact-field :is(input, textarea):is(:autofill, :-webkit-autofill):focus { border-color: #fba45c99; box-shadow: inset 0 0 0 1000px #17120e, 0 0 0 2px #fba45c12; }
 .contact-field textarea { min-height: 132px; resize: vertical; max-height: 360px; }
+.contact-field textarea::-webkit-resizer { background: transparent; }
 .contact-submit { display: flex; flex-direction: column; align-items: flex-start; gap: 13px; margin-top: 25px; }
 .contact-submit > p { max-width: 320px; margin: 0; color: #9c9389; font-size: 11px; line-height: 1.7; }
 .contact-feedback { margin: 18px 0 0; padding-top: 15px; border-top: 1px solid var(--contact-line); color: #d5c4b3; font-size: 12px; line-height: 1.7; }

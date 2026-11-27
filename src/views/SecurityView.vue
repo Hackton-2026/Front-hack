@@ -78,7 +78,7 @@ onUnmounted(() => { document.title = previousTitle })
       <div v-reveal class="ip-cta">
         <h2>Achou uma falha?<br><em>Fale direto com a gente.</em></h2>
         <div class="ip-cta__actions">
-          <GooeyButton variant="primary" size="lg" href="mailto:contato@novexo.app?subject=Seguran%C3%A7a%20%E2%80%94%20Novexo">Relatar um problema</GooeyButton>
+          <GooeyButton variant="primary" size="lg" href="mailto:contato@novexo.cloud?subject=Seguran%C3%A7a%20%E2%80%94%20Novexo">Relatar um problema</GooeyButton>
         </div>
       </div>
     </main>
