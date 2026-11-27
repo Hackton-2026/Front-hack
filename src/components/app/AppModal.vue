@@ -58,12 +58,14 @@ footer { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25
 .box :deep(.row2) { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .box :deep(:is(input:not([type='checkbox']), textarea, select)) { width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--line-strong, #3d3934); border-radius: 7px; background: var(--bg, #0f0e0d); font: inherit; color: var(--text, #f2efea); outline: none; }
 .box :deep(:is(input, textarea, select):focus) { border-color: var(--accent, #e56515); }
-.box :deep(.btn) { padding: 0.5rem 0.95rem; border: 1px solid var(--line-strong, #3d3934); border-radius: 7px; background: var(--surface-2, #211f1c); font-weight: 500; color: var(--text, #f2efea); cursor: pointer; }
+.box :deep(.btn) { padding: 0.5rem 0.95rem; border: 1px solid var(--line-strong, #3d3934); border-radius: 7px; background: var(--surface-2, #211f1c); font-weight: 500; color: var(--text, #f2efea); cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease, transform 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.box :deep(.btn:active:not(:disabled)) { transform: scale(0.97); }
 .box :deep(.btn.primary) { border-color: var(--text, #f8f8f8); background: var(--text, #f8f8f8); color: var(--bg, #000); }
 .box :deep(.btn.danger) { border-color: #d9483b; background: #d9483b; color: #fff; }
 .box :deep(.btn:disabled) { opacity: 0.5; cursor: not-allowed; }
 .box :deep(.chips) { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.box :deep(.chip) { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border: 1px solid var(--line-strong, #3d3934); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted, #a29d95); cursor: pointer; }
+.box :deep(.chip) { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border: 1px solid var(--line-strong, #3d3934); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted, #a29d95); cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease, transform 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.box :deep(.chip:active:not(:disabled)) { transform: scale(0.97); }
 .box :deep(.chip.is-on) { border-color: var(--accent, #e56515); background: color-mix(in srgb, var(--accent, #e56515) 14%, transparent); color: var(--text, #f2efea); }
 .box :deep(.err) { margin: 0; font-size: 12.5px; color: var(--danger, #ff8a80); }
 .box :deep(:focus-visible) { outline: 2px solid var(--accent-soft, #fba45c); outline-offset: 2px; }

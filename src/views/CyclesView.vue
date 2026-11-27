@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { EASE, DUR, gsap, prefersReducedMotion, staggerIn } from '../utils/motion'
+import { staggerIn } from '../utils/motion'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useUi } from '../composables/useUi'
 import AppIcon from '../components/app/AppIcon.vue'
@@ -138,9 +138,6 @@ async function animate() {
   await nextTick()
   if (!root.value) return
   staggerIn(root.value.querySelectorAll('.cyc, .pg-row'))
-  if (prefersReducedMotion()) return
-  gsap.fromTo(root.value.querySelectorAll('.bd__actual'), { drawSVG: '0%' }, { drawSVG: '100%', duration: DUR.enter, ease: EASE.inOutSoft, delay: 0.2 })
-  gsap.from(root.value.querySelectorAll('.bd__dot'), { scale: 0, transformOrigin: 'center', duration: DUR.fast, ease: EASE.pop, delay: 1.2 })
 }
 watch([tab, () => props.id], animate)
 watch(() => props.id, () => (tab.value = 'active'))

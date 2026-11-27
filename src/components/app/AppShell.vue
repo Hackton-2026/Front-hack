@@ -96,7 +96,7 @@ function subEnter(el, done) {
 }
 function subLeave(el, done) {
   if (reduced) return done()
-  gsap.to(el, { height: 0, autoAlpha: 0, marginBottom: 0, overflow: 'hidden', duration: DUR.press, ease: EASE.in, onComplete: done })
+  gsap.to(el, { height: 0, autoAlpha: 0, marginBottom: 0, overflow: 'hidden', duration: 0.16, ease: EASE.out, onComplete: done })
 }
 
 function onKey(e) {
@@ -116,9 +116,6 @@ watch(() => route.path, async () => {
   await nextTick()
   const scroller = root.value?.querySelector('.main__scroll')
   if (scroller) scroller.scrollTop = 0
-  if (reduced) return
-  const page = scroller?.firstElementChild
-  if (page) gsap.fromTo(page, { y: -8, opacity: 0 }, { y: 0, opacity: 1, duration: DUR.fast, ease: EASE.soft })
 })
 
 watch(() => ui.taskId, (id) => typeof id === 'number' && touchRecent('task', id))
@@ -281,7 +278,8 @@ onUnmounted(() => {
   --on-accent: #140700;
   --danger: #ff8a80;
   --success: #7fc47a;
-  --ease: cubic-bezier(0, 0, 0.2, 1);
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --rail-w: 248px;
   --color-heading: var(--text);
   --color-text: var(--text);
@@ -404,8 +402,12 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .loading p { margin: 0; }
 .retry { padding: 0.45rem 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: color-mix(in srgb, var(--accent) 12%, transparent); cursor: pointer; }
 .toast { position: fixed; left: 50%; bottom: 1.25rem; z-index: 90; max-width: min(30rem, calc(100vw - 2rem)); margin: 0; padding: 0.7rem 1rem; border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--accent) 20%, var(--surface)); color: var(--accent-soft); box-shadow: 0 12px 30px rgb(0 0 0 / 0.4); translate: -50% 0; }
-.toast-enter-active, .toast-leave-active { transition: opacity 0.25s var(--ease), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(10px); }
+.toast-enter-active { transition: opacity 0.24s cubic-bezier(0.23, 1, 0.32, 1), transform 0.26s cubic-bezier(0.23, 1, 0.32, 1); }
+.toast-leave-active { transition: opacity 0.16s cubic-bezier(0.23, 1, 0.32, 1), transform 0.18s cubic-bezier(0.23, 1, 0.32, 1); }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(100%); }
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter-from, .toast-leave-to { transform: none; }
+}
 
 @media (max-width: 860px) {
   .app { --rail-w: 64px; }

@@ -184,6 +184,7 @@ function place() {
   const below = innerHeight - r.bottom > popH + 10 || r.top < popH + 10
   pos.value = {
     left: `${Math.max(10, Math.min(r.left, innerWidth - popW - 10))}px`,
+    transformOrigin: below ? 'top left' : 'bottom left',
     ...(below ? { top: `${r.bottom + 8}px` } : { bottom: `${innerHeight - r.top + 8}px` }),
   }
 }
@@ -494,12 +495,15 @@ onBeforeUnmount(() => {
   background: var(--surface-2, #221f1c);
   color: var(--text, #f8f8f8);
 }
-.cp-pop-enter-active, .cp-pop-leave-active {
-  transition: opacity 0.14s ease, transform 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+.cp-pop-enter-active {
+  transition: opacity 150ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.cp-pop-leave-active {
+  transition: opacity 110ms cubic-bezier(0.23, 1, 0.32, 1), transform 110ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .cp-pop-enter-from, .cp-pop-leave-to {
   opacity: 0;
-  transform: translateY(-4px) scale(0.98);
+  transform: scale(0.96);
 }
 @media (prefers-reduced-motion: reduce) {
   .cp-pop-enter-active, .cp-pop-leave-active { transition: none; }

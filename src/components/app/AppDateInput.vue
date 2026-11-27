@@ -70,6 +70,7 @@ function place() {
   const below = innerHeight - r.bottom > popH + 8 || r.top < popH + 8
   pos.value = {
     left: `${Math.max(8, Math.min(r.left, innerWidth - popW - 8))}px`,
+    transformOrigin: below ? 'top left' : 'bottom left',
     ...(below ? { top: `${r.bottom + 5}px` } : { bottom: `${innerHeight - r.top + 5}px` }),
   }
 }
@@ -169,8 +170,9 @@ onBeforeUnmount(() => (open.value = false))
   font-size: 13px;
   color: var(--text, #f8f8f8);
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
 }
+.nvx-date:active:not(:disabled) { transform: scale(0.985); }
 .nvx-date--sm { height: 28px; padding: 0 0.5rem; font-size: 12.5px; }
 .nvx-date--block { display: flex; width: 100%; }
 .nvx-date:hover:not(:disabled), .nvx-date.is-open {
@@ -256,7 +258,8 @@ onBeforeUnmount(() => (open.value = false))
 }
 .nvx-cal__act:hover { background: var(--surface-2, #24201c); }
 .nvx-cal__act.muted { color: var(--muted, #9b958e); }
-.cal-pop-enter-active, .cal-pop-leave-active { transition: opacity 0.14s ease, transform 0.16s cubic-bezier(0.22, 1, 0.36, 1); }
-.cal-pop-enter-from, .cal-pop-leave-to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+.cal-pop-enter-active { transition: opacity 150ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+.cal-pop-leave-active { transition: opacity 110ms cubic-bezier(0.23, 1, 0.32, 1), transform 110ms cubic-bezier(0.23, 1, 0.32, 1); }
+.cal-pop-enter-from, .cal-pop-leave-to { opacity: 0; transform: scale(0.96); }
 @media (prefers-reduced-motion: reduce) { .cal-pop-enter-active, .cal-pop-leave-active { transition: none; } }
 </style>

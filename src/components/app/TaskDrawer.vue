@@ -174,7 +174,7 @@ function onEsc(e) {
 }
 function close() {
   if (reduced || !panel.value) return closeTask()
-  gsap.to(panel.value, { x: 40, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: closeTask })
+  gsap.to(panel.value, { x: 40, autoAlpha: 0, duration: 0.16, ease: EASE.out, onComplete: closeTask })
 }
 
 async function set(fields) {

@@ -6,8 +6,9 @@
 .app .pg-tabs button { padding: 0.35rem 0.65rem; border: 0; border-radius: 6px; background: none; font-weight: 500; color: var(--muted); cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
 .app .pg-tabs button:hover { color: var(--text); }
 .app .pg-tabs button[aria-selected='true'] { background: var(--surface-2); color: var(--text); }
-.app .pg-tabs .n { margin-left: 0.3rem; font-size: 11.5px; color: var(--muted); }
-.app .pg-btn { display: inline-flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.75rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2); font-size: 13px; font-weight: 500; color: var(--text); text-decoration: none; white-space: nowrap; cursor: pointer; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
+.app .pg-tabs .n { margin-left: 0.3rem; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.app .pg-btn { display: inline-flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.75rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2); font-size: 13px; font-weight: 500; color: var(--text); text-decoration: none; white-space: nowrap; cursor: pointer; transition: border-color 160ms var(--ease), background-color 160ms var(--ease), transform 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.app .pg-btn:active:not(:disabled) { transform: scale(0.97); }
 .app .pg-btn:hover { border-color: var(--accent); }
 .app .pg-btn.primary { border-color: #f8f8f8; background: #f8f8f8; color: #000; }
 .app .pg-btn.primary:hover { border-color: var(--accent); background: #fff; }
@@ -15,11 +16,13 @@
 .app.is-light .pg-btn.primary:hover { border-color: var(--accent); background: var(--accent); color: #fff; }
 .app .md input[type='checkbox'] { appearance: none; width: 15px; height: 15px; margin: 0 0.4rem 0 0; vertical-align: -2px; border: 1.5px solid var(--line-strong); border-radius: 4px; background: var(--bg); cursor: pointer; transition: background 0.14s ease, border-color 0.14s ease; }
 .app .md input[type='checkbox']:checked { border-color: var(--accent); background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.2 6.2L4.8 8.8L9.8 3.3' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/10px no-repeat; }
-.app .pg-icon { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
+.app .pg-icon { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; transition: background-color 160ms var(--ease), color 160ms var(--ease), transform 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.app .pg-icon:active:not(:disabled) { transform: scale(0.95); }
 .app .pg-icon:hover, .app .pg-icon[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
 .app .pg-icon.is-on { color: var(--accent-soft); }
 .app .pg-seg { display: flex; padding: 2px; border: 1px solid var(--line); border-radius: 7px; }
-.app .pg-seg button { display: grid; place-items: center; width: 28px; white-space: nowrap; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; }
+.app .pg-seg button { display: grid; place-items: center; width: 28px; white-space: nowrap; height: 24px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; transition: background-color 140ms ease, color 140ms ease, transform 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.app .pg-seg button:active:not(:disabled) { transform: scale(0.95); }
 .app .pg-seg button[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
 .app .pg-search { display: flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
 .app .pg-search:focus-within { border-color: var(--accent); }
@@ -82,7 +85,8 @@
 .app .md-math { margin: 0.6em 0; padding: 0.6rem; overflow-x: auto; border-radius: 6px; font-family: 'Geist Mono', monospace; text-align: center; }
 .app .md-page { color: var(--text) !important; text-decoration: underline; text-decoration-color: var(--line-strong); }
 .app .md-empty { padding: 0.5rem 0.7rem; border: 1px dashed var(--line-strong); border-radius: 6px; font-size: 13px; color: var(--muted); }
-.app .md-btn { padding: 0.4rem 0.8rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); font: 500 13px/1 'Geist', system-ui, sans-serif; color: var(--text); cursor: pointer; }
+.app .md-btn { padding: 0.4rem 0.8rem; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); font: 500 13px/1 'Geist', system-ui, sans-serif; color: var(--text); cursor: pointer; transition: border-color 150ms ease, transform 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.app .md-btn:active:not(:disabled) { transform: scale(0.97); }
 .app .md-btn:hover { border-color: var(--accent); }
 .app .md-crumbs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4em 0; font-size: 13px; color: var(--muted); }
 .app .md-crumbs a { color: var(--muted) !important; text-decoration: none; }
@@ -140,19 +144,30 @@
 @media (prefers-reduced-motion: reduce) { .pop-enter-active, .pop-leave-active { transition: none; } }
 
 /* fundo dos modais: entra e sai em fade; a caixa sai encolhendo (a entrada da caixa é GSAP em cada modal) */
-.veil-enter-active, .veil-leave-active { transition: opacity 0.2s ease-out; }
+.veil-enter-active { transition: opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1); }
+.veil-leave-active { transition: opacity 0.15s cubic-bezier(0.23, 1, 0.32, 1); }
 .veil-enter-from, .veil-leave-to { opacity: 0; }
-.veil-leave-active > * { transition: transform 0.2s ease-in; }
-.veil-leave-to > * { transform: translateY(8px) scale(0.97); }
+.veil-leave-active > * { transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1); }
+.veil-leave-to > * { transform: translateY(6px) scale(0.97); }
 @media (prefers-reduced-motion: reduce) { .veil-enter-active, .veil-leave-active, .veil-leave-active > * { transition: none; } }
 
 /* painel lateral (chat do projeto) entra e sai deslizando da direita */
-.slide-side-enter-active { transition: opacity 0.25s ease-out, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
-.slide-side-leave-active { transition: opacity 0.18s ease-in, transform 0.18s ease-in; }
+.slide-side-enter-active { transition: opacity 0.24s cubic-bezier(0.23, 1, 0.32, 1), transform 0.26s var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1)); }
+.slide-side-leave-active { transition: opacity 0.16s cubic-bezier(0.23, 1, 0.32, 1), transform 0.16s cubic-bezier(0.23, 1, 0.32, 1); }
 .slide-side-enter-from, .slide-side-leave-to { opacity: 0; transform: translateX(28px); }
 @media (prefers-reduced-motion: reduce) { .slide-side-enter-active, .slide-side-leave-active { transition: none; } }
 
-/* menus de contexto e popovers sem <Transition>: entrada curta só em CSS */
-@keyframes menu-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
-.app .pg-menu, .app .pmenu, .app .veil .menu, .app .meet__pop { animation: menu-in 0.18s ease-out; transform-origin: top; }
-@media (prefers-reduced-motion: reduce) { .app .pg-menu, .app .pmenu, .app .veil .menu, .app .meet__pop { animation: none; } }
+/* menus de contexto e popovers sem <Transition>: transição interruptível ancorada no gatilho */
+.app .pg-menu, .app .pmenu, .app .veil .menu, .app .meet__pop {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transform-origin: top right;
+  transition: opacity 150ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@starting-style {
+  .app .pg-menu, .app .pmenu, .app .veil .menu, .app .meet__pop {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) { .app .pg-menu, .app .pmenu, .app .veil .menu, .app .meet__pop { transition: none; } }

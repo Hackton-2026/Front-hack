@@ -117,7 +117,7 @@ onUnmounted(() => {
 @keyframes status-pulse { 50% { opacity: .35; } }
 .status-list > li { grid-template-columns: 24px 1fr; align-items: start; }
 .status-row { display: flex; justify-content: space-between; gap: 20px; }
-.status-meta { display: grid; justify-items: end; gap: 4px; flex-shrink: 0; font: 11px var(--font-mono); color: #8d857c; }
+.status-meta { display: grid; justify-items: end; gap: 4px; flex-shrink: 0; font: 11px var(--font-mono); font-variant-numeric: tabular-nums; color: #8d857c; }
 .status-meta strong { font: 600 12px var(--lp-sans); }
 .status-meta .is-up { color: #86efac; }
 .status-meta .is-slow { color: var(--lp-orange-soft); }

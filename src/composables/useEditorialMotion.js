@@ -26,9 +26,9 @@ export function useEditorialMotion(root, { page, items } = {}) {
   function reveal(targets, trigger, vars = {}) {
     if (!targets.length) return
     return gsap.from(targets, {
-      autoAlpha: 0, y: 24, duration: DUR.slow, stagger: 0.075,
+      autoAlpha: 0, y: 14, duration: 0.45, stagger: 0.04,
       ease: EASE.out, clearProps: 'transform,opacity,visibility',
-      scrollTrigger: { trigger, start: 'top 89%', once: true },
+      scrollTrigger: { trigger, start: 'top 90%', once: true },
       ...vars,
     })
   }
@@ -54,8 +54,8 @@ export function useEditorialMotion(root, { page, items } = {}) {
     const introContent = isBlog ? [] : select('.article-head__lead, .article-head__byline')
     if (introContent.length) {
       intro.from(introContent, {
-        y: -30, autoAlpha: 0, duration: DUR.slow, ease: EASE.expo, stagger: 0.08,
-      }, 1.6)
+        y: 12, autoAlpha: 0, duration: 0.45, ease: EASE.out, stagger: 0.05,
+      }, 0.22)
     }
 
     const cover = select(isBlog ? '.news-feature' : '.article-cover')[0]
@@ -82,10 +82,7 @@ export function useEditorialMotion(root, { page, items } = {}) {
       const sidebar = select('.reading-toc, .reading-sidebar')[0]
       reveal(select('.reading-toc__inner > *, .reading-sidebar__sticky > *'), sidebar, { x: -12, y: 0, stagger: 0.08 })
       select('.article-section').forEach(section => {
-        reveal([...section.children], section, { y: 20, stagger: 0.065 })
-      })
-      select('.flaticon--framed').forEach(icon => {
-        reveal([icon], icon.parentElement, { y: 8, scale: 0.94, duration: DUR.mid, stagger: 0 })
+        reveal([...section.children], section, { y: 14, stagger: 0.04 })
       })
       const explore = select('.explore-section')[0]
       reveal(select('.explore-section__head, .explore-card'), explore, { y: 28, stagger: 0.12 })

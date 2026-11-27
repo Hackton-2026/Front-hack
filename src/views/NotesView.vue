@@ -35,7 +35,7 @@ async function create() {
 function del(id) {
   const el = root.value.querySelector(`[data-note="${id}"]`)
   if (!el || reduced) return remove(id)
-  gsap.to(el, { scale: 0.85, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: () => remove(id) })
+  gsap.to(el, { scale: 0.92, autoAlpha: 0, duration: 0.16, ease: EASE.out, onComplete: () => remove(id) })
 }
 async function pin(n, el) {
   n.pinned = !n.pinned

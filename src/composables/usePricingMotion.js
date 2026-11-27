@@ -56,10 +56,10 @@ export function usePricingMotion(root, yearly) {
         const card = element.matches('.price-card')
         if (!card && (element.closest('.price-card') || element.querySelector('.price-card, [data-pricing-reveal]'))) return
         gsap.from(element, {
-          autoAlpha: 0, y: card ? 28 : 20, scale: card ? 0.985 : 1,
-          duration: card ? 0.95 : 0.8, ease: EASE.out,
+          autoAlpha: 0, y: 14,
+          duration: 0.45, ease: EASE.out,
           clearProps: 'transform,opacity,visibility',
-          scrollTrigger: { trigger: element, start: 'top 91%', once: true },
+          scrollTrigger: { trigger: element, start: 'top 92%', once: true },
         })
       })
 

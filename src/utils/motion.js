@@ -35,15 +35,13 @@ export const vReveal = {
     }
     el._reveal = gsap.from(modifiers.stagger ? el.children : el, {
       opacity: 0,
-      y: 48,
-      scale: 0.96,
-      filter: 'blur(8px)',
-      duration: DUR.enter,
-      ease: EASE.expo,
-      stagger: 0.12,
-      clearProps: 'filter,transform',
+      y: 16,
+      duration: 0.45,
+      ease: EASE.out,
+      stagger: 0.04,
+      clearProps: 'transform,opacity',
       delay: Number(value) || 0,
-      scrollTrigger: modifiers.now ? undefined : { trigger: el, start: 'top 88%', once: true },
+      scrollTrigger: modifiers.now ? undefined : { trigger: el, start: 'top 90%', once: true },
     })
   },
   unmounted(el) {

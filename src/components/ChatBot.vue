@@ -97,8 +97,8 @@ async function decide(action, ok) {
 </template>
 
 <style scoped>
-.bot-enter-active { transition: opacity 0.22s ease-out, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1); transform-origin: bottom right; }
-.bot-leave-active { transition: opacity 0.15s ease-in, transform 0.15s ease-in; transform-origin: bottom right; }
+.bot-enter-active { transition: opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1), transform 0.22s cubic-bezier(0.23, 1, 0.32, 1); transform-origin: bottom right; }
+.bot-leave-active { transition: opacity 0.14s cubic-bezier(0.23, 1, 0.32, 1), transform 0.15s cubic-bezier(0.23, 1, 0.32, 1); transform-origin: bottom right; }
 .bot-enter-from, .bot-leave-to { opacity: 0; transform: translateY(10px) scale(0.96); }
 @media (prefers-reduced-motion: reduce) { .bot-enter-active, .bot-leave-active { transition: none; } }
 .bot { position: fixed; right: var(--space-4); bottom: var(--space-4); z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
