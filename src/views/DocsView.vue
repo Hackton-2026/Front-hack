@@ -48,7 +48,6 @@ usePageTitle('Documentação | Novexo')
     <main class="ip-main">
       <section class="ip-hero" aria-labelledby="docs-title">
         <div v-reveal.now>
-          <p class="ip-kicker">Desenvolvedores</p>
           <h1 id="docs-title">Leve o Novexo<br>para o seu <em>código.</em></h1>
         </div>
         <div v-reveal.now="0.15">

@@ -37,7 +37,6 @@ onUnmounted(() => { document.title = previousTitle })
     <main class="ip-main">
       <section class="ip-hero" aria-labelledby="sec-title">
         <div v-reveal.now>
-          <p class="ip-kicker">Segurança</p>
           <h1 id="sec-title">O trabalho do seu time,<br>bem <em>guardado.</em></h1>
         </div>
         <p v-reveal.now="0.15" class="ip-lead">Sem promessas vagas: aqui está <strong>o que o Novexo faz hoje</strong> para proteger contas, projetos e pagamentos, e também o que ainda falta fazer.</p>

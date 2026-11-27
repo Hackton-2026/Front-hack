@@ -68,7 +68,6 @@ onUnmounted(() => {
     <main class="ip-main">
       <section class="ip-hero" aria-labelledby="status-title">
         <div v-reveal.now>
-          <p class="ip-kicker">Status</p>
           <h1 id="status-title" class="status-head" :class="`is-${overall}`"><span class="status-dot" aria-hidden="true" />{{ HEADLINE[overall].replace(/\.$/, '') }}<em>.</em></h1>
         </div>
         <p v-reveal.now="0.15" class="ip-lead" aria-live="polite">

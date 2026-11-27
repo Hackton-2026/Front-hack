@@ -47,7 +47,6 @@ onUnmounted(() => { document.title = previousTitle })
     <main class="ip-main">
       <section class="ip-hero" aria-labelledby="cases-title">
         <div v-reveal.now>
-          <p class="ip-kicker">Casos de uso</p>
           <h1 id="cases-title">Um jeito de trabalhar<br>para cada <em>time.</em></h1>
         </div>
         <p v-reveal.now="0.15" class="ip-lead">O Novexo não pede que você mude o seu processo. Os mesmos blocos, como tarefas, ciclos, wiki e chat, se encaixam do jeito que o seu time já trabalha.</p>

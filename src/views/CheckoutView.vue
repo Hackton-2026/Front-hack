@@ -237,7 +237,6 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 
     <main v-else class="grid">
       <aside class="summary">
-        <p class="eyebrow reveal">Seu plano</p>
         <h1 class="title reveal">Falta pouco para o seu time voar.</h1>
 
         <div class="pick reveal" role="radiogroup" aria-label="Plano">
@@ -406,8 +405,7 @@ onUnmounted(() => { stopPix(); clearTimeout(leave); brick?.unmount?.() })
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(1.5rem, 4vw, 3.5rem); max-width: 76rem; margin: 1rem auto 0; align-items: start; }
 @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
 
-.eyebrow { margin: 0; font: 600 0.75rem/1 var(--lp-sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--lp-orange-soft); }
-.title { margin: 0.75rem 0 1.5rem; color: var(--lp-white); font: 900 clamp(2rem, 4.4vw, 3.25rem)/0.95 var(--lp-display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; }
+.title { margin: 0 0 1.5rem; color: var(--lp-white); font: 900 clamp(2rem, 4.4vw, 3.25rem)/0.95 var(--lp-display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; }
 .pick { display: inline-flex; gap: 0.4rem; margin-bottom: 1.25rem; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: #0b0b0b; }
 .pick button { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border: 0; border-radius: 999px; background: none; font: 500 0.9375rem/1 var(--lp-sans); color: rgb(248 248 248 / 0.7); cursor: pointer; transition: background 0.3s, color 0.3s; }
 .pick button[aria-checked='true'] { background: var(--lp-white); color: #000; }

@@ -32,7 +32,6 @@ onUnmounted(() => { document.title = previousTitle })
     <main class="ip-main">
       <section class="ip-hero" aria-labelledby="about-title">
         <div v-reveal.now>
-          <p class="ip-kicker">Sobre o Novexo</p>
           <h1 id="about-title">Feito por um time<br>que também <em>se perdia.</em></h1>
         </div>
         <p v-reveal.now="0.15" class="ip-lead">O Novexo nasceu no <strong>Hackathon 2026</strong>, de um time pequeno cansado de ver o trabalho espalhado entre planilha, grupo de mensagens e post-it. A ideia era simples: um lugar só, que cresce junto com o time.</p>

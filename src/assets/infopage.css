@@ -21,8 +21,6 @@
 
 .ip-hero { position: relative; isolation: isolate; display: grid; grid-template-columns: 1.1fr .9fr; gap: clamp(40px, 6vw, 90px); align-items: end; padding-bottom: 72px; border-bottom: 1px solid var(--ip-line); }
 .ip-hero::before { content: ''; position: absolute; z-index: -1; pointer-events: none; width: min(850px, 100vw); height: 760px; top: -220px; left: -260px; background: radial-gradient(ellipse at center, var(--ip-glow), var(--ip-glow-deep) 40%, transparent 68%); }
-.ip-kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 26px; color: var(--ip-label); font: 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
-.ip-kicker::before { content: ''; width: 18px; height: 1px; background: var(--lp-orange-soft); }
 .ip-hero h1 { margin: 0; color: var(--ip-title); font: 600 clamp(56px, 6.4vw, 92px)/.98 var(--lp-hero); letter-spacing: -.07em; }
 .ip-hero h1 em { color: var(--lp-orange-soft); font-family: var(--font-serif); font-weight: 400; letter-spacing: -.045em; }
 .ip-lead { max-width: 420px; margin: 0; color: var(--ip-muted); font-size: 15px; line-height: 1.8; }

@@ -230,7 +230,6 @@ const filteredSprints = computed(() =>
     <SiteNav />
     <main class="guide">
       <header class="intro">
-        <p class="eyebrow">ENGENHARIA &amp; CHANGELOG</p>
         <h1>Sprints e atualizações<br /><em>do Novexo</em></h1>
         <p>
           Acompanhe cada sprint publicado pelo time de engenharia: novas capacidades, ganhos reais
@@ -319,13 +318,6 @@ h2 {
 .intro {
   max-width: 720px;
   margin-bottom: 52px;
-}
-.eyebrow {
-  color: #fba45c;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  margin-bottom: 16px;
 }
 h1 {
   font:
