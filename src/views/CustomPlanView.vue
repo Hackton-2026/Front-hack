@@ -112,7 +112,7 @@ onUnmounted(() => {
 <template>
   <div class="lp custom-plan">
     <a href="#custom-form" class="custom-skip">Pular para as perguntas</a>
-    <header class="custom-nav"><RouterLink to="/" class="custom-logo" aria-label="Novexo, início">NOVEXO</RouterLink><RouterLink to="/precos"><FlaticonIcon name="arrow-left" :size="14" />Voltar aos planos</RouterLink></header>
+    <header class="custom-nav"><RouterLink to="/" class="custom-logo" aria-label="Novexo, início">NOVEXO</RouterLink><GooeyButton variant="secondary" to="/precos"><FlaticonIcon name="arrow-left" :size="14" />Voltar aos planos</GooeyButton></header>
     <main ref="root" class="custom-main">
       <header class="custom-heading"><h1>Monte o plano <br><span>da sua empresa.</span></h1></header>
       <div class="custom-layout">
@@ -217,8 +217,7 @@ onUnmounted(() => {
 .custom-main { padding-bottom: 48px; }
 .custom-nav { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding-block: 28px; }
 .custom-logo { color: #f8f8f8; font: 800 25px/1 var(--lp-display); letter-spacing: -.04em; text-decoration: none; }
-.custom-nav > a:last-child { display: inline-flex; align-items: center; gap: 9px; color: #b2a69a; font-size: 12px; text-decoration: none; }
-.custom-nav > a:hover { color: var(--lp-orange-soft); }
+.custom-logo:hover { color: var(--lp-orange-soft); }
 .custom-plan :is(a, button, input, textarea):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 5px; }
 .custom-skip { position: fixed; z-index: 100; top: 12px; left: 20px; padding: 12px 20px; background: #fff; color: #000; transform: translateY(-170%); }
 .custom-skip:focus { transform: none; }
@@ -345,7 +344,6 @@ onUnmounted(() => {
   .custom-nav, .custom-main { padding-inline: 20px; }
   .custom-nav { padding-block: 22px; }
   .custom-logo { font-size: 22px; }
-  .custom-nav > a:last-child { font-size: 11px; }
   .custom-heading { display: block; padding: 35px 0 30px; }
   .custom-heading h1 { font-size: clamp(40px, 8vw, 58px); }
   .custom-layout { display: flex; flex-direction: column; gap: 23px; }
