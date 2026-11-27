@@ -175,7 +175,7 @@ onUnmounted(() => {
 
         <aside class="custom-sidebar" aria-labelledby="custom-budget-title">
           <section class="custom-budget" :style="{ '--budget-progress': `${budget / 5}%` }">
-            <div class="custom-budget__head"><FlaticonIcon name="settings-sliders" framed :size="20" /><h2 id="custom-budget-title">Seu orçamento mensal</h2></div>
+            <div class="custom-budget__head"><FlaticonIcon name="settings-sliders" :size="17" /><h2 id="custom-budget-title">Seu orçamento mensal</h2></div>
             <p>Total por mês para a empresa.</p>
             <div class="custom-budget__amount"><output for="custom-budget-range">{{ formatBRL(budget) }}</output><span>/ mês</span></div>
             <label class="sr-only" for="custom-budget-range">Orçamento mensal da empresa, de zero a quinhentos reais</label>
@@ -226,7 +226,7 @@ onUnmounted(() => {
 .custom-heading h1 { margin: 0; color: #f5eee6; font: 600 clamp(42px, 4.7vw, 63px)/1.06 var(--lp-hero); letter-spacing: -.065em; }
 .custom-heading h1 > span { color: var(--lp-orange-soft); font-family: var(--font-serif); font-style: italic; font-weight: 400; letter-spacing: -.035em; }
 .custom-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 28px; align-items: start; }
-.custom-form, .custom-budget { position: relative; min-width: 0; padding: 30px; border: 1px solid var(--custom-line); border-radius: 14px; background: #0e0c0a; }
+.custom-form, .custom-budget { position: relative; min-width: 0; padding: 30px; border: 1px solid rgb(255 255 255 / 0.09); border-radius: 12px; background: #0a0a09; }
 .custom-form, .custom-question { scroll-margin-top: 25px; }
 .custom-steps { position: relative; display: flex; justify-content: space-between; gap: 13px; }
 .custom-steps::before { content: ''; position: absolute; top: 15px; left: 16px; right: 16px; height: 1px; background: #ffffff1a; pointer-events: none; }
@@ -245,9 +245,9 @@ onUnmounted(() => {
 .custom-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 25px 18px; }
 .custom-question { min-width: 0; }
 .custom-question--full { grid-column: 1 / -1; }
-.custom-question > label, .custom-question legend { display: flex; align-items: baseline; gap: 7px; margin-bottom: 10px; color: #d4c5b5; font-size: 11px; line-height: 1.6; }
-.custom-question :is(input:not([type='checkbox']), textarea), .custom-exact input { display: block; width: 100%; min-width: 0; min-height: 45px; padding: 12px; border: 1px solid #ffffff24; border-radius: 7px; background: #ffffff03; color: #f2e9e0; caret-color: var(--lp-orange-soft); font: 400 12px/1.5 var(--lp-sans); color-scheme: dark; transition: border-color .2s; }
-.custom-question :deep(.sel) { min-height: 45px; height: 45px; border-radius: 7px; border-color: #ffffff24; background: #ffffff03; font-size: 12.5px; }
+.custom-question > label, .custom-question legend { display: flex; align-items: baseline; gap: 7px; margin-bottom: 8px; color: #cdc6be; font-size: 12.5px; font-weight: 500; line-height: 1.5; }
+.custom-question :is(input:not([type='checkbox']), textarea), .custom-exact input { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 11px 13px; border: 1px solid rgb(255 255 255 / 0.12); border-radius: 8px; background: #111110; color: #f2e9e0; caret-color: var(--lp-orange-soft); font: 400 14px/1.5 var(--lp-sans); color-scheme: dark; transition: border-color 150ms ease, background-color 150ms ease; }
+.custom-question :deep(.sel) { min-height: 44px; height: 44px; border-radius: 8px; border-color: rgb(255 255 255 / 0.12); background: #111110; font-size: 14px; }
 .custom-question :deep(.sel[aria-invalid='true']) { border-color: #fba45c99; }
 .custom-question :is(input, textarea)::placeholder { color: #8d8276; opacity: 1; }
 .custom-question :is(input, textarea):focus-visible, .custom-exact input:focus-visible { outline: none; border-color: #fba45c99; box-shadow: 0 0 0 2px #fba45c12; }
@@ -270,10 +270,10 @@ onUnmounted(() => {
 .custom-text-button { display: inline-flex; align-items: center; justify-content: flex-start; gap: 8px; width: fit-content; padding: 6px 0; border: 0; background: none; color: #d5ba9c; font: 400 11px/1.5 var(--lp-sans); cursor: pointer; }
 .custom-text-button:hover { color: var(--lp-orange-soft); }
 .custom-sidebar { position: sticky; top: 25px; min-width: 0; }
-.custom-budget { padding: 26px; background: #16100b; border-color: #fba45c40; }
-.custom-budget__head { display: flex; align-items: center; gap: 13px; }
-.custom-budget h2 { margin: 0; color: #eedbc8; font: 500 18px/1.3 var(--lp-hero); letter-spacing: -.04em; }
-.custom-budget > p { margin: 17px 0 0; color: #a79582; font-size: 11px; line-height: 1.7; }
+.custom-budget { padding: 26px; background: #0d0d0c; border-color: rgb(255 255 255 / 0.1); }
+.custom-budget__head { display: flex; align-items: center; gap: 10px; color: var(--lp-orange-soft); }
+.custom-budget h2 { margin: 0; color: #f1ede8; font: 500 18px/1.3 var(--lp-hero); letter-spacing: -.04em; }
+.custom-budget > p { margin: 14px 0 0; color: #9c958c; font-size: 13px; line-height: 1.6; }
 .custom-budget__amount { display: flex; align-items: baseline; gap: 8px; margin-top: 14px; color: #f3e5d7; }
 .custom-budget__amount output { font: 550 46px/1.15 var(--lp-hero); letter-spacing: -.065em; font-variant-numeric: tabular-nums; }
 .custom-budget__amount > span { color: #a78f76; font-size: 12px; }
@@ -291,9 +291,9 @@ onUnmounted(() => {
 .custom-exact > span:first-child { color: #b7a18b; font-size: 11px; }
 .custom-exact > span:last-child { display: flex; align-items: center; gap: 7px; color: #d4b18e; font-size: 12px; }
 .custom-exact input { max-width: 92px; min-height: 36px; padding: 7px 11px; font-size: 12.5px; text-align: right; }
-.custom-budget > .custom-budget__hint { padding-top: 19px; border-top: 1px solid #b88e602b; color: #bca184; font-size: 11px; }
-.custom-preview { position: relative; margin-top: 16px; padding: 25px; border: 1px solid #fba45c40; border-radius: 12px; background: #14100c; }
-.custom-preview::before { content: ''; position: absolute; top: -6px; left: 33px; width: 10px; height: 10px; border: solid #fba45c40; border-width: 1px 0 0 1px; background: #14100c; transform: rotate(45deg); }
+.custom-budget > .custom-budget__hint { padding-top: 18px; border-top: 1px solid rgb(255 255 255 / 0.08); color: #a79f96; font-size: 12.5px; line-height: 1.65; }
+.custom-preview { position: relative; margin-top: 16px; padding: 25px; border: 1px solid rgb(255 255 255 / 0.1); border-radius: 12px; background: #0d0d0c; }
+.custom-preview::before { content: ''; position: absolute; top: -6px; left: 33px; width: 10px; height: 10px; border: solid rgb(255 255 255 / 0.1); border-width: 1px 0 0 1px; background: #0d0d0c; transform: rotate(45deg); }
 .custom-preview__heading { display: grid; gap: 12px; }
 .custom-preview__heading > span { color: var(--lp-orange-soft); font-size: 11px; line-height: 1.5; }
 .custom-preview h2 { color: #f0dfcc; font: 500 24px/1.15 var(--lp-hero); letter-spacing: -.045em; margin: 0; }
