@@ -56,7 +56,7 @@ onUnmounted(() => { document.title = previousTitle })
         <header><h2 id="cases-who">Quem usa<br><span>e para quê.</span></h2></header>
         <div v-reveal.stagger class="ip-cards">
           <RouterLink v-for="c in CASES" :key="c.title" :to="c.to" class="ip-card">
-            <FlaticonIcon :name="c.icon" framed :size="18" />
+            <FlaticonIcon :name="c.icon" :size="18" />
             <h3>{{ c.title }}</h3>
             <p>{{ c.text }}</p>
             <ul><li v-for="t in c.tags" :key="t">{{ t }}</li></ul>
