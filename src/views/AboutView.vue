@@ -1,11 +1,11 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import { vReveal } from '../utils/motion'
+import { usePageTitle } from '../composables/usePageTitle'
 
 const PRINCIPLES = [
   ['Menos telas, mais trabalho feito', 'Cada recurso precisa tirar um passo da rotina do time. Se só deixa a tela mais cheia, fica de fora.'],
@@ -21,9 +21,7 @@ const STORY = [
   ['Agora', 'Fora da tela', 'Planos com Pix e cartão, avisos de prazo no WhatsApp, GitHub e Google Agenda.'],
 ]
 
-let previousTitle
-onMounted(() => { previousTitle = document.title; document.title = 'Sobre | Novexo' })
-onUnmounted(() => { document.title = previousTitle })
+usePageTitle('Sobre')
 </script>
 
 <template>

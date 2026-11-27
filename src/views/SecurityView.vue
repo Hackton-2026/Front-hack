@@ -1,11 +1,11 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import { vReveal } from '../utils/motion'
+import { usePageTitle } from '../composables/usePageTitle'
 
 const ACCESS = [
   ['Senhas que nem nós conseguimos ler', 'As senhas são guardadas só como hash, com os validadores de força do Django. Também dá para entrar com o Google, e o e-mail é confirmado por link.'],
@@ -26,9 +26,7 @@ const NOT_YET = [
   ['Envio dos webhooks', 'Já dá para cadastrar o endereço e os eventos, mas o envio assinado ainda não está ligado.'],
 ]
 
-let previousTitle
-onMounted(() => { previousTitle = document.title; document.title = 'Segurança | Novexo' })
-onUnmounted(() => { document.title = previousTitle })
+usePageTitle('Segurança')
 </script>
 
 <template>

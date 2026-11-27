@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import '../assets/landing.css'
 import SiteNav from '../components/landing/SiteNav.vue'
@@ -11,6 +11,7 @@ import AppFaq from '../components/landing/AppFaq.vue'
 import AppCheckbox from '../components/app/AppCheckbox.vue'
 import { PRICING_PLANS, COMPARISON_GROUPS, annualTotal, annualSavings, formatBRL } from '../data/plans'
 import { usePricingMotion } from '../composables/usePricingMotion'
+import { usePageTitle } from '../composables/usePageTitle'
 import { useAuth } from '../composables/useAuth'
 import { openCustomPlan } from '../utils/customPlanEntry'
 
@@ -59,9 +60,7 @@ const questions = [
   { question: 'Como descubro o preço do Enterprise?', answer: 'O Enterprise tem uma proposta personalizada. Fale com nosso time para definir o escopo e as condições do contrato anual. Ele inclui os recursos do Business, SSO e auditoria, automações ilimitadas, gerente de conta dedicado e SLA de 99,9%.', link: '/contato?assunto=comercial', label: 'Conversar sobre minha empresa' },
 ]
 
-let previousTitle
-onMounted(() => { previousTitle = document.title; document.title = 'Preços e planos | Novexo' })
-onUnmounted(() => { document.title = previousTitle })
+usePageTitle('Planos e Preços')
 </script>
 
 <template>

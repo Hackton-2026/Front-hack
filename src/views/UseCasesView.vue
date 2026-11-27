@@ -1,5 +1,4 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
 import '../assets/landing.css'
 import '../assets/infopage.css'
 import SiteNav from '../components/landing/SiteNav.vue'
@@ -7,6 +6,7 @@ import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
 import { vReveal } from '../utils/motion'
+import { usePageTitle } from '../composables/usePageTitle'
 
 const CASES = [
   { icon: 'code-branch', title: 'Times de produto e engenharia', to: '/solucoes/engenharia',
@@ -36,9 +36,7 @@ const DAY = [
   ['17:45', 'Fim do dia', '/whatsapp avisa o time que a entrega de amanhã mudou. Quem cadastrou o número recebe no celular.'],
 ]
 
-let previousTitle
-onMounted(() => { previousTitle = document.title; document.title = 'Casos de uso | Novexo' })
-onUnmounted(() => { document.title = previousTitle })
+usePageTitle('Casos de uso')
 </script>
 
 <template>

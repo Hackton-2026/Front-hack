@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import { CUSTOM_PLAN_PATH } from './utils/customPlanEntry'
+import { formatPageTitle } from './composables/usePageTitle'
 import { HOME_SEO, SEO_BY_PATH, SITE_NAME, SITE_ORIGIN } from './data/seo'
 
 const router = createRouter({
@@ -64,10 +65,10 @@ const router = createRouter({
     { path: '/blog', alias: '/news', component: () => import('./views/BlogView.vue'), meta: { bare: true } },
     { path: '/blog/como-funciona', alias: '/como-funciona', component: () => import('./views/HowItWorksView.vue'), meta: { bare: true } },
     { path: '/blog/:slug', component: () => import('./views/BlogArticleView.vue'), meta: { bare: true } },
-    { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true } },
-    { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true } },
-    { path: '/entrar/:token', component: () => import('./views/JoinView.vue'), props: true, meta: { bare: true } },
-    { path: '/verificar-email', component: () => import('./views/VerifyEmailView.vue'), meta: { bare: true } },
+    { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true, title: 'Entrar' } },
+    { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true, title: 'Checkout' } },
+    { path: '/entrar/:token', component: () => import('./views/JoinView.vue'), props: true, meta: { bare: true, title: 'Convite' } },
+    { path: '/verificar-email', component: () => import('./views/VerifyEmailView.vue'), meta: { bare: true, title: 'Verificar e-mail' } },
     { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Começar', icon: 'rocket' } },
     { path: '/inicio', redirect: '/projetos' },
     { path: '/meu-trabalho', component: () => import('./views/MyWorkView.vue'), meta: { app: true, auth: true, area: 'work', ownTitle: true, title: 'Seu trabalho', icon: 'mine' } },
@@ -93,28 +94,28 @@ const router = createRouter({
     { path: '/arquivados', component: () => import('./views/ArchivesView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Arquivados', icon: 'archive' } },
     { path: '/paineis', component: () => import('./views/DashboardsView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Painéis', icon: 'dashboard' } },
     { path: '/wiki', component: () => import('./views/WikiView.vue'), meta: { app: true, auth: true, area: 'wiki', title: 'Documentos', icon: 'wiki' } },
-    { path: '/ia', component: () => import('./views/AiView.vue'), meta: { app: true, auth: true, area: 'ai', title: 'Novexo IA', icon: 'ai' } },
+    { path: '/ia', component: () => import('./views/AiView.vue'), meta: { app: true, auth: true, area: 'ai', title: 'IA', icon: 'ai' } },
     { path: '/ajustes', component: () => import('./views/SettingsView.vue'), meta: { app: true, auth: true, area: 'settings', ownTitle: true, title: 'Ajustes', icon: 'settings' } },
-    { path: '/explorar', component: () => import('./views/ProductsView.vue') },
+    { path: '/explorar', component: () => import('./views/ProductsView.vue'), meta: { title: 'Explorar' } },
     {
       path: '/meus',
       component: () => import('./views/ProductsView.vue'),
       props: { mine: true },
-      meta: { auth: true },
+      meta: { auth: true, title: 'Meus itens' },
     },
-    { path: '/novo', component: () => import('./views/ProductFormView.vue'), meta: { auth: true } },
+    { path: '/novo', component: () => import('./views/ProductFormView.vue'), meta: { auth: true, title: 'Novo item' } },
     {
       path: '/editar/:id',
       component: () => import('./views/ProductFormView.vue'),
       props: true,
-      meta: { auth: true },
+      meta: { auth: true, title: 'Editar item' },
     },
-    { path: '/perfil', component: () => import('./views/ProfileView.vue'), meta: { auth: true } },
+    { path: '/perfil', component: () => import('./views/ProfileView.vue'), meta: { auth: true, title: 'Perfil' } },
     {
       path: '/chat/:id?',
       component: () => import('./views/ChatView.vue'),
       props: true,
-      meta: { auth: true },
+      meta: { auth: true, title: 'Chat' },
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
@@ -159,7 +160,8 @@ router.afterEach((to) => {
     to.path === '/verificar-email'
   )
   const seo = SEO_BY_PATH[to.path]
-  const pageTitle = to.path === '/' || isPrivate ? SITE_NAME : (seo?.title || SITE_NAME)
+  const rawTitle = to.path === '/' ? SITE_NAME : (seo?.title || to.meta?.title || SITE_NAME)
+  const pageTitle = formatPageTitle(rawTitle)
   const ogTitle = seo?.ogTitle || seo?.title || HOME_SEO.ogTitle
   const desc = seo?.description || HOME_SEO.description
   const canonical = `${SITE_ORIGIN}${to.path === '/' ? '/' : to.path}`

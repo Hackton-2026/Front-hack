@@ -20,7 +20,7 @@ const filtered = computed(() => filterPosts(category.value, query.value))
 const visible = computed(() => filtered.value.slice(0, visibleLimit.value))
 const pageRoot = ref(null)
 useEditorialMotion(pageRoot, { page: 'blog', items: visible })
-usePageTitle('Blog Novexo | Novidades, ideias e próximos passos')
+usePageTitle('Blog')
 watch([category, query], () => { visibleLimit.value = 9 })
 function resetFilters() { category.value = 'Todas'; query.value = '' }
 </script>

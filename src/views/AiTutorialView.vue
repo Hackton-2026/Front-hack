@@ -2,12 +2,14 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { prefersReducedMotion } from '../utils/motion'
 import { vTutorialMotion } from '../utils/tutorialMotion'
+import { usePageTitle } from '../composables/usePageTitle'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
 import workspaceImage from '../assets/product/novexo-ia-workspace.png'
 
+usePageTitle('IA')
 const screenshot = ref(null)
 const cursorVisible = ref(false)
 const replay = ref(0)

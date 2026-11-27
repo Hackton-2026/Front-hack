@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import '../assets/landing.css'
 import SiteNav from '../components/landing/SiteNav.vue'
@@ -9,6 +9,7 @@ import FlaticonIcon from '../components/FlaticonIcon.vue'
 import AppFaq from '../components/landing/AppFaq.vue'
 import AppSelect from '../components/app/AppSelect.vue'
 import { useContactMotion } from '../composables/useContactMotion'
+import { usePageTitle } from '../composables/usePageTitle'
 
 const route = useRoute()
 const root = ref(null)
@@ -67,9 +68,7 @@ const questions = [
   { question: 'Onde encontro os planos e preços?', answer: 'Na página de preços você pode comparar os recursos, conhecer cada plano e escolher uma opção para o seu momento.', link: '/precos', label: 'Conhecer os planos' },
 ]
 
-let previousTitle
-onMounted(() => { previousTitle = document.title; document.title = 'Contato | Novexo' })
-onUnmounted(() => { document.title = previousTitle })
+usePageTitle('Contato')
 </script>
 
 <template>

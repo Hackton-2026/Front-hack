@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { vTutorialMotion } from '../utils/tutorialMotion'
+import { usePageTitle } from '../composables/usePageTitle'
 import SiteNav from '../components/landing/SiteNav.vue'
 import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
@@ -14,6 +15,7 @@ const formatDate = (date) =>
     timeZone: 'America/Sao_Paulo',
   }).format(new Date(date))
 
+usePageTitle('Engenharia')
 const activeCategory = ref('Todas')
 
 const sprints = [

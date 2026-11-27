@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
 import '../assets/landing.css'
 import GooeyButton from '../components/GooeyButton.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
@@ -12,6 +12,7 @@ import {
   getCustomPlanPreview, normalizeCustomBudget, buildCustomPlanRequest,
 } from '../data/customPlan'
 import { useCustomPlanMotion } from '../composables/useCustomPlanMotion'
+import { usePageTitle } from '../composables/usePageTitle'
 
 const root = ref(null)
 const form = ref(null)
@@ -35,7 +36,7 @@ watch([answers, budget], () => { prepared.value = false }, { deep: true })
 
 let focusFrame = 0
 let downloadUrl
-let previousTitle
+usePageTitle('Plano personalizado')
 
 function setBudget(event) {
   const value = normalizeCustomBudget(event.target.value)
@@ -101,9 +102,7 @@ function downloadRequest() {
   link.remove()
 }
 
-onMounted(() => { previousTitle = document.title; document.title = 'Monte seu plano personalizado | Novexo' })
 onUnmounted(() => {
-  document.title = previousTitle
   cancelAnimationFrame(focusFrame)
   if (downloadUrl) URL.revokeObjectURL(downloadUrl)
 })

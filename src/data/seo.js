@@ -24,36 +24,36 @@ export const SITELINK_PAGES = [
   },
   {
     path: '/produto/ia',
-    name: 'Novexo IA',
-    title: 'Novexo IA | Assistente de Projetos',
+    name: 'IA',
+    title: 'IA | Novexo',
     description:
       'Crie tarefas, estruture projetos e resuma conversas com inteligência artificial integrada ao seu workspace. Menos trabalho manual, mais entrega.',
   },
   {
     path: '/login',
-    name: 'Entrar no Novexo',
-    title: 'Entrar no Novexo',
+    name: 'Entrar',
+    title: 'Entrar | Novexo',
     description:
       'Acesse sua conta Novexo ou crie seu workspace grátis em segundos. Gerencie tarefas, projetos, chat em tempo real e documentos em um só lugar.',
   },
   {
     path: '/blog/como-funciona',
-    name: 'Como Funciona',
-    title: 'Como Funciona | Novexo',
+    name: 'Como funciona',
+    title: 'Como funciona | Novexo',
     description:
       'Veja na prática como tarefas, quadros Kanban, ciclos, calendário, wiki e chat trabalham juntos para manter todo o time alinhado.',
   },
   {
     path: '/casos-de-uso',
-    name: 'Casos de Uso',
-    title: 'Casos de Uso | Novexo',
+    name: 'Casos de uso',
+    title: 'Casos de uso | Novexo',
     description:
       'Descubra como times de engenharia, agências, operações e educação organizam demandas e entregam mais rápido com o Novexo.',
   },
   {
     path: '/blog',
-    name: 'Blog Novexo',
-    title: 'Blog Novexo',
+    name: 'Blog',
+    title: 'Blog | Novexo',
     description:
       'Guias práticos sobre produtividade, planejamento semanal, rituais de equipe e gestão de projetos sem burocracia.',
   },
@@ -145,30 +145,37 @@ export const OTHER_PUBLIC_PAGES = [
       'Conecte o Novexo às ferramentas do seu time com API pública, webhooks, Google Meet e WhatsApp.',
   },
   {
+    path: '/precos/personalizado',
+    name: 'Plano personalizado',
+    title: 'Plano personalizado | Novexo',
+    description:
+      'Monte um plano sob medida para a sua empresa com SSO, auditoria, automações ilimitadas, gerente de conta dedicado e SLA de 99,9%.',
+  },
+  {
     path: '/solucoes/engenharia',
     name: 'Engenharia',
-    title: 'Novexo para Engenharia',
+    title: 'Engenharia | Novexo',
     description:
       'Ciclos, módulos, quadros, documentação técnica e IA integrados para times de engenharia e desenvolvimento de software.',
   },
   {
     path: '/solucoes/agencias',
     name: 'Agências',
-    title: 'Novexo para Agências',
+    title: 'Agências | Novexo',
     description:
       'Gerencie projetos de clientes, briefings, entregas e aprovações em um único lugar com o Novexo.',
   },
   {
     path: '/solucoes/operacoes',
     name: 'Operações',
-    title: 'Novexo para Operações',
+    title: 'Operações | Novexo',
     description:
       'Padronize processos, acompanhe prazos e mantenha toda a operação sincronizada com o Novexo.',
   },
   {
     path: '/solucoes/educacao',
     name: 'Educação',
-    title: 'Novexo para Educação',
+    title: 'Educação | Novexo',
     description:
       'Organize turmas, projetos acadêmicos, tarefas e materiais colaborativos com simplicidade no Novexo.',
   },
@@ -177,7 +184,7 @@ export const OTHER_PUBLIC_PAGES = [
 export const BLOG_SEO_PAGES = BLOG_POSTS.map((post) => ({
   path: `/blog/${post.slug}`,
   name: post.title,
-  title: `${post.title} | Blog Novexo`,
+  title: `${post.title} | Novexo`,
   description: post.excerpt,
   type: 'article',
   datePublished: post.date,

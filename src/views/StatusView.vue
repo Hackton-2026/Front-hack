@@ -7,6 +7,7 @@ import SiteFooter from '../components/landing/SiteFooter.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import { API_URL } from '../config'
 import { vReveal } from '../utils/motion'
+import { usePageTitle } from '../composables/usePageTitle'
 
 const EVERY = 30
 const SLOW_MS = 1500
@@ -47,16 +48,14 @@ const overall = computed(() => {
 const LABEL = { up: 'Funcionando', slow: 'Lento', down: 'Fora do ar', checking: 'Verificando…' }
 const HEADLINE = { up: 'Tudo funcionando.', slow: 'Funcionando, mas lento.', down: 'Algo está fora do ar.', checking: 'Verificando…' }
 
-let previousTitle, timer, clock
+usePageTitle('Status')
+let timer, clock
 onMounted(() => {
-  previousTitle = document.title
-  document.title = 'Status | Novexo'
   runAll()
   timer = setInterval(runAll, EVERY * 1000)
   clock = setInterval(() => (now.value = Date.now()), 1000)
 })
 onUnmounted(() => {
-  document.title = previousTitle
   clearInterval(timer)
   clearInterval(clock)
 })

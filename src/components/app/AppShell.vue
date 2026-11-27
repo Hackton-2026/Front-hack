@@ -7,6 +7,7 @@ import { api } from '../../services/api'
 import { useOnboarding } from '../../composables/useOnboarding'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
+import { formatPageTitle } from '../../composables/usePageTitle'
 import AppIcon from './AppIcon.vue'
 import AccountMenu from './AccountMenu.vue'
 import NotesDock from './NotesDock.vue'
@@ -62,6 +63,9 @@ async function resendVerify() {
   }
 }
 const title = computed(() => ui.crumb || route.meta.title || '')
+watchEffect(() => {
+  if (title.value) document.title = formatPageTitle(title.value)
+})
 // ownTitle: a página já mostra o próprio título; um caminho de um nível só o repetiria
 const crumbs = computed(() => {
   const parts = title.value.split(' › ').map((label) => ({ label }))

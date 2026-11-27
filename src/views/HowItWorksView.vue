@@ -17,7 +17,7 @@ import { usePageTitle } from '../composables/usePageTitle'
 const pageRoot = ref(null)
 const article = ref(null)
 useEditorialMotion(pageRoot, { page: 'guide' })
-usePageTitle('Como funciona o Novexo | Blog Novexo')
+usePageTitle('Como funciona')
 
 const breadcrumbs = [
   { label: 'Início', to: '/' },
