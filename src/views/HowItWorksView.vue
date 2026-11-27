@@ -10,6 +10,7 @@ import AppFaq from '../components/landing/AppFaq.vue'
 import AppReadingToc from '../components/landing/AppReadingToc.vue'
 import AppBreadcrumbs from '../components/landing/AppBreadcrumbs.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
+import BrandN from '../components/app/BrandN.vue'
 import sunset from '../assets/landing/footer-sunset.webp'
 import { useEditorialMotion } from '../composables/useEditorialMotion'
 import { usePageTitle } from '../composables/usePageTitle'
@@ -52,7 +53,7 @@ const faqs = [
         <AppBreadcrumbs :items="breadcrumbs" />
         <h1>Como funciona<br><em>o Novexo.</em></h1>
         <p class="article-head__lead">Da primeira ideia à próxima entrega: descubra como organizar seus projetos, conectar seu time e fazer o trabalho fluir com o Novexo.</p>
-        <div class="article-head__byline"><span class="author-mark" aria-hidden="true">N</span><div><strong>Equipe Novexo</strong></div></div>
+        <div class="article-head__byline"><BrandN :size="28" :animated="false" /><div><strong>Equipe Novexo</strong></div></div>
       </header>
 
       <figure class="article-cover">
@@ -149,7 +150,7 @@ const faqs = [
 .journal__main { max-width: 1320px; padding: 142px 48px 0; margin: auto; }
 .article-head { max-width: 990px; }
 .article-head h1 { margin: 25px 0; font: 600 clamp(48px, 6.4vw, 84px)/1.06 var(--lp-hero); letter-spacing: -.065em; color: var(--lp-white); }.article-head h1 em { font-family: var(--font-serif); font-weight: 400; letter-spacing: -.035em; color: var(--lp-orange-soft); }.article-head__lead { max-width: 670px; margin: 0; color: #b7b3af; font-size: clamp(15px, 1.5vw, 18px); line-height: 1.75; }
-.article-head__byline { display: flex; align-items: center; gap: 12px; margin: 30px 0 42px; font-size: 11px; }.author-mark { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 1px solid #ffffff26; border-radius: 50%; font: 800 17px var(--lp-display); }.article-head__byline strong { font-weight: 500; font-size: 12px; }
+.article-head__byline { display: flex; align-items: center; gap: 11px; margin: 30px 0 42px; font-size: 11px; }.article-head__byline strong { font-weight: 500; font-size: 12.5px; }
 .article-cover { position: relative; isolation: isolate; display: grid; grid-template-columns: .85fr 1.3fr; align-items: center; gap: 25px; min-height: 490px; margin: 0; padding: 52px 45px 75px; border: 1px solid #ffffff24; border-radius: 12px; overflow: hidden; background: #492516; }.article-cover__photo, .article-cover__shade { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; }.article-cover__shade { z-index: -1; background: linear-gradient(90deg, #180b04cc, #6c2c0d55), linear-gradient(0deg, #140c08ee, transparent 50%); }.article-cover__words > p { margin: 0; font: 600 clamp(28px, 3vw, 42px)/1.1 var(--lp-hero); letter-spacing: -.05em; color: #fff; }.article-cover__demo { transform: perspective(1500px) rotateY(-5deg) rotateZ(1deg); min-width: 0; }
 .reading-layout { display: grid; grid-template-columns: 245px minmax(0, 720px); justify-content: space-between; gap: 60px; margin: 85px 0 100px; }
 .sidebar-cta { display: block; position: relative; font-size: 16px; line-height: 1.4; letter-spacing: -.02em; color: #f8f8f8; text-decoration: none; }.sidebar-cta > span { position: absolute; right: 0; bottom: 4px; font-size: 22px; color: var(--lp-orange-soft); }

@@ -10,6 +10,7 @@ import BlogCard from '../components/landing/BlogCard.vue'
 import AppReadingToc from '../components/landing/AppReadingToc.vue'
 import AppBreadcrumbs from '../components/landing/AppBreadcrumbs.vue'
 import FlaticonIcon from '../components/FlaticonIcon.vue'
+import BrandN from '../components/app/BrandN.vue'
 import { BLOG_POSTS, formatPostDate } from '../data/blog'
 import { usePageTitle } from '../composables/usePageTitle'
 import { EASE, gsap, prefersReducedMotion } from '../utils/motion'
@@ -92,7 +93,7 @@ onBeforeUnmount(() => motionCtx?.revert())
     <SiteNav />
     <main v-if="post" ref="pageRoot" class="story__main">
       <AppBreadcrumbs :items="breadcrumbs" />
-      <header class="story__header"><div class="story__intro"><h1>{{ post.title }}</h1><p>{{ post.excerpt }}</p><div class="story__author"><span aria-hidden="true">N</span><div><strong>Equipe Novexo</strong><time :datetime="post.date">{{ formatPostDate(post.date) }}</time></div></div></div><div class="story__cover"><EditorialArt :key="post.slug" :kind="post.art" :lines="post.coverLine" animated /></div></header>
+      <header class="story__header"><div class="story__intro"><h1>{{ post.title }}</h1><p>{{ post.excerpt }}</p><div class="story__author"><BrandN :size="28" :animated="false" /><div><strong>Equipe Novexo</strong><time :datetime="post.date">{{ formatPostDate(post.date) }}</time></div></div></div><div class="story__cover"><EditorialArt :key="post.slug" :kind="post.art" :lines="post.coverLine" animated /></div></header>
 
       <div class="story__layout">
         <AppReadingToc
@@ -146,7 +147,7 @@ onBeforeUnmount(() => motionCtx?.revert())
 
 <style scoped>
 .story :is(a, button):focus-visible { outline: 2px solid var(--lp-orange-soft); outline-offset: 5px; }.story__skip { position: fixed; top: 12px; left: 20px; z-index: 100; padding: 12px 20px; color: #000; background: #fff; transform: translateY(-160%); }.story__skip:focus { transform: none; }.story__main { max-width: 1320px; padding: 145px 48px 0; margin-inline: auto; }
-.story__header { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 50px; padding-block: 50px; border-bottom: 1px solid #ffffff26; }.story__intro { min-width: 0; }.story h1 { margin: 23px 0; color: #f5f0e9; font: 500 clamp(32px, 3.5vw, 47px)/1.09 var(--lp-hero); letter-spacing: -.055em; text-wrap: balance; }.story__intro > p { margin: 0; color: #b2aaa1; font-size: 14px; line-height: 1.8; }.story__author { display: flex; align-items: center; gap: 12px; margin-top: 27px; }.story__author > span { display: grid; place-items: center; position: relative; width: 35px; height: 35px; border: 1px solid #ffffff30; border-radius: 50%; font: 800 16px var(--lp-display); }.story__author > div { display: grid; gap: 3px; font-size: 12px; }.story__author strong { font-weight: 500; color: #e9e0d5; }.story__author time { color: #a69e95; font-size: 11px; }.story__cover { min-width: 0; overflow: hidden; border: 1px solid #ffffff26; border-radius: 10px; }.story__cover :deep(.art-caption) { font-size: clamp(23px, 2.9vw, 36px); }
+.story__header { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 50px; padding-block: 50px; border-bottom: 1px solid #ffffff26; }.story__intro { min-width: 0; }.story h1 { margin: 23px 0; color: #f5f0e9; font: 500 clamp(32px, 3.5vw, 47px)/1.09 var(--lp-hero); letter-spacing: -.055em; text-wrap: balance; }.story__intro > p { margin: 0; color: #b2aaa1; font-size: 14px; line-height: 1.8; }.story__author { display: flex; align-items: center; gap: 11px; margin-top: 27px; }.story__author > div { display: grid; gap: 3px; font-size: 12px; }.story__author strong { font-weight: 500; color: #e9e0d5; }.story__author time { color: #a69e95; font-size: 11px; }.story__cover { min-width: 0; overflow: hidden; border: 1px solid #ffffff26; border-radius: 10px; }.story__cover :deep(.art-caption) { font-size: clamp(23px, 2.9vw, 36px); }
 .story__layout { display: grid; grid-template-columns: 245px minmax(0, 720px); gap: 60px; justify-content: space-between; margin-top: 60px; }
 .story__back { display: inline-flex; align-items: center; gap: 6px; color: #e1d5c7; text-decoration: none; font-size: 12px; transition: color .2s; }.story__back:hover { color: var(--lp-orange-soft); }
 .story__body { min-width: 0; scroll-margin-top: 120px; }.story__body > section { scroll-margin-top: 125px; padding: 40px 0; border-bottom: 1px solid #ffffff26; }.story__body > section:first-child { padding-top: 0; }.story__body h2 { color: #eee7de; font: 500 clamp(25px, 2.6vw, 33px)/1.2 var(--lp-hero); letter-spacing: -.04em; margin: 0 0 22px; text-wrap: balance; }.story__body p { color: #b7aea3; font-size: 15px; line-height: 1.9; margin: 0 0 18px; }.story__body section p:last-child { margin-bottom: 0; }

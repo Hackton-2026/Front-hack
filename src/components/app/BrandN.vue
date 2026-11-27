@@ -3,7 +3,10 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { gsap, prefersReducedMotion } from '../../utils/motion'
 
-defineProps({ size: { type: Number, default: 34 } })
+const props = defineProps({
+  size: { type: Number, default: 34 },
+  animated: { type: Boolean, default: true },
+})
 const svg = ref(null)
 let tl
 
@@ -18,7 +21,7 @@ const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
 const path = ([, [a, b], front], t) => { const c = lerp(b, front[1], t), d = lerp(a, front[0], t); return `M${a}L${b}L${c}L${d}Z` }
 
 onMounted(() => {
-  if (prefersReducedMotion()) return
+  if (!props.animated || prefersReducedMotion()) return
   const pieces = [...svg.value.querySelectorAll('path')]
   const lens = STROKES.map(([, back, front]) => Math.hypot(front[0][0] - back[0][0], front[0][1] - back[0][1]))
   const total = lens.reduce((x, y) => x + y, 0)
