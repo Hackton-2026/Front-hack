@@ -20,6 +20,51 @@ const activeCategory = ref('Todas')
 
 const sprints = [
   {
+    sprint: 'Sprint 17',
+    version: 'v2.5',
+    category: 'Novidades',
+    title: 'Automações por linguagem natural, Portal do cliente, Formulários públicos e MCP oficial',
+    date: '2026-11-27T13:05:00-03:00',
+    summary:
+      'Novo painel Personalizar em cada projeto com regras automáticas, links públicos sem login para clientes e servidor MCP limpo para conectar agentes externos.',
+    items: [
+      'Painel Personalizar no projeto com automações por projeto: descreva a regra em português para revisar gatilho e ação ou ative 6 receitas prontas (WhatsApp, chat, notificações, etiquetas e status).',
+      'Formulários públicos (/f/:token) com proteção anti-spam (rate limit + honeypot) e Portal do cliente (/portal/:token) sem login exibindo apenas entregas marcadas como visíveis.',
+      'Servidor MCP oficial via Streamable HTTP (/api/mcp) com 6 ferramentas autenticadas por token pessoal nvx_ para Claude, Cursor e ChatGPT, respeitando permissões e sem anúncios.',
+      'WhatsApp bidirecional autenticado por segredo compartilhado: converse com a Novexo IA direto no chat e responda 1 (Confirmar) ou 2 (Cancelar) para executar ações com segurança.',
+    ],
+  },
+  {
+    sprint: 'Sprint 16',
+    version: 'v2.4',
+    category: 'Melhorias',
+    title: 'Edição inline, ações em lote, cronômetro nas tarefas e IA 100% opcional',
+    date: '2026-11-27T12:15:00-03:00',
+    summary:
+      'Fluxo diário acelerado na Lista, Kanban e Drawer de tarefas, somado a novos controles de contexto, desfazer e desligamento completo da IA.',
+    items: [
+      'Lista com edição inline (status, responsáveis, prazo e prioridade), agrupamento e ordenação flexíveis, seleção múltipla com Shift+Click + barra em lote (POST /api/tasks/bulk) e resumo visual por grupo.',
+      'Kanban com ordenação manual (arrasto vertical salvando posição), por prioridade ou prazo, mantendo animação Flip ao recolher e expandir colunas sem perder os 60fps do drag.',
+      'Drawer de tarefas com cronômetro ao vivo (play/pause) e registro rápido de horas, recorrência automática ao concluir, toggle de portal do cliente e micro-ações opcionais da IA com prévia antes de aplicar.',
+      'Novexo IA com filtro por projeto, botão Desfazer ação (ai_action_logs) e preferência pessoal para ocultar recursos de IA; onboarding enxugado para 4 passos com projeto de exemplo em PT-BR e importador para Trello (.json), Asana, ClickUp, Notion e Jira.',
+    ],
+  },
+  {
+    sprint: 'Sprint 15',
+    version: 'v2.3',
+    category: 'Correções',
+    title: 'Hardening de segurança na API, atalhos de teclado instantâneos e acabamento editorial',
+    date: '2026-11-27T09:30:00-03:00',
+    summary:
+      'Revisão de segurança P0 nas rotas de autenticação, CORS e paginação, além de navegação mobile redesenhada e micro-interações táteis em todo o site e app.',
+    items: [
+      'Revogação real de sessão JWT no logout (envio autenticado antes de limpar o storage), allowlist explícita de CORS, rate limit fail-closed e busca exata de e-mail em login e convites.',
+      'Paginação automática até 5.000 tarefas em GET /api/tasks/ (eliminando corte silencioso em 1.000 itens), skeletons reais no carregamento e KPIs + carga por responsável na Visão Geral do projeto.',
+      'Atalhos de teclado estilo Linear (C/N no projeto atual, G + I/M/P/W/A/S e ?), drawer deslizante no mobile e modal de criação com modo "Criar mais" e "Usar modelo".',
+      'Refino visual no site e blog: cards editoriais mais limpos, assinatura unificada da Equipe Novexo, títulos padronizados ("Página | Novexo") e micro-interações respeitando prefers-reduced-motion.',
+    ],
+  },
+  {
     sprint: 'Sprint 14',
     version: 'v2.2',
     category: 'Performance',
