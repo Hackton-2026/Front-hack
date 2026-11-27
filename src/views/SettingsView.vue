@@ -14,6 +14,7 @@ import WhatsAppSettings from '../components/app/WhatsAppSettings.vue'
 import AppSelect from '../components/app/AppSelect.vue'
 import AppIcon from '../components/app/AppIcon.vue'
 import AppDateInput from '../components/app/AppDateInput.vue'
+import AppColorPicker from '../components/app/AppColorPicker.vue'
 import IntegrationsPanel from '../components/app/IntegrationsPanel.vue'
 import DeleteProjectDialog from '../components/app/DeleteProjectDialog.vue'
 
@@ -104,6 +105,7 @@ const tab = ref(route.query.tab || 'profile')
 watch(() => route.query.tab, (t) => { if (t) tab.value = t })
 const activeGroup = computed(() => GROUPS.find((g) => g.tabs.some(([id]) => id === tab.value))?.label || 'Ajustes')
 const panel = ref(null)
+const panelBody = ref(null)
 const status = ref('')
 const deleting = ref(null)
 const confirm2 = ref('')
@@ -117,6 +119,7 @@ watch(tab, async (t) => {
   if (t === 'billing' && !billing.value) loadBilling()
   if (t === 'notify') loadDevices()
   await nextTick()
+  if (panelBody.value) panelBody.value.scrollTop = 0
   if (!prefersReducedMotion()) gsap.fromTo(panel.value, { y: 6, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: DUR.press, ease: EASE.soft })
 })
 const twice = (key, run) => {
@@ -339,6 +342,7 @@ async function onImport(e) {
           <span class="panel__eyebrow">{{ activeGroup }}</span>
           <h2>{{ TITLES[tab] }}</h2>
         </div>
+        <div ref="panelBody" class="panel__body">
         <p v-if="!isAdmin && ['general', 'billing', 'identity', 'governance', 'schedule', 'wiki', 'ai', 'webhooks'].includes(tab)" class="hint">Só administradores mudam esta seção.</p>
 
         <template v-if="tab === 'profile'">
@@ -379,9 +383,7 @@ async function onImport(e) {
             </fieldset>
             <fieldset class="group card-sub">
               <legend>Cor do tema</legend>
-              <div class="swatches">
-                <button v-for="[name, hex] in ACCENTS" :key="hex" type="button" class="swatch" :style="{ background: hex }" :aria-pressed="state.prefs.accent === hex" :aria-label="name" :title="name" @click="state.prefs.accent = hex" />
-              </div>
+              <AppColorPicker v-model="state.prefs.accent" />
             </fieldset>
           </div>
           <div class="form cols">
@@ -639,9 +641,12 @@ async function onImport(e) {
             </div>
             <fieldset class="group card-sub">
               <legend>Cor do projeto</legend>
-              <div class="swatches">
-                <button v-for="[name, hex] in ACCENTS" :key="hex" type="button" class="swatch" :style="{ background: hex }" :aria-pressed="proj.color === hex" :aria-label="name" :title="name" @click="updateProject(proj, { color: hex })" />
-              </div>
+              <AppColorPicker
+                :model-value="proj.color"
+                :show-reset="false"
+                @update:model-value="proj.color = $event"
+                @commit="updateProject(proj, { color: $event })"
+              />
             </fieldset>
             <h3>Recursos dos projetos (para você)</h3>
             <ul class="toggles">
@@ -681,6 +686,7 @@ async function onImport(e) {
         </template>
 
         <p v-if="status" class="status" role="status">{{ status }}</p>
+        </div>
       </section>
     </div>
   </div>
@@ -725,15 +731,24 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
   max-height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 0.4rem;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
+  padding-right: 0.35rem;
 }
-.tabs::-webkit-scrollbar, .panel::-webkit-scrollbar { width: 6px; }
-.tabs::-webkit-scrollbar-track, .panel::-webkit-scrollbar-track { background: transparent; }
-.tabs::-webkit-scrollbar-thumb, .panel::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--line-strong); }
-.tabs::-webkit-scrollbar-thumb:hover, .panel::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-.tabs::-webkit-scrollbar-button, .panel::-webkit-scrollbar-button { display: none; width: 0; height: 0;
+.tabs::-webkit-scrollbar, .panel__body::-webkit-scrollbar { width: 12px; }
+.tabs::-webkit-scrollbar-track, .panel__body::-webkit-scrollbar-track { background: transparent; margin-block: 10px; }
+.tabs::-webkit-scrollbar-thumb, .panel__body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 4px solid transparent;
+  background: color-mix(in srgb, var(--muted) 36%, transparent);
+  background-clip: content-box;
+}
+.tabs::-webkit-scrollbar-thumb:hover, .panel__body::-webkit-scrollbar-thumb:hover {
+  border: 3px solid transparent;
+  background: color-mix(in srgb, var(--muted) 68%, transparent);
+  background-clip: content-box;
+}
+.tabs::-webkit-scrollbar-button, .panel__body::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+@supports not selector(::-webkit-scrollbar) {
+  .tabs, .panel__body { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 }
 .tabs__group {
   display: flex;
@@ -783,27 +798,33 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 1.35rem;
   width: 100%;
   height: 100%;
   max-height: 100%;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 1.75rem 2.15rem;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
 }
 .panel__head {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding-bottom: 1rem;
+  padding: 1.55rem 2.15rem 1.05rem;
   border-bottom: 1px solid var(--line);
+}
+.panel__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.45rem 2.15rem 1.85rem;
 }
 .panel__eyebrow {
   font-size: 11px;
@@ -922,7 +943,9 @@ h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text);
   .layout { grid-template-columns: minmax(0, 1fr); overflow: visible; }
   .tabs { height: auto; max-height: none; overflow: visible; padding-right: 0; }
   .tabs__list { flex-direction: row; flex-wrap: wrap; gap: 4px; }
-  .panel { height: auto; max-height: none; overflow: visible; padding: 1.25rem; }
+  .panel { height: auto; max-height: none; overflow: visible; }
+  .panel__head { padding: 1.15rem 1.25rem 0.9rem; }
+  .panel__body { overflow: visible; padding: 1.15rem 1.25rem 1.25rem; }
   .toggles { grid-template-columns: 1fr; }
 }
 </style>

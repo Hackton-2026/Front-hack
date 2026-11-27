@@ -6,6 +6,7 @@ import { useUi } from '../composables/useUi'
 import { api } from '../services/api'
 import AppIcon from '../components/app/AppIcon.vue'
 import ProjectIcon from '../components/app/ProjectIcon.vue'
+import AppColorPicker from '../components/app/AppColorPicker.vue'
 import { PROJECT_ICONS, iconClass } from '../components/app/projectIcons'
 import Avatars from '../components/app/Avatars.vue'
 import ProgressRing from '../components/app/ProgressRing.vue'
@@ -22,7 +23,7 @@ const p = computed(() => project(pid.value))
 const panel = ref(true)
 const tab = ref('info')
 const picking = ref(false)
-const closePickerOutside = (e) => { if (!e.target.closest('.icon-wrap')) picking.value = false }
+const closePickerOutside = (e) => { if (!e.target.closest('.icon-wrap, .nvx-cp-pop')) picking.value = false }
 const closePickerOnEsc = (e) => { if (e.key === 'Escape') picking.value = false }
 watch(picking, (open) => {
   const method = open ? 'addEventListener' : 'removeEventListener'
@@ -180,7 +181,7 @@ onMounted(async () => {
           </button>
           <div v-if="picking" class="emojis" role="listbox" aria-label="Ícones" :style="{ '--pick-color': p.color || undefined }">
             <div class="colors" role="group" aria-label="Cor do projeto">
-              <button v-for="c in COLORS" :key="c" type="button" class="sw" :style="{ background: c }" :aria-pressed="p.color === c" :aria-label="`Cor ${c}`" @click="save({ color: c })" />
+              <AppColorPicker :model-value="p.color" :presets="COLORS.map((c) => [c, c])" :show-reset="false" compact @update:model-value="p.color = $event" @commit="save({ color: $event })" />
             </div>
             <button v-for="e in PROJECT_ICONS" :key="e" type="button" role="option" :aria-selected="iconClass(p.icon) === e" :aria-label="e.slice(6)" @click="pick(e)"><ProjectIcon :icon="e" :size="17" /></button>
             <button type="button" class="none" @click="pick('')">Sem ícone</button>
@@ -315,9 +316,9 @@ onMounted(async () => {
 .icon:disabled { cursor: default; }
 .sq { width: 1.4rem; height: 1.4rem; border-radius: 6px; }
 .emojis { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; display: grid; grid-template-columns: repeat(8, 2.1rem); gap: 2px; padding: 0.4rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 40px rgb(0 0 0 / 0.45); }
-.emojis button { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--pick-color, var(--muted)); cursor: pointer; }
-.emojis button:hover, .emojis button[aria-selected='true'] { background: var(--surface-2); }
-.emojis button:hover, .emojis button[aria-selected='true'] { background: var(--surface-2); }
+.emojis > button { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--pick-color, var(--muted)); cursor: pointer; }
+.emojis > button:hover, .emojis > button[aria-selected='true'] { background: var(--surface-2); }
+.emojis > button:hover, .emojis > button[aria-selected='true'] { background: var(--surface-2); }
 .emojis .credit { grid-column: 1 / -1; padding: 0.2rem 0 0; font-size: 11px; color: var(--muted); text-align: center; text-decoration: none; }
 .emojis .credit:hover { color: var(--text); }
 .emojis .colors { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.15rem 0.2rem 0.5rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--line); }
