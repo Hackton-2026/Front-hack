@@ -12,7 +12,7 @@ export const DUR = { press: 0.2, fast: 0.35, base: 0.5, mid: 0.65, slow: 0.85, l
 export const EASE = { out: 'power3.out', soft: 'power2.out', expo: 'expo.out', in: 'power2.in', inOut: 'power3.inOut', inOutSoft: 'power2.inOut', linear: 'none', popSoft: 'back.out(1.7)', pop: 'back.out(2)', popStrong: 'back.out(3)' }
 export const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.calm === 'on'
 
-export function revealTitleCharacters(targets) {
+export function revealTitleCharacters(targets, opts = {}) {
   return gsap.from(targets, {
     y: 10,
     opacity: 0,
@@ -22,6 +22,7 @@ export function revealTitleCharacters(targets) {
     stagger: 0.045,
     delay: 0.15,
     clearProps: 'transform,opacity,filter',
+    ...opts,
   })
 }
 

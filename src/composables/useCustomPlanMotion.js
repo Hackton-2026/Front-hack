@@ -24,10 +24,10 @@ export function useCustomPlanMotion(root, step, reviewing) {
       const select = gsap.utils.selector(root.value)
       SplitText.create(select('h1')[0], {
         type: 'words,chars', wordsClass: 'editorial-word', charsClass: 'editorial-char',
-        autoSplit: true, aria: 'auto', onSplit: split => revealTitleCharacters(split.chars),
+        autoSplit: true, aria: 'auto', onSplit: split => revealTitleCharacters(split.chars, { duration: 0.45, stagger: 0.014, delay: 0.04 }),
       })
       gsap.from(select('.custom-form, .custom-budget'), {
-        y: 20, autoAlpha: 0, duration: DUR.slow, stagger: .1, delay: .3, ease: EASE.out,
+        y: 14, autoAlpha: 0, duration: DUR.base, stagger: .06, delay: .08, ease: EASE.out,
         clearProps: 'transform,opacity,visibility',
       })
       context.add('step', () => {

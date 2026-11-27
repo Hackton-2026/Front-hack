@@ -28,7 +28,7 @@ const completed = computed(() => CUSTOM_PLAN_QUESTIONS.filter(question => isCust
 const preview = computed(() => getCustomPlanPreview(budget.value))
 const previewHighlights = computed(() => preview.value.suggested.length <= 4 ? preview.value.suggested : [...preview.value.suggested.slice(0, 2), ...preview.value.suggested.slice(-2)])
 const requestText = computed(() => buildCustomPlanRequest(answers, budget.value))
-const emailHref = computed(() => `mailto:contato@novexo.app?subject=${encodeURIComponent('Meu plano personalizado — Novexo')}&body=${encodeURIComponent(requestText.value)}`)
+const emailHref = computed(() => `mailto:contato@novexo.cloud?subject=${encodeURIComponent('Meu plano personalizado — Novexo')}&body=${encodeURIComponent(requestText.value)}`)
 useCustomPlanMotion(root, step, reviewing)
 
 watch([answers, budget], () => { prepared.value = false }, { deep: true })
@@ -114,7 +114,7 @@ onUnmounted(() => {
     <a href="#custom-form" class="custom-skip">Pular para as perguntas</a>
     <header class="custom-nav"><RouterLink to="/" class="custom-logo" aria-label="Novexo, início">NOVEXO</RouterLink><RouterLink to="/precos"><FlaticonIcon name="arrow-left" :size="14" />Voltar aos planos</RouterLink></header>
     <main ref="root" class="custom-main">
-      <header class="custom-heading"><h1>Monte o plano<br><span>da sua empresa.</span></h1></header>
+      <header class="custom-heading"><h1>Monte o plano <br><span>da sua empresa.</span></h1></header>
       <div class="custom-layout">
         <form id="custom-form" ref="form" class="custom-form" novalidate @submit.prevent="submitStep">
           <nav class="custom-steps" aria-label="Etapas do formulário"><button v-for="(item, index) in CUSTOM_PLAN_STEPS" :key="item.title" type="button" :disabled="index > visited" :aria-current="step === index && !reviewing ? 'step' : undefined" @click="goToStep(index)"><span><FlaticonIcon v-if="index < step || reviewing" name="check" :size="13" /><template v-else>{{ index + 1 }}</template></span><span>{{ item.title }}</span></button></nav>
@@ -169,7 +169,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-if="reviewing" class="custom-review__actions"><GooeyButton :href="emailHref" variant="primary" @click="prepared = true">Continuar por e-mail<FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton><button type="button" class="custom-text-button" @click="downloadRequest"><FlaticonIcon name="download" :size="14" />Baixar solicitação</button><p>O aplicativo de e-mail abre com suas respostas. Revise a mensagem e envie para nosso time.</p><p v-if="prepared" role="status" class="custom-feedback">Se o aplicativo não abriu, baixe a solicitação e envie para <a href="mailto:contato@novexo.app">contato@novexo.app</a>.</p><button type="button" class="custom-text-button" @click="goToStep(0)"><FlaticonIcon name="pencil" :size="13" />Editar respostas</button></div>
+          <div v-if="reviewing" class="custom-review__actions"><GooeyButton :href="emailHref" variant="primary" @click="prepared = true">Continuar por e-mail<FlaticonIcon name="arrow-up-right" :size="14" /></GooeyButton><button type="button" class="custom-text-button" @click="downloadRequest"><FlaticonIcon name="download" :size="14" />Baixar solicitação</button><p>O aplicativo de e-mail abre com suas respostas. Revise a mensagem e envie para nosso time.</p><p v-if="prepared" role="status" class="custom-feedback">Se o aplicativo não abriu, baixe a solicitação e envie para <a href="mailto:contato@novexo.cloud">contato@novexo.cloud</a>.</p><button type="button" class="custom-text-button" @click="goToStep(0)"><FlaticonIcon name="pencil" :size="13" />Editar respostas</button></div>
           <div v-else class="custom-form__actions"><button v-if="step > 0" type="button" class="custom-text-button" @click="goToStep(step - 1)"><FlaticonIcon name="arrow-left" :size="13" />Voltar</button><span v-else class="custom-form__required">Todas as perguntas são obrigatórias.</span><GooeyButton type="submit" variant="primary">{{ step === 2 ? 'Revisar solicitação' : 'Continuar' }}<FlaticonIcon name="arrow-right" :size="14" /></GooeyButton></div>
         </form>
 
@@ -182,7 +182,7 @@ onUnmounted(() => {
             <input id="custom-budget-range" class="custom-range" type="range" min="0" max="500" step="1" :value="budget" :aria-valuetext="`${formatBRL(budget)} por mês para a empresa`" aria-describedby="custom-budget-help" @input="setBudget" />
             <div class="custom-budget__scale" aria-hidden="true"><span>R$ 0</span><span>R$ 250</span><span>R$ 500</span></div>
             <label class="custom-exact" for="custom-budget-exact"><span>Ou digite um valor</span><span><span aria-hidden="true">R$</span><input id="custom-budget-exact" type="number" min="0" max="500" step="1" inputmode="numeric" :value="budget" @input="setBudget" /></span></label>
-            <p id="custom-budget-help" class="custom-budget__hint">Arraste a bolinha. A prévia aparece a partir de R$ 100.</p>
+            <p id="custom-budget-help" class="custom-budget__hint">{{ preview.band ? 'Prévia atualizada abaixo. Ajuste o orçamento para comparar faixas de escopo.' : 'Ajuste o controle deslizante ou digite um valor. A prévia aparece a partir de R$ 100.' }}</p>
           </section>
 
           <Transition name="custom-preview">
@@ -225,13 +225,14 @@ onUnmounted(() => {
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .custom-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 35px; padding: 49px 0 42px; }
 .custom-heading h1 { margin: 0; color: #f5eee6; font: 600 clamp(42px, 4.7vw, 63px)/1.06 var(--lp-hero); letter-spacing: -.065em; }
-.custom-heading h1 > span { color: var(--lp-orange-soft); }
+.custom-heading h1 > span { color: var(--lp-orange-soft); font-family: var(--font-serif); font-style: italic; font-weight: 400; letter-spacing: -.035em; }
 .custom-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 28px; align-items: start; }
 .custom-form, .custom-budget { position: relative; min-width: 0; padding: 30px; border: 1px solid var(--custom-line); border-radius: 14px; background: #0e0c0a; }
 .custom-form, .custom-question { scroll-margin-top: 25px; }
-.custom-steps { display: flex; justify-content: space-between; gap: 13px; }
-.custom-steps button { display: flex; flex-direction: column; align-items: flex-start; gap: 11px; padding: 0; border: 0; background: none; color: #b9a997; font: 400 11px/1.4 var(--lp-sans); cursor: pointer; }
-.custom-steps button > span:first-child { display: grid; place-items: center; width: 31px; height: 31px; border: 1px solid #8a735647; border-radius: 50%; color: #b29471; font-size: 11px; }
+.custom-steps { position: relative; display: flex; justify-content: space-between; gap: 13px; }
+.custom-steps::before { content: ''; position: absolute; top: 15px; left: 16px; right: 16px; height: 1px; background: #ffffff1a; pointer-events: none; }
+.custom-steps button { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 11px; padding: 0; border: 0; background: none; color: #b9a997; font: 400 11px/1.4 var(--lp-sans); cursor: pointer; }
+.custom-steps button > span:first-child { display: grid; place-items: center; width: 31px; height: 31px; border: 1px solid #8a735647; border-radius: 50%; background: #0e0c0a; color: #b29471; font-size: 11px; }
 .custom-steps button[aria-current='step'] { color: #f5dec7; }
 .custom-steps button[aria-current='step'] > span:first-child { background: var(--lp-orange-soft); color: #211205; border-color: var(--lp-orange-soft); }
 .custom-steps button:disabled { opacity: .55; cursor: default; }
@@ -254,6 +255,7 @@ onUnmounted(() => {
 .custom-question :is(input, textarea)[aria-invalid='true'] { border-color: #fba45c99; }
 .custom-question :is(input, textarea):is(:autofill, :-webkit-autofill) { -webkit-text-fill-color: #f2e9e0; box-shadow: inset 0 0 0 1000px #17120e; }
 .custom-question textarea { resize: vertical; min-height: 110px; max-height: 240px; }
+.custom-question textarea::-webkit-resizer { background: transparent; }
 .custom-question fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .custom-question legend { padding: 0; }
 .custom-field-hint { margin: -4px 0 13px; color: #978877; font-size: 11px; }
@@ -289,7 +291,7 @@ onUnmounted(() => {
 .custom-exact { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 23px; }
 .custom-exact > span:first-child { color: #b7a18b; font-size: 11px; }
 .custom-exact > span:last-child { display: flex; align-items: center; gap: 7px; color: #d4b18e; font-size: 12px; }
-.custom-exact input { max-width: 78px; min-height: 35px; padding: 7px 9px; font-size: 12px; }
+.custom-exact input { max-width: 92px; min-height: 36px; padding: 7px 11px; font-size: 12.5px; text-align: right; }
 .custom-budget > .custom-budget__hint { padding-top: 19px; border-top: 1px solid #b88e602b; color: #bca184; font-size: 11px; }
 .custom-preview { position: relative; margin-top: 16px; padding: 25px; border: 1px solid #fba45c40; border-radius: 12px; background: #14100c; }
 .custom-preview::before { content: ''; position: absolute; top: -6px; left: 33px; width: 10px; height: 10px; border: solid #fba45c40; border-width: 1px 0 0 1px; background: #14100c; transform: rotate(45deg); }

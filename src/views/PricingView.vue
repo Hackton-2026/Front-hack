@@ -48,8 +48,11 @@ const enterpriseFeatures = [
   { icon: 'headset', title: 'Gerente de conta', text: 'Uma pessoa dedicada ao relacionamento com sua empresa.' },
   { icon: 'shield-check', title: 'SLA de 99,9%', text: 'Disponibilidade prevista no acordo de serviço.' },
 ]
+const annualSavingsCopy = [essential, business]
+  .filter(plan => annualSavings(plan) > 0)
+  .map(plan => `${formatBRL(annualSavings(plan))} no ${plan.name}`)
 const questions = [
-  { question: 'Qual é a diferença entre pagar mensalmente e anualmente?', answer: `No mensal, o Essencial custa ${formatBRL(essential.month)} e o Business ${formatBRL(business.month)} por membro a cada mês. No anual, os valores equivalem a ${formatBRL(essential.year)} e ${formatBRL(business.year)} por membro/mês, com cobrança dos 12 meses de uma vez: ${formatBRL(annualTotal(essential))} e ${formatBRL(annualTotal(business))} por membro. A economia anual é de ${formatBRL(annualSavings(essential))} no Essencial e ${formatBRL(annualSavings(business))} no Business.` },
+  { question: 'Qual é a diferença entre pagar mensalmente e anualmente?', answer: `No mensal, o Essencial custa ${formatBRL(essential.month)} e o Business ${formatBRL(business.month)} por membro a cada mês. No anual, os valores equivalem a ${formatBRL(essential.year)} e ${formatBRL(business.year)} por membro/mês, com cobrança dos 12 meses de uma vez: ${formatBRL(annualTotal(essential))} e ${formatBRL(annualTotal(business))} por membro.${annualSavingsCopy.length ? ` No plano anual, você economiza ${annualSavingsCopy.join(' e ')} por membro.` : ''}` },
   { question: 'O que posso fazer com o plano Grátis?', answer: 'Criar tarefas e listas ilimitadas, organizar seus projetos em até 3 quadros e armazenar até 100 MB de arquivos. É uma forma de começar a organizar a rotina sem pagar uma assinatura.' },
   { question: 'Quando vale passar do Essencial para o Business?', answer: 'Quando seu time precisa acompanhar metas, visualizar resultados em painéis, controlar o tempo ou definir permissões por espaço. O Business também inclui a Novexo IA e aumenta o limite mensal de automações de 100 para 10 mil.' },
   { question: 'O que significa ter 100 vezes o limite de automações?', answer: 'O Essencial inclui 100 automações por mês, enquanto o Business inclui 10 mil. A comparação é entre os limites mensais dos dois planos. Você pode usar essa capacidade para executar mais ações recorrentes nos fluxos do time.' },

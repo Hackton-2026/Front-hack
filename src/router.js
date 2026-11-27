@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from './composables/useAuth'
-import { CUSTOM_PLAN_PATH, canEnterCustomPlan } from './utils/customPlanEntry'
+import { CUSTOM_PLAN_PATH } from './utils/customPlanEntry'
 import { HOME_SEO, SEO_BY_PATH, SITE_NAME, SITE_ORIGIN } from './data/seo'
 
 const router = createRouter({
@@ -54,7 +54,7 @@ const router = createRouter({
     { path: '/produto/tarefas', component: () => import('./views/TarefasTutorial.vue'), meta: { bare: true } },
     { path: '/produto/ia', component: () => import('./views/AiTutorialView.vue'), meta: { bare: true } },
     { path: '/precos', alias: '/pricing', component: () => import('./views/PricingView.vue'), meta: { bare: true } },
-    { path: CUSTOM_PLAN_PATH, component: () => import('./views/CustomPlanView.vue'), meta: { bare: true }, beforeEnter: () => canEnterCustomPlan() || { path: '/precos', hash: '#enterprise', replace: true } },
+    { path: CUSTOM_PLAN_PATH, component: () => import('./views/CustomPlanView.vue'), meta: { bare: true } },
     { path: '/contato', alias: '/contact-us', component: () => import('./views/ContactView.vue'), meta: { bare: true } },
     { path: '/casos-de-uso', component: () => import('./views/UseCasesView.vue'), meta: { bare: true } },
     { path: '/seguranca', alias: '/security', component: () => import('./views/SecurityView.vue'), meta: { bare: true } },
