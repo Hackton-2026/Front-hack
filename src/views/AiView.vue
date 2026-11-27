@@ -166,7 +166,7 @@ async function undoAction(msg) {
     </div>
   </div>
 
-  <div v-else class="ai" :class="{ 'has-chat': messages.length }" :style="{ '--ai-shark-filter': sharkFilter }">
+  <div v-else class="ai is-viewport" :class="{ 'has-chat': messages.length }" :style="{ '--ai-shark-filter': sharkFilter }">
     <AsciiSharks />
     <div class="veil" aria-hidden="true" />
 

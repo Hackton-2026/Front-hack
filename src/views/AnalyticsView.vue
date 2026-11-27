@@ -150,7 +150,7 @@ onMounted(() => {
 
 <style scoped>
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding: 1.25rem; }
-.card { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.card { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; overflow: hidden; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .wide { grid-column: 1 / -1; }
 .card header { display: flex; align-items: baseline; justify-content: space-between; }
 h2 { margin: 0; font: 600 1rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
@@ -168,7 +168,8 @@ i.c2 { background: var(--success, #7fc47a); }
 .ln.c2 { stroke: var(--success, #7fc47a); }
 .area { fill: rgb(251 164 92 / 0.08); }
 .bars { display: flex; flex-direction: column; gap: 0.7rem; margin: 0; padding: 0; list-style: none; }
-.bars li { display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 0.75rem; font-size: 13px; }
+.bars li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem 0.75rem; font-size: 13px; }
+.bars li > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bars b { font-variant-numeric: tabular-nums; }
 .bar { grid-column: 1 / -1; display: flex; height: 8px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .bar i { display: block; height: 100%; border-radius: 999px; }

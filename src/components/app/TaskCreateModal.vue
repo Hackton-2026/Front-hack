@@ -50,7 +50,10 @@ watch(() => ui.creating, async (defaults) => {
   loadTemplates()
   await nextTick()
   titleInput.value?.focus()
-  if (!prefersReducedMotion()) gsap.fromTo(box.value, { scale: 0.96, y: 10, autoAlpha: 0 }, { scale: 1, y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
+  if (!prefersReducedMotion() && box.value) {
+    gsap.killTweensOf(box.value)
+    gsap.fromTo(box.value, { scale: 0.96, y: 10, autoAlpha: 0 }, { scale: 1, y: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
+  }
 })
 
 watch(() => form.projectId, (pid) => {

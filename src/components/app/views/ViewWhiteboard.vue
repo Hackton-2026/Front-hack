@@ -48,11 +48,11 @@ function drag(n, e) {
 </template>
 
 <style scoped>
-.wb { display: flex; flex-direction: column; gap: 0.6rem; }
-.bar { display: flex; align-items: center; gap: 0.75rem; }
+.wb { display: flex; flex: 1; flex-direction: column; gap: 0.6rem; min-width: 0; min-height: 0; }
+.bar { flex-shrink: 0; display: flex; align-items: center; gap: 0.75rem; }
 .bar small { color: var(--muted); }
 .add { height: 30px; padding: 0 0.8rem; border: 1px solid var(--accent); border-radius: 6px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); cursor: pointer; }
-.canvas { position: relative; min-height: 32rem; overflow: auto; border: 1px dashed var(--line-strong); border-radius: 10px; background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 18px 18px; }
+.canvas { position: relative; flex: 1; min-height: 22rem; overflow: auto; border: 1px dashed var(--line-strong); border-radius: 10px; background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 18px 18px; }
 .note { position: absolute; display: flex; flex-direction: column; width: 11rem; padding: 0.5rem; border-radius: 8px; box-shadow: 0 6px 18px rgb(0 0 0 / 0.3); cursor: grab; touch-action: none; }
 .note:active { cursor: grabbing; }
 textarea { border: 0; background: none; font: 500 13px/1.4 'Geist', system-ui, sans-serif; color: #1c1a17; resize: none; outline: none; }

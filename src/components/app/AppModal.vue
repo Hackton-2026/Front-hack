@@ -10,12 +10,17 @@ const target = ref('body')
 const onKey = (e) => e.key === 'Escape' && emit('close')
 
 watch(() => props.open, async (v) => {
-  if (!v) return removeEventListener('keydown', onKey)
-  target.value = document.querySelector('.app') || 'body'
+  if (!v) {
+    removeEventListener('keydown', onKey)
+    target.value = 'body'
+    return
+  }
+  target.value = document.querySelector('.app') ? '.app' : 'body'
   addEventListener('keydown', onKey)
   await nextTick()
   box.value?.querySelector('input, textarea, select')?.focus()
   if (!prefersReducedMotion() && box.value) {
+    gsap.killTweensOf(box.value)
     gsap.timeline()
       .fromTo(box.value, { y: 14, scale: 0.97, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
       .from(box.value.querySelectorAll('.f, footer'), { y: 6, autoAlpha: 0, duration: DUR.press, stagger: 0.04, ease: EASE.soft }, '-=0.18')

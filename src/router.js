@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import { useUi } from './composables/useUi'
+import { tokens } from './services/api'
 import { CUSTOM_PLAN_PATH } from './utils/customPlanEntry'
 import { formatPageTitle } from './composables/usePageTitle'
 import { HOME_SEO, SEO_BY_PATH, SITE_NAME, SITE_ORIGIN } from './data/seo'
@@ -124,13 +126,38 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const { user, ready, init } = useAuth()
-  // páginas públicas não esperam o /me (servidor lento não pode travar a vitrine)
-  if (!ready.value) { if (to.meta.auth || to.meta.guest) await init(); else init() }
+  const { user, ready, offline, init } = useAuth()
+  // páginas públicas e /login sem token não travam esperando /me
+  if (!ready.value && !user.value) {
+    if (to.meta.auth) {
+      await init()
+    } else if (to.meta.guest && tokens.access && !offline.value) {
+      await init()
+    } else if (tokens.access) {
+      init()
+    } else {
+      ready.value = true
+    }
+  }
   // conta nova só entra no app depois de confirmar o e-mail (o servidor também recusa): o login mostra esse passo
   const pending = user.value?.must_confirm_email
   if (to.meta.auth && (!user.value || pending)) return { path: '/login', query: { next: to.fullPath } }
   if (to.meta.guest && user.value && !pending) return '/comecar'
+})
+
+const CHUNK_ERR = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading (?:CSS )?chunk|Unable to preload CSS/i
+const RELOAD_KEY = 'nvx:chunk-reload'
+router.onError((err, to) => {
+  if (!CHUNK_ERR.test(err?.message || '')) return
+  try {
+    const last = Number(sessionStorage.getItem(RELOAD_KEY) || 0)
+    if (Date.now() - last > 15000) {
+      sessionStorage.setItem(RELOAD_KEY, String(Date.now()))
+      location.assign(to?.fullPath || location.href)
+      return
+    }
+  } catch { }
+  useUi().toast('Não foi possível abrir esta página agora. Verifique sua conexão e tente novamente.')
 })
 
 function setMeta(selector, attr, value) {

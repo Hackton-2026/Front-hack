@@ -10,17 +10,29 @@ const offline = ref(false)
 
 async function loadMe() {
   try {
-    user.value = await Promise.race([api('/api/auth/me/'), new Promise((_, no) => setTimeout(no, 10000, new Error('Servidor sem resposta.')))])
+    user.value = await api('/api/auth/me/', { timeout: 8000 })
     offline.value = false
   } catch (e) {
-    user.value = null
-    offline.value = !e.status
+    const transient = !e.status || e.status >= 500
+    offline.value = transient
+    // Só derruba a sessão se o servidor realmente rejeitou o token (401/403);
+    // oscilação de rede ao voltar do AFK não deve chutar o usuário para /login.
+    if (!transient) user.value = null
   }
 }
 
-async function init() {
-  if (tokens.access) await loadMe()
-  ready.value = !offline.value
+let initializing = null
+function init() {
+  if (!tokens.access) {
+    offline.value = false
+    ready.value = true
+    return Promise.resolve()
+  }
+  initializing ||= (async () => {
+    await loadMe()
+    ready.value = !offline.value
+  })().finally(() => { initializing = null })
+  return initializing
 }
 
 async function login(username, password) {
@@ -66,6 +78,7 @@ function logout() {
 }
 
 window.addEventListener('auth:logout', logout)
+window.addEventListener('online', () => { if (offline.value && tokens.access) init() })
 
 export function useAuth() {
   return { user, ready, offline, init, loadMe, login, loginWithGoogle, register, updateMe, logout }

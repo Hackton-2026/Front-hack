@@ -47,10 +47,10 @@ const max = (rows) => Math.max(1, ...rows.map((r) => r[1]))
 .kpi { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .kpi strong { font: 650 1.6rem/1 'Geist', system-ui, sans-serif; color: var(--text); }
 .kpi span { font-size: 12px; color: var(--muted); }
-.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.75rem; }
-.chart { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr)); gap: 0.75rem; }
+.chart { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 h3 { margin: 0 0 0.25rem; font-size: 12.5px; color: var(--muted); }
-.bar { display: grid; grid-template-columns: 7.5rem 1fr 2rem; align-items: center; gap: 0.5rem; font-size: 12.5px; color: var(--text); }
+.bar { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 2rem; align-items: center; gap: 0.5rem; font-size: 12.5px; color: var(--text); }
 .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .track span { display: block; height: 100%; border-radius: inherit; }

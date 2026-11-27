@@ -165,7 +165,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
     <section v-if="timeline.length" class="tl" aria-label="Linha do tempo dos ciclos">
       <div class="tl__head"><strong>Linha do tempo</strong><span class="pg-muted">De 2 semanas atrás até 6 semanas à frente</span></div>
       <div class="tl__track">
-        <span class="tl__today" :style="{ left: `${todayPos}%` }"><small>hoje</small></span>
+        <span class="tl__today" :class="{ flip: todayPos > 85 }" :style="{ left: `${todayPos}%` }"><small>hoje</small></span>
         <button v-for="b in timeline" :key="b.c.id" type="button" class="tl__bar" :class="b.phase" :style="{ left: `${b.left}%`, width: `${b.width}%` }" :title="`${b.c.name}: ${range(b.c)}, ${Math.round(b.pct * 100)}% concluído`" @click="open(b.c)">
           <i :style="{ width: `${b.pct * 100}%` }" /><span>{{ b.c.name }}{{ !pid ? `, ${project(b.c.project)?.name || ''}` : '' }}</span>
         </button>
@@ -275,7 +275,7 @@ onUnmounted(() => removeEventListener('click', onDoc))
 .cyc__name:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; border-radius: 4px; }
 .cyc__date { height: 30px; }
 .menu-wrap { position: relative; }
-.cyc__body { display: grid; grid-template-columns: minmax(15rem, 19rem) 1fr; }
+.cyc__body { display: grid; grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr); }
 .sum { display: flex; flex-direction: column; padding: 1rem 1.25rem; border-right: 1px solid var(--line); }
 .sum__cap { margin: 0.6rem 0 0.25rem; padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 .sum__cap:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
@@ -293,10 +293,10 @@ onUnmounted(() => removeEventListener('click', onDoc))
 .badge.g { background: rgb(127 196 122 / 0.18); color: #a6e0a2; }
 .badge.o { background: rgb(229 101 21 / 0.2); color: var(--accent-soft); }
 .plain li { padding: 0.45rem 0; }
-.bd { margin: 0; padding: 1rem 1.25rem; }
+.bd { min-width: 0; overflow: hidden; margin: 0; padding: 1rem 1.25rem; }
 figcaption { margin-bottom: 0.5rem; font-weight: 600; }
 figcaption span { margin-left: 0.3rem; font-weight: 400; color: var(--muted); }
-.bd svg { width: 100%; height: auto; overflow: visible; }
+.bd svg { display: block; width: 100%; max-width: 100%; height: auto; overflow: visible; }
 .bd svg text { fill: var(--muted); font-size: 11px; }
 .bd__grid { stroke: var(--line); }
 .bd__today { stroke: var(--line-strong); stroke-dasharray: 3 4; }
@@ -307,11 +307,12 @@ figcaption span { margin-left: 0.3rem; font-weight: 400; color: var(--muted); }
   .cyc__body { grid-template-columns: 1fr; }
   .sum { border-right: 0; border-bottom: 1px solid var(--line); }
 }
-.tl { margin: 0 1.25rem 0.5rem; padding: 0.8rem 1rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.tl { margin: 0 1.25rem 0.5rem; overflow: hidden; padding: 0.8rem 1rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .tl__head { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.7rem; font-size: 13px; }
-.tl__track { position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 28px; padding-top: 14px; }
+.tl__track { position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 28px; overflow: hidden; padding-top: 14px; }
 .tl__today { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--accent); }
-.tl__today small { position: absolute; top: -2px; left: 4px; font-size: 10.5px; color: var(--accent-soft); }
+.tl__today small { position: absolute; top: -2px; left: 4px; white-space: nowrap; font-size: 10.5px; color: var(--accent-soft); }
+.tl__today.flip small { left: auto; right: 4px; }
 .tl__bar { position: relative; height: 24px; margin-left: 0; overflow: hidden; padding: 0; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface-2); text-align: left; cursor: pointer; }
 .tl__bar i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--accent) 35%, transparent); }
 .tl__bar span { position: relative; padding: 0 0.5rem; font-size: 11.5px; font-weight: 500; line-height: 22px; color: var(--text); white-space: nowrap; }

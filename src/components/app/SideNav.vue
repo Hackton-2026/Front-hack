@@ -61,13 +61,21 @@ const base = (p) => `/projetos/${p.id}`
 const subActive = (p, s) => route.path === base(p) + s.path || (s.path && route.path.startsWith(`${base(p)}${s.path}/`))
 const toggleProject = (p) => (openProjects.has(p.id) ? openProjects.delete(p.id) : openProjects.add(p.id))
 
+watch(() => route.path, closeMenu)
+
 function onEnter(el, done) {
   if (reduced) return done()
-  gsap.fromTo(el, { height: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', autoAlpha: 1, duration: DUR.fast, ease: EASE.out, clearProps: 'overflow', onComplete: done })
+  gsap.killTweensOf(el)
+  let ended = false
+  const finish = () => { if (!ended) { ended = true; done() } }
+  gsap.fromTo(el, { height: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', autoAlpha: 1, duration: DUR.fast, ease: EASE.out, clearProps: 'overflow', onComplete: finish, onInterrupt: finish })
 }
 function onLeave(el, done) {
   if (reduced) return done()
-  gsap.to(el, { height: 0, autoAlpha: 0, overflow: 'hidden', duration: DUR.press, ease: EASE.in, onComplete: done })
+  gsap.killTweensOf(el)
+  let ended = false
+  const finish = () => { if (!ended) { ended = true; done() } }
+  gsap.to(el, { height: 0, autoAlpha: 0, overflow: 'hidden', duration: DUR.press, ease: EASE.in, onComplete: finish, onInterrupt: finish })
 }
 
 async function startProject() {

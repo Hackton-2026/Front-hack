@@ -149,14 +149,14 @@ onMounted(() => {
 .kpi > span:last-child { font-size: 12.5px; color: var(--muted); }
 .kpi.is-warn .kpi__ic { background: rgb(255 91 77 / 0.15); color: var(--danger, #ff8a80); }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding: 1rem 1.25rem 1.5rem; }
-.card { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.card { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; overflow: hidden; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .wide { grid-column: 1 / -1; }
 .card header { display: flex; align-items: baseline; justify-content: space-between; }
 .card header a { text-decoration: none; }
 h2 { margin: 0; font: 600 1rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .plist, .due { display: flex; flex-direction: column; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
-.plist li { display: grid; grid-template-columns: 1fr auto; gap: 0.3rem; font-size: 13.5px; }
-.plist a { display: flex; align-items: center; gap: 0.45rem; color: var(--text); text-decoration: none; }
+.plist li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem; font-size: 13.5px; }
+.plist a { display: flex; align-items: center; gap: 0.45rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); text-decoration: none; }
 .plist a:hover { color: var(--accent-soft); }
 .sq { width: 9px; height: 9px; border-radius: 3px; }
 .pbar { grid-column: 1 / -1; height: 6px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
@@ -168,7 +168,7 @@ h2 { margin: 0; font: 600 1rem/1.3 'Geist', system-ui, sans-serif; color: var(--
 .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 time { font-size: 12px; color: var(--muted); }
 time.late { color: var(--danger, #ff8a80); }
-.cycles { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.6rem; }
+.cycles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr)); gap: 0.6rem; }
 .cy { display: flex; align-items: center; gap: 0.7rem; padding: 0.75rem; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; transition: border-color 0.2s var(--ease); }
 .cy:hover { border-color: var(--accent); }
 .cy > span:last-child { display: flex; flex-direction: column; }

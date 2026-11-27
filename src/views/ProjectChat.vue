@@ -187,7 +187,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 </script>
 
 <template>
-  <aside class="chat" :class="{ page }" :role="page ? undefined : 'complementary'" :aria-label="`Chat de ${p?.name || 'projeto'}`" @keydown.esc="page || ui.closeChat()">
+  <aside class="chat" :class="{ page, 'is-viewport': page }" :role="page ? undefined : 'complementary'" :aria-label="`Chat de ${p?.name || 'projeto'}`" @keydown.esc="page || ui.closeChat()">
     <nav v-if="page" class="rooms" aria-label="Conversas">
       <p class="rooms__label">Conversas</p>
       <button type="button" class="room" :aria-current="!peer" @click="peer = null">
@@ -273,8 +273,8 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 <style scoped>
 .chat { position: fixed; z-index: 65; top: 52px; right: 10px; bottom: 10px; display: flex; flex-direction: column; width: min(25rem, calc(100vw - 20px)); border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg); box-shadow: -20px 20px 60px rgb(0 0 0 / 0.45); overflow: hidden; }
 .pane { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
-.chat.page { position: static; z-index: auto; flex-direction: row; width: auto; height: calc(100% - 3rem); margin: 1.5rem; box-shadow: none; }
-.rooms { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; width: 16rem; padding: 0.6rem; overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface); }
+.chat.page { position: static; z-index: auto; flex-direction: row; width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+.rooms { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; width: 16rem; padding: 0.6rem; overflow-x: hidden; overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface); }
 .rooms__label { margin: 0.6rem 0.4rem 0.3rem; font-size: 11.5px; font-weight: 600; color: var(--muted); }
 .rooms__label:first-child { margin-top: 0.2rem; }
 .room { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.5rem; border: 0; border-radius: 7px; background: none; text-align: left; color: var(--text); cursor: pointer; }
@@ -288,8 +288,8 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 .rooms__alone { margin: 0.4rem; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
 .rooms__alone a { color: var(--text); }
 @media (max-width: 720px) {
-  .chat.page { flex-direction: column; margin: 0.75rem; height: calc(100% - 1.5rem); }
-  .rooms { flex-direction: row; width: auto; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .chat.page { flex-direction: column; margin: 0; height: 100%; }
+  .rooms { flex-direction: row; width: auto; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--line); }
   .rooms__label, .room__txt small, .rooms__alone { display: none; }
   .room { flex-shrink: 0; }
 }
@@ -299,7 +299,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 .people { display: inline-flex; align-items: center; gap: 0.3rem; height: 28px; padding: 0 0.5rem; border-radius: 6px; font-size: 12.5px; color: var(--muted); text-decoration: none; }
 .people:hover, .x:hover { background: var(--surface-2); color: var(--text); }
 .x { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
-.msgs { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.15rem; padding: 1rem 0.9rem; }
+.msgs { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; display: flex; flex-direction: column; gap: 0.15rem; padding: 1rem 0.9rem; }
 .asks { margin: 0.8rem 0 0 calc(30px + 0.6rem); }
 .mentions { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 2; margin: 0; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 12px 30px rgb(0 0 0 / 0.4); list-style: none; }
 .mentions li { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem; border-radius: 6px; font-size: 13px; cursor: pointer; }

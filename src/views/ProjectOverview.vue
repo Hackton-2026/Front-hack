@@ -201,7 +201,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="p" ref="root" class="ov" :class="{ 'has-panel': panel }">
+  <div v-if="p" ref="root" class="ov is-viewport-lg" :class="{ 'has-panel': panel }">
     <div class="main">
       <div class="cover" :style="{ background: p.cover_image ? `center / cover no-repeat url(${JSON.stringify(p.cover_image)})` : COVERS[p.cover % COVERS.length] }">
         <div class="cover__btns">
@@ -350,9 +350,13 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.ov { display: grid; grid-template-columns: 1fr; min-height: 100%; }
+.ov { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100%; }
 .ov.has-panel { grid-template-columns: minmax(0, 1fr) 22rem; }
 .main { min-width: 0; container-type: inline-size; }
+@media (min-width: 1101px) {
+  .ov { height: 100%; overflow: hidden; }
+  .main { height: 100%; overflow-x: hidden; overflow-y: auto; }
+}
 .cover { position: relative; height: 8.5rem; }
 .cover__btns { position: absolute; right: 0.9rem; top: 0.8rem; display: flex; gap: 0.4rem; }
 .cover__btn { display: inline-flex; align-items: center; gap: 0.35rem; height: 28px; padding: 0 0.6rem; border: 1px solid rgb(255 255 255 / 0.12); border-radius: 6px; background: rgb(15 14 13 / 0.6); backdrop-filter: blur(8px); font-size: 12.5px; color: var(--text); cursor: pointer; }
@@ -382,7 +386,7 @@ onMounted(async () => {
 .icon:not(:disabled):hover { translate: 0 -2px; }
 .icon:disabled { cursor: default; }
 .sq { width: 1.4rem; height: 1.4rem; border-radius: 6px; }
-.emojis { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; display: grid; grid-template-columns: repeat(8, 2.1rem); gap: 2px; padding: 0.4rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 40px rgb(0 0 0 / 0.45); }
+.emojis { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; display: grid; grid-template-columns: repeat(8, 2.1rem); gap: 2px; max-width: calc(100vw - 3rem); overflow-x: auto; padding: 0.4rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 40px rgb(0 0 0 / 0.45); }
 .emojis > button { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--pick-color, var(--muted)); cursor: pointer; }
 .emojis > button:hover, .emojis > button[aria-selected='true'] { background: var(--surface-2); }
 .emojis .credit { grid-column: 1 / -1; padding: 0.2rem 0 0; font-size: 11px; color: var(--muted); text-align: center; text-decoration: none; }
@@ -415,7 +419,7 @@ onMounted(async () => {
 .rm { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .rm:hover { background: var(--surface-2); color: var(--text); }
 :is(.add-link, .material, .rm):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-.links { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.6rem; }
+.links { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr)); gap: 0.6rem; }
 .link, .cycle { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.2s var(--ease), translate 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .link:hover, .cycle:hover { border-color: var(--line-strong); translate: 0 -2px; }
 .link { min-height: 4.25rem; }
@@ -426,7 +430,7 @@ onMounted(async () => {
 .link small, .cycle small { font-size: 12.5px; color: var(--muted); }
 .link__go { flex-shrink: 0; margin-left: auto; font-size: 16px; color: var(--muted); transition: translate 0.25s var(--ease), color 0.2s var(--ease); }
 .link:hover .link__go { translate: 3px 0; color: var(--text); }
-.side { position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; gap: 1rem; max-height: calc(100vh - 97px); overflow-y: auto; padding: 1rem 1.1rem; border-left: 1px solid var(--line); }
+.side { align-self: stretch; display: flex; flex-direction: column; gap: 1rem; height: 100%; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: 1rem 1.1rem; border-left: 1px solid var(--line); }
 .side__tabs { display: grid; grid-template-columns: repeat(3, 1fr); padding: 3px; border-radius: 8px; background: var(--surface); }
 .side__tabs button { display: grid; place-items: center; height: 28px; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .side__tabs button[aria-selected='true'] { background: var(--surface-2); color: var(--text); }
@@ -466,8 +470,8 @@ h3 { margin: 0; font: 600 1.05rem/1.3 'Geist', system-ui, sans-serif; color: var
 .feed__upd { display: flex !important; flex-direction: column; gap: 0.35rem !important; padding: 0.75rem !important; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 0.5rem; }
 .feed__upd::before { display: none; }
 @media (max-width: 1100px) {
-  .ov.has-panel { grid-template-columns: 1fr; }
-  .side { position: static; max-height: none; border-top: 1px solid var(--line); border-left: 0; }
+  .ov.has-panel { grid-template-columns: minmax(0, 1fr); }
+  .side { height: auto; max-height: none; overflow: visible; border-top: 1px solid var(--line); border-left: 0; }
   .doc { padding: 0 1.25rem 3rem; }
 }
 </style>

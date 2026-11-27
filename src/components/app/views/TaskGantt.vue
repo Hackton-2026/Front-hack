@@ -146,8 +146,8 @@ watch(zoom, () => nextTick(() => goToday(false)))
 </template>
 
 <style scoped>
-.gantt { display: flex; flex-direction: column; gap: 0.75rem; }
-.bar-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.gantt { display: flex; flex: 1; flex-direction: column; gap: 0.75rem; min-width: 0; min-height: 0; }
+.bar-tools { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .seg { display: flex; padding: 2px; border: 1px solid var(--line); border-radius: 7px; }
 .seg button { height: 26px; padding: 0 0.65rem; border: 0; border-radius: 5px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .seg button[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
@@ -155,7 +155,7 @@ watch(zoom, () => nextTick(() => goToday(false)))
 .ghost:hover { background: var(--surface-2); }
 .hint { margin-left: auto; font-size: 12px; color: var(--muted); }
 
-.scroll { overflow: auto; max-height: 70vh; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.scroll { flex: 1; min-height: 0; overflow: auto; max-height: 70vh; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .grid { display: grid; min-width: max-content; font-size: 12.5px; }
 
 .corner { position: sticky; top: 0; left: 0; z-index: 4; display: flex; align-items: flex-end; padding: 0 0.85rem 0.55rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); font-size: 11.5px; font-weight: 500; color: var(--muted); }
@@ -200,6 +200,7 @@ watch(zoom, () => nextTick(() => goToday(false)))
 .tip { position: absolute; top: -2px; z-index: 2; translate: 0 -100%; padding: 0.15rem 0.45rem; border-radius: 5px; background: var(--text); font-size: 11px; color: var(--bg); white-space: nowrap; pointer-events: none; }
 
 .empty { margin: 0; padding: 2rem; border: 1px dashed var(--line); border-radius: 10px; text-align: center; color: var(--muted); }
+.undated { flex-shrink: 0; max-height: 9rem; overflow-y: auto; }
 .undated summary { font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .undated button { display: block; padding: 0.3rem 0; border: 0; background: none; font-size: 13px; color: var(--text); cursor: pointer; }
 .undated small { color: var(--muted); }

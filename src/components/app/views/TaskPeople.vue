@@ -49,7 +49,7 @@ const label = (d) => new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { weekda
 </template>
 
 <style scoped>
-.wrap { display: flex; flex-direction: column; gap: 0.5rem; overflow-x: auto; }
+.wrap { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; overflow-x: auto; }
 .load { width: 100%; border-collapse: collapse; font-size: 13px; border: 1px solid var(--line); }
 th, td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; color: var(--text); }
 th { font-size: 11.5px; font-weight: 600; color: var(--muted); background: var(--surface); }
@@ -60,8 +60,8 @@ th:first-child, td:first-child { text-align: left; }
 .cell.over { background: rgb(255 91 77 / 0.25); color: var(--danger, #ff8a80); }
 .late { color: var(--danger, #ff8a80); }
 .muted { margin: 0; font-size: 12px; color: var(--muted); }
-.team { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.75rem; }
-.person { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.team { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr)); gap: 0.75rem; }
+.person { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; padding: 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .person header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; color: var(--text); }
 .person header small { margin-left: auto; color: var(--muted); }
 .av { display: grid; place-items: center; width: 26px; height: 26px; overflow: hidden; border-radius: 50%; font: 700 10px/1 'Lexend', system-ui, sans-serif; color: #000; }

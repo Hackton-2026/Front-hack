@@ -105,7 +105,7 @@ const box = { w: round(6 * -DX + (WEEKS - 1) * WX + 2 * R + 4), h: round(HMAX + 
 </template>
 
 <style scoped>
-.card { display: flex; flex-direction: column; gap: 0.9rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.card { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; overflow: hidden; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .yh__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
 h3 { margin: 0; font: 600 0.95rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .yh__head p { margin: 0.15rem 0 0; font-size: 12.5px; color: var(--muted); }
@@ -119,8 +119,9 @@ h3 { margin: 0; font: 600 0.95rem/1.3 'Geist', system-ui, sans-serif; color: var
 .yh__stats dd { margin: 0.1rem 0 0; font: 650 1.15rem/1.2 'Geist', system-ui, sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
 .yh__stats small { margin-left: 0.3rem; font-size: 11.5px; font-weight: 400; color: var(--muted); }
 
-.yh__flat { display: flex; flex-direction: column; gap: 4px; }
+.yh__flat { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow: hidden; }
 .yh__months, .yh__grid { display: grid; grid-template-columns: repeat(53, 1fr); gap: 2px; }
+.yh__months { overflow: hidden; }
 .yh__months span { overflow: visible; font-size: 10.5px; line-height: 1; color: var(--muted); white-space: nowrap; }
 .yh__grid { grid-template-rows: repeat(7, auto); grid-auto-flow: column; }
 .yh__grid i { aspect-ratio: 1; border-radius: 50%; }
@@ -131,7 +132,7 @@ h3 { margin: 0; font: 600 0.95rem/1.3 'Geist', system-ui, sans-serif; color: var
 .l4 { background: var(--accent); }
 .none { visibility: hidden; }
 
-.yh__3d { width: 100%; height: auto; overflow: visible; }
+.yh__3d { display: block; width: 100%; max-width: 100%; height: auto; overflow: hidden; }
 .yh__3d g { --c: var(--surface-2); animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i) * 6ms); }
 .yh__3d .l1 { --c: color-mix(in srgb, var(--accent) 30%, var(--surface-2)); }
 .yh__3d .l2 { --c: color-mix(in srgb, var(--accent) 52%, var(--surface-2)); }

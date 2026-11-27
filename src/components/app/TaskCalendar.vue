@@ -26,15 +26,18 @@ const monthLabel = computed(() => cursor.value.toLocaleDateString('pt-BR', { mon
 const days = computed(() => {
   const first = new Date(cursor.value)
   const offset = (first.getDay() - weekStart.value + 7) % 7
+  const lastDay = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
+  const total = Math.ceil((offset + lastDay) / 7) * 7
   const start = new Date(first)
   start.setDate(1 - offset)
-  return Array.from({ length: 42 }, (_, i) => {
+  return Array.from({ length: total }, (_, i) => {
     const d = new Date(start)
     d.setDate(start.getDate() + i)
     const key = iso(d)
     return { key, n: d.getDate(), out: d.getMonth() !== first.getMonth(), today: key === today(), tasks: props.tasks.filter((t) => t.due === key) }
   })
 })
+const weeksCount = computed(() => Math.max(4, Math.ceil(days.value.length / 7)))
 const undated = computed(() => props.tasks.filter((t) => !t.due && t.status !== 'done'))
 
 async function shift(dir) {
@@ -75,7 +78,7 @@ function drop(day) {
         </div>
       </header>
       <div class="week" aria-hidden="true"><span v-for="w in weekdays" :key="w">{{ w }}</span></div>
-      <div ref="grid" class="grid">
+      <div ref="grid" class="grid" :style="{ '--weeks': weeksCount }">
         <div
           v-for="d in days"
           :key="d.key"
@@ -108,44 +111,53 @@ function drop(day) {
     <aside class="undated" :class="{ over: over === 'none' }" @dragover.prevent="over = 'none'" @dragleave.self="over = null" @drop.prevent="dragging && updateTask(dragging, { due: null }); dragging = null; over = null">
       <h3>Sem data <span>{{ undated.length }}</span></h3>
       <p class="hint">Arraste para um dia do calendário.</p>
-      <button v-for="t in undated" :key="t.id" type="button" class="row" draggable="true" @dragstart="dragging = t" @dragend="dragging = null; over = null" @click="openTask(t)">
-        <StatusBadge :status="t.status" compact />{{ t.title }}
-      </button>
+      <div class="undated__list">
+        <button v-for="t in undated" :key="t.id" type="button" class="row" draggable="true" @dragstart="dragging = t" @dragend="dragging = null; over = null" @click="openTask(t)">
+          <StatusBadge :status="t.status" compact /><span>{{ t.title }}</span>
+        </button>
+      </div>
     </aside>
   </div>
 </template>
 
 <style scoped>
-.cal { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 1rem; align-items: start; }
-@media (max-width: 1100px) { .cal { grid-template-columns: minmax(0, 1fr); } }
-.cal__main { min-width: 0; overflow: hidden; }
-.bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+.cal { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 1rem; flex: 1; min-width: 0; min-height: 0; align-items: stretch; }
+.cal__main { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.bar { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
 .month { display: inline-block; font-size: 1rem; }
 .month::first-letter { text-transform: uppercase; }
 .nav { display: flex; gap: 0.25rem; }
 .nav__btn, .nav__today { display: grid; place-items: center; height: 30px; padding: 0 0.6rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; cursor: pointer; }
 .nav__btn { width: 30px; padding: 0; }
 .nav__btn:hover, .nav__today:hover { border-color: var(--accent); }
-.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-bottom: 0.25rem; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.week { flex-shrink: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-bottom: 0.25rem; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .week span { padding: 0 0.5rem; }
-.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.day { display: flex; flex-direction: column; gap: 3px; min-height: 6.5rem; padding: 0.35rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.15s var(--ease); }
+.grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(var(--weeks, 5), minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.day { display: flex; flex-direction: column; gap: 2px; min-width: 0; min-height: 0; overflow: hidden; padding: 0.3rem 0.35rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.15s var(--ease); }
 .day:hover { background: var(--surface); }
 .day.out { background: color-mix(in srgb, var(--bg) 60%, #000); }
 .day.out .day__n { color: color-mix(in srgb, var(--muted) 55%, transparent); }
 .day.over { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.day__n { align-self: flex-end; display: grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%; font-size: 12px; color: var(--muted); pointer-events: none; }
+.day__n { flex-shrink: 0; align-self: flex-end; display: grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%; font-size: 12px; color: var(--muted); pointer-events: none; }
 .day.today .day__n { background: var(--accent); font-weight: 600; color: #000; }
-.chip { display: block; width: 100%; padding: 0.15rem 0.4rem; overflow: hidden; border: 0; border-left: 3px solid var(--c); border-radius: 4px; background: var(--surface-2); font-size: 11.5px; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: grab; }
+.chip { flex-shrink: 0; display: block; width: 100%; padding: 0.12rem 0.38rem; overflow: hidden; border: 0; border-left: 3px solid var(--c); border-radius: 4px; background: var(--surface-2); font-size: 11.5px; line-height: 1.25; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: grab; }
 .chip:hover { background: color-mix(in srgb, var(--c) 18%, var(--surface-2)); }
 .chip.done { color: var(--muted); text-decoration: line-through; }
-.more { padding-left: 0.4rem; font-size: 11px; color: var(--muted); }
-.undated { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.75rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); transition: border-color 0.2s var(--ease); }
+.more { flex-shrink: 0; padding-left: 0.4rem; font-size: 11px; color: var(--muted); }
+.undated { display: flex; flex-direction: column; gap: 0.35rem; min-height: 0; max-height: 100%; overflow: hidden; padding: 0.75rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); transition: border-color 0.2s var(--ease); }
 .undated.over { border-color: var(--accent); }
-.undated h3 { margin: 0; font-size: 13px; color: var(--text); }
+.undated h3 { flex-shrink: 0; margin: 0; font-size: 13px; color: var(--text); }
 .undated h3 span { font-weight: 400; color: var(--muted); }
-.hint { margin: 0 0 0.35rem; font-size: 12px; color: var(--muted); }
-.row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); font-size: 12.5px; text-align: left; cursor: grab; }
+.hint { flex-shrink: 0; margin: 0 0 0.25rem; font-size: 12px; color: var(--muted); }
+.undated__list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.35rem; overflow-x: hidden; overflow-y: auto; }
+.row { flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; min-width: 0; padding: 0.4rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); font-size: 12.5px; text-align: left; cursor: grab; }
+.row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row:hover { border-color: var(--line-strong); }
 :is(.nav__btn, .nav__today, .chip, .row):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .cal { grid-template-columns: minmax(0, 1fr); flex: none; }
+  .grid { grid-template-rows: none; }
+  .day { min-height: 5.5rem; }
+  .undated { max-height: 18rem; }
+}
 </style>

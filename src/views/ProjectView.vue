@@ -49,6 +49,7 @@ const customizing = ref(false)
 
 const saved = computed(() => props.view && state.views.find((x) => x.id === Number(props.view)))
 const kind = computed(() => saved.value?.type || view.value)
+const fixedView = computed(() => ['calendar', 'gantt', 'whiteboard'].includes(kind.value))
 // Formulário e Linha do tempo saíram do produto: as já criadas somem da barra e o link volta para o projeto
 // Galeria também saiu; a visão Ciclos é a mesma página de /projetos/:id/ciclos (a da visão geral)
 const REMOVED = ['form', 'timeline', 'gallery']
@@ -65,7 +66,17 @@ const visible = computed(() => { const v = pinned.value.slice(0, MAX_TABS); retu
 const overflow = computed(() => pinned.value.filter((v) => !visible.value.includes(v)))
 
 const menu = ref(null)
+const addMenuEl = ref(null)
+const addMenuStyle = ref({})
 const adding = ref(false)
+function toggleAddMenu(e) {
+  if (adding.value) { adding.value = false; return }
+  const r = e.currentTarget.getBoundingClientRect()
+  const w = Math.min(576, innerWidth * 0.92)
+  const left = Math.max(12, Math.min(r.left, innerWidth - w - 12))
+  addMenuStyle.value = { top: `${Math.min(r.bottom + 6, innerHeight - 160)}px`, left: `${left}px` }
+  adding.value = true
+}
 const findLayout = ref('')
 const asPrivate = ref(false)
 const asPinned = ref(true)
@@ -89,9 +100,10 @@ async function addView(l) {
   complete('view')
   router.push(`/projetos/${pid.value}/visoes/${v.id}`)
 }
-const closeMenu = (e) => { if (adding.value && !menu.value?.contains(e.target)) adding.value = false }
-onMounted(() => addEventListener('pointerdown', closeMenu))
-onUnmounted(() => removeEventListener('pointerdown', closeMenu))
+const closeMenu = (e) => { if (adding.value && !menu.value?.contains(e.target) && !addMenuEl.value?.contains(e.target)) adding.value = false }
+const closeOnResize = () => { adding.value = false }
+onMounted(() => { addEventListener('pointerdown', closeMenu); addEventListener('resize', closeOnResize) })
+onUnmounted(() => { removeEventListener('pointerdown', closeMenu); removeEventListener('resize', closeOnResize) })
 
 const togglePin = () => updateItem('view', saved.value, { is_pinned: !saved.value.is_pinned })
 async function unpinView(v) {
@@ -187,7 +199,7 @@ onMounted(() => moveInk(false))
 </script>
 
 <template>
-  <div v-if="p && scope" class="proj">
+  <div v-if="p && scope" class="proj" :class="{ 'is-viewport-md': fixedView }">
     <header class="head">
       <div class="head__title">
         <ProjectIcon :icon="p.icon" :color="p.color" :size="22" class="emoji" />
@@ -226,23 +238,25 @@ onMounted(() => moveInk(false))
           </div>
         </details>
         <div ref="menu" class="add-view">
-          <button type="button" class="add-btn" :aria-expanded="adding" @click="adding = !adding"><AppIcon name="plus" :size="13" />Visualização</button>
-          <Transition name="pop"><div v-if="adding" class="add-menu" role="dialog" aria-label="Adicionar visualização">
-            <label class="add-find"><AppIcon name="search" :size="13" /><input v-model="findLayout" placeholder="Buscar visualizações" aria-label="Buscar visualizações" /></label>
-            <template v-for="[group, title] in [['popular', 'Popular'], ['more', 'Mais visualizações']]" :key="group">
-              <p v-if="shown(group).length" class="add-group">{{ title }}</p>
-              <div class="add-grid">
-                <button v-for="l in shown(group)" :key="l.type" type="button" class="add-item" :disabled="onBar(l.type)" @click="addView(l)">
-                  <span class="add-ico"><AppIcon :name="l.icon" :size="16" /></span>
-                  <span><strong>{{ l.label }}</strong><small>{{ onBar(l.type) ? 'Já está na barra' : l.desc }}</small></span>
-                </button>
+          <button type="button" class="add-btn" :aria-expanded="adding" @click="toggleAddMenu"><AppIcon name="plus" :size="13" />Visualização</button>
+          <Teleport defer to=".app">
+            <Transition name="pop"><div v-if="adding" ref="addMenuEl" class="add-menu" :style="addMenuStyle" role="dialog" aria-label="Adicionar visualização">
+              <label class="add-find"><AppIcon name="search" :size="13" /><input v-model="findLayout" placeholder="Buscar visualizações" aria-label="Buscar visualizações" /></label>
+              <template v-for="[group, title] in [['popular', 'Popular'], ['more', 'Mais visualizações']]" :key="group">
+                <p v-if="shown(group).length" class="add-group">{{ title }}</p>
+                <div class="add-grid">
+                  <button v-for="l in shown(group)" :key="l.type" type="button" class="add-item" :disabled="onBar(l.type)" @click="addView(l)">
+                    <span class="add-ico"><AppIcon :name="l.icon" :size="16" /></span>
+                    <span><strong>{{ l.label }}</strong><small>{{ onBar(l.type) ? 'Já está na barra' : l.desc }}</small></span>
+                  </button>
+                </div>
+              </template>
+              <div class="add-foot">
+                <AppCheckbox v-model="asPrivate" size="sm" label="Visualização privada" />
+                <AppCheckbox v-model="asPinned" size="sm" label="Fixar na barra" />
               </div>
-            </template>
-            <div class="add-foot">
-              <AppCheckbox v-model="asPrivate" size="sm" label="Visualização privada" />
-              <AppCheckbox v-model="asPinned" size="sm" label="Fixar na barra" />
-            </div>
-          </div></Transition>
+            </div></Transition>
+          </Teleport>
         </div>
       </div>
       <div v-if="saved" class="view-actions">
@@ -299,7 +313,13 @@ onMounted(() => moveInk(false))
 </template>
 
 <style scoped>
-.proj { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; }
+.proj { display: flex; flex-direction: column; gap: 1rem; min-width: 0; padding: 1.5rem; }
+@media (min-width: 901px) {
+  .proj.is-viewport-md { height: 100%; overflow: hidden; padding-bottom: 1rem; }
+  .proj.is-viewport-md > :is(.head, .pbar, .toolbar) { flex-shrink: 0; }
+  .proj.is-viewport-md :deep(.gantt .scroll) { max-height: none; }
+  .proj.is-viewport-md :deep(.wb .canvas) { min-height: 0; }
+}
 .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
 .head__title { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; min-width: 0; }
 .sq { width: 14px; height: 14px; border-radius: 4px; }
@@ -343,12 +363,12 @@ button.head-btn { background: none; cursor: pointer; }
 .more summary { padding: 0.55rem 0.6rem; font-size: 13px; color: var(--muted); list-style: none; cursor: pointer; }
 .more summary::-webkit-details-marker { display: none; }
 .more summary:hover, .more[open] summary { color: var(--text); }
-.more__box { position: absolute; top: 100%; left: 0; z-index: 30; display: flex; flex-direction: column; min-width: 13rem; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 12px 32px rgb(0 0 0 / 0.35); }
+.more__box { position: absolute; top: 100%; right: 0; left: auto; z-index: 30; display: flex; flex-direction: column; min-width: 13rem; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 12px 32px rgb(0 0 0 / 0.35); }
 .more__box a { display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.5rem; border-radius: 5px; font-size: 13px; color: var(--text); text-decoration: none; }
 .more__box a:hover { background: var(--surface-2); }
 .add-btn { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.25rem; padding: 0.3rem 0.6rem; border: 1px dashed var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .add-btn:hover, .add-btn[aria-expanded='true'] { border-color: var(--accent); color: var(--text); }
-.add-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; width: min(36rem, 92vw); max-height: 70vh; overflow-y: auto; padding: 0.6rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.4); transform-origin: top left; }
+.add-menu { position: fixed; z-index: 70; width: min(36rem, 92vw); max-height: 70vh; overflow-y: auto; padding: 0.6rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.4); transform-origin: top left; }
 .add-find { display: flex; align-items: center; gap: 0.4rem; height: 32px; margin-bottom: 0.4rem; padding: 0 0.55rem; border: 1px solid var(--line-strong); border-radius: 7px; color: var(--muted); }
 .add-find:focus-within { border-color: var(--accent); }
 .add-find input { flex: 1; border: 0; background: none; font: inherit; color: var(--text); outline: none; }

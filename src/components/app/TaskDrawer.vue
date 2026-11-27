@@ -282,10 +282,19 @@ watch(() => ui.taskId, async (id, old) => {
   aiSelected.value = []
   tab.value = 'all'
   comment.value = ''
-  if (!id || old) return
+  if (!id) return
+  if (old) {
+    if (panel.value) {
+      gsap.killTweensOf(panel.value)
+      gsap.set(panel.value, { x: 0, autoAlpha: 1 })
+    }
+    return
+  }
   await nextTick()
-  panel.value?.focus({ preventScroll: true }) // sem foco dentro, o Esc não chega no veil
+  if (!panel.value) return
+  panel.value.focus({ preventScroll: true }) // sem foco dentro, o Esc não chega no veil
   if (reduced) return
+  gsap.killTweensOf(panel.value)
   gsap.fromTo(panel.value, { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: DUR.fast, ease: EASE.out })
   gsap.from(panel.value.querySelectorAll('.sec'), { y: 10, autoAlpha: 0, duration: DUR.fast, stagger: 0.04, ease: EASE.soft, delay: 0.08 })
 })
@@ -296,7 +305,10 @@ function onEsc(e) {
 }
 function close() {
   if (reduced || !panel.value) return closeTask()
-  gsap.to(panel.value, { x: 40, autoAlpha: 0, duration: 0.16, ease: EASE.out, onComplete: closeTask })
+  gsap.killTweensOf(panel.value)
+  let closed = false
+  const finish = () => { if (!closed) { closed = true; closeTask() } }
+  gsap.to(panel.value, { x: 40, autoAlpha: 0, duration: 0.16, ease: EASE.out, onComplete: finish, onInterrupt: finish })
 }
 
 async function set(fields) {
@@ -741,7 +753,7 @@ function destroy() {
 </template>
 
 <style scoped>
-.veil { position: fixed; inset: 0; z-index: 70; display: flex; justify-content: flex-end; background: rgb(0 0 0 / 0.4); }
+.veil { position: fixed; inset: 0; z-index: 70; display: flex; justify-content: flex-end; overflow: hidden; background: rgb(0 0 0 / 0.4); }
 .veil.is-wide { justify-content: center; align-items: center; padding: 2rem 1rem; }
 .drawer:focus { outline: none; }
 .drawer { display: flex; flex-direction: column; width: min(92vw, 58rem); height: 100%; border-left: 1px solid var(--line-strong); background: var(--surface); box-shadow: -20px 0 50px rgb(0 0 0 / 0.4); }
@@ -767,7 +779,7 @@ function destroy() {
 .menu button:hover, .menu a:hover { background: var(--surface-2); }
 .menu .danger { color: var(--danger, #ff8a80); }
 .menu .tick { margin-left: auto; color: var(--accent-soft); }
-.body { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; padding: 1.25rem 1.5rem 2rem; overflow-y: auto; }
+.body { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; padding: 1.25rem 1.5rem 2rem; overflow-x: hidden; overflow-y: auto; }
 .parent-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.6rem; padding: 0; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .parent-link:hover { color: var(--accent-soft); }
 .title { display: block; width: 100%; margin-top: 0.5rem; padding: 0; border: 0; background: none; font: 600 1.375rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); resize: none; field-sizing: content; outline: none; }

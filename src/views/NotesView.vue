@@ -102,7 +102,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.notes { gap: 0.9rem; padding-bottom: 2rem; }
+.notes { gap: 0.9rem; overflow-x: clip; padding-bottom: 2rem; }
 h1 { display: flex; align-items: center; gap: 0.5rem; }
 .count { padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--surface-2); font-size: 12px; font-weight: 500; color: var(--muted); }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 0 1.25rem; }

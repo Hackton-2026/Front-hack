@@ -28,21 +28,28 @@ async function openPanel() {
   }
 }
 function closePanel() {
-  if (reduced) return (panel.value = false)
-  gsap.to(root.value.querySelector('.notes'), { scale: 0.97, y: 8, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: () => (panel.value = false) })
+  const el = root.value?.querySelector('.notes')
+  if (reduced || !el) return (panel.value = false)
+  gsap.killTweensOf(el)
+  let closed = false
+  const finish = () => { if (!closed) { closed = true; panel.value = false } }
+  gsap.to(el, { scale: 0.97, y: 8, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: finish, onInterrupt: finish })
 }
 async function newNote() {
   const note = add(COLORS[notes.value.length % COLORS.length])
   if (!panel.value) await openPanel()
   await nextTick()
-  const el = root.value.querySelector(`[data-note="${note.id}"]`)
+  const el = root.value?.querySelector(`[data-note="${note.id}"]`)
   el?.querySelector('textarea')?.focus()
   if (el && !reduced) gsap.from(el, { scale: 0.9, autoAlpha: 0, duration: DUR.fast, ease: EASE.popSoft })
 }
 function deleteNote(id) {
-  const el = root.value.querySelector(`[data-note="${id}"]`)
+  const el = root.value?.querySelector(`[data-note="${id}"]`)
   if (!el || reduced) return remove(id)
-  gsap.to(el, { scale: 0.9, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: () => remove(id) })
+  gsap.killTweensOf(el)
+  let done = false
+  const finish = () => { if (!done) { done = true; remove(id) } }
+  gsap.to(el, { scale: 0.9, autoAlpha: 0, duration: DUR.press, ease: EASE.in, onComplete: finish, onInterrupt: finish })
 }
 const onKey = (e) => { if (e.key === 'Escape') { dial.value = false; if (panel.value) closePanel() } }
 addEventListener('keydown', onKey)

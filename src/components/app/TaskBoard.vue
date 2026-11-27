@@ -322,7 +322,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.kb { display: flex; flex-direction: column; gap: 0.75rem; }
+.kb { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
 .kb__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
 .opt { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .total { margin-left: auto; font-size: 12px; }
@@ -334,7 +334,7 @@ onMounted(() => {
 .fields__row :deep(.nvx-chk) { width: 100%; font-size: 13px; }
 .lim { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.35rem 0.55rem; font-size: 13px; }
 .lim input { width: 3.6rem; height: 26px; padding: 0 0.4rem; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--bg); font: inherit; color: var(--text); }
-.kb__scroll { display: flex; flex-direction: column; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
+.kb__scroll { display: flex; flex-direction: column; gap: 1rem; min-width: 0; overflow-x: auto; padding-bottom: 0.5rem; }
 .lane__head { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font: 600 13px/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
 .lane__head i { width: 9px; height: 9px; border-radius: 3px; }
 .board { display: grid; gap: 0.85rem; align-items: start; }

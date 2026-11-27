@@ -127,16 +127,20 @@ onMounted(() => {
 <style scoped>
 .mywork { gap: 0.9rem; padding-bottom: 2rem; }
 .top { display: flex; flex-wrap: wrap; gap: 1rem; align-items: stretch; padding: 0 1.25rem; }
-.stats { display: grid; flex: 1; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.6rem; }
+.stats { display: grid; flex: 1; min-width: 0; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.6rem; }
 .stat { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 0.5rem; align-items: center; padding: 0.7rem 0.85rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); }
 .stat b { font: 650 1.4rem/1 'Geist', system-ui, sans-serif; color: var(--text); }
 .stat span { grid-column: 1 / -1; font-size: 12px; }
 .stat.warn b { color: var(--danger, #ff8a80); } .stat.accent b { color: var(--accent-soft); } .stat.good b { color: var(--success, #7fc47a); }
 .stat.zero b { color: var(--muted); font-weight: 500; }
-.wk { display: flex; gap: 0.35rem; align-items: flex-end; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.wk { display: flex; gap: 0.35rem; align-items: flex-end; max-width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .wk__day { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
-.wk__tip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translate(-50%, 4px); padding: 0.3rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--text); font-size: 11.5px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s ease-out, transform 0.15s ease-out; z-index: 5; }
-.wk__day:hover .wk__tip { opacity: 1; transform: translate(-50%, 0); }
+.wk__tip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translate(-50%, 4px); padding: 0.3rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--text); font-size: 11.5px; white-space: nowrap; pointer-events: none; visibility: hidden; opacity: 0; transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0s linear 0.15s; z-index: 5; }
+.wk__day:hover .wk__tip { visibility: visible; opacity: 1; transform: translate(-50%, 0); transition-delay: 0s; }
+.wk__day:first-child .wk__tip { left: 0; transform: translateY(4px); }
+.wk__day:first-child:hover .wk__tip { transform: translateY(0); }
+.wk__day:nth-last-child(-n+2) .wk__tip { left: auto; right: 0; transform: translateY(4px); }
+.wk__day:nth-last-child(-n+2):hover .wk__tip { transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) { .wk__tip { transition: none; } }
 .wk__bar { display: flex; align-items: flex-end; width: 18px; height: 52px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
 .wk__bar i { transition: height 0.4s ease-out; display: block; width: 100%; border-radius: 5px; background: var(--accent-soft); }
@@ -149,17 +153,18 @@ onMounted(() => {
 .bucket.late h2 { color: var(--danger, #ff8a80); } .bucket.today h2 { color: var(--accent-soft); }
 .chev { transition: transform 0.2s var(--ease); }
 .bucket__head[aria-expanded='false'] .chev { transform: rotate(-90deg); }
-.task { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 1.25rem; border-top: 1px solid var(--line); }
+.task { display: flex; align-items: center; gap: 0.6rem; min-width: 0; padding: 0.5rem 1.25rem; border-top: 1px solid var(--line); }
 .task:hover { background: var(--surface); }
-.tick { display: grid; place-items: center; width: 17px; height: 17px; padding: 0; border: 1.5px solid var(--line-strong); border-radius: 5px; background: none; color: transparent; cursor: pointer; }
+.tick { flex-shrink: 0; display: grid; place-items: center; width: 17px; height: 17px; padding: 0; border: 1.5px solid var(--line-strong); border-radius: 5px; background: none; color: transparent; cursor: pointer; }
 .tick:hover { border-color: var(--accent); color: var(--accent-soft); }
 .tick.done { border-color: var(--accent); background: var(--accent); color: #000; }
-.code { font: 500 11.5px/1 'Geist Mono', monospace; color: var(--muted); }
+.code { flex-shrink: 0; font: 500 11.5px/1 'Geist Mono', monospace; color: var(--muted); }
 .title { flex: 1; min-width: 0; padding: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 500; color: var(--text); text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .title:hover { color: var(--accent-soft); }
-.due { padding: 0.15rem 0.5rem; border-radius: 6px; background: var(--surface-2); font-size: 12px; color: var(--muted); }
+.proj { max-width: 11rem; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
+.due { flex-shrink: 0; padding: 0.15rem 0.5rem; border-radius: 6px; background: var(--surface-2); font-size: 12px; color: var(--muted); }
 .due.today { color: var(--accent-soft); } .due.late { color: var(--danger, #ff8a80); }
-.pad { padding: 0 1.25rem; }
+.pad { min-width: 0; padding: 0 1.25rem; }
 @media (max-width: 760px) { .proj { display: none; } }
 :is(.tick, .title, .bucket__head):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 </style>

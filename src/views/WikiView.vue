@@ -373,7 +373,7 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 </script>
 
 <template>
-  <div class="wiki">
+  <div class="wiki is-viewport-sm">
     <aside class="list" aria-label="Documentos">
       <div class="list__head">
         <strong>Documentos</strong>
@@ -544,8 +544,8 @@ const toggleOpen = (id) => (expanded.value.has(id) ? expanded.value.delete(id) :
 </template>
 
 <style scoped>
-.wiki { display: grid; grid-template-columns: 17rem minmax(0, 1fr); height: 100%; min-height: 0; }
-.list { display: flex; flex-direction: column; gap: 1px; min-height: 0; padding: 0.9rem 0.6rem; border-right: 1px solid var(--line); overflow-y: auto; }
+.wiki { display: grid; grid-template-columns: 17rem minmax(0, 1fr); height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
+.list { display: flex; flex-direction: column; gap: 1px; min-height: 0; padding: 0.9rem 0.6rem; border-right: 1px solid var(--line); overflow-x: hidden; overflow-y: auto; }
 .list__head { display: flex; align-items: center; justify-content: space-between; padding: 0 0.35rem 0.6rem; }
 .head-btns { display: flex; gap: 0.3rem; }
 .imp-hint { margin: 0; font-size: 13px; color: var(--muted); }
@@ -586,9 +586,9 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .add-col { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.8rem; padding: 0.4rem 0.45rem; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .add-col:hover { color: var(--text); background: var(--surface-2); }
 
-.page { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: 1rem; min-height: 0; overflow-y: auto; }
+.page { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: 1rem; min-height: 0; overflow-x: hidden; overflow-y: auto; }
 .page.wide .editor { max-width: none; }
-.editor { display: flex; flex-direction: column; gap: 0.6rem; width: 100%; max-width: 48rem; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+.editor { display: flex; flex-direction: column; gap: 0.6rem; width: 100%; max-width: 48rem; margin: 0 auto; padding: 1rem 1.5rem 3rem 2.25rem; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; padding-bottom: 0.4rem; }
 .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; font-size: 12.5px; color: var(--muted); }
 .bar__right { display: flex; align-items: center; gap: 0.4rem; }
@@ -626,7 +626,7 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .tools button { min-width: 28px; height: 26px; padding: 0 0.4rem; border: 0; border-radius: 5px; background: none; font: 600 12px/1 'Geist', system-ui, sans-serif; color: var(--muted); cursor: pointer; }
 .tools button:hover { background: var(--surface-2); color: var(--text); }
 .write { position: relative; }
-.write { margin-left: -2rem; padding-left: 2rem; }
+.write { margin-left: -1.75rem; padding-left: 1.75rem; }
 .line-add { position: absolute; left: 0.35rem; z-index: 2; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 5px; background: none; font: 400 18px/1 'Geist', system-ui, sans-serif; color: var(--muted); cursor: pointer; }
 .line-add:hover { background: var(--surface-2); color: var(--text); }
 .body { width: 100%; min-height: 50vh; padding: 0.5rem 0; border: 0; background: none; font: 400 15px/1.7 'Geist Mono', ui-monospace, monospace; color: var(--text); resize: none; outline: none; field-sizing: content; }
@@ -656,7 +656,7 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .ver { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem; padding: 0.35rem 0; border-top: 1px solid var(--line); }
 .link { padding: 0; border: 0; background: none; font-size: 12.5px; color: var(--accent-soft); text-decoration: none; cursor: pointer; }
 
-.home-page { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 52rem; margin: 0 auto; padding: 2.5rem 1.5rem; overflow-y: auto; }
+.home-page { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 52rem; margin: 0 auto; padding: 2.5rem 1.5rem; overflow-x: hidden; overflow-y: auto; }
 .home-page h1 { margin: 0; font: 650 1.6rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); }
 .home-page > .muted { padding: 0; font-size: 13.5px; }
 .home-actions { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
@@ -668,5 +668,5 @@ button.row { gap: 0.5rem; padding: 0.4rem 0.45rem; border: 0; background: none; 
 .card .muted { padding: 0; }
 :is(.new-page, .row button, button.row, .mini, .caret, .add-col, .icon, .seg button, .menu__box button, .tools button, .chip, .sub, .toc, .link, .card, .new, .emoji summary):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 /* depois das regras base: antes delas, .page e .side as sobrescreviam e o editor ficava com 50px no celular */
-@media (max-width: 760px) { .wiki { grid-template-columns: minmax(0, 1fr); height: auto; } .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 45vh; } .page { grid-template-columns: minmax(0, 1fr); } .side { display: none; } }
+@media (max-width: 760px) { .wiki { grid-template-columns: minmax(0, 1fr); height: auto; overflow: visible; } .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 45vh; } .page { grid-template-columns: minmax(0, 1fr); } .side { display: none; } }
 </style>

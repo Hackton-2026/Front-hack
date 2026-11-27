@@ -46,7 +46,7 @@ watchEffect(() => {
   document.documentElement.dataset.calm = state.prefs.calm ? 'on' : ''
   document.documentElement.style.setProperty('--accent', state.prefs.accent || '#e56515')
 })
-const { ui, newTask } = useUi()
+const { ui, newTask, closeOverlays } = useUi()
 watch(() => [route.query.task, state.loaded], ([id]) => { if (id && state.tasks.some((t) => t.id === Number(id))) ui.taskId = Number(id) }, { immediate: true })
 const photo = computed(() => state.people.find((m) => m.id === state.me)?.avatar || user.value?.avatar || '')
 const hideVerify = ref(false)
@@ -102,11 +102,17 @@ const reduced = prefersReducedMotion()
 
 function subEnter(el, done) {
   if (reduced) return done()
-  gsap.fromTo(el, { height: 0, marginBottom: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', marginBottom: '0.75rem', autoAlpha: 1, duration: DUR.fast, ease: EASE.out, clearProps: 'height,marginBottom,overflow', onComplete: done })
+  gsap.killTweensOf(el)
+  let ended = false
+  const finish = () => { if (!ended) { ended = true; done() } }
+  gsap.fromTo(el, { height: 0, marginBottom: 0, autoAlpha: 0, overflow: 'hidden' }, { height: 'auto', marginBottom: '0.75rem', autoAlpha: 1, duration: DUR.fast, ease: EASE.out, clearProps: 'height,marginBottom,overflow', onComplete: finish, onInterrupt: finish })
 }
 function subLeave(el, done) {
   if (reduced) return done()
-  gsap.to(el, { height: 0, autoAlpha: 0, marginBottom: 0, overflow: 'hidden', duration: 0.16, ease: EASE.out, onComplete: done })
+  gsap.killTweensOf(el)
+  let ended = false
+  const finish = () => { if (!ended) { ended = true; done() } }
+  gsap.to(el, { height: 0, autoAlpha: 0, marginBottom: 0, overflow: 'hidden', duration: 0.16, ease: EASE.out, onComplete: finish, onInterrupt: finish })
 }
 
 let chord = ''
@@ -156,6 +162,9 @@ function onClick(e) {
 watch(() => route.path, async () => {
   ui.crumb = ''
   mobileNav.value = false
+  chord = ''
+  clearTimeout(chordTimer)
+  closeOverlays({ keepTask: Boolean(route.query.task) })
   await nextTick()
   const scroller = root.value?.querySelector('.main__scroll')
   if (scroller) scroller.scrollTop = 0
@@ -189,6 +198,8 @@ onUnmounted(() => {
   mounted = false
   unsubPush?.()
   clearInterval(inboxTimer)
+  clearTimeout(chordTimer)
+  closeOverlays()
   ctx?.revert()
   removeEventListener('keydown', onKey)
   removeEventListener('click', onClick)
@@ -450,13 +461,19 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .verify__x { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .verify__x:hover { background: var(--surface-2); color: var(--text); }
 :is(.verify__btn, .verify__x):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-.crumb { display: flex; align-items: center; gap: 0.5rem; min-height: 48px; padding: 0 1.5rem; border-bottom: 1px solid var(--line); font-weight: 500; }
+.crumb { display: flex; align-items: center; gap: 0.5rem; min-width: 0; min-height: 48px; padding: 0 1.5rem; overflow: hidden; white-space: nowrap; border-bottom: 1px solid var(--line); font-weight: 500; }
+.crumb > :deep(.app-icon) { flex-shrink: 0; }
 .crumb > :deep(.app-icon:first-child) { color: var(--accent-soft); }
+.crumb > span, .crumb__link { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .crumb__sep { color: var(--muted); }
 .crumb__link { margin: -0.2rem -0.35rem; padding: 0.2rem 0.35rem; border-radius: 6px; color: var(--muted); text-decoration: none; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
 .crumb__link:hover { background: var(--surface-2); color: var(--text); }
 .crumb__link:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 0; }
-.main__scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.main__scroll { flex: 1; min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+.main__scroll:has(> .is-viewport) { overflow: hidden; }
+@media (min-width: 761px) { .main__scroll:has(> .is-viewport-sm) { overflow: hidden; } }
+@media (min-width: 901px) { .main__scroll:has(> .is-viewport-md) { overflow: hidden; } }
+@media (min-width: 1101px) { .main__scroll:has(> .is-viewport-lg) { overflow: hidden; } }
 .loading { flex: 1; display: grid; place-content: center; justify-items: center; gap: 0.75rem; color: var(--muted); text-align: center; }
 .loading p { margin: 0; }
 .retry { padding: 0.45rem 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: color-mix(in srgb, var(--accent) 12%, transparent); cursor: pointer; }

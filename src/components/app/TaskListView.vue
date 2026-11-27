@@ -292,6 +292,7 @@ onUnmounted(() => {
 
 <style scoped>
 .list { display: flex; flex-direction: column; gap: 1.15rem; padding-bottom: 3.5rem; }
+.list, .group { min-width: 0; }
 .list__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
 .opt { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 12.5px; color: var(--muted); }
 .list__hint { margin-left: auto; font-size: 11.5px; color: var(--muted); }
@@ -332,7 +333,7 @@ onUnmounted(() => {
 .who-btn { display: inline-flex; align-items: center; min-height: 26px; padding: 0.1rem 0.25rem; border: 1px solid transparent; border-radius: 6px; background: none; cursor: pointer; transition: border-color 140ms ease, background-color 140ms ease; }
 .who-btn:hover { border-color: var(--line-strong); background: var(--surface-2); }
 .who-empty { display: grid; place-items: center; width: 22px; height: 22px; border: 1px dashed var(--line-strong); border-radius: 50%; color: var(--muted); }
-.who-pop { position: absolute; top: calc(100% + 4px); left: 0; z-index: 35; display: flex; flex-direction: column; min-width: 12.5rem; max-height: 15rem; overflow-y: auto; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 34px rgb(0 0 0 / 0.45); transform-origin: top left; }
+.who-pop { position: absolute; top: calc(100% + 4px); right: 0; left: auto; z-index: 35; display: flex; flex-direction: column; min-width: 12.5rem; max-height: 15rem; overflow-y: auto; padding: 0.3rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 34px rgb(0 0 0 / 0.45); transform-origin: top right; }
 .who-pop button { display: flex; align-items: center; gap: 0.5rem; padding: 0.38rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 12.5px; color: var(--text); text-align: left; cursor: pointer; }
 .who-pop button:hover { background: var(--surface-2); }
 .who-pop .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
@@ -355,6 +356,9 @@ onUnmounted(() => {
 .bulk-enter-from, .bulk-leave-to { opacity: 0; transform: translate(-50%, 14px); }
 
 :is(.caret, .tick, .who-btn, .bulk__close):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+@media (max-width: 1140px) and (min-width: 901px) {
+  .cols, .row { grid-template-columns: 24px minmax(0, 1fr) 6.6rem 5.4rem 5.8rem 6.4rem; }
+}
 @media (max-width: 900px) {
   .list__hint { display: none; }
   .cols { display: none; }

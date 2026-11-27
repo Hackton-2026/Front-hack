@@ -26,11 +26,21 @@ function answerAsk(result) {
   resolve?.(result)
 }
 
+function closeOverlays({ keepTask = false } = {}) {
+  if (!keepTask) ui.taskId = null
+  ui.creating = null
+  ui.chat = null
+  ui.palette = false
+  ui.help = false
+  if (ui.ask) answerAsk(ui.ask.value === null ? false : null)
+}
+
 export function useUi() {
   return {
     confirmAsk: (title, { message = '', confirmLabel = 'Apagar', danger = true } = {}) => openAsk({ title, message, confirmLabel, danger, value: null }),
     promptAsk: (title, value = '', { confirmLabel = 'Salvar', placeholder = '' } = {}) => openAsk({ title, message: '', confirmLabel, danger: false, value, placeholder }),
     answerAsk,
+    closeOverlays,
     ui,
     openTask: (task) => (ui.taskId = task.id),
     closeTask: () => (ui.taskId = null),

@@ -427,7 +427,7 @@ async function onImport(e) {
 </script>
 
 <template>
-  <div class="page">
+  <div class="page is-viewport-md">
     <header class="page__head">
       <h1>Ajustes</h1>
       <span class="page__sub">Gerencie sua conta, preferências, planos e configurações do workspace.</span>
@@ -853,6 +853,7 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
   gap: 1.15rem;
   height: 100%;
   max-height: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 0.35rem;
@@ -935,6 +936,7 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
   display: flex;
   flex-direction: column;
   gap: 1.35rem;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 1.45rem 2.15rem 1.85rem;
@@ -950,7 +952,7 @@ h2 { margin: 0; font: 650 1.4rem/1.2 'Geist', system-ui, sans-serif; letter-spac
 h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text); }
 
 .form { display: flex; flex-direction: column; gap: 1.1rem; width: 100%; max-width: none; }
-.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem 1.35rem; width: 100%; max-width: none; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr)); gap: 1rem 1.35rem; width: 100%; max-width: none; }
 .form label { display: flex; flex-direction: column; gap: 0.4rem; font-size: 12.5px; font-weight: 500; color: var(--muted); }
 :is(.form input, .row input, .rows input) { height: 38px; padding: 0 0.75rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); font: inherit; font-size: 14px; color: var(--text); outline: none; }
 .form :deep(.sel) { height: 38px; border-radius: 8px; font-size: 13.5px; }
@@ -992,7 +994,7 @@ h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text);
 .seg label:has(input:focus-visible) { outline: 2px solid var(--accent-soft); }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 
-.toggles { display: grid; grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr)); gap: 0.85rem; margin: 0; padding: 0; list-style: none; }
+.toggles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(21rem, 100%), 1fr)); gap: 0.85rem; margin: 0; padding: 0; list-style: none; }
 .toggles li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 50%, var(--surface)); font-size: 13.5px; }
 .toggles small { display: block; margin-top: 0.2rem; font-size: 12px; color: var(--muted); }
 .switch { position: relative; flex-shrink: 0; width: 36px; height: 20px; padding: 0; border: 0; border-radius: 999px; background: var(--line-strong); cursor: pointer; transition: background 0.2s var(--ease); }
