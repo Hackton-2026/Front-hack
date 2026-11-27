@@ -29,7 +29,7 @@ watch(picking, (open) => {
   document[method]('pointerdown', closePickerOutside, true)
   document[method]('keydown', closePickerOnEsc)
 })
-onUnmounted(() => { picking.value = false; document.removeEventListener('pointerdown', closePickerOutside, true); document.removeEventListener('keydown', closePickerOnEsc) })
+onUnmounted(() => { clearTimeout(feedTimer); picking.value = false; document.removeEventListener('pointerdown', closePickerOutside, true); document.removeEventListener('keydown', closePickerOnEsc) })
 const feed = ref([])
 const loadingFeed = ref(false)
 const update = reactive({ state: 'on_track', text: '' })
@@ -75,7 +75,10 @@ async function addLink() {
   }
 }
 async function removeLink(l) {
-  try { await linksApi(`${l.id}/`, { method: 'DELETE' }); materials.value = materials.value.filter((x) => x !== l) } catch (e) { toast(e.message) }
+  const idx = materials.value.indexOf(l)
+  if (idx < 0) return
+  materials.value.splice(idx, 1)
+  try { await linksApi(`${l.id}/`, { method: 'DELETE' }) } catch (e) { materials.value.splice(idx, 0, l); toast(e.message) }
 }
 
 async function refresh() {
@@ -89,8 +92,17 @@ function grow() {
   desc.value.style.height = 'auto'
   desc.value.style.height = `${desc.value.scrollHeight}px`
 }
+let feedTimer
+function scheduleFeedRefresh() {
+  clearTimeout(feedTimer)
+  feedTimer = setTimeout(async () => {
+    if (!p.value) return
+    try { feed.value = await projectActivity(pid.value) } catch { }
+  }, 1200)
+}
 async function save(fields) {
-  if (await updateProject(p.value, fields)) refresh()
+  const ok = await updateProject(p.value, fields)
+  if (ok && ['name', 'description', 'icon', 'cover', 'cover_image'].some((k) => k in fields)) scheduleFeedRefresh()
 }
 const coverInput = ref(null)
 const uploadingCover = ref(false)
@@ -166,11 +178,11 @@ onMounted(async () => {
           <button type="button" class="icon" :disabled="!canEdit" :aria-expanded="picking" aria-label="Trocar ícone do projeto" @click="picking = !picking">
             <ProjectIcon :icon="p.icon" :color="p.color" :size="28" />
           </button>
-          <div v-if="picking" class="emojis" role="listbox" aria-label="Ícones">
+          <div v-if="picking" class="emojis" role="listbox" aria-label="Ícones" :style="{ '--pick-color': p.color || undefined }">
             <div class="colors" role="group" aria-label="Cor do projeto">
               <button v-for="c in COLORS" :key="c" type="button" class="sw" :style="{ background: c }" :aria-pressed="p.color === c" :aria-label="`Cor ${c}`" @click="save({ color: c })" />
             </div>
-            <button v-for="e in PROJECT_ICONS" :key="e" type="button" role="option" :aria-selected="iconClass(p.icon) === e" :aria-label="e.slice(6)" @click="pick(e)"><ProjectIcon :icon="e" :color="p.color" :size="17" /></button>
+            <button v-for="e in PROJECT_ICONS" :key="e" type="button" role="option" :aria-selected="iconClass(p.icon) === e" :aria-label="e.slice(6)" @click="pick(e)"><ProjectIcon :icon="e" :size="17" /></button>
             <button type="button" class="none" @click="pick('')">Sem ícone</button>
             <a class="credit" href="https://www.flaticon.com/uicons" target="_blank" rel="noopener">Uicons by Flaticon</a>
           </div>
@@ -303,8 +315,8 @@ onMounted(async () => {
 .icon:disabled { cursor: default; }
 .sq { width: 1.4rem; height: 1.4rem; border-radius: 6px; }
 .emojis { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; display: grid; grid-template-columns: repeat(8, 2.1rem); gap: 2px; padding: 0.4rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 40px rgb(0 0 0 / 0.45); }
-.emojis button { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
-.emojis button:hover, .emojis button[aria-selected='true'] { color: var(--text); }
+.emojis button { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--pick-color, var(--muted)); cursor: pointer; }
+.emojis button:hover, .emojis button[aria-selected='true'] { background: var(--surface-2); }
 .emojis button:hover, .emojis button[aria-selected='true'] { background: var(--surface-2); }
 .emojis .credit { grid-column: 1 / -1; padding: 0.2rem 0 0; font-size: 11px; color: var(--muted); text-align: center; text-decoration: none; }
 .emojis .credit:hover { color: var(--text); }

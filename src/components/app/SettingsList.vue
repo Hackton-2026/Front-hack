@@ -111,10 +111,13 @@ async function submit() {
 }
 async function remove(row) {
   if (!(await useUi().confirmAsk(`Apagar este ${props.noun}?`))) return
+  const idx = rows.value.indexOf(row)
+  if (idx < 0) return
+  rows.value.splice(idx, 1)
   try {
     await api(`${props.path}${row.id}/`, { method: 'DELETE' })
-    rows.value = rows.value.filter((r) => r !== row)
   } catch (e) {
+    rows.value.splice(idx, 0, row)
     error.value = e.message
   }
 }

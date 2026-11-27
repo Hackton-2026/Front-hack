@@ -24,7 +24,11 @@ watch(done, (v) => save(KEY, v), { deep: true })
 
 const NOTES_KEY = 'novexo:notes'
 const notes = ref(read(NOTES_KEY, []))
-watch(notes, (v) => save(NOTES_KEY, v), { deep: true })
+let notesTimer
+watch(notes, (v) => {
+  clearTimeout(notesTimer)
+  notesTimer = setTimeout(() => save(NOTES_KEY, v), 300)
+}, { deep: true })
 
 export function useOnboarding() {
   const isDone = (id) => done.value.includes(id)

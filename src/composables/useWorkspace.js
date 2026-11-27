@@ -1,7 +1,8 @@
-import { computed, reactive, toRaw, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { api } from '../services/api'
 import { useUi } from './useUi'
 import { PROJECT_ICONS } from '../components/app/projectIcons'
+import { createOptimisticQueue, deepMerge, restoreFields, snapshotFields } from '../utils/optimisticQueue'
 
 
 export const STATUSES = [
@@ -133,6 +134,8 @@ function toApi(fields) {
 const fromActivity = (a) => ({ id: a.id, taskId: a.task, actor: a.actor, type: a.event_type, text: a.text, at: a.at, details: a.details || {} })
 const KINDS = { cycle: 'cycles', module: 'modules', page: 'pages', view: 'views' }
 
+const optimistic = createOptimisticQueue()
+
 async function load() {
   if (state.loading) return
   state.loading = true
@@ -156,6 +159,7 @@ async function load() {
 
 // logout/troca de conta: o singleton não pode mostrar o workspace e os rascunhos da conta anterior
 export function resetWorkspace() {
+  optimistic.clear()
   Object.assign(state, {
     loaded: false, loading: false, error: '', me: null, isAdmin: false, workspaceName: '', slug: '', settings: {},
     members: [], people: [], invites: [], projects: [], tasks: [], activity: [], inbox: [], cycles: [], modules: [], pages: [], views: [], docs: localDefaults().docs,
@@ -176,10 +180,6 @@ function refreshFeed() {
 }
 
 const fail = (e) => useUi().toast(e.message || 'Não foi possível salvar. Tente de novo.')
-// coalescing + versionamento por tarefa: drags rápidos nunca pulam de volta quando uma resposta atrasada chega
-const taskVersions = new Map()
-const pendingPatches = new Map()
-const inFlightTasks = new Map()
 // clique duplo: um pedido igual em andamento é reaproveitado em vez de criar o item duas vezes
 const inflight = new Map()
 const once = (key, run) => { if (!inflight.has(key)) inflight.set(key, run().finally(() => inflight.delete(key))); return inflight.get(key) }
@@ -226,7 +226,8 @@ export function useWorkspace() {
       refreshFeed()
       return true
     } catch (e) {
-      state.tasks.splice(state.tasks.indexOf(task), 1)
+      const idx = state.tasks.indexOf(task)
+      if (idx >= 0) state.tasks.splice(idx, 1)
       fail(e)
       return false
     }
@@ -239,65 +240,34 @@ export function useWorkspace() {
       return true
     }
     const id = task.id
-    const ver = (taskVersions.get(id) || 0) + 1
-    taskVersions.set(id, ver)
-
-    const before = Object.fromEntries(Object.keys(fields).map((k) => [k, structuredClone(toRaw(task[k]) ?? null)]))
-    Object.assign(task, fields, { updatedAt: new Date().toISOString() })
-    if (typeof id !== 'number') return true
-
-    // mescla edições rápidas da mesma tarefa em um único próximo PATCH sem sobrescrever o estado otimista mais recente
-    const queued = pendingPatches.get(id)
-    if (queued) {
-      Object.assign(queued.fields, fields)
-      for (const [k, v] of Object.entries(before)) {
-        if (!(k in queued.before)) queued.before[k] = v
-      }
-    } else {
-      pendingPatches.set(id, { fields: { ...fields }, before })
+    if (typeof id !== 'number') {
+      Object.assign(task, fields, { updatedAt: new Date().toISOString() })
+      return true
     }
-
-    if (inFlightTasks.has(id)) return inFlightTasks.get(id)
-
-    const flush = (async () => {
-      let lastResult = true
-      while (pendingPatches.has(id)) {
-        const batch = pendingPatches.get(id)
-        pendingPatches.delete(id)
-        const sentVer = taskVersions.get(id)
-        try {
-          const data = await api(`/api/tasks/${id}/`, { method: 'PATCH', body: toApi(batch.fields) })
-          // só aplica a resposta do servidor se nenhuma mudança mais nova do usuário entrou na fila
-          if (taskVersions.get(id) === sentVer && !pendingPatches.has(id)) {
-            Object.assign(task, fromApi(data))
-          }
-          refreshFeed()
-          lastResult = true
-        } catch (e) {
-          if (taskVersions.get(id) === sentVer && !pendingPatches.has(id)) {
-            Object.assign(task, batch.before)
-          }
-          fail(e)
-          lastResult = e.message
-        }
-      }
-      return lastResult
-    })().finally(() => {
-      inFlightTasks.delete(id)
+    return optimistic.enqueue(`task:${id}`, {
+      patch: fields,
+      captureBefore: (p) => snapshotFields(task, p),
+      apply: (p) => Object.assign(task, p, { updatedAt: new Date().toISOString() }),
+      revert: (before) => restoreFields(task, before),
+      send: (batch) => api(`/api/tasks/${id}/`, { method: 'PATCH', body: toApi(batch) }),
+      onSuccess: (data) => {
+        Object.assign(task, fromApi(data))
+        refreshFeed()
+      },
+      onError: fail,
     })
-
-    inFlightTasks.set(id, flush)
-    return flush
   }
   async function removeTask(task) {
-    state.tasks.splice(state.tasks.indexOf(task), 1)
+    const idx = state.tasks.indexOf(task)
+    if (idx < 0) return
+    state.tasks.splice(idx, 1)
     if (task.draft) { schedulePersist(); return }
     if (typeof task.id !== 'number') return
     try {
       await api(`/api/tasks/${task.id}/`, { method: 'DELETE' })
       refreshFeed()
     } catch (e) {
-      state.tasks.push(task)
+      state.tasks.splice(idx, 0, task)
       fail(e)
     }
   }
@@ -316,17 +286,19 @@ export function useWorkspace() {
     })
   }
   async function updateProject(p, fields) {
-    const before = Object.fromEntries(Object.keys(fields).map((k) => [k, p[k]]))
-    Object.assign(p, fields)
-    try {
-      Object.assign(p, await api(`/api/projects/${p.id}/`, { method: 'PATCH', body: fields }))
-      refreshFeed()
-      return true
-    } catch (e) {
-      Object.assign(p, before)
-      fail(e)
-      return false
-    }
+    const res = await optimistic.enqueue(`project:${p.id}`, {
+      patch: fields,
+      captureBefore: (patch) => snapshotFields(p, patch),
+      apply: (patch) => Object.assign(p, patch),
+      revert: (before) => restoreFields(p, before),
+      send: (batch) => api(`/api/projects/${p.id}/`, { method: 'PATCH', body: batch }),
+      onSuccess: (data) => {
+        Object.assign(p, data)
+        refreshFeed()
+      },
+      onError: fail,
+    })
+    return res === true
   }
   async function postUpdate(p, body) {
     try {
@@ -353,16 +325,16 @@ export function useWorkspace() {
     })
   }
   async function updateItem(kind, item, fields) {
-    const before = Object.fromEntries(Object.keys(fields).map((k) => [k, structuredClone(toRaw(item[k]) ?? null)]))
-    Object.assign(item, fields)
-    try {
-      Object.assign(item, await api(`/api/${KINDS[kind]}/${item.id}/`, { method: 'PATCH', body: fields }))
-      return true
-    } catch (e) {
-      Object.assign(item, before)
-      fail(e)
-      return false
-    }
+    const res = await optimistic.enqueue(`${kind}:${item.id}`, {
+      patch: fields,
+      captureBefore: (patch) => snapshotFields(item, patch),
+      apply: (patch) => Object.assign(item, patch),
+      revert: (before) => restoreFields(item, before),
+      send: (batch) => api(`/api/${KINDS[kind]}/${item.id}/`, { method: 'PATCH', body: batch }),
+      onSuccess: (data) => Object.assign(item, data),
+      onError: fail,
+    })
+    return res === true
   }
   async function removeItem(kind, item) {
     const list = state[KINDS[kind]]
@@ -393,13 +365,19 @@ export function useWorkspace() {
     }
   }
   async function archiveProject(p, hard = false) {
+    const idx = state.projects.indexOf(p)
+    const snapTasks = state.tasks.filter((t) => t.projectId === p.id)
+    const snapLists = Object.fromEntries(['cycles', 'modules', 'pages', 'views'].map((k) => [k, state[k].filter((x) => x.project === p.id)]))
+    if (idx >= 0) state.projects.splice(idx, 1)
+    for (const k of ['cycles', 'modules', 'pages', 'views']) state[k] = state[k].filter((x) => x.project !== p.id)
+    state.tasks = state.tasks.filter((t) => t.projectId !== p.id)
     try {
       await api(`/api/projects/${p.id}/${hard ? '?hard=1' : ''}`, { method: 'DELETE' })
-      state.projects.splice(state.projects.indexOf(p), 1)
-      for (const k of ['cycles', 'modules', 'pages', 'views']) state[k] = state[k].filter((x) => x.project !== p.id)
-      state.tasks = state.tasks.filter((t) => t.projectId !== p.id)
       return true
     } catch (e) {
+      if (idx >= 0) state.projects.splice(idx, 0, p)
+      state.tasks.push(...snapTasks)
+      for (const [k, items] of Object.entries(snapLists)) state[k].push(...items)
       fail(e)
       return false
     }
@@ -426,28 +404,57 @@ export function useWorkspace() {
   const doneRatio = (list) => (list.length ? list.filter((t) => t.status === 'done').length / list.length : 0)
 
   async function saveWorkspace(body) {
-    try {
-      const ws = await api('/api/workspace/', { method: 'PATCH', body })
-      Object.assign(state, { workspaceName: ws.name, slug: ws.slug, settings: ws.settings, members: ws.members })
-      return true
-    } catch (e) {
-      fail(e)
-      return false
-    }
+    const res = await optimistic.enqueue('workspace', {
+      patch: body,
+      deep: true,
+      captureBefore: (patch) => {
+        const snap = {}
+        if ('name' in patch) snap.name = state.workspaceName
+        if ('slug' in patch) snap.slug = state.slug
+        if ('settings' in patch) snap.settings = snapshotFields(state.settings, patch.settings)
+        return snap
+      },
+      apply: (patch) => {
+        if ('name' in patch) state.workspaceName = patch.name
+        if ('slug' in patch) state.slug = patch.slug
+        if ('settings' in patch) {
+          if (!state.settings || typeof state.settings !== 'object') state.settings = {}
+          deepMerge(state.settings, patch.settings)
+        }
+      },
+      revert: (before) => {
+        if ('name' in before) state.workspaceName = before.name
+        if ('slug' in before) state.slug = before.slug
+        if ('settings' in before) restoreFields(state.settings, before.settings)
+      },
+      send: (batch) => api('/api/workspace/', { method: 'PATCH', body: batch }),
+      onSuccess: (ws) => {
+        Object.assign(state, { workspaceName: ws.name, slug: ws.slug, settings: ws.settings || {}, members: ws.members })
+      },
+      onError: fail,
+    })
+    return res === true
   }
   const renameWorkspace = (name) => saveWorkspace({ name })
   async function setMemberRole(m, role) {
-    try {
-      m.role = (await api(`/api/workspace/members/${m.id}/`, { method: 'PATCH', body: { role } })).role
-    } catch (e) {
-      fail(e)
-    }
+    await optimistic.enqueue(`member:${m.id}`, {
+      patch: { role },
+      captureBefore: (patch) => snapshotFields(m, patch),
+      apply: (patch) => Object.assign(m, patch),
+      revert: (before) => restoreFields(m, before),
+      send: (batch) => api(`/api/workspace/members/${m.id}/`, { method: 'PATCH', body: batch }),
+      onSuccess: (data) => { m.role = data.role },
+      onError: fail,
+    })
   }
   async function removeMember(m) {
+    const idx = state.members.findIndex((x) => x.id === m.id)
+    if (idx < 0) return
+    state.members.splice(idx, 1)
     try {
       await api(`/api/workspace/members/${m.id}/`, { method: 'DELETE' })
-      state.members = state.members.filter((x) => x.id !== m.id)
     } catch (e) {
+      state.members.splice(idx, 0, m)
       fail(e)
     }
   }
@@ -476,15 +483,37 @@ export function useWorkspace() {
   const cancelInvite = (pid, inviteId) => api(`/api/projects/${pid}/invitations/${inviteId}/`, { method: 'DELETE' })
   const setProjectPermission = (pid, userId, permission) => api(`/api/projects/${pid}/members/${userId}/`, { method: 'PATCH', body: { permission } })
   async function setProjectRole(pid, userId, title) {
-    const res = await api(`/api/projects/${pid}/members/${userId}/`, { method: 'PATCH', body: { title } })
     const p = project(pid)
-    if (p) {
-      const titles = { ...(p.titles || {}) }
-      if (res.title) titles[userId] = res.title
-      else delete titles[userId]
-      p.titles = titles
-    }
-    return res.title
+    let latestTitle = title
+    const res = await optimistic.enqueue(`proj-role:${pid}:${userId}`, {
+      patch: { title },
+      captureBefore: () => ({ title: p?.titles?.[userId] ?? '' }),
+      apply: (patch) => {
+        if (!p) return
+        const titles = { ...(p.titles || {}) }
+        if (patch.title) titles[userId] = patch.title
+        else delete titles[userId]
+        p.titles = titles
+      },
+      revert: (before) => {
+        if (!p) return
+        const titles = { ...(p.titles || {}) }
+        if (before.title) titles[userId] = before.title
+        else delete titles[userId]
+        p.titles = titles
+      },
+      send: (batch) => api(`/api/projects/${pid}/members/${userId}/`, { method: 'PATCH', body: batch }),
+      onSuccess: (data) => {
+        latestTitle = data.title
+        if (!p) return
+        const titles = { ...(p.titles || {}) }
+        if (data.title) titles[userId] = data.title
+        else delete titles[userId]
+        p.titles = titles
+      },
+    })
+    if (res !== true) throw new Error(typeof res === 'string' ? res : 'Não foi possível salvar o cargo.')
+    return latestTitle
   }
   const rolesOf = (pid) => {
     const groups = {}
@@ -492,13 +521,27 @@ export function useWorkspace() {
     return Object.entries(groups).map(([title, ids]) => ({ title, ids })).sort((a, b) => a.title.localeCompare(b.title))
   }
   async function removeProjectMember(pid, userId) {
-    await api(`/api/projects/${pid}/members/${userId}/`, { method: 'DELETE' })
+    const p = project(pid)
+    const prevMembers = p?.members ? [...p.members] : null
+    const prevProjIdx = userId === state.me ? state.projects.findIndex((x) => x.id === pid) : -1
+    const prevProj = prevProjIdx >= 0 ? state.projects[prevProjIdx] : null
+    const prevTasks = userId === state.me ? state.tasks.filter((t) => !t.draft && t.projectId === pid) : []
     if (userId === state.me) {
-      state.projects = state.projects.filter((p) => p.id !== pid)
+      state.projects = state.projects.filter((x) => x.id !== pid)
       state.tasks = state.tasks.filter((t) => t.draft || t.projectId !== pid)
-    } else {
-      const p = project(pid)
-      if (p?.members) p.members = p.members.filter((id) => id !== userId)
+    } else if (p?.members) {
+      p.members = p.members.filter((id) => id !== userId)
+    }
+    try {
+      await api(`/api/projects/${pid}/members/${userId}/`, { method: 'DELETE' })
+    } catch (e) {
+      if (userId === state.me && prevProj) {
+        state.projects.splice(prevProjIdx, 0, prevProj)
+        state.tasks.push(...prevTasks)
+      } else if (p && prevMembers) {
+        p.members = prevMembers
+      }
+      throw e
     }
   }
   const inviteInfo = (token) => api(`/api/invites/${encodeURIComponent(token)}/`)

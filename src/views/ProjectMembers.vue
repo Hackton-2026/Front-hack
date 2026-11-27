@@ -108,7 +108,17 @@ async function copyLink() {
     ui.toast('Não foi possível copiar. Selecione o link e copie manualmente.')
   }
 }
-const changePerm = (m, perm) => run(`perm-${m.id}`, () => setProjectPermission(pid.value, m.id, perm), refresh)
+async function changePerm(m, perm) {
+  const prev = m.permission
+  m.permission = perm
+  error.value = ''
+  try {
+    await setProjectPermission(pid.value, m.id, perm)
+  } catch (e) {
+    m.permission = prev
+    error.value = e.message
+  }
+}
 const remove = (m) => run(`rm-${m.id}`, () => removeProjectMember(pid.value, m.id), async () => { await refresh(); load() })
 async function leave() {
   const name = p.value?.name
