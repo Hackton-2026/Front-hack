@@ -46,8 +46,8 @@ function toggle(i) {
       >
         <span class="nvx-faq__q">{{ qText(item) }}</span>
         <span class="nvx-faq__icon" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none">
-            <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3.5v17M3.5 12h17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
           </svg>
         </span>
       </button>
@@ -86,7 +86,7 @@ function toggle(i) {
   justify-content: space-between;
   gap: 1.25rem;
   width: 100%;
-  padding: 1.3rem 0;
+  padding: 1.35rem 0;
   border: 0;
   background: none;
   font: 500 clamp(0.95rem, 1.3vw, 1.0625rem)/1.5 var(--lp-sans, 'Geist', system-ui, sans-serif);
@@ -107,24 +107,22 @@ function toggle(i) {
   flex: 1;
 }
 .nvx-faq__icon {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  border: 1px solid rgb(255 255 255 / 0.14);
+  width: 24px;
+  height: 24px;
   color: var(--lp-orange-soft, #fba45c);
-  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), background 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
 }
 .nvx-faq__icon svg {
-  width: 14px;
-  height: 14px;
+  width: 22px;
+  height: 22px;
 }
 .nvx-faq__item.is-open .nvx-faq__icon {
   transform: rotate(45deg);
-  background: rgb(229 101 21 / 0.18);
-  border-color: rgb(229 101 21 / 0.45);
+  color: var(--lp-orange, #e56515);
 }
 .nvx-faq__body {
   display: grid;
