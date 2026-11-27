@@ -102,13 +102,13 @@ h2 { margin: 0 0 0.25rem; font: 600 1.25rem/1.2 'Geist', system-ui, sans-serif; 
 .bar { height: 4px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .bar__fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-soft)); transform-origin: left; }
 
-.done { position: relative; padding: 0.8rem 1rem; border: 1px solid rgb(229 101 21 / 0.45); border-radius: 10px; background: rgb(229 101 21 / 0.1); color: var(--text); }
+.done { position: relative; padding: 0.8rem 1rem; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--text); }
 .done strong { color: var(--accent-soft); margin-right: 0.35rem; }
 .burst { position: absolute; left: 50%; top: 50%; pointer-events: none; }
 .burst :deep(i) { position: absolute; width: 7px; height: 11px; border-radius: 2px; }
 
 .steps { margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
-.step { --flash: 0; background: rgb(229 101 21 / calc(var(--flash) * 0.16)); }
+.step { --flash: 0; background: color-mix(in srgb, var(--accent) calc(var(--flash) * 16%), transparent); }
 .step + .step { border-top: 1px solid var(--line); }
 .step__btn { display: flex; align-items: center; gap: 0.85rem; width: 100%; padding: 0.85rem 1rem; border: 0; background: none; text-align: left; cursor: pointer; transition: background 0.2s var(--ease); }
 .step__btn:hover { background: var(--surface-2); }

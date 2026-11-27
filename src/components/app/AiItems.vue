@@ -62,7 +62,7 @@ const due = (d) => d && new Date(`${d}T12:00`).toLocaleDateString('pt-BR', { day
 .card { display: flex; align-items: center; gap: 0.65rem; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); font: inherit; color: var(--text); text-align: left; text-decoration: none; cursor: pointer; transition: border-color 0.2s var(--ease), translate 0.2s var(--ease); }
 .card:hover { border-color: var(--accent); translate: 0 -1px; }
 .card:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-.ic { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 7px; background: rgb(229 101 21 / 0.14); color: var(--accent-soft); }
+.ic { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 7px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent-soft); }
 .txt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .txt small { font-size: 11.5px; color: var(--muted); }
 .txt strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }

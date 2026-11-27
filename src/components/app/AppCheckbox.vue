@@ -119,7 +119,7 @@ function onToggle(e) {
 .nvx-chk.is-indeterminate .nvx-chk__box {
   border-color: var(--accent, #e56515);
   background: var(--accent, #e56515);
-  box-shadow: 0 0 0 1px rgb(229 101 21 / 0.25);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #e56515) 28%, transparent);
 }
 .nvx-chk.is-checked .nvx-chk__mark {
   stroke-dashoffset: 0;

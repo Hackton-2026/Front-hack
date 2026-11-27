@@ -45,6 +45,8 @@ function draw() {
   if (el.width !== W || el.height !== H) { el.width = W; el.height = H; el.style.width = `${cw}px`; el.style.height = `${ch}px` }
 
   const ctx = el.getContext('2d'), c = COLORS[props.variant] || COLORS.primary, a = progress
+  const accent = getComputedStyle(parent).getPropertyValue('--accent').trim()
+  const fillColor = props.variant === 'secondary' ? c.fill : (accent || c.fill)
   const bump = 4 * a * (1 - a)
   const cy = -0.35 + 0.85 * a
   const size = 0.12 + 1.5 * a
@@ -55,7 +57,7 @@ function draw() {
   if (!c.bg && a < 0.01) return
   ctx.beginPath()
   ctx.ellipse(0.5 * W, (1 - cy) * H, rx, ry, 0, 0, Math.PI * 2)
-  ctx.fillStyle = c.fill
+  ctx.fillStyle = fillColor
   ctx.fill()
 }
 
@@ -186,7 +188,7 @@ onBeforeUnmount(() => {
 :global(.app.is-light) .gb--secondary .gb__btn { color: var(--text); border: 1px solid var(--line-strong); background: var(--surface-2); }
 :global(.app.is-light) .gb--secondary .gb__ring { display: none; }
 :global(.app.is-light) .gb--primary .gb__btn { border: 1px solid var(--line-strong); }
-.gb__btn:focus-visible { outline: 2px solid #fba45c; outline-offset: 3px; }
+.gb__btn:focus-visible { outline: 2px solid var(--accent-soft, #fba45c); outline-offset: 3px; }
 
 .gb__canvas { position: absolute; top: -1px; left: -1px; z-index: 0; display: block; width: calc(100% + 2px); height: calc(100% + 2px); border-radius: inherit; pointer-events: none; }
 .gb__label { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 0.5rem; transition: color 0.4s ease-out 0.15s; }

@@ -311,8 +311,8 @@ onMounted(() => {
 .card.is-dragging { opacity: 0.35; }
 .card.is-moved { animation: kb-flash 0.55s ease-out; }
 @keyframes kb-flash {
-  0% { border-color: var(--accent); box-shadow: 0 0 0 2px rgb(229 101 21 / 0.45); }
-  100% { border-color: var(--line-strong); box-shadow: 0 0 0 0 rgb(229 101 21 / 0); }
+  0% { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+  100% { border-color: var(--line-strong); box-shadow: 0 0 0 0 transparent; }
 }
 .card.is-done .card__title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
 .card:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }

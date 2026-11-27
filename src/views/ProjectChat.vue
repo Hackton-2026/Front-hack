@@ -311,7 +311,7 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 .empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin: auto; max-width: 26rem; padding: 0; border: 0; text-align: center; color: var(--muted); } .empty strong { color: var(--text); font-size: 15px; }
 .empty p { margin: 0; line-height: 1.55; }
 .empty code { padding: 0.05rem 0.3rem; border-radius: 4px; background: var(--surface-2); color: var(--accent-soft); }
-.spark { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; background: rgb(229 101 21 / 0.16); color: var(--accent-soft); }
+.spark { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent-soft); }
 .msg { display: flex; align-items: flex-start; gap: 0.6rem; margin-top: 0.7rem; }
 .msg.cont { margin-top: 0; padding-left: calc(30px + 0.6rem); }
 .ava { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; overflow: hidden; border-radius: 50%; font: 700 11px/1 'Lexend', system-ui, sans-serif; color: #000; }
@@ -321,12 +321,12 @@ const sameAuthor = (i) => i > 0 && messages.value[i - 1].is_ai === messages.valu
 .bubble header strong { font-weight: 600; font-size: 13.5px; }
 .bubble time { font-size: 11.5px; color: var(--muted); }
 .bubble p { margin: 0.1rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
-.msg.ai .bubble { padding: 0.5rem 0.75rem; border: 1px solid rgb(229 101 21 / 0.35); border-radius: 10px; background: rgb(229 101 21 / 0.07); }
+.msg.ai .bubble { padding: 0.5rem 0.75rem; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .msg.ai.cont .bubble { margin-top: 0.3rem; }
 .msg.ai header strong { color: var(--accent-soft); }
 mark { padding: 0 0.15rem; border-radius: 4px; background: var(--surface-2); color: var(--text); }
-mark.nvx { background: rgb(229 101 21 / 0.18); color: var(--accent-soft); }
-.confirm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; margin: 0.8rem 0 0 calc(30px + 0.6rem); padding: 0.6rem 0.8rem; border: 1px solid rgb(229 101 21 / 0.5); border-radius: 10px; background: var(--surface); }
+mark.nvx { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent-soft); }
+.confirm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; margin: 0.8rem 0 0 calc(30px + 0.6rem); padding: 0.6rem 0.8rem; border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); border-radius: 10px; background: var(--surface); }
 .confirm p { margin: 0; white-space: pre-line; }
 .confirm div { display: flex; gap: 0.4rem; }
 .thinking { display: flex; align-items: center; gap: 0.6rem; margin: 0.8rem 0 0; color: var(--muted); }
@@ -336,7 +336,7 @@ mark.nvx { background: rgb(229 101 21 / 0.18); color: var(--accent-soft); }
 .dots i:nth-child(2) { animation-delay: 0.15s; }
 .dots i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes dot { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
-.error { margin: 0 0.9rem 0.5rem; padding: 0.55rem 0.8rem; border: 1px solid rgb(229 101 21 / 0.45); border-radius: 8px; background: rgb(229 101 21 / 0.1); font-size: 13px; color: #ffd2b3; }
+.error { margin: 0 0.9rem 0.5rem; padding: 0.55rem 0.8rem; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--accent) 10%, transparent); font-size: 13px; color: var(--accent-soft); }
 .composer { container-type: inline-size; position: relative; display: flex; flex-direction: column; gap: 0.35rem; margin: 0 0.75rem 0.75rem; padding: 0.65rem 0.65rem 0.5rem 0.85rem; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); }
 .composer:focus-within { border-color: var(--accent); }
 .composer textarea { min-height: 1.5rem; max-height: 10rem; border: 0; background: none; font: inherit; color: var(--text); resize: none; outline: none; field-sizing: content; }

@@ -41,7 +41,10 @@ const onScheme = (e) => (systemLight.value = e.matches)
 lightQuery.addEventListener('change', onScheme)
 onUnmounted(() => lightQuery.removeEventListener('change', onScheme))
 const light = computed(() => state.prefs.theme === 'light' || (state.prefs.theme === 'auto' && systemLight.value))
-watchEffect(() => (document.documentElement.dataset.calm = state.prefs.calm ? 'on' : ''))
+watchEffect(() => {
+  document.documentElement.dataset.calm = state.prefs.calm ? 'on' : ''
+  document.documentElement.style.setProperty('--accent', state.prefs.accent || '#e56515')
+})
 const { ui, newTask } = useUi()
 watch(() => [route.query.task, state.loaded], ([id]) => { if (id && state.tasks.some((t) => t.id === Number(id))) ui.taskId = Number(id) }, { immediate: true })
 const photo = computed(() => state.people.find((m) => m.id === state.me)?.avatar || user.value?.avatar || '')
@@ -274,7 +277,7 @@ onUnmounted(() => {
   --text: #f2efea;
   --muted: #a29d95;
   --accent: #e56515;
-  --accent-soft: #fba45c;
+  --accent-soft: color-mix(in srgb, var(--accent) 56%, #ffffff);
   --on-accent: #140700;
   --danger: #ff8a80;
   --success: #7fc47a;
@@ -311,7 +314,7 @@ onUnmounted(() => {
   --line-strong: #d2cac0;
   --text: #1c1a17;
   --muted: #6b655d;
-  --accent-soft: #a3470d;
+  --accent-soft: color-mix(in srgb, var(--accent) 78%, #000000);
   --danger: #b42318;
   --success: #2a7130;
   color-scheme: light;
@@ -363,11 +366,12 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .ws__text strong { font-size: 14.5px; font-weight: 600; }
 :is(.ws__text, .me__text) small { font-size: 12px; color: var(--muted); }
 .rail__item { display: flex; align-items: center; gap: 0.7rem; padding: 0.45rem 0.65rem; border-radius: 8px; font-weight: 500; color: var(--muted); text-decoration: none; white-space: nowrap; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
-.rail__item :deep(.app-icon) { flex: none; transition: color 0.2s var(--ease); }
+.rail__item :deep(.app-icon) { flex: none; color: color-mix(in srgb, var(--accent-soft) 55%, var(--muted)); transition: color 0.2s var(--ease); }
 .rail__item:hover { background: var(--surface-2); color: var(--text); }
+.rail__item:hover :deep(.app-icon) { color: var(--accent-soft); }
 .rail__item.is-active { background: var(--surface-2); color: var(--text); }
-.rail__badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--accent); font: 600 11px/18px 'Geist', sans-serif; font-variant-numeric: tabular-nums; color: #000; text-align: center; }
-.rail__item.is-active :deep(.app-icon) { color: var(--accent-soft); }
+.rail__badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--accent); font: 600 11px/18px 'Geist', sans-serif; font-variant-numeric: tabular-nums; color: #fff; text-align: center; }
+.rail__item.is-active :deep(.app-icon) { color: var(--accent); }
 .rail__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .rail__dock { position: absolute; inset-block-end: 1px; inset-inline-end: 2px; }
 .rail__foot { display: flex; flex-direction: column; gap: 2px; padding-top: 0.5rem; }
@@ -390,6 +394,7 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .verify__x:hover { background: var(--surface-2); color: var(--text); }
 :is(.verify__btn, .verify__x):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .crumb { display: flex; align-items: center; gap: 0.5rem; min-height: 48px; padding: 0 1.5rem; border-bottom: 1px solid var(--line); font-weight: 500; }
+.crumb > :deep(.app-icon:first-child) { color: var(--accent-soft); }
 .crumb__sep { color: var(--muted); }
 .crumb__link { margin: -0.2rem -0.35rem; padding: 0.2rem 0.35rem; border-radius: 6px; color: var(--muted); text-decoration: none; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
 .crumb__link:hover { background: var(--surface-2); color: var(--text); }
@@ -397,8 +402,8 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .main__scroll { flex: 1; min-height: 0; overflow-y: auto; }
 .loading { flex: 1; display: grid; place-content: center; justify-items: center; gap: 0.75rem; color: var(--muted); text-align: center; }
 .loading p { margin: 0; }
-.retry { padding: 0.45rem 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: rgb(229 101 21 / 0.12); cursor: pointer; }
-.toast { position: fixed; left: 50%; bottom: 1.25rem; z-index: 90; max-width: min(30rem, calc(100vw - 2rem)); margin: 0; padding: 0.7rem 1rem; border: 1px solid rgb(229 101 21 / 0.5); border-radius: 10px; background: #2a1408; color: #ffd2b3; box-shadow: 0 12px 30px rgb(0 0 0 / 0.4); translate: -50% 0; }
+.retry { padding: 0.45rem 0.9rem; border: 1px solid var(--accent); border-radius: 6px; background: color-mix(in srgb, var(--accent) 12%, transparent); cursor: pointer; }
+.toast { position: fixed; left: 50%; bottom: 1.25rem; z-index: 90; max-width: min(30rem, calc(100vw - 2rem)); margin: 0; padding: 0.7rem 1rem; border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--accent) 20%, var(--surface)); color: var(--accent-soft); box-shadow: 0 12px 30px rgb(0 0 0 / 0.4); translate: -50% 0; }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.25s var(--ease), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(10px); }
 

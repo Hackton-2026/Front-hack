@@ -38,15 +38,19 @@ onBeforeUnmount(() => tl?.kill())
 
 <template>
   <svg ref="svg" class="brand-n" :width="size" :height="size" viewBox="150 159 470 482" aria-hidden="true">
-    <path d="M170 179H287V400H170Z" fill="#F0B680" />
-    <path d="M170 400H287V621H170Z" fill="#DB7032" />
-    <path d="M287 179L437 309V491L287 361Z" fill="#DB7032" />
-    <path d="M463 335L600 452V621L463 504Z" fill="#A04417" />
-    <path d="M313.5 556a52 52 0 1 0 104 0a52 52 0 1 0 -104 0Z" fill="#F0B680" />
-    <path d="M469.5 250.5a58.5 58.5 0 1 0 117 0a58.5 58.5 0 1 0 -117 0Z" fill="#F0B680" />
+    <path class="tone-light" d="M170 179H287V400H170Z" />
+    <path class="tone-mid" d="M170 400H287V621H170Z" />
+    <path class="tone-mid" d="M287 179L437 309V491L287 361Z" />
+    <path class="tone-dark" d="M463 335L600 452V621L463 504Z" />
+    <path class="tone-light" d="M313.5 556a52 52 0 1 0 104 0a52 52 0 1 0 -104 0Z" />
+    <path class="tone-light" d="M469.5 250.5a58.5 58.5 0 1 0 117 0a58.5 58.5 0 1 0 -117 0Z" />
   </svg>
 </template>
 
 <style scoped>
 .brand-n { display: block; flex: none; overflow: visible; filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.35)); }
+.brand-n path { transition: fill 0.25s ease; }
+.tone-light { fill: color-mix(in srgb, var(--accent, #e56515) 48%, #ffffff); }
+.tone-mid { fill: var(--accent, #e56515); }
+.tone-dark { fill: color-mix(in srgb, var(--accent, #e56515) 66%, #000000); }
 </style>

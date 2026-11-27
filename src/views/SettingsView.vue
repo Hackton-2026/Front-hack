@@ -691,71 +691,68 @@ async function onImport(e) {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
   width: 100%;
   max-width: none;
-  min-height: 100%;
-  padding: 1.5rem 2rem 2.5rem;
+  height: 100%;
+  overflow: hidden;
+  padding: 1.25rem 1.85rem;
 }
 .page__head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  flex-shrink: 0;
   gap: 0.35rem 1rem;
 }
-h1 { margin: 0; font: 650 1.6rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.025em; color: var(--text); }
+h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.025em; color: var(--text); }
 .page__sub { font-size: 13px; color: var(--muted); }
 
 .layout {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   display: grid;
-  grid-template-columns: 16.5rem minmax(0, 1fr);
+  grid-template-columns: 15.5rem minmax(0, 1fr);
   gap: 1.5rem;
-  align-items: start;
+  align-items: stretch;
 }
 .tabs {
-  position: sticky;
-  top: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-height: calc(100vh - 6rem);
+  gap: 1.15rem;
+  height: 100%;
+  max-height: 100%;
   overflow-y: auto;
-  padding-right: 0.25rem;
+  overscroll-behavior: contain;
+  padding-right: 0.4rem;
   scrollbar-width: thin;
 }
 .tabs__group {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0.55rem;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
 }
 .tabs__label {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.48rem 0.7rem;
-  margin-bottom: 0.25rem;
-  border-radius: 7px;
-  border-left: 3px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 13%, var(--surface-2));
-  font: 700 11px/1.2 'Geist', system-ui, sans-serif;
+  padding: 0 0.65rem 0.4rem;
+  margin-bottom: 0.15rem;
+  border-bottom: 1px solid var(--line);
+  font: 700 11.5px/1.2 'Geist', system-ui, sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text);
 }
-.tabs__label :deep(.app-icon) { color: var(--accent-soft); }
+.tabs__label :deep(.app-icon) { color: var(--accent); }
 .tabs__list {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 .tabs button {
-  padding: 0.46rem 0.75rem;
+  padding: 0.44rem 0.7rem;
   border: 0;
   border-radius: 7px;
   background: none;
@@ -781,12 +778,17 @@ h1 { margin: 0; font: 650 1.6rem/1.2 'Geist', system-ui, sans-serif; letter-spac
   flex-direction: column;
   gap: 1.35rem;
   width: 100%;
+  height: 100%;
+  max-height: 100%;
   min-width: 0;
-  min-height: calc(100vh - 9.5rem);
-  padding: 1.85rem 2.25rem;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.75rem 2.15rem;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
+  scrollbar-width: thin;
 }
 .panel__head {
   display: flex;
@@ -906,11 +908,11 @@ h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text);
 .photo__btns { display: flex; align-items: center; gap: 0.85rem; margin-top: 0.4rem; }
 
 @media (max-width: 900px) {
-  .page { padding: 1.25rem; }
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .tabs { position: static; max-height: none; overflow: visible; }
+  .page { height: auto; overflow: visible; padding: 1.25rem; }
+  .layout { grid-template-columns: minmax(0, 1fr); overflow: visible; }
+  .tabs { height: auto; max-height: none; overflow: visible; padding-right: 0; }
   .tabs__list { flex-direction: row; flex-wrap: wrap; gap: 4px; }
-  .panel { min-height: 0; padding: 1.25rem; }
+  .panel { height: auto; max-height: none; overflow: visible; padding: 1.25rem; }
   .toggles { grid-template-columns: 1fr; }
 }
 </style>

@@ -374,7 +374,7 @@ button.head-btn { background: none; cursor: pointer; }
 .find:focus-within { border-color: var(--accent); }
 .find input { width: 9rem; border: 0; background: none; font: inherit; color: var(--text); outline: none; }
 .toggle { display: inline-flex; align-items: center; gap: 0.35rem; height: 30px; padding: 0 0.65rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
-.toggle[aria-pressed='true'] { border-color: var(--accent); background: rgb(229 101 21 / 0.12); color: var(--text); }
+.toggle[aria-pressed='true'] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); }
 .toggle:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .missing { padding: 3rem 1.5rem; text-align: center; color: var(--muted); }
 .missing a { color: var(--accent-soft); }

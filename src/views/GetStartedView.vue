@@ -100,9 +100,9 @@ onUnmounted(() => ctx?.revert())
 .hello__sub { margin: 0; color: var(--muted); }
 
 .trial { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; padding: 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-.trial__icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 7px; background: rgb(229 101 21 / 0.14); color: var(--accent-soft); }
+.trial__icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 7px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent-soft); }
 .trial h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.25rem 0 0; font: 600 1.0625rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
-.badge { padding: 0.15rem 0.45rem; border-radius: 4px; background: rgb(251 164 92 / 0.16); font-size: 12px; font-weight: 500; color: var(--accent-soft); }
+.badge { padding: 0.15rem 0.45rem; border-radius: 4px; background: color-mix(in srgb, var(--accent) 16%, transparent); font-size: 12px; font-weight: 500; color: var(--accent-soft); }
 .trial p { margin: 0; max-width: 60ch; color: var(--muted); }
 .trial__btns { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.35rem; }
 

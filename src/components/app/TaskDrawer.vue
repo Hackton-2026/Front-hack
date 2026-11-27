@@ -600,7 +600,7 @@ input[type='date']:focus, .desc:focus, .add input:focus, .tag-input:focus, .comm
 .menu__who small { font-size: 11.5px; color: var(--muted); }
 .inline :deep(.grow) { flex: 1; min-width: 9rem; } .chips { flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12px; cursor: pointer; }
-.chip.is-on { border-color: var(--accent); background: rgb(229 101 21 / 0.14); }
+.chip.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .none { font-size: 12.5px; color: var(--muted); }
 .ntag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.15rem 0.2rem 0.15rem 0.5rem; border-radius: 4px; background: var(--surface-2); font-size: 12px; }

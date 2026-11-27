@@ -64,7 +64,7 @@ footer { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25
 .box :deep(.btn:disabled) { opacity: 0.5; cursor: not-allowed; }
 .box :deep(.chips) { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .box :deep(.chip) { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border: 1px solid var(--line-strong, #3d3934); border-radius: 999px; background: none; font-size: 12.5px; color: var(--muted, #a29d95); cursor: pointer; }
-.box :deep(.chip.is-on) { border-color: var(--accent, #e56515); background: rgb(229 101 21 / 0.14); color: var(--text, #f2efea); }
+.box :deep(.chip.is-on) { border-color: var(--accent, #e56515); background: color-mix(in srgb, var(--accent, #e56515) 14%, transparent); color: var(--text, #f2efea); }
 .box :deep(.err) { margin: 0; font-size: 12.5px; color: var(--danger, #ff8a80); }
 .box :deep(:focus-visible) { outline: 2px solid var(--accent-soft, #fba45c); outline-offset: 2px; }
 </style>

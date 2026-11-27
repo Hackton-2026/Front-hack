@@ -110,7 +110,7 @@ textarea:focus, .row input:focus { border-color: var(--accent); }
 .people { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; border: 0; }
 .people legend { margin-bottom: 0.4rem; padding: 0; font-size: 12px; font-weight: 500; color: var(--muted); }
 .chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 999px; background: none; font-size: 12.5px; cursor: pointer; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
-.chip.is-on { border-color: var(--accent); background: rgb(229 101 21 / 0.14); }
+.chip.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .dot { width: 9px; height: 9px; border-radius: 50%; }
 .error { margin: 0; font-size: 13px; color: #ffb48a; }
 footer { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; padding-top: 0.25rem; }

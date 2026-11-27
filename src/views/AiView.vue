@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { api } from '../services/api'
 import { useAuth } from '../composables/useAuth'
@@ -14,6 +14,17 @@ import AiQuestions from '../components/app/AiQuestions.vue'
 const SUGGESTIONS = ['O que está atrasado e quem é o responsável?', 'Resuma minhas tarefas desta semana', 'Crie uma tarefa para revisar o contrato amanhã', 'Coloque minha próxima tarefa em andamento']
 const { user, loadMe } = useAuth()
 const { load, state, createDoc } = useWorkspace()
+const sharkFilter = computed(() => {
+  const hex = (state.prefs.accent || '#e56515').replace('#', '')
+  if (hex.length !== 6) return 'grayscale(1) sepia(1) saturate(9) hue-rotate(-24deg) brightness(1.15)'
+  const r = parseInt(hex.slice(0, 2), 16) / 255
+  const g = parseInt(hex.slice(2, 4), 16) / 255
+  const b = parseInt(hex.slice(4, 6), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min
+  let h = 0
+  if (d) h = ((max === r ? ((g - b) / d + (g < b ? 6 : 0)) : max === g ? ((b - r) / d + 2) : ((r - g) / d + 4)) * 60)
+  return `grayscale(1) sepia(1) saturate(8) hue-rotate(${Math.round(h - 46)}deg) brightness(1.1)`
+})
 const wikiContext = () => state.docs.filter((d) => !d.archived).map((d) => ({ title: d.title, body: d.body }))
 function applyItems(items = []) {
   for (const it of items) {
@@ -110,7 +121,7 @@ async function decide(action, ok) {
 </script>
 
 <template>
-  <div class="ai" :class="{ 'has-chat': messages.length }">
+  <div class="ai" :class="{ 'has-chat': messages.length }" :style="{ '--ai-shark-filter': sharkFilter }">
     <AsciiSharks />
     <div class="veil" aria-hidden="true" />
 
@@ -216,7 +227,7 @@ async function decide(action, ok) {
 .btn { padding: 0.4rem 0.9rem; border: 1px solid var(--ai-glass-line); border-radius: 8px; background: none; font-size: 13px; cursor: pointer; }
 .btn--primary { border-color: var(--ai-shark); background: var(--ai-shark); color: #000 !important; }
 
-.error { margin: 0; padding: 0.6rem 0.8rem; border: 1px solid rgb(229 101 21 / 0.4); border-radius: 8px; background: rgb(229 101 21 / 0.1); font-size: 13px; color: #ffd2b3; }
+.error { margin: 0; padding: 0.6rem 0.8rem; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--accent) 10%, transparent); font-size: 13px; color: var(--accent-soft); }
 .error a { margin-left: 0.4rem; color: var(--ai-shark-soft); }
 :is(.sug, .send, .btn):focus-visible { outline: 2px solid var(--ai-shark-soft); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .typing span { animation: none; } }
