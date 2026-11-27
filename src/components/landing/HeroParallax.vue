@@ -23,7 +23,7 @@ function parallax() {
   for (const layer of layers) {
     layer.style.transform = `translate3d(0, ${(-s * layer.dataset.speed).toFixed(1)}px, 0)`
   }
-  el.style.setProperty('--text-fade', Math.max(0, 1 - s / (innerHeight * 0.55)).toFixed(3))
+  el.style.setProperty('--text-fade', Math.max(0, 1 - s / (innerHeight * 0.4)).toFixed(3))
 }
 const onScroll = () => { frame ||= requestAnimationFrame(parallax) }
 
@@ -71,7 +71,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.hero { position: relative; height: 200vh; height: 200svh; }
+.hero { position: relative; height: 178vh; height: 178svh; }
 .hero__stick { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: #000; }
 .hero__sky, .hero__hill, .hero__inner { will-change: transform; }
 .hero__sky {
@@ -93,8 +93,8 @@ onUnmounted(() => {
 
 .hero__inner { position: absolute; inset: 0 0 auto; z-index: 2; display: flex; flex-direction: column; align-items: center; max-width: 52rem; margin: 0 auto; padding: 8.75rem 1.25rem 0; text-align: center; opacity: var(--text-fade, 1); }
 .hero__title { display: flex; flex-direction: column; margin: 0 0 1.75rem; color: #fff; }
-.hero__line { font: 700 clamp(3rem, 8vw, 5rem)/1 var(--lp-hero); letter-spacing: -0.05em; }
-.hero__line.serif { font: italic 400 clamp(3.1rem, 8.4vw, 5.3rem)/1 'Instrument Serif', Georgia, serif; letter-spacing: -0.05em; }
+.hero__line { font: 700 clamp(2.45rem, 8.6vw, 5rem)/1.02 var(--lp-hero); letter-spacing: -0.05em; }
+.hero__line.serif { font: italic 400 clamp(2.55rem, 9vw, 5.3rem)/1.02 'Instrument Serif', Georgia, serif; letter-spacing: -0.05em; }
 .hero__word { display: inline-block; white-space: nowrap; }
 .hero__word + .hero__word { margin-left: 0.25em; }
 .hero__char { display: inline-block; will-change: transform, filter, opacity; }
