@@ -132,7 +132,7 @@ function leave() {
             <input v-model="form.email" :type="isRegister ? 'email' : 'text'" required :autocomplete="isRegister ? 'email' : 'username'" />
           </label>
           <label class="field">
-            <span>Senha</span>
+            <span class="field__row"><span>Senha</span><RouterLink v-if="!isRegister" to="/contato?assunto=suporte" class="forgot">Esqueci minha senha</RouterLink></span>
             <span class="pass">
               <input v-model="form.password" :type="showPassword ? 'text' : 'password'" required :autocomplete="isRegister ? 'new-password' : 'current-password'" />
               <button type="button" class="eye" :aria-label="showPassword ? 'Esconder senha' : 'Mostrar senha'" :aria-pressed="showPassword" @click="showPassword = !showPassword">
@@ -149,7 +149,7 @@ function leave() {
 
           <p v-if="offline" class="error" role="alert">Não conseguimos falar com o servidor agora. Sua sessão continua salva. <button type="button" class="retry" :disabled="loading" @click="retry">Tentar de novo</button></p>
           <p v-if="error" class="error" role="alert">{{ error }}</p>
-          <GooeyButton type="submit" variant="primary" :disabled="loading" class="submit">
+          <GooeyButton type="submit" variant="primary" size="lg" block :disabled="loading" class="submit">
             <ArcLoader v-if="loading" />{{ loading ? 'Aguarde…' : isRegister ? 'Criar conta' : 'Entrar' }}
           </GooeyButton>
         </form>
@@ -230,7 +230,10 @@ h1 { margin: 1.25rem 0 0.5rem; font: 800 clamp(1.6rem, 2.4vw, 2rem)/1.1 'Lexend'
 .other { margin-top: 1.75rem; color: var(--muted); }
 .error { margin: 0; padding: 0.75rem 0.9rem; border-radius: 6px; background: rgb(229 101 21 / 0.12); border: 1px solid rgb(229 101 21 / 0.4); font-size: 0.875rem; white-space: pre-line; color: #ffd2b3; }
 .error .retry { margin-left: 0.35rem; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: inherit; text-decoration: underline; cursor: pointer; }
-.submit { align-self: center; margin-top: 0.5rem; }
+.field__row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; font-size: 0.875rem; font-weight: 600; }
+.forgot { font-size: 0.8125rem; font-weight: 400; color: var(--muted); text-decoration: none; transition: color 0.18s; }
+.forgot:hover { color: var(--orange-soft); text-decoration: underline; text-underline-offset: 3px; }
+.submit { width: 100%; margin-top: 0.5rem; }
 
 .divider { display: flex; align-items: center; gap: 1rem; width: 100%; margin: 1.25rem 0 1rem; font-size: 0.8125rem; color: var(--muted); }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }

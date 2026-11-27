@@ -24,10 +24,10 @@ onMounted(async () => {
   window.google.accounts.id.renderButton(el.value, {
     theme: props.theme,
     size: 'large',
-    shape: 'rectangular',
+    shape: 'pill',
     text: 'continue_with',
     locale: 'pt-BR',
-    width: Math.min(400, el.value.offsetWidth),
+    width: Math.min(432, el.value.offsetWidth || 400),
   })
 })
 </script>
@@ -38,6 +38,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.google-btn { display: flex; justify-content: center; min-height: 44px; }
+.google-btn { display: flex; justify-content: center; width: 100%; min-height: 44px; }
 .google-off { margin: 0; font-size: 0.8125rem; text-align: center; opacity: 0.75; }
 </style>
