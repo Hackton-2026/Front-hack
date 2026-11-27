@@ -15,7 +15,7 @@ import FortnightHeatmap from '../components/app/FortnightHeatmap.vue'
 import YearHeatmap from '../components/app/YearHeatmap.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
-const { state, project, tasksOf, progress, updateProject, postUpdate, projectActivity, STATUSES, today } = useWorkspace()
+const { state, project, member, tasksOf, progress, isOverdue, updateProject, postUpdate, projectActivity, STATUSES, today, day } = useWorkspace()
 const { ui, toast } = useUi()
 const pid = computed(() => Number(props.id))
 const p = computed(() => project(pid.value))
@@ -42,6 +42,45 @@ const people = computed(() => [...new Set(tasks.value.flatMap((t) => t.assignees
 const cycles = computed(() => state.cycles.filter((c) => c.project === pid.value))
 const activeCycle = computed(() => cycles.value.find((c) => c.start_date <= today() && c.end_date >= today()) || lateCycle.value)
 const lateCycle = computed(() => cycles.value.find((c) => c.end_date < today() && tasks.value.some((t) => t.cycle === c.id && t.status !== 'done')))
+
+const kpis = computed(() => {
+  const weekAgo = day(-7)
+  const nowDay = today()
+  const nextWeek = day(7)
+  const list = tasks.value
+  const done7d = list.filter((t) => t.status === 'done' && String(t.completedAt || t.updatedAt || '').slice(0, 10) >= weekAgo).length
+  const openCount = list.filter((t) => t.status !== 'done').length
+  const lateCount = list.filter((t) => isOverdue(t)).length
+  const due7d = list.filter((t) => t.status !== 'done' && t.due && t.due >= nowDay && t.due <= nextWeek).length
+  return [
+    { label: 'Concluídas (7d)', value: done7d, hint: 'entregues na semana', tone: '' },
+    { label: 'Em aberto', value: openCount, hint: `de ${list.length} no total`, tone: '' },
+    { label: 'Atrasadas', value: lateCount, hint: lateCount ? 'pedem atenção' : 'tudo em dia', tone: lateCount ? 'warn' : '' },
+    { label: 'Vencem em 7 dias', value: due7d, hint: 'próximas entregas', tone: '' },
+  ]
+})
+
+const workload = computed(() => {
+  const map = new Map()
+  for (const t of tasks.value) {
+    const ids = t.assignees.length ? t.assignees : ['__none']
+    for (const id of ids) {
+      const cur = map.get(id) || { id, open: 0, done: 0 }
+      if (t.status === 'done') cur.done++
+      else cur.open++
+      map.set(id, cur)
+    }
+  }
+  const rows = [...map.values()].map((r) => ({
+    ...r,
+    total: r.open + r.done,
+    name: r.id === '__none' ? 'Sem responsável' : (member(r.id)?.name || 'Pessoa'),
+    color: r.id === '__none' ? 'var(--line-strong)' : (member(r.id)?.color || 'var(--accent)'),
+  })).sort((a, b) => b.open - a.open || b.total - a.total)
+  const max = Math.max(1, ...rows.map((r) => r.total))
+  return rows.slice(0, 8).map((r) => ({ ...r, ratio: r.open / max }))
+})
+
 const LINKS = computed(() => [
   { icon: 'fi-rr-list-check', label: 'Itens de trabalho', n: tasks.value.length, to: '', hint: 'as tarefas do time' },
   { icon: 'fi-rr-refresh', label: 'Ciclos', n: cycles.value.length, to: '/ciclos', hint: 'sprints com começo e fim', key: 'cycles' },
@@ -155,8 +194,8 @@ onMounted(async () => {
   if (prefersReducedMotion() || !root.value) return
   gsap.timeline({ defaults: { ease: EASE.out } })
     .from(root.value.querySelector('.cover'), { scaleY: 0.6, transformOrigin: 'top', autoAlpha: 0, duration: DUR.mid })
-    .from(root.value.querySelector('.icon'), { y: 14, scale: 0.8, autoAlpha: 0, duration: DUR.base }, '-=0.3')
-    .from(root.value.querySelectorAll('.doc > *:not(.icon-wrap)'), { y: 12, autoAlpha: 0, duration: DUR.base, stagger: 0.06 }, '-=0.25')
+    .from(root.value.querySelector('.icon'), { y: 14, scale: 0.85, autoAlpha: 0, duration: DUR.base }, '-=0.3')
+    .from(root.value.querySelectorAll('.doc > *:not(.icon-wrap)'), { y: 12, autoAlpha: 0, duration: DUR.base, stagger: 0.05 }, '-=0.25')
     .from(root.value.querySelectorAll('.side'), { x: 20, autoAlpha: 0, duration: DUR.base }, 0.15)
 })
 </script>
@@ -190,6 +229,15 @@ onMounted(async () => {
         </div>
         <input class="name" :value="p.name" aria-label="Nome do projeto" maxlength="120" :readonly="!canEdit" @change="$event.target.value.trim() && save({ name: $event.target.value.trim() })" />
         <textarea ref="desc" class="desc" :value="p.description" rows="2" :readonly="!canEdit" :placeholder="canEdit ? 'Conte do que se trata o projeto, os objetivos e os marcos…' : 'Sem descrição.'" aria-label="Descrição do projeto" @input="grow" @change="save({ description: $event.target.value })" />
+
+        <div class="kpis" aria-label="Resumo do projeto">
+          <div v-for="k in kpis" :key="k.label" class="kpi" :class="k.tone">
+            <span class="kpi__label">{{ k.label }}</span>
+            <strong class="kpi__val">{{ k.value }}</strong>
+            <small class="kpi__hint">{{ k.hint }}</small>
+          </div>
+        </div>
+
         <div class="duo">
           <div class="col">
             <h2 class="sec">O que tem neste projeto</h2>
@@ -257,6 +305,15 @@ onMounted(async () => {
               <i :style="{ '--w': tasks.length ? tasks.filter((t) => t.status === s.id).length / tasks.length : 0, '--c': s.color }" />
             </li>
           </ul>
+          <template v-if="workload.length">
+            <h4 class="sub-h">Carga em aberto</h4>
+            <ul class="bars">
+              <li v-for="w in workload" :key="w.id">
+                <span class="w-name">{{ w.name }}</span><b>{{ w.open }}<small class="w-tot">/{{ w.total }}</small></b>
+                <i :style="{ '--w': w.ratio, '--c': w.color }" />
+              </li>
+            </ul>
+          </template>
           <dl class="props">
             <dt>Prefixo</dt><dd>{{ p.prefix || '—' }}</dd>
             <dt>Pessoas</dt><dd><Avatars v-if="people.length" :ids="people" :size="22" /><span v-else>—</span></dd>
@@ -302,6 +359,16 @@ onMounted(async () => {
 .cover__btn:hover { background: rgb(15 14 13 / 0.85); }
 .doc { display: flex; flex-direction: column; gap: 0.5rem; width: min(84rem, 100%); padding: 0 2.5rem 4rem; }
 .doc > :is(.name, .desc) { max-width: 46rem; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; margin-top: 0.65rem; max-width: 68rem; }
+.kpi { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.8rem 0.95rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.kpi.warn { border-color: rgb(255 91 77 / 0.38); background: color-mix(in srgb, #ff5b4d 6%, var(--surface)); }
+.kpi__label { font-size: 12px; color: var(--muted); }
+.kpi__val { font: 650 1.45rem/1.15 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
+.kpi.warn .kpi__val { color: #ff8a80; }
+.kpi__hint { font-size: 11.5px; color: var(--muted); }
+@container (max-width: 46rem) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 /* blocos à esquerda e os quadros de entregas ao lado; em tela estreita um embaixo do outro */
 .duo { display: grid; grid-template-columns: minmax(0, 46rem) minmax(0, 1fr); align-items: start; gap: 0 2rem; }
 .col { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
@@ -317,7 +384,6 @@ onMounted(async () => {
 .sq { width: 1.4rem; height: 1.4rem; border-radius: 6px; }
 .emojis { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; display: grid; grid-template-columns: repeat(8, 2.1rem); gap: 2px; padding: 0.4rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 18px 40px rgb(0 0 0 / 0.45); }
 .emojis > button { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--pick-color, var(--muted)); cursor: pointer; }
-.emojis > button:hover, .emojis > button[aria-selected='true'] { background: var(--surface-2); }
 .emojis > button:hover, .emojis > button[aria-selected='true'] { background: var(--surface-2); }
 .emojis .credit { grid-column: 1 / -1; padding: 0.2rem 0 0; font-size: 11px; color: var(--muted); text-align: center; text-decoration: none; }
 .emojis .credit:hover { color: var(--text); }
@@ -355,7 +421,9 @@ onMounted(async () => {
 .link { min-height: 4.25rem; }
 .link__icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 17px; line-height: 1; }
 .link__icon i::before, .link__go::before { display: block; line-height: 1; }
-.link__text strong, .link__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .link__text, .cycle > span:last-child { display: flex; flex-direction: column; min-width: 0; } .link small, .cycle small { font-size: 12.5px; color: var(--muted); }
+.link__text strong, .link__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link__text, .cycle > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.link small, .cycle small { font-size: 12.5px; color: var(--muted); }
 .link__go { flex-shrink: 0; margin-left: auto; font-size: 16px; color: var(--muted); transition: translate 0.25s var(--ease), color 0.2s var(--ease); }
 .link:hover .link__go { translate: 3px 0; color: var(--text); }
 .side { position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; gap: 1rem; max-height: calc(100vh - 97px); overflow-y: auto; padding: 1rem 1.1rem; border-left: 1px solid var(--line); }
@@ -365,11 +433,14 @@ onMounted(async () => {
 .side__tabs button:focus-visible, .upd__states button:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 1px; }
 .side__body { display: flex; flex-direction: column; gap: 0.9rem; }
 h3 { margin: 0; font: 600 1.05rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); }
-.prog { display: flex; align-items: center; gap: 0.8rem; font-size: 13px; color: var(--muted); }
+.sub-h { margin: 0.35rem 0 -0.25rem; font: 600 12px/1.2 'Geist', system-ui, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.prog { display: flex; align-items: center; gap: 0.8rem; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .prog strong { color: var(--text); }
 .bars { display: flex; flex-direction: column; gap: 0.55rem; margin: 0; padding: 0; list-style: none; }
-.bars li { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem; font-size: 13px; }
+.bars li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem; font-size: 13px; }
 .bars b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.w-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-tot { font-weight: 400; font-size: 11.5px; color: var(--muted); }
 .bars i { grid-column: 1 / -1; height: 4px; border-radius: 999px; background: linear-gradient(90deg, var(--c) calc(var(--w) * 100%), var(--surface-2) 0); }
 .props { display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.55rem 0.5rem; margin: 0; font-size: 13px; }
 .props dt { color: var(--muted); }

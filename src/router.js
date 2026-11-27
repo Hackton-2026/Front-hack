@@ -68,6 +68,8 @@ const router = createRouter({
     { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true, bare: true, title: 'Entrar' } },
     { path: '/checkout', component: () => import('./views/CheckoutView.vue'), meta: { auth: true, bare: true, title: 'Checkout' } },
     { path: '/entrar/:token', component: () => import('./views/JoinView.vue'), props: true, meta: { bare: true, title: 'Convite' } },
+    { path: '/f/:token', component: () => import('./views/PublicFormView.vue'), props: true, meta: { bare: true, title: 'Solicitação' } },
+    { path: '/portal/:token', component: () => import('./views/ClientPortalView.vue'), props: true, meta: { bare: true, title: 'Portal do cliente' } },
     { path: '/verificar-email', component: () => import('./views/VerifyEmailView.vue'), meta: { bare: true, title: 'Verificar e-mail' } },
     { path: '/comecar', component: () => import('./views/GetStartedView.vue'), meta: { app: true, auth: true, area: 'work', title: 'Começar', icon: 'rocket' } },
     { path: '/inicio', redirect: '/projetos' },
@@ -157,6 +159,8 @@ router.afterEach((to) => {
     to.meta?.auth ||
     to.path.startsWith('/convite/') ||
     to.path.startsWith('/entrar/') ||
+    to.path.startsWith('/f/') ||
+    to.path.startsWith('/portal/') ||
     to.path === '/verificar-email'
   )
   const seo = SEO_BY_PATH[to.path]

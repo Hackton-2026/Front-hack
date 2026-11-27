@@ -1,14 +1,10 @@
 import { computed, ref, watch } from 'vue'
 
 export const STEPS = [
-  { id: 'project', title: 'Criar um projeto', hint: 'Um espaço para as tarefas de uma área ou cliente.' },
-  { id: 'task', title: 'Criar uma tarefa', hint: 'Dê um título, um responsável e um prazo.' },
-  { id: 'invite', title: 'Convidar alguém para um projeto', hint: 'Quem entra vê só aquele projeto: tarefas, páginas e chat.' },
-  { id: 'doc', title: 'Escrever um documento', hint: 'Specs e atas ao lado das tarefas.' },
-  { id: 'ai', title: 'Conversar com a Novexo IA', hint: 'Peça um resumo do que está atrasado.' },
-  { id: 'integration', title: 'Conectar uma integração', hint: 'GitHub, Notion, Slack e outras.' },
-  { id: 'view', title: 'Criar uma visualização', hint: 'Lista, quadro ou calendário com seus filtros.' },
-  { id: 'sticky', title: 'Criar uma nota', hint: 'Anote uma ideia rápida no botão de notas.' },
+  { id: 'project', title: 'Criar ou abrir um projeto', hint: 'Use o projeto de exemplo ou crie um espaço para sua equipe ou cliente.' },
+  { id: 'task', title: 'Criar sua primeira tarefa', hint: 'Dê um título, responsável e prazo — ou aperte C de qualquer tela.' },
+  { id: 'view', title: 'Escolher sua visualização', hint: 'Alterne entre Lista, Kanban, Calendário ou Gantt.' },
+  { id: 'invite', title: 'Convidar equipe ou explorar a IA', hint: 'Convide alguém para um projeto ou peça um resumo na Novexo IA.' },
 ]
 
 const KEY = 'novexo:onboarding'
@@ -35,7 +31,10 @@ export function useOnboarding() {
   const toggle = (id) => {
     done.value = isDone(id) ? done.value.filter((d) => d !== id) : [...done.value, id]
   }
-  const complete = (id) => { if (!isDone(id)) done.value = [...done.value, id] }
+  const complete = (id) => {
+    const mapped = id === 'ai' ? 'invite' : id
+    if (!isDone(mapped)) done.value = [...done.value, mapped]
+  }
   const count = computed(() => STEPS.filter((s) => done.value.includes(s.id)).length)
   return { STEPS, isDone, toggle, complete, count, total: STEPS.length }
 }
@@ -44,7 +43,6 @@ export function useNotes() {
   const add = (color) => {
     const note = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: '', color, at: new Date().toISOString() }
     notes.value = [note, ...notes.value]
-    useOnboarding().complete('sticky')
     return note
   }
   const remove = (id) => { notes.value = notes.value.filter((n) => n.id !== id) }

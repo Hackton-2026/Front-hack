@@ -51,8 +51,10 @@ async function updateMe(body) {
 
 function logout() {
   const refresh = tokens.refresh
-  // queima o refresh no servidor; sem rede, ao menos o navegador esquece
-  if (refresh) api('/api/auth/logout/', { method: 'POST', body: { refresh }, auth: false }).catch(() => {})
+  // revoga a sessão autenticada no servidor antes de limpar os tokens locais
+  if (tokens.access || refresh) {
+    api('/api/auth/logout/', { method: 'POST', body: refresh ? { refresh } : {}, auth: true }).catch(() => {})
+  }
   // o DELETE do device usa o access atual: dispara antes de limpar; o token local sai já para não repetir em loop
   if (savedToken()) {
     disablePush().catch(() => {})

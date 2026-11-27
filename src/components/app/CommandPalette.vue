@@ -7,30 +7,36 @@ import AppIcon from './AppIcon.vue'
 import StatusBadge from './StatusBadge.vue'
 
 const PAGES = [
-  { label: 'Seu trabalho', to: '/meu-trabalho', icon: 'mine' },
-  { label: 'Projetos', to: '/projetos', icon: 'folder' },
+  { label: 'Seu trabalho', to: '/meu-trabalho', icon: 'mine', meta: 'G M' },
+  { label: 'Caixa de entrada', to: '/caixa-de-entrada', icon: 'inbox', meta: 'G I' },
+  { label: 'Projetos', to: '/projetos', icon: 'folder', meta: 'G P' },
   { label: 'Notas', to: '/notas', icon: 'note' },
-  { label: 'Documentos', to: '/wiki', icon: 'wiki' },
-  { label: 'Novexo IA', to: '/ia', icon: 'ai' },
-  { label: 'Ajustes', to: '/ajustes', icon: 'settings' },
+  { label: 'Documentos', to: '/wiki', icon: 'wiki', meta: 'G W' },
+  { label: 'Novexo IA', to: '/ia', icon: 'ai', meta: 'G A' },
+  { label: 'Ajustes', to: '/ajustes', icon: 'settings', meta: 'G S' },
   { label: 'Começar', to: '/comecar', icon: 'rocket' },
 ]
 
 const router = useRouter()
-const { state, code } = useWorkspace()
+const { state, code, aiEnabled } = useWorkspace()
 const { ui, openTask, newTask } = useUi()
 const q = ref('')
 const index = ref(0)
 const box = ref(null)
 const input = ref(null)
 
-const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 const results = computed(() => {
   const term = norm(q.value.trim())
   const has = (s) => !term || norm(s).includes(term)
+  const visiblePages = PAGES.filter((p) => (p.to === '/ia' ? aiEnabled.value : true))
+  const actions = [
+    { label: 'Criar tarefa', meta: 'C', icon: 'plus', run: () => newTask() },
+    { label: 'Atalhos do teclado', meta: '?', icon: 'help', run: () => { ui.help = true } },
+  ]
   return [
-    ...[{ label: 'Criar tarefa', icon: 'plus', run: () => newTask() }].filter((a) => has(a.label)).map((a) => ({ ...a, group: 'Ações' })),
-    ...PAGES.filter((p) => has(p.label)).map((p) => ({ ...p, group: 'Páginas', run: () => router.push(p.to) })),
+    ...actions.filter((a) => has(a.label)).map((a) => ({ ...a, group: 'Ações' })),
+    ...visiblePages.filter((p) => has(p.label)).map((p) => ({ ...p, group: 'Páginas', run: () => router.push(p.to) })),
     ...state.projects.filter((p) => has(p.name)).map((p) => ({ label: p.name, icon: 'folder', color: p.color, group: 'Projetos', run: () => router.push(`/projetos/${p.id}`) })),
     ...(term ? state.tasks.filter((t) => has(`${t.title} ${code(t)}`)).slice(0, 8).map((t) => ({ label: t.title, meta: t.draft ? 'Rascunho' : code(t), status: t.status, group: 'Tarefas', run: () => openTask(t) })) : []),
   ]

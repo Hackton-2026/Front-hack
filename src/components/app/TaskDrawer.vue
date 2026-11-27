@@ -1,11 +1,12 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { EASE, DUR, gsap, prefersReducedMotion } from '../../utils/motion'
 import { useWorkspace } from '../../composables/useWorkspace'
 import { useUi } from '../../composables/useUi'
 import AppIcon from './AppIcon.vue'
 import Avatars from './Avatars.vue'
 import AppSelect from './AppSelect.vue'
+import AppCheckbox from './AppCheckbox.vue'
 import AppDateInput from './AppDateInput.vue'
 import StatusBadge from './StatusBadge.vue'
 import MdEditor from './MdEditor.vue'
@@ -13,7 +14,7 @@ import ReactionBar from './ReactionBar.vue'
 import { api } from '../../services/api'
 import { render, slug } from '../../utils/markdown'
 
-const { state, STATUSES, PRIORITIES, code, member, status, createTask, updateTask, removeTask, taskActivity, taskComments, peopleOf, rolesOf } = useWorkspace()
+const { state, STATUSES, PRIORITIES, aiEnabled, code, member, createTask, updateTask, removeTask, taskActivity, taskComments, peopleOf, rolesOf } = useWorkspace()
 const { ui, closeTask, openTask, toast } = useUi()
 const task = computed(() => state.tasks.find((t) => t.id === ui.taskId))
 const saved = computed(() => typeof task.value?.id === 'number')
@@ -29,7 +30,7 @@ const addingSub = ref(false)
 const confirmDelete = ref(false)
 const reduced = prefersReducedMotion()
 const motion = () => !prefersReducedMotion()
-const pop = (el) => motion() && el && gsap.fromTo(el, { scale: 0.82 }, { scale: 1, duration: DUR.fast, ease: EASE.popStrong })
+const pop = (el) => motion() && el && gsap.fromTo(el, { scale: 0.88 }, { scale: 1, duration: DUR.fast, ease: EASE.popStrong })
 const enter = (els, opts = {}) => motion() && els?.length && gsap.fromTo(els, { y: 8, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: DUR.fast, stagger: 0.035, ease: EASE.soft, clearProps: 'transform', ...opts })
 const q = (sel) => panel.value?.querySelectorAll(sel)
 
@@ -40,20 +41,137 @@ const comment = ref('')
 const sending = ref(false)
 const needNote = ref(false)
 const note = ref('')
-const EMPTY_PANEL = () => ({ upvotes: [], downvotes: [], watchers: [], reactions: [], relations: [], attachments: [], last_editor: null, last_edited_at: null })
+const EMPTY_PANEL = () => ({ upvotes: [], downvotes: [], watchers: [], reactions: [], relations: [], attachments: [], worklogs: [], last_editor: null, last_edited_at: null })
 const panelData = ref(EMPTY_PANEL())
 async function loadFeed() {
   if (!saved.value) { activity.value = []; comments.value = []; panelData.value = EMPTY_PANEL(); return }
   const id = task.value.id
   try {
     const [a, c, p] = await Promise.all([taskActivity(id), taskComments(id), api(`/api/tasks/${id}/panel/`)])
-    if (task.value?.id === id) { activity.value = a; comments.value = c; panelData.value = p }
+    if (task.value?.id === id) { activity.value = a; comments.value = c; panelData.value = { ...EMPTY_PANEL(), ...p } }
   } catch { }
 }
 watch(() => [ui.taskId, task.value?.updatedAt], loadFeed)
 
+// Live timer & quick worklog
+const timerTaskId = ref(null)
+const timerStartedAt = ref(0)
+const timerSec = ref(0)
+let timerHandle = null
+const timeMins = ref(30)
+const timeNote = ref('')
+const loggingTime = ref(false)
+const timerActiveHere = computed(() => timerTaskId.value !== null && timerTaskId.value === task.value?.id)
+const totalMinutes = computed(() => (panelData.value.worklogs || []).reduce((s, w) => s + Number(w.minutes || 0), 0))
+const fmtClock = (sec) => {
+  const h = Math.floor(sec / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  const s = sec % 60
+  return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':')
+}
+const fmtMins = (m) => {
+  const n = Math.max(0, Math.round(Number(m) || 0))
+  const h = Math.floor(n / 60)
+  const rem = n % 60
+  if (!h) return `${rem}m`
+  return rem ? `${h}h ${rem}m` : `${h}h`
+}
+function clearTimer() {
+  if (timerHandle) { clearInterval(timerHandle); timerHandle = null }
+  timerTaskId.value = null
+  timerStartedAt.value = 0
+  timerSec.value = 0
+}
+function startTimer() {
+  if (!saved.value) return
+  if (timerHandle) clearInterval(timerHandle)
+  timerTaskId.value = task.value.id
+  timerStartedAt.value = Date.now()
+  timerSec.value = 0
+  timerHandle = setInterval(() => {
+    timerSec.value = Math.max(0, Math.floor((Date.now() - timerStartedAt.value) / 1000))
+  }, 1000)
+}
+async function stopTimer() {
+  const targetId = timerTaskId.value
+  const elapsed = timerSec.value
+  clearTimer()
+  if (!targetId) return
+  const minutes = Math.max(1, Math.round(elapsed / 60))
+  await saveWorklog(minutes, 'Cronômetro', targetId)
+}
+async function toggleTimer() {
+  if (timerActiveHere.value) await stopTimer()
+  else startTimer()
+}
+async function saveWorklog(minutes = Number(timeMins.value), logNote = timeNote.value.trim(), targetId = task.value?.id) {
+  const mins = Math.round(Number(minutes) || 0)
+  if (!targetId || mins < 1 || mins > 1440 || loggingTime.value) return
+  loggingTime.value = true
+  try {
+    const created = await api('/api/worklogs/', { method: 'POST', body: { task: targetId, minutes: mins, note: logNote.slice(0, 200) } })
+    if (task.value?.id === targetId) {
+      panelData.value = { ...panelData.value, worklogs: [created, ...(panelData.value.worklogs || [])] }
+    }
+    timeNote.value = ''
+    toast(`${fmtMins(mins)} registrados na tarefa.`)
+  } catch (e) {
+    toast(e.message || 'Não foi possível registrar o tempo.')
+  } finally {
+    loggingTime.value = false
+  }
+}
+async function removeWorklog(w) {
+  try {
+    await api(`/api/worklogs/${w.id}/`, { method: 'DELETE' })
+    panelData.value = { ...panelData.value, worklogs: (panelData.value.worklogs || []).filter((x) => x.id !== w.id) }
+    toast('Registro de tempo removido.')
+  } catch (e) {
+    toast(e.message || 'Não foi possível remover.')
+  }
+}
+onUnmounted(() => { if (timerHandle) clearInterval(timerHandle) })
+
+// Optional on-demand preview-first AI assist (only shown when aiEnabled)
+const aiBusy = ref(false)
+const aiPreview = ref(null)
+const aiSelected = ref([])
+async function runAssist(mode) {
+  if (!saved.value || !aiEnabled.value || aiBusy.value) return
+  aiBusy.value = true
+  aiPreview.value = null
+  try {
+    const res = await api('/api/ai/task-assist/', { method: 'POST', body: { task_id: task.value.id, mode } })
+    aiPreview.value = res
+    if (mode === 'break_subtasks') {
+      aiSelected.value = [...(res.subtasks || [])]
+    }
+  } catch (e) {
+    toast(e.message || 'Não foi possível consultar a IA.')
+  } finally {
+    aiBusy.value = false
+  }
+}
+function applySuggestedSubtasks() {
+  const chosen = aiSelected.value.filter(Boolean)
+  if (!chosen.length || !task.value) return
+  for (const titleText of chosen) {
+    createTask({ title: titleText, projectId: task.value.projectId, parent: task.value.id, assignees: [state.me] })
+  }
+  toast(`${chosen.length} ${chosen.length === 1 ? 'subitem criado' : 'subitens criados'}.`)
+  aiPreview.value = null
+  aiSelected.value = []
+}
+
 const TABS = [['all', 'Tudo'], ['activity', 'Atividade'], ['comments', 'Comentários'], ['updates', 'Atualizações'], ['transition', 'Transição'], ['history', 'Histórico']]
 const UPDATE_STATES = [['on_track', 'No prazo', '#7fc47a'], ['at_risk', 'Em risco', '#f2c46d'], ['off_track', 'Atrasada', '#ff5b4d']]
+const RECURRENCE_OPTIONS = [
+  { value: '', label: 'Não repete' },
+  { value: 'daily', label: 'Todo dia' },
+  { value: 'weekly', label: 'Toda semana' },
+  { value: 'biweekly', label: 'A cada 15 dias' },
+  { value: 'monthly', label: 'Todo mês' },
+]
 const newest = ref(false)
 const showActivity = (a) => ({ all: true, activity: true, transition: ['status', 'task_completed'].includes(a.type), history: !['comment', 'task_created'].includes(a.type) }[tab.value])
 const showComment = (c) => ({ all: true, comments: !c.is_update, updates: c.is_update }[tab.value])
@@ -64,7 +182,8 @@ const feed = computed(() => [
 
 async function act(path, body, method = 'POST') {
   try {
-    panelData.value = await api(`/api/tasks/${task.value.id}/${path}`, { method, body })
+    const res = await api(`/api/tasks/${task.value.id}/${path}`, { method, body })
+    panelData.value = { ...EMPTY_PANEL(), ...res }
     return true
   } catch (e) {
     toast(e.message || 'Não foi possível salvar.')
@@ -126,7 +245,7 @@ watch(() => [ui.taskId, task.value?.title], () => (title.value = task.value?.tit
 watch([tab, newest], async () => { await nextTick(); enter(q('.log li')) })
 watch(adding, async (v) => {
   await nextTick()
-  if (v && motion()) gsap.from(q('.inline, form.add'), { height: 0, autoAlpha: 0, duration: DUR.fast, ease: EASE.soft, clearProps: 'height' })
+  if (v && motion()) gsap.from(q('.inline, form.add, .time-box'), { height: 0, autoAlpha: 0, duration: DUR.fast, ease: EASE.soft, clearProps: 'height' })
 })
 watch(() => [panelData.value.relations.length, panelData.value.attachments.length, comments.value.length], async (now, before) => {
   if (!before || now.every((n, i) => n <= before[i])) return
@@ -158,6 +277,9 @@ watch(() => ui.taskId, async (id, old) => {
   needNote.value = false
   note.value = ''
   menu.value = people.value = addingSub.value = false
+  adding.value = ''
+  aiPreview.value = null
+  aiSelected.value = []
   tab.value = 'all'
   comment.value = ''
   if (!id || old) return
@@ -209,9 +331,7 @@ const gcalUrl = computed(() => {
   const end = new Date(`${t.due}T12:00`)
   end.setDate(end.getDate() + 1)
   const start = (t.start && t.start <= t.due ? t.start : t.due).replaceAll('-', '')
-  const details = `${t.description ? `${t.description.slice(0, 800)}
-
-` : ''}${location.origin}/projetos/${t.projectId}`
+  const details = `${t.description ? `${t.description.slice(0, 800)}\n\n` : ''}${location.origin}/projetos/${t.projectId}`
   return `https://calendar.google.com/calendar/render?${new URLSearchParams({ action: 'TEMPLATE', text: `${code(t)}: ${t.title}`, dates: `${start}/${ymd(end)}`, details })}`
 })
 const titleOf = (id) => state.projects.find((p) => p.id === task.value?.projectId)?.titles?.[id]
@@ -234,7 +354,7 @@ function addItem() {
 function toggleItem(item, el) {
   item.done = !item.done
   set({ checklist: [...task.value.checklist] })
-  if (item.done && !reduced) gsap.fromTo(el, { scale: 0.7 }, { scale: 1, duration: DUR.fast, ease: EASE.pop })
+  if (item.done && !reduced) gsap.fromTo(el, { scale: 0.78 }, { scale: 1, duration: DUR.fast, ease: EASE.pop })
 }
 const removeItem = (item) => set({ checklist: task.value.checklist.filter((i) => i !== item) })
 function addTag() {
@@ -289,7 +409,7 @@ const copyLink = () => copy(`${location.origin}${location.pathname}?task=${task.
 function duplicate() {
   const t = task.value
   menu.value = false
-  const copyOf = createTask({ title: `${t.title} (cópia)`.slice(0, 200), projectId: t.projectId, description: t.description, priority: t.priority, due: t.due, start: t.start, tags: [...t.tags], assignees: [...t.assignees], checklist: t.checklist.map((i) => ({ title: i.title, done: false })) })
+  const copyOf = createTask({ title: `${t.title} (cópia)`.slice(0, 200), projectId: t.projectId, description: t.description, priority: t.priority, due: t.due, start: t.start, tags: [...t.tags], assignees: [...t.assignees], recurrence: t.recurrence || '', clientVisible: Boolean(t.clientVisible), checklist: t.checklist.map((i) => ({ title: i.title, done: false })) })
   openTask(copyOf)
   toast('Tarefa duplicada.')
 }
@@ -327,6 +447,10 @@ function destroy() {
           </button>
           <button v-else type="button" class="done-btn" :disabled="!task.projectId" :title="task.projectId ? '' : 'Escolha um projeto para publicar'" @click="publish">Publicar</button>
           <template v-if="saved">
+            <button type="button" class="timer-pill" :class="{ 'is-running': timerActiveHere }" :title="timerActiveHere ? 'Parar e registrar tempo' : 'Iniciar cronômetro nesta tarefa'" @click="toggleTimer">
+              <AppIcon :name="timerActiveHere ? 'pause' : 'play'" :size="12" />
+              <span class="timer-clock">{{ timerActiveHere ? fmtClock(timerSec) : totalMinutes ? fmtMins(totalMinutes) : 'Iniciar' }}</span>
+            </button>
             <span class="votes" role="group" aria-label="Votos">
               <button type="button" class="vote" :aria-pressed="myVote === 1" :title="`A favor: ${names(panelData.upvotes)}`" aria-label="Votar a favor" @click="vote(1, $event.currentTarget)"><AppIcon name="caret-up" :size="14" />{{ panelData.upvotes.length }}</button>
               <button type="button" class="vote" :aria-pressed="myVote === -1" :title="`Contra: ${names(panelData.downvotes)}`" aria-label="Votar contra" @click="vote(-1, $event.currentTarget)"><AppIcon name="caret-down" :size="14" />{{ panelData.downvotes.length }}</button>
@@ -397,12 +521,67 @@ function destroy() {
 
         <div v-if="saved" class="actions sec" role="toolbar" aria-label="Ações">
           <button type="button" :aria-pressed="adding === 'sub'" @click="openAdd('sub')"><AppIcon name="plus" :size="13" />Subitem</button>
+          <button type="button" :aria-pressed="adding === 'time'" @click="openAdd('time')"><AppIcon name="clock" :size="13" />Tempo<small v-if="totalMinutes" class="act-num">{{ fmtMins(totalMinutes) }}</small></button>
           <button type="button" :aria-pressed="adding === 'dep'" @click="openAdd('dep')"><AppIcon name="layers" :size="13" />Dependência</button>
           <button type="button" :aria-pressed="adding === 'rel'" @click="openAdd('rel')"><AppIcon name="module" :size="13" />Relação</button>
           <button type="button" :aria-pressed="adding === 'link'" @click="openAdd('link')"><AppIcon name="link" :size="13" />Link</button>
           <label class="attach"><AppIcon name="archive" :size="13" />Anexar<input type="file" @change="onAttach" /></label>
           <button type="button" :aria-pressed="adding === 'page'" @click="openAdd('page')"><AppIcon name="page" :size="13" />Página</button>
+          <template v-if="aiEnabled">
+            <span class="actions__sep" aria-hidden="true" />
+            <button type="button" class="ai-act" :disabled="aiBusy" @click="runAssist('break_subtasks')"><AppIcon name="ai" :size="13" />{{ aiBusy ? 'Pensando…' : 'Quebrar em subitens' }}</button>
+            <button v-if="comments.length" type="button" class="ai-act" :disabled="aiBusy" @click="runAssist('summarize_comments')"><AppIcon name="ai" :size="13" />Resumir comentários</button>
+          </template>
         </div>
+
+        <div v-if="aiPreview" class="ai-preview sec" role="region" aria-label="Sugestão da Novexo IA">
+          <div class="ai-preview__head">
+            <span><AppIcon name="ai" :size="13" />{{ aiPreview.mode === 'break_subtasks' ? 'Subitens sugeridos (revise antes de criar)' : 'Resumo dos comentários' }}</span>
+            <button type="button" class="x" aria-label="Fechar sugestão" @click="aiPreview = null"><AppIcon name="close" :size="13" /></button>
+          </div>
+          <template v-if="aiPreview.mode === 'break_subtasks'">
+            <ul class="ai-subs">
+              <li v-for="(s, idx) in aiPreview.subtasks || []" :key="idx">
+                <AppCheckbox v-model="aiSelected" :value="s" size="sm" :label="s" />
+              </li>
+            </ul>
+            <div class="ai-preview__foot">
+              <button type="button" class="ghost" @click="aiPreview = null">Descartar</button>
+              <button type="button" class="done-btn is-done" :disabled="!aiSelected.length" @click="applySuggestedSubtasks">Criar {{ aiSelected.length }} {{ aiSelected.length === 1 ? 'subitem' : 'subitens' }}</button>
+            </div>
+          </template>
+          <template v-else>
+            <div class="c-body" v-html="render(aiPreview.summary || '')" />
+            <div class="ai-preview__foot">
+              <button type="button" class="ghost" @click="copy(aiPreview.summary || '', 'Resumo copiado.')">Copiar resumo</button>
+              <button type="button" class="ghost" @click="aiPreview = null">Fechar</button>
+            </div>
+          </template>
+        </div>
+
+        <div v-if="adding === 'time'" class="time-box sec">
+          <div class="time-box__top">
+            <span class="time-box__total">Total registrado: <strong>{{ totalMinutes ? fmtMins(totalMinutes) : '0m' }}</strong></span>
+            <div class="time-presets">
+              <button v-for="m in [15, 30, 60]" :key="m" type="button" class="time-chip" :disabled="loggingTime" @click="saveWorklog(m, '')">+{{ fmtMins(m) }}</button>
+            </div>
+          </div>
+          <form class="inline" @submit.prevent="saveWorklog()">
+            <input v-model.number="timeMins" type="number" min="1" max="1440" class="time-mins" aria-label="Minutos" placeholder="Minutos" />
+            <input v-model="timeNote" type="text" placeholder="Nota opcional (ex.: revisão do layout)" aria-label="Nota do tempo" />
+            <button type="submit" class="done-btn" :disabled="loggingTime || !timeMins">Registrar</button>
+          </form>
+          <ul v-if="(panelData.worklogs || []).length" class="wlogs">
+            <li v-for="w in panelData.worklogs" :key="w.id">
+              <strong class="wlogs__dur">{{ fmtMins(w.minutes) }}</strong>
+              <span class="wlogs__who">{{ member(w.user)?.name || 'Alguém' }}</span>
+              <span v-if="w.note" class="wlogs__note">{{ w.note }}</span>
+              <small>{{ w.date }}</small>
+              <button v-if="w.user === state.me || state.isAdmin" type="button" class="x" aria-label="Remover registro de tempo" @click="removeWorklog(w)"><AppIcon name="close" :size="12" /></button>
+            </li>
+          </ul>
+        </div>
+
         <form v-if="adding === 'dep' || adding === 'rel'" class="inline sec" @submit.prevent="addRelation">
           <AppSelect v-model="rel.kind" :options="relKindOptions" aria-label="Tipo" />
           <AppSelect v-model="rel.task" class="grow" :options="relTaskOptions" placeholder="Escolher tarefa" aria-label="Tarefa" />
@@ -477,6 +656,14 @@ function destroy() {
             <dd>
               <AppSelect v-if="saved" ghost size="sm" :model-value="task.parent || null" :options="parentSelectOptions" placeholder="Adicionar pai" aria-label="Tarefa pai" @change="(v) => set({ parent: v })" />
               <span v-else class="none">Publique para escolher</span>
+            </dd>
+            <dt><AppIcon name="cycle" :size="15" />Repetir</dt>
+            <dd>
+              <AppSelect ghost size="sm" :model-value="task.recurrence || ''" :options="RECURRENCE_OPTIONS" aria-label="Recorrência" @change="(v) => set({ recurrence: v })" />
+            </dd>
+            <dt><AppIcon name="globe" :size="15" />Portal</dt>
+            <dd>
+              <AppCheckbox size="sm" :model-value="Boolean(task.clientVisible)" label="Visível no portal do cliente" @update:model-value="(v) => set({ clientVisible: Boolean(v) })" />
             </dd>
             <dt><AppIcon name="tag" :size="15" />Etiquetas</dt>
             <dd class="chips">
@@ -559,20 +746,24 @@ function destroy() {
 .drawer:focus { outline: none; }
 .drawer { display: flex; flex-direction: column; width: min(92vw, 58rem); height: 100%; border-left: 1px solid var(--line-strong); background: var(--surface); box-shadow: -20px 0 50px rgb(0 0 0 / 0.4); }
 .is-wide .drawer { width: min(100%, 76rem); height: min(100%, 52rem); border: 1px solid var(--line-strong); border-radius: 12px; }
-.head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; height: 52px; padding: 0 0.75rem; border-bottom: 1px solid var(--line); }
-.head__group { display: flex; align-items: center; gap: 0.35rem; }
-.code { font: 500 12px/1 'Geist Mono', monospace; color: var(--muted); }
-.done-btn { display: inline-flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.7rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: background 0.2s var(--ease), border-color 0.2s var(--ease); }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 52px; padding: 0.35rem 0.75rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.head__group { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.code { font: 500 12px/1 'Geist Mono', monospace; color: var(--muted); font-variant-numeric: tabular-nums; }
+.done-btn { display: inline-flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.7rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; font-weight: 500; color: var(--text); cursor: pointer; transition: background 0.16s var(--ease), border-color 0.16s var(--ease), transform 0.12s var(--ease); }
 .done-btn:hover:not(:disabled) { border-color: var(--accent); }
+.done-btn:active:not(:disabled), .icon:active, .vote:active, .sub-btn:active, .timer-pill:active, .time-chip:active, .actions button:active, .mini:active { transform: scale(0.97); }
 .done-btn.is-done { border-color: var(--accent); background: var(--accent); color: #000; }
 .done-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.icon { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.timer-pill { display: inline-flex; align-items: center; gap: 0.35rem; height: 30px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; transition: border-color 0.16s var(--ease), color 0.16s var(--ease), background 0.16s var(--ease), transform 0.12s var(--ease); }
+.timer-pill:hover { border-color: var(--line-strong); color: var(--text); background: var(--surface-2); }
+.timer-pill.is-running { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent-soft); }
+.timer-clock { font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; }
+.icon { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; transition: background 0.14s var(--ease), color 0.14s var(--ease), transform 0.12s var(--ease); }
 .icon:hover, .icon[aria-pressed='true'] { background: var(--surface-2); color: var(--text); }
 .menu-wrap { position: relative; }
-.menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 5; display: flex; flex-direction: column; min-width: 13rem; max-height: 18rem; padding: 0.3rem; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.45); }
-.bar .menu { left: 0; right: auto; }
-.menu button, .menu a { text-decoration: none; }
-.menu button, .menu a { display: flex; flex-shrink: 0; align-items: center; gap: 0.5rem; white-space: nowrap; padding: 0.45rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; text-align: left; color: var(--text); cursor: pointer; }
+.menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 5; display: flex; flex-direction: column; min-width: 13rem; max-height: 18rem; padding: 0.3rem; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.45); transform-origin: top right; }
+.bar .menu { left: 0; right: auto; transform-origin: top left; }
+.menu button, .menu a { text-decoration: none; display: flex; flex-shrink: 0; align-items: center; gap: 0.5rem; white-space: nowrap; padding: 0.45rem 0.55rem; border: 0; border-radius: 5px; background: none; font-size: 13px; text-align: left; color: var(--text); cursor: pointer; }
 .menu button:hover, .menu a:hover { background: var(--surface-2); }
 .menu .danger { color: var(--danger, #ff8a80); }
 .menu .tick { margin-left: auto; color: var(--accent-soft); }
@@ -580,7 +771,8 @@ function destroy() {
 .parent-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.6rem; padding: 0; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .parent-link:hover { color: var(--accent-soft); }
 .title { display: block; width: 100%; margin-top: 0.5rem; padding: 0; border: 0; background: none; font: 600 1.375rem/1.3 'Geist', system-ui, sans-serif; color: var(--text); resize: none; field-sizing: content; outline: none; }
-.bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); border-block: 1px solid var(--line); position: relative; z-index: 6; } .cell { display: flex; align-items: center; gap: 0.3rem; min-width: 0; padding: 0.35rem 0.5rem; color: var(--muted); }
+.bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); border-block: 1px solid var(--line); position: relative; z-index: 6; }
+.cell { display: flex; align-items: center; gap: 0.3rem; min-width: 0; padding: 0.35rem 0.5rem; color: var(--muted); }
 .cell + .cell { border-left: 1px solid var(--line); }
 .cell :deep(.nvx-date) { border-color: transparent; background: none; padding-inline: 0.35rem; }
 .cell input { flex: 1; min-width: 0; padding: 0 0.2rem; }
@@ -595,11 +787,12 @@ input[type='date'] { height: 30px; padding: 0 0.4rem; font-size: 13px; }
 input[type='date']:hover, .desc:hover { background: var(--surface-2); }
 input[type='date']:focus, .desc:focus, .add input:focus, .tag-input:focus, .comment textarea:focus { border-color: var(--accent); }
 .menu__label { padding: 0.45rem 0.55rem 0.2rem; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); }
-.menu__n { margin-left: 0.15rem; font-size: 11.5px; color: var(--muted); }
+.menu__n { margin-left: 0.15rem; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .menu__who { display: flex; flex-direction: column; min-width: 0; }
 .menu__who small { font-size: 11.5px; color: var(--muted); }
-.inline :deep(.grow) { flex: 1; min-width: 9rem; } .chips { flex-wrap: wrap; }
-.chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12px; cursor: pointer; }
+.inline :deep(.grow) { flex: 1; min-width: 9rem; }
+.chips { flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: none; font-size: 12px; color: var(--text); cursor: pointer; }
 .chip.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .none { font-size: 12.5px; color: var(--muted); }
@@ -608,15 +801,15 @@ input[type='date']:focus, .desc:focus, .add input:focus, .tag-input:focus, .comm
 .tag-input { width: 9rem; height: 28px; padding: 0 0.4rem; font-size: 13px; }
 .tag-input:hover { background: var(--surface-2); }
 h3 { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.5rem; font: 600 13px/1.2 'Geist', system-ui, sans-serif; color: var(--text); }
-h3 span { font-weight: 400; color: var(--muted); }
+h3 span { font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
 h3.big { margin-bottom: 0.8rem; font-size: 14px; }
-.mini { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: auto; padding: 0.25rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; }
+.mini { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: auto; padding: 0.25rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; transition: border-color 0.15s var(--ease), color 0.15s var(--ease), transform 0.12s var(--ease); }
 .mini:hover { border-color: var(--line-strong); color: var(--text); }
 .desc { width: 100%; padding: 0.5rem; resize: vertical; }
 .subs { display: flex; flex-direction: column; margin: 0 0 0.4rem; padding: 0; border: 1px solid var(--line); border-radius: 8px; list-style: none; }
 .subs li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6rem; }
 .subs li + li { border-top: 1px solid var(--line); }
-.subs__code { font: 500 11.5px/1 'Geist Mono', monospace; color: var(--muted); }
+.subs__code { font: 500 11.5px/1 'Geist Mono', monospace; color: var(--muted); font-variant-numeric: tabular-nums; }
 .subs__title { flex: 1; min-width: 0; padding: 0; border: 0; background: none; font-size: 13px; text-align: left; color: var(--text); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .subs__title:hover { color: var(--accent-soft); }
 .fold { display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.6rem; padding: 0; border: 0; background: none; font-size: 12.5px; font-weight: 600; color: var(--text); cursor: pointer; }
@@ -636,7 +829,7 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .rm { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--muted); cursor: pointer; opacity: 0; }
 .items li:hover .rm, .rm:focus-visible { opacity: 1; }
 .add input { width: 100%; height: 32px; padding: 0 0.5rem; border-color: var(--line); }
-.tabs { display: flex; gap: 0.2rem; margin-bottom: 0.8rem; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 0.2rem; margin-bottom: 0.8rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
 .tabs button { margin-bottom: -1px; padding: 0.45rem 0.6rem; border: 0; border-bottom: 2px solid transparent; background: none; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; }
 .tabs button:hover { color: var(--text); }
 .tabs button[aria-selected='true'] { border-color: var(--accent); color: var(--text); }
@@ -656,27 +849,50 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .note textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; color: var(--text); outline: none; resize: vertical; }
 .note textarea:focus { border-color: var(--accent); }
 .note div { display: flex; justify-content: flex-end; gap: 0.5rem; }
-.ghost { padding: 0 0.7rem; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.ghost { height: 30px; padding: 0 0.7rem; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .ghost:hover { background: var(--surface-2); color: var(--text); }
-.votes { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; }
+.votes { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; font-variant-numeric: tabular-nums; }
 .vote { display: inline-flex; align-items: center; gap: 0.15rem; height: 28px; padding: 0 0.5rem; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .vote + .vote { border-left: 1px solid var(--line); }
 .vote[aria-pressed='true'] { color: var(--accent-soft); }
 .sub-btn { display: inline-flex; align-items: center; gap: 0.35rem; height: 30px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--text); cursor: pointer; }
-.sub-btn span { color: var(--muted); }
+.sub-btn span { color: var(--muted); font-variant-numeric: tabular-nums; }
 .sub-btn[aria-pressed='true'] { border-color: var(--accent); }
 .saving { margin-left: 0.6rem; font-size: 11.5px; color: var(--accent-soft); }
-.count { display: block; text-align: right; font-size: 11px; color: var(--muted); }
+.count { display: block; text-align: right; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .count.full { color: var(--danger, #ff8a80); }
 .under { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.6rem; }
 .under small { font-size: 11.5px; color: var(--muted); }
-.actions { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.35rem; border: 1px solid var(--line); border-radius: 8px; }
-.actions button, .attach { position: relative; display: inline-flex; align-items: center; gap: 0.3rem; height: 28px; padding: 0 0.55rem; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; padding: 0.35rem; border: 1px solid var(--line); border-radius: 8px; }
+.actions button, .attach { position: relative; display: inline-flex; align-items: center; gap: 0.3rem; height: 28px; padding: 0 0.55rem; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: background 0.14s var(--ease), color 0.14s var(--ease), transform 0.12s var(--ease); }
 .actions button:hover, .actions button[aria-pressed='true'], .attach:hover { background: var(--surface-2); color: var(--text); }
+.actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+.actions__sep { width: 1px; height: 16px; margin: 0 0.15rem; background: var(--line); }
+.ai-act { color: var(--accent-soft) !important; }
+.act-num { font: 500 11px/1 'Geist Mono', monospace; color: var(--accent-soft); font-variant-numeric: tabular-nums; }
 .attach input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .attach:focus-within { outline: 2px solid var(--accent-soft); }
 .inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.inline input { flex: 1; min-width: 9rem; height: 32px; padding: 0 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13px; color: var(--text); }
+.inline input { flex: 1; min-width: 9rem; height: 32px; padding: 0 0.5rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); font: inherit; font-size: 13px; color: var(--text); outline: none; }
+.inline input:focus { border-color: var(--accent); }
+.time-box { display: flex; flex-direction: column; gap: 0.65rem; padding: 0.75rem; border: 1px solid var(--line); border-radius: 9px; background: color-mix(in srgb, var(--bg) 55%, var(--surface)); }
+.time-box__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 12.5px; color: var(--muted); }
+.time-box__total strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.time-presets { display: flex; gap: 0.35rem; }
+.time-chip { height: 26px; padding: 0 0.55rem; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); font: 500 12px/1 'Geist Mono', monospace; color: var(--text); cursor: pointer; font-variant-numeric: tabular-nums; transition: border-color 0.14s var(--ease), transform 0.12s var(--ease); }
+.time-chip:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-soft); }
+.time-mins { flex: 0 0 5.5rem !important; min-width: 5rem !important; font-variant-numeric: tabular-nums; }
+.wlogs { display: flex; flex-direction: column; margin: 0; padding: 0.45rem 0 0; border-top: 1px solid var(--line); list-style: none; gap: 0.3rem; }
+.wlogs li { display: flex; align-items: center; gap: 0.5rem; font-size: 12.5px; color: var(--muted); }
+.wlogs__dur { min-width: 3.4rem; font-family: 'Geist Mono', monospace; color: var(--text); font-variant-numeric: tabular-nums; }
+.wlogs__who { color: var(--text); font-weight: 500; }
+.wlogs__note { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wlogs small { margin-left: auto; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ai-preview { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem 0.9rem; border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 9px; background: color-mix(in srgb, var(--accent) 6%, var(--bg)); }
+.ai-preview__head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 12.5px; font-weight: 600; color: var(--accent-soft); }
+.ai-preview__head > span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.ai-subs { display: flex; flex-direction: column; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
+.ai-preview__foot { display: flex; justify-content: flex-end; gap: 0.45rem; }
 .rel { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; font-size: 13px; }
 .rel__kind { min-width: 7.5rem; font-size: 12px; color: var(--muted); }
 .rel__item { display: inline-flex; align-items: center; gap: 0.2rem; max-width: 100%; padding: 0.15rem 0.2rem 0.15rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; }
@@ -689,7 +905,6 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .files a:hover { color: var(--accent-soft); }
 .files small { font-size: 11.5px; }
 .thumb { width: 28px; height: 28px; border-radius: 4px; object-fit: cover; }
-.tabs { flex-wrap: wrap; align-items: center; }
 .sort { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: auto; padding: 0.25rem 0.5rem; border: 0; background: none; font-size: 12px; color: var(--muted); cursor: pointer; }
 .states { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .states label { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.55rem; border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); border-radius: 999px; font-size: 12px; cursor: pointer; }
@@ -709,6 +924,9 @@ h3.big { margin-bottom: 0.8rem; font-size: 14px; }
 .c-body :deep(blockquote) { margin: 0.3em 0; padding-left: 0.7rem; border-left: 3px solid var(--accent); color: var(--muted); }
 .c-edit div { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.4rem; }
 .det { font-size: 11.5px; color: var(--muted); }
-:is(.vote, .sub-btn, .actions button, .x, .sort, .c-actions button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+:is(.vote, .sub-btn, .timer-pill, .time-chip, .actions button, .x, .sort, .c-actions button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 :is(.done-btn, .icon, .chip, .box, .rm, .ntag button, .mini, .fold, .tabs button, .menu button, .cell__btn, .subs__title, .parent-link):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .done-btn:active, .icon:active, .vote:active, .sub-btn:active, .timer-pill:active, .time-chip:active, .actions button:active, .mini:active { transform: none; }
+}
 </style>

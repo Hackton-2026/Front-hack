@@ -23,8 +23,21 @@ const menu = ref('')
 
 const ABOUT = { todo: 'Ainda não começou', doing: 'Alguém está trabalhando nisso', review: 'Esperando revisão', done: 'Pronto e entregue' }
 const FIELDS = { project: 'Projeto', tags: 'Etiquetas', sub: 'Subtarefas', assignees: 'Responsáveis', dates: 'Datas', priority: 'Prioridade', cycle: 'Ciclo' }
-state.prefs.board ||= { limits: {}, collapsed: [], hideEmpty: false, group: '', fields: Object.fromEntries(Object.keys(FIELDS).map((k) => [k, true])) }
+state.prefs.board ||= { limits: {}, collapsed: [], hideEmpty: false, group: '', sort: 'manual', fields: Object.fromEntries(Object.keys(FIELDS).map((k) => [k, true])) }
 const cfg = state.prefs.board
+if (!cfg.sort) cfg.sort = 'manual'
+const SORT_OPTIONS = [
+  { value: 'manual', label: 'Manual' },
+  { value: 'priority', label: 'Prioridade' },
+  { value: 'due', label: 'Prazo' },
+]
+const PRIO_RANK = { urgent: 0, high: 1, normal: 2, low: 3, '': 4 }
+const sortCol = (list) => {
+  const arr = [...list]
+  if (cfg.sort === 'priority') return arr.sort((a, b) => (PRIO_RANK[a.priority || ''] ?? 4) - (PRIO_RANK[b.priority || ''] ?? 4))
+  if (cfg.sort === 'due') return arr.sort((a, b) => (a.due || '9999-99-99').localeCompare(b.due || '9999-99-99'))
+  return arr.sort((a, b) => (a.sortPosition || 0) - (b.sortPosition || 0))
+}
 
 // Mapas pré-indexados para eliminar buscas O(N²) durante drag & render
 const prioMap = new Map(PRIORITIES.map((p) => [p.id, p]))
@@ -76,7 +89,7 @@ const boardLanes = computed(() => {
   return active.map((l, idx) => {
     let laneTotal = 0
     const cells = cols.value.map((c) => {
-      const list = cfg.group ? c.tasks.filter(l.has) : c.tasks
+      const list = sortCol(cfg.group ? c.tasks.filter(l.has) : c.tasks)
       laneTotal += list.length
       return { col: c, tasks: list }
     })
@@ -133,6 +146,26 @@ function onDrop(status, lane) {
   updateTask(task, patch)
   flashMoved(task.id)
 }
+function onDropBeforeCard(targetTask, status, lane, cellTasks) {
+  const task = draggedTask
+  draggedTask = null
+  draggingId.value = null
+  over.value = null
+  if (!task || task.id === targetTask.id) return
+  if (task.status !== status && needsNote(task, status)) return
+  const idx = cellTasks.findIndex((t) => t.id === targetTask.id)
+  const prevPos = idx > 0 ? (cellTasks[idx - 1].sortPosition || (idx - 1) * 100) : (targetTask.sortPosition || 0) - 100
+  const nextPos = targetTask.sortPosition || idx * 100
+  const sortPosition = Math.round((prevPos + nextPos) / 2)
+  const patch = {
+    ...(task.status !== status && { status }),
+    ...(lane.patch && !lane.has(task) && lane.patch),
+    sortPosition,
+  }
+  cfg.sort = 'manual'
+  updateTask(task, patch)
+  flashMoved(task.id)
+}
 function moveBy(task, dir) {
   const i = STATUSES.findIndex((s) => s.id === task.status) + dir
   if (STATUSES[i] && !needsNote(task, STATUSES[i].id)) {
@@ -169,6 +202,9 @@ onMounted(() => {
     <div class="kb__bar">
       <label class="opt"><AppIcon name="layers" :size="13" />Agrupar por
         <AppSelect v-model="cfg.group" :options="groupOptions" size="sm" aria-label="Agrupar por" />
+      </label>
+      <label class="opt"><AppIcon name="sliders" :size="13" />Ordenar
+        <AppSelect v-model="cfg.sort" :options="SORT_OPTIONS" size="sm" aria-label="Ordenar cartões por" />
       </label>
       <div class="rel">
         <button type="button" class="pg-btn" :aria-expanded="menu === 'fields'" @click.stop="menu = menu === 'fields' ? '' : 'fields'"><AppIcon name="settings" :size="13" />Campos</button>
@@ -229,6 +265,8 @@ onMounted(() => {
                 :aria-label="`${t.title}. Setas esquerda e direita mudam o status.`"
                 @dragstart="onDragStart($event, t)"
                 @dragend="onDragEnd"
+                @dragover.prevent
+                @drop.stop.prevent="onDropBeforeCard(t, c.id, row.lane, cellTasks)"
                 @click="openTask(t)"
                 @keydown.enter="openTask(t)"
                 @keydown.left.prevent="moveBy(t, -1)"

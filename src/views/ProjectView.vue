@@ -13,6 +13,7 @@ import AppCheckbox from '../components/app/AppCheckbox.vue'
 import TaskListView from '../components/app/TaskListView.vue'
 import TaskBoard from '../components/app/TaskBoard.vue'
 import TaskCalendar from '../components/app/TaskCalendar.vue'
+import ProjectCustomizeDrawer from '../components/app/ProjectCustomizeDrawer.vue'
 import GooeyButton from '../components/GooeyButton.vue'
 import { LAYOUTS, layout } from '../components/app/views/layouts'
 import TaskGantt from '../components/app/views/TaskGantt.vue'
@@ -44,6 +45,7 @@ const view = computed(() => VIEWS.find((v) => v.id === route.query.v)?.id || sta
 const onlyMine = ref(false)
 const q = ref('')
 const tabs = ref(null)
+const customizing = ref(false)
 
 const saved = computed(() => props.view && state.views.find((x) => x.id === Number(props.view)))
 const kind = computed(() => saved.value?.type || view.value)
@@ -198,6 +200,7 @@ onMounted(() => moveInk(false))
       <div class="head__right">
         <RouterLink :to="`/projetos/${p.id}/membros`" class="people" :title="`${people.length} ${people.length === 1 ? 'pessoa' : 'pessoas'} no projeto`"><Avatars :ids="people" :size="26" /></RouterLink>
         <button type="button" class="chat-btn" :class="{ 'is-on': ui.chat === p.id }" :aria-pressed="ui.chat === p.id" aria-label="Chat do projeto" title="Chat do projeto" @click="ui.chat === p.id ? closeChat() : openChat(p.id)"><AppIcon name="chat" :size="17" /></button>
+        <button v-if="canEdit" type="button" class="head-btn" :class="{ 'is-on': customizing }" :aria-expanded="customizing" @click="customizing = true"><AppIcon name="sliders" :size="15" />Personalizar</button>
         <RouterLink :to="`/projetos/${p.id}/membros`" class="head-btn"><AppIcon name="user" :size="15" />Participantes</RouterLink>
         <button v-if="canEdit && (cycle || module)" type="button" class="head-btn icon-only" :aria-label="`Apagar ${cycle ? 'ciclo' : 'módulo'}`" :title="`Apagar ${cycle ? 'ciclo' : 'módulo'}`" @click="removeScope"><AppIcon name="trash" :size="15" /></button>
         <button v-if="canEdit && cycleId" type="button" class="head-btn" @click="openPicker"><AppIcon name="plus" :size="15" />Adicionar do projeto</button>
@@ -269,12 +272,13 @@ onMounted(() => moveInk(false))
     <ViewActivity v-else-if="kind === 'activity'" :project-id="p.id" />
     <TaskListView v-else :tasks="tasks" :project-id="p.id" :defaults="scope.defaults" />
 
+    <ProjectCustomizeDrawer :open="customizing" :project="p" :tasks="scoped" :can-edit="canEdit" @close="customizing = false" />
+
     <AppModal :open="picking" title="Adicionar itens do projeto" @close="picking = false" @submit="addPicked">
       <input v-model="pickQ" type="search" placeholder="Buscar pelo nome ou código" aria-label="Buscar itens do projeto" />
       <ul v-if="candidates.length" class="pick">
         <li v-for="t in candidates" :key="t.id">
           <AppCheckbox v-model="picked" :value="t.id" size="sm" class="pick__row">
-
             <span class="pick__code">{{ t.code }}</span>
             <span class="pick__title">{{ t.title }}</span>
             <small v-if="t.cycle" class="pick__from">em {{ cycleName(t.cycle) }}</small>
@@ -297,20 +301,21 @@ onMounted(() => moveInk(false))
 <style scoped>
 .proj { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; }
 .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
-.head__title { display: flex; align-items: center; gap: 0.65rem; }
+.head__title { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; min-width: 0; }
 .sq { width: 14px; height: 14px; border-radius: 4px; }
 .emoji { font-size: 1.35rem; line-height: 1; }
 .back { font-size: 12px; color: var(--muted); text-decoration: none; }
 .back:hover { color: var(--accent-soft); }
 h1 { margin: 0; font: 650 1.5rem/1.2 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; color: var(--text); }
-.pct { font-size: 12.5px; color: var(--muted); }
-.head__right { display: flex; align-items: center; gap: 0.75rem; }
+.pct { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.head__right { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
 .people { display: inline-flex; border-radius: 999px; }
 .people:focus-visible, .chat-btn:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-.chat-btn { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line-strong); border-radius: 8px; background: none; color: var(--muted); cursor: pointer; transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease); }
+.chat-btn { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line-strong); border-radius: 8px; background: none; color: var(--muted); cursor: pointer; transition: color 0.16s var(--ease), border-color 0.16s var(--ease), background 0.16s var(--ease), transform 0.12s var(--ease); }
 .chat-btn:hover, .chat-btn.is-on { border-color: var(--text); color: var(--text); }
-.head-btn { display: inline-flex; align-items: center; gap: 0.45rem; height: 36px; padding: 0 0.85rem; border: 1px solid var(--line-strong); border-radius: 8px; color: var(--text); font-size: 13.5px; font-weight: 500; text-decoration: none; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
-.head-btn:hover { border-color: var(--text); background: var(--surface-2); }
+.head-btn { display: inline-flex; align-items: center; gap: 0.45rem; height: 36px; padding: 0 0.85rem; border: 1px solid var(--line-strong); border-radius: 8px; color: var(--text); font-size: 13.5px; font-weight: 500; text-decoration: none; transition: border-color 0.16s var(--ease), background 0.16s var(--ease), transform 0.12s var(--ease); }
+.head-btn:hover, .head-btn.is-on { border-color: var(--text); background: var(--surface-2); }
+.head-btn:active, .chat-btn:active, .toggle:active { transform: scale(0.97); }
 .head-btn:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 button.head-btn { background: none; cursor: pointer; }
 .head-btn.icon-only { width: 36px; padding: 0; justify-content: center; color: var(--muted); }
@@ -327,8 +332,7 @@ button.head-btn { background: none; cursor: pointer; }
 .pbar { height: 3px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
 .pbar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-soft)); transform-origin: left; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; border-bottom: 1px solid var(--line); }
-.tabs { position: relative; display: flex; gap: 0.25rem; }
-.tabs { flex-wrap: wrap; align-items: center; }
+.tabs { position: relative; display: flex; gap: 0.25rem; flex-wrap: wrap; align-items: center; }
 .tabs > button, .tab-link { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.55rem 0.7rem; border: 0; background: none; font-weight: 500; font-size: 13.5px; color: var(--muted); text-decoration: none; cursor: pointer; transition: color 0.2s var(--ease); }
 .tabs > button[aria-selected='true'], .tabs > button:hover, .tab-link[aria-selected='true'], .tab-link:hover { color: var(--text); }
 :is(.tabs > button, .tab-link, .add-btn, .add-item, .view-actions button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: -2px; border-radius: 6px; }
@@ -344,7 +348,7 @@ button.head-btn { background: none; cursor: pointer; }
 .more__box a:hover { background: var(--surface-2); }
 .add-btn { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.25rem; padding: 0.3rem 0.6rem; border: 1px dashed var(--line-strong); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
 .add-btn:hover, .add-btn[aria-expanded='true'] { border-color: var(--accent); color: var(--text); }
-.add-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; width: min(36rem, 92vw); max-height: 70vh; overflow-y: auto; padding: 0.6rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.4); }
+.add-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; width: min(36rem, 92vw); max-height: 70vh; overflow-y: auto; padding: 0.6rem; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.4); transform-origin: top left; }
 .add-find { display: flex; align-items: center; gap: 0.4rem; height: 32px; margin-bottom: 0.4rem; padding: 0 0.55rem; border: 1px solid var(--line-strong); border-radius: 7px; color: var(--muted); }
 .add-find:focus-within { border-color: var(--accent); }
 .add-find input { flex: 1; border: 0; background: none; font: inherit; color: var(--text); outline: none; }
@@ -366,16 +370,29 @@ button.head-btn { background: none; cursor: pointer; }
 .ink { position: absolute; left: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding-bottom: 0.45rem; }
 .filters :deep(.on) { border-color: var(--accent); color: var(--text); }
-.clear { height: 30px; padding: 0 0.6rem; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.clear { height: 30px; padding: 0 0.6rem; border: 0; border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; font-variant-numeric: tabular-nums; }
 .clear:hover { color: var(--text); background: var(--surface-2); }
 .clear:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .find { display: flex; align-items: center; gap: 0.4rem; height: 30px; padding: 0 0.55rem; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
 .find:focus-within { border-color: var(--accent); }
 .find input { width: 9rem; border: 0; background: none; font: inherit; color: var(--text); outline: none; }
-.toggle { display: inline-flex; align-items: center; gap: 0.35rem; height: 30px; padding: 0 0.65rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.toggle { display: inline-flex; align-items: center; gap: 0.35rem; height: 30px; padding: 0 0.65rem; border: 1px solid var(--line); border-radius: 6px; background: none; font-size: 12.5px; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .toggle[aria-pressed='true'] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); }
 .toggle:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .missing { padding: 3rem 1.5rem; text-align: center; color: var(--muted); }
 .missing a { color: var(--accent-soft); }
+
+@media (max-width: 760px) {
+  .proj { padding: 1rem; gap: 0.85rem; }
+  .head { gap: 0.75rem; }
+  .head__right { width: 100%; justify-content: flex-start; gap: 0.45rem; }
+  .head-btn { height: 34px; padding: 0 0.65rem; font-size: 12.5px; }
+  .filters { width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 0.55rem; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filters > * { flex-shrink: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .head-btn:active, .chat-btn:active, .toggle:active { transform: none; }
+}
 </style>

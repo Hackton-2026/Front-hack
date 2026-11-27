@@ -33,7 +33,7 @@ const localDefaults = () => ({
   ],
   prefs: {
     weekStart: 0, theme: 'dark', density: 'comfortable',
-    accent: '#e56515', contrast: false, calm: false, showIds: true, handCursor: true, shortcuts: true, defaultView: 'list', defaultPriority: '', assignMe: true,
+    accent: '#e56515', contrast: false, calm: false, showIds: true, handCursor: true, shortcuts: true, hideAi: false, defaultView: 'list', defaultPriority: '', assignMe: true,
     notify: { assigned: true, mention: true, due: true, status: true, done: false, digest: false, followOwn: true },
     nav: { drafts: true, mine: true, notes: true },
     pinned: [],
@@ -120,14 +120,17 @@ watch(() => [state.docs, state.prefs], schedulePersist, { deep: true })
 const fromApi = (t) => ({
   id: t.id, number: t.number, code: t.code, projectId: t.project, title: t.title, description: t.description, status: t.status,
   priority: t.priority, assignees: t.assignees, due: t.due, start: t.start, parent: t.parent, creator: t.creator, tags: t.tags, checklist: t.checklist, completionNote: t.completion_note,
-  cycle: t.cycle, modules: t.modules, completedAt: t.completed_at, createdAt: t.created_at, updatedAt: t.updated_at, draft: false,
+  cycle: t.cycle, modules: t.modules, recurrence: t.recurrence || '', clientVisible: Boolean(t.client_visible), sortPosition: Number(t.sort_position ?? 0),
+  completedAt: t.completed_at, createdAt: t.created_at, updatedAt: t.updated_at, draft: false,
 })
 function toApi(fields) {
   const body = {}
   for (const [k, v] of Object.entries(fields)) {
     if (k === 'projectId') body.project = v
+    else if (k === 'clientVisible') body.client_visible = Boolean(v)
+    else if (k === 'sortPosition') body.sort_position = Number(v) || 0
     else if (k === 'checklist') body.checklist = v.map((i) => (typeof i.id === 'number' ? i : { title: i.title, done: i.done }))
-    else if (['title', 'description', 'status', 'priority', 'assignees', 'due', 'start', 'parent', 'tags', 'note', 'cycle', 'modules'].includes(k)) body[k] = v
+    else if (['title', 'description', 'status', 'priority', 'assignees', 'due', 'start', 'parent', 'tags', 'note', 'cycle', 'modules', 'recurrence'].includes(k)) body[k] = v
   }
   return body
 }
@@ -205,6 +208,7 @@ export function useWorkspace() {
   function createTask(fields) {
     const task = reactive({
       id: uid(), number: null, code: '', projectId: null, title: '', status: 'todo', priority: '', assignees: [state.me], due: null, start: null, parent: null, creator: state.me, tags: [], cycle: null, modules: [],
+      recurrence: '', clientVisible: false, sortPosition: 0,
       description: '', checklist: [], draft: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), ...fields,
     })
     if (!task.projectId) task.draft = true
@@ -566,9 +570,40 @@ export function useWorkspace() {
     schedulePersist()
   }
 
+  const aiEnabled = computed(() => state.settings.products?.ai !== false && !state.prefs.hideAi)
+
+  async function bulkUpdateTasks(ids, patch) {
+    const numIds = ids.filter((id) => typeof id === 'number')
+    if (!numIds.length) return false
+    try {
+      const res = await api('/api/tasks/bulk/', { method: 'POST', body: { ids: numIds, ...toApi(patch), ...(patch.delete ? { delete: true } : {}) } })
+      if (patch.delete) {
+        const gone = new Set(numIds)
+        state.tasks = state.tasks.filter((t) => !gone.has(t.id))
+      } else if (Array.isArray(res?.tasks)) {
+        const map = new Map(res.tasks.map((t) => [t.id, fromApi(t)]))
+        for (const t of state.tasks) {
+          if (map.has(t.id)) Object.assign(t, map.get(t.id))
+        }
+      }
+      refreshFeed()
+      return res?.count ?? numIds.length
+    } catch (e) {
+      fail(e)
+      return false
+    }
+  }
+
+  async function seedExampleProject() {
+    const p = await api('/api/projects/seed-example/', { method: 'POST' })
+    state.loaded = false
+    await load()
+    return p
+  }
+
   return {
-    state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread,
-    load, refreshFeed, createTask, taskSaved, updateTask, removeTask, createProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, createDoc, progress, clearLocal,
+    state, STATUSES, PRIORITIES, project, member, status, priority, code, tasksOf, mine, drafts, isOverdue, unread, aiEnabled,
+    load, refreshFeed, createTask, taskSaved, updateTask, removeTask, bulkUpdateTasks, createProject, seedExampleProject, renameWorkspace, saveWorkspace, setMemberRole, removeMember, markRead, markAllRead, taskActivity, taskComments, createDoc, progress, clearLocal,
     updateProject, postUpdate, projectActivity, createItem, updateItem, removeItem, archivedProjects, trashedTasks, restoreProject, archiveProject, restoreTask,
     starred, toggleStar, doneRatio, touchRecent, peopleOf,
     projectMembers, inviteToProject, cancelInvite, setProjectPermission, setProjectRole, rolesOf, removeProjectMember, inviteInfo, acceptInvite, declineInvite,

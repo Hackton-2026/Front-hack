@@ -3,6 +3,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { EASE, DUR, gsap, prefersReducedMotion } from '../utils/motion'
 import { parseCsv, toCsv } from '../utils/csv'
+import { API_URL } from '../config'
 import { api, toFormData } from '../services/api'
 import { compressImage } from '../utils/image'
 import { disablePush, enablePush, pushConfigured, pushSupported, savedToken } from '../services/push'
@@ -36,16 +37,16 @@ const PREF_TOGGLES = [
   ['calm', 'Modo de desempenho', 'Desliga animações e transições.'],
   ['showIds', 'Mostrar IDs das tarefas', 'Código (ex.: APP-3) nas listas e no quadro.'],
   ['handCursor', 'Cursor de mão', 'Mãozinha ao passar em botões e links.'],
-  ['shortcuts', 'Atalhos do teclado', 'Ctrl K para buscar e N para nova tarefa.'],
+  ['shortcuts', 'Atalhos do teclado', 'Ctrl K para buscar, C/N para nova tarefa e G + tecla para navegar.'],
   ['assignMe', 'Me atribuir novas tarefas', 'Nova tarefa já vem com você como responsável.'],
+  ['hideAi', 'Ocultar recursos de IA', 'Esconde a aba IA, atalhos e sugestões de IA só para você.'],
 ]
 const NOTIFY = [
   ['assigned', 'Me atribuírem uma tarefa'], ['mention', 'Me mencionarem'], ['status', 'O status de uma tarefa minha mudar'],
   ['done', 'Uma tarefa minha for concluída'], ['due', 'Prazo chegando ou tarefa parada'], ['digest', 'Resumo da semana por e-mail'],
   ['followOwn', 'Seguir as tarefas que eu criar ou editar'],
 ]
-const VIEWS = [['list', 'Lista'], ['board', 'Quadro'], ['calendar', 'Calendário']]
-const ROLES = [['admin', 'Admin'], ['member', 'Membro'], ['limited', 'Membro limitado'], ['guest', 'Convidado']]
+const VIEWS = [['list', 'Lista'], ['board', 'Kanban'], ['calendar', 'Calendário'], ['gantt', 'Gantt']]
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const FEATURES = [['cycles', 'Ciclos'], ['modules', 'Módulos'], ['pages', 'Documentos do projeto']]
 
@@ -207,11 +208,28 @@ const testPush = () => pushAction(() => api('/api/devices/test/', { method: 'POS
 const slugInput = ref('')
 watch(() => state.slug, (s) => (slugInput.value = s), { immediate: true })
 const origin = location.origin
+const mcpEndpoint = `${(API_URL || origin).replace(/\/$/, '')}/api/mcp`
+const mcpConfigJson = computed(() => JSON.stringify({
+  mcpServers: {
+    novexo: {
+      url: mcpEndpoint,
+      headers: { Authorization: 'Bearer nvx_SEU_TOKEN_AQUI' },
+    },
+  },
+}, null, 2))
+async function copyMcpConfig() {
+  try {
+    await navigator.clipboard.writeText(mcpConfigJson.value)
+    status.value = 'Configuração MCP copiada.'
+  } catch {
+    status.value = 'Não foi possível copiar.'
+  }
+}
 
 const billing = ref(null)
 const payments = ref([])
 const paymentsError = ref('')
-const yearly = ref(false)
+const yearly = ref(true)
 async function loadBilling() {
   try {
     // a lista vazia por erro parecia "nenhum pagamento", justo onde o checkout manda procurar o recibo
@@ -288,29 +306,119 @@ function exportCsv() {
 }
 
 const importProject = ref('')
-const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
-const byName = (list, v) => list.find((x) => norm(x.name) === norm(v) || x.id === norm(v))?.id
+const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+function mapStatus(raw) {
+  const v = norm(raw)
+  if (!v) return 'todo'
+  const direct = STATUSES.find((x) => norm(x.name) === v || x.id === v)
+  if (direct) return direct.id
+  if (/done|conclu|feit|complet|closed|resolv|entreg/.test(v)) return 'done'
+  if (/revis|review|qa|aprov|homolog/.test(v)) return 'review'
+  if (/doing|progress|andamento|fazendo|active|working|exec/.test(v)) return 'doing'
+  return 'todo'
+}
+function mapPriority(raw) {
+  const v = norm(raw)
+  if (!v) return ''
+  const direct = PRIORITIES.find((x) => norm(x.name) === v || x.id === v)
+  if (direct) return direct.id
+  if (/urgen|crit|p1|highest/.test(v)) return 'urgent'
+  if (/high|alta|p2/.test(v)) return 'high'
+  if (/norm|med|p3/.test(v)) return 'normal'
+  if (/low|baix|p4|lowest/.test(v)) return 'low'
+  return ''
+}
+const toDate = (v) => (/^\d{2}\/\d{2}\/\d{4}$/.test(v) ? v.split('/').reverse().join('-') : /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null)
+
 async function onImport(e) {
   const file = e.target.files[0]
   e.target.value = ''
   if (!file) return
   const pid = importProject.value || state.projects[0]?.id
   if (!pid) { status.value = 'Crie um projeto antes de importar.'; return }
-  const [header, ...lines] = parseCsv(await file.text())
+
+  const rawText = await file.text()
+  // Trello JSON export support
+  if (file.name.toLowerCase().endsWith('.json') || rawText.trim().startsWith('{')) {
+    try {
+      const json = JSON.parse(rawText)
+      if (Array.isArray(json.cards)) {
+        const listMap = new Map((json.lists || []).map((l) => [l.id, l.name]))
+        const checklistMap = new Map((json.checklists || []).map((cl) => [cl.id, cl.checkItems || []]))
+        let n = 0
+        for (const card of json.cards) {
+          if (card.closed || !card.name?.trim()) continue
+          const listName = listMap.get(card.idList) || ''
+          const tags = (card.labels || []).map((lb) => (lb.name || lb.color || '').trim().toLowerCase()).filter(Boolean)
+          const checklist = (card.idChecklists || [])
+            .flatMap((cid) => checklistMap.get(cid) || [])
+            .map((ci) => ({ title: String(ci.name || '').slice(0, 200), done: ci.state === 'complete' }))
+            .filter((ci) => ci.title)
+          createTask({
+            projectId: pid,
+            title: card.name.trim().slice(0, 200),
+            description: String(card.desc || '').slice(0, 4000),
+            status: mapStatus(listName),
+            due: card.due ? toDate(String(card.due)) : null,
+            tags: [...new Set(tags)].slice(0, 10),
+            checklist,
+          })
+          n++
+        }
+        status.value = `${n} cartões do Trello importados para ${project(pid)?.name}.`
+        return
+      }
+      if (Array.isArray(json.tasks)) {
+        let n = 0
+        for (const t of json.tasks) {
+          if (!t.title?.trim()) continue
+          createTask({
+            projectId: pid,
+            title: String(t.title).trim().slice(0, 200),
+            description: String(t.description || ''),
+            status: mapStatus(t.status),
+            priority: mapPriority(t.priority),
+            due: t.due ? toDate(String(t.due)) : null,
+            tags: Array.isArray(t.tags) ? t.tags : [],
+          })
+          n++
+        }
+        status.value = `${n} tarefas JSON importadas para ${project(pid)?.name}.`
+        return
+      }
+      status.value = 'JSON não reconhecido. Envie um export de quadro do Trello ou backup do Novexo.'
+      return
+    } catch {
+      status.value = 'Arquivo JSON inválido.'
+      return
+    }
+  }
+
+  // CSV importer (Asana, ClickUp, Notion, Jira, Excel, Novexo)
+  const [header, ...lines] = parseCsv(rawText)
+  if (!header?.length) { status.value = 'Planilha vazia.'; return }
   const col = (...names) => header.findIndex((h) => names.includes(norm(h)))
-  const c = { title: col('titulo', 'title', 'nome', 'name'), status: col('status'), priority: col('prioridade', 'priority'), due: col('prazo', 'due', 'data'), tags: col('etiquetas', 'tags') }
-  if (c.title < 0) { status.value = 'O arquivo precisa de uma coluna "Título".'; return }
-  const toDate = (v) => (/^\d{2}\/\d{2}\/\d{4}$/.test(v) ? v.split('/').reverse().join('-') : /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null)
+  const c = {
+    title: col('titulo', 'title', 'nome', 'name', 'task name', 'summary', 'assunto', 'tarefa', 'card name'),
+    description: col('descricao', 'description', 'notes', 'notas', 'detalhes', 'body'),
+    status: col('status', 'situacao', 'section/column', 'section', 'column', 'coluna', 'list', 'lista', 'stage', 'etapa'),
+    priority: col('prioridade', 'priority', 'urgencia'),
+    due: col('prazo', 'due', 'due date', 'data', 'data de entrega', 'deadline', 'vencimento'),
+    tags: col('etiquetas', 'tags', 'labels', 'marcadores'),
+  }
+  if (c.title < 0) { status.value = 'A planilha precisa de uma coluna "Título" (ou "Name" / "Task Name" / "Summary").'; return }
   let n = 0
   for (const r of lines) {
     const title = r[c.title]?.trim()
     if (!title) continue
     createTask({
-      projectId: pid, title,
-      status: (c.status >= 0 && byName(STATUSES, r[c.status] || '')) || 'todo',
-      priority: (c.priority >= 0 && byName(PRIORITIES, r[c.priority] || '')) || '',
+      projectId: pid,
+      title: title.slice(0, 200),
+      description: c.description >= 0 ? (r[c.description]?.trim() || '') : '',
+      status: c.status >= 0 ? mapStatus(r[c.status] || '') : 'todo',
+      priority: c.priority >= 0 ? mapPriority(r[c.priority] || '') : '',
       due: c.due >= 0 ? toDate(r[c.due]?.trim() || '') : null,
-      tags: c.tags >= 0 ? (r[c.tags] || '').split(',').map((t) => t.trim().toLowerCase()).filter(Boolean) : [],
+      tags: c.tags >= 0 ? (r[c.tags] || '').split(/[,;]/).map((t) => t.trim().toLowerCase()).filter(Boolean) : [],
     })
     n++
   }
@@ -518,13 +626,16 @@ async function onImport(e) {
         </template>
 
         <template v-else-if="tab === 'import'">
-          <p class="hint">Importe tarefas de uma planilha CSV (do Novexo, Excel, Google Planilhas, Jira, Trello…). A primeira linha precisa ter os nomes das colunas: <strong>Título</strong> e, se quiser, Status, Prioridade, Prazo e Etiquetas.</p>
-          <div class="form cols">
-            <label>Projeto de destino
-              <AppSelect v-model="importProject" :options="[{ value: '', label: state.projects[0]?.name || 'Nenhum projeto' }, ...state.projects.slice(1).map((p) => ({ value: p.id, label: p.name }))]" block />
-            </label>
+          <div class="card-sub">
+            <h3>Migre sem retrabalho</h3>
+            <p class="hint">Aceita <strong>Trello (.json)</strong> com listas, etiquetas e checklists, ou planilhas <strong>CSV</strong> do <strong>Asana, ClickUp, Notion, Jira, Excel</strong> e do próprio Novexo. Colunas como <code>Task Name</code>, <code>Section/Column</code>, <code>Priority</code>, <code>Due Date</code> e <code>Tags</code> são reconhecidas automaticamente.</p>
+            <div class="form cols">
+              <label>Projeto de destino
+                <AppSelect v-model="importProject" :options="[{ value: '', label: state.projects[0]?.name || 'Nenhum projeto' }, ...state.projects.slice(1).map((p) => ({ value: p.id, label: p.name }))]" block />
+              </label>
+            </div>
+            <label v-if="canWrite" class="pg-btn primary file">Escolher arquivo (.csv ou .json)<input type="file" accept=".csv,text/csv,.json,application/json" @change="onImport" /></label>
           </div>
-          <label v-if="canWrite" class="pg-btn primary file">Escolher arquivo CSV<input type="file" accept=".csv,text/csv" @change="onImport" /></label>
         </template>
 
         <template v-else-if="tab === 'export'">
@@ -681,7 +792,20 @@ async function onImport(e) {
 
         <template v-else-if="LISTS[tab]">
           <SettingsList :key="tab" v-bind="LISTS[tab]" :query="LISTS[tab].kind ? `?kind=${LISTS[tab].kind}` : ''" :extra="LISTS[tab].kind ? { kind: LISTS[tab].kind } : {}" :can-write="LISTS[tab].admin ? isAdmin : canWrite" />
-          <p v-if="tab === 'tokens'" class="hint">Use no cabeçalho <code>Authorization: Token nvx_…</code>. O token completo aparece uma única vez, ao criar.</p>
+          <template v-if="tab === 'tokens'">
+            <p class="hint">Use no cabeçalho <code>Authorization: Bearer nvx_…</code> ou <code>Token nvx_…</code>. O token completo aparece uma única vez, ao criar.</p>
+            <div class="card-sub mcp-card">
+              <div class="mcp-head">
+                <div>
+                  <h3>Servidor MCP oficial (Claude, Cursor, ChatGPT)</h3>
+                  <p class="hint">Conecte seu agente externo ao Novexo via Streamable HTTP — sem anúncios injetados, respeitando exatamente suas permissões.</p>
+                </div>
+                <button type="button" class="pg-btn" @click="copyMcpConfig"><AppIcon name="copy" :size="13" />Copiar JSON</button>
+              </div>
+              <pre class="mcp-code"><code>{{ mcpConfigJson }}</code></pre>
+              <p class="hint">Ferramentas expostas: <code>list_projects</code>, <code>list_tasks</code>, <code>create_task</code>, <code>update_task</code>, <code>add_comment</code> e <code>list_docs</code>.</p>
+            </div>
+          </template>
           <p v-if="tab === 'webhooks'" class="hint">O Novexo vai mandar um POST para a URL a cada evento, assinado com o segredo. O envio ainda está sendo construído; a configuração já fica salva.</p>
         </template>
 
@@ -750,11 +874,7 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
 @supports not selector(::-webkit-scrollbar) {
   .tabs, .panel__body { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 }
-.tabs__group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
+.tabs__group { display: flex; flex-direction: column; gap: 0.2rem; }
 .tabs__label {
   display: flex;
   align-items: center;
@@ -768,11 +888,7 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
   color: var(--text);
 }
 .tabs__label :deep(.app-icon) { color: var(--accent); }
-.tabs__list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.tabs__list { display: flex; flex-direction: column; gap: 2px; }
 .tabs button {
   padding: 0.44rem 0.7rem;
   border: 0;
@@ -784,10 +900,7 @@ h1 { margin: 0; font: 650 1.55rem/1.2 'Geist', system-ui, sans-serif; letter-spa
   cursor: pointer;
   transition: background 0.14s ease, color 0.14s ease;
 }
-.tabs button:hover {
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
-  color: var(--text);
-}
+.tabs button:hover { background: color-mix(in srgb, var(--surface-2) 70%, transparent); color: var(--text); }
 .tabs button[aria-current='page'] {
   background: var(--surface-2);
   color: var(--text);
@@ -847,7 +960,7 @@ h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text);
 .prefix-input span { padding-left: 0.75rem; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .form .prefix-input input { flex: 1; min-width: 0; height: 100%; border: 0; padding-left: 0.15rem; background: none; }
 .hint { margin: 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
-.hint code { padding: 0.1rem 0.35rem; border-radius: 5px; background: var(--bg); }
+.hint code { padding: 0.1rem 0.35rem; border-radius: 5px; background: var(--bg); font-family: 'Geist Mono', monospace; font-size: 12px; }
 .muted { color: var(--muted); }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
 .logout-btn { margin-left: auto; padding: 0.45rem 0.9rem; border: 1px solid var(--line-strong); border-radius: 8px; background: none; font: 500 13px/1.2 inherit; color: var(--muted); cursor: pointer; transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease; }
@@ -864,6 +977,9 @@ h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text);
   border-radius: 11px;
   background: color-mix(in srgb, var(--bg) 50%, var(--surface));
 }
+.mcp-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.mcp-head h3 { margin: 0 0 0.2rem; font-size: 14px; }
+.mcp-code { margin: 0; padding: 0.8rem 0.95rem; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font: 400 12.5px/1.55 'Geist Mono', monospace; color: var(--text); }
 .danger-zone { border-color: rgb(255 91 77 / 0.3); }
 
 .group { display: flex; flex-direction: column; gap: 0.65rem; margin: 0; min-width: 0; }
@@ -875,10 +991,6 @@ h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text);
 .seg label:has(input:checked) { background: var(--surface-2); color: var(--text); font-weight: 500; }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--accent-soft); }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
-.swatches { display: flex; flex-wrap: wrap; gap: 0.55rem; }
-.swatch { width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; transition: transform 0.14s ease; }
-.swatch:hover { transform: scale(1.1); }
-.swatch[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
 
 .toggles { display: grid; grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr)); gap: 0.85rem; margin: 0; padding: 0; list-style: none; }
 .toggles li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 50%, var(--surface)); font-size: 13.5px; }
@@ -927,7 +1039,7 @@ h3 { margin: 0.35rem 0 0; font-size: 13px; font-weight: 600; color: var(--text);
 .danger { align-self: flex-start; padding: 0.5rem 0.9rem; border: 1px solid rgb(255 91 77 / 0.45); border-radius: 8px; background: none; font-size: 13.5px; color: var(--danger, #ff8a80); cursor: pointer; }
 .danger:hover { background: rgb(255 91 77 / 0.12); }
 .status { margin: 0; font-size: 13px; color: var(--accent-soft); }
-:is(.tabs button, .link, .switch, .danger, .swatch, .days button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+:is(.tabs button, .link, .switch, .danger, .days button):focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
 .av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .block { display: block; }
 .photo { display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--bg) 50%, var(--surface)); }

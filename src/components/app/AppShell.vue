@@ -34,7 +34,7 @@ async function newProject() {
 }
 const { user } = useAuth()
 const { count, total } = useOnboarding()
-const { state, unread, load, refreshFeed, touchRecent } = useWorkspace()
+const { state, unread, aiEnabled, load, refreshFeed, touchRecent } = useWorkspace()
 
 const lightQuery = matchMedia('(prefers-color-scheme: light)')
 const systemLight = ref(lightQuery.matches)
@@ -86,7 +86,10 @@ const RAIL = [
   { icon: 'wiki', label: 'Documentos', to: '/wiki', area: 'wiki' },
   { icon: 'ai', label: 'IA', to: '/ia', area: 'ai' },
 ]
-const rail = computed(() => RAIL.filter((r) => !r.area || state.settings.products?.[r.area] !== false))
+const rail = computed(() => RAIL.filter((r) => {
+  if (r.area === 'ai') return aiEnabled.value
+  return !r.area || state.settings.products?.[r.area] !== false
+}))
 const inProjects = computed(() => route.meta.area === 'work' && route.path !== '/meu-trabalho')
 const isActive = (r) => (r.tree ? route.path === '/projetos' : r.to === '/meu-trabalho' ? route.path === r.to : route.meta.area === r.area)
 const ROLE_NAMES = { owner: 'Dono', admin: 'Admin', member: 'Membro', limited: 'Membro limitado', guest: 'Convidado' }
@@ -106,12 +109,45 @@ function subLeave(el, done) {
   gsap.to(el, { height: 0, autoAlpha: 0, marginBottom: 0, overflow: 'hidden', duration: 0.16, ease: EASE.out, onComplete: done })
 }
 
+let chord = ''
+let chordTimer = 0
+function currentProjectId() {
+  const m = route.path.match(/^\/projetos\/(\d+)/)
+  return m ? Number(m[1]) : undefined
+}
 function onKey(e) {
   const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable
   if (!state.prefs.shortcuts && e.key !== 'Escape') return
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); ui.palette = !ui.palette }
-  else if (!typing && e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && !ui.creating) { e.preventDefault(); newTask() }
-  else if (e.key === 'Escape') { helpOpen.value = false; mobileNav.value = false }
+  const key = e.key.toLowerCase()
+  if ((e.ctrlKey || e.metaKey) && key === 'k') { e.preventDefault(); ui.palette = !ui.palette; return }
+  if (e.key === 'Escape') { helpOpen.value = false; mobileNav.value = false; chord = ''; return }
+  if (typing || e.ctrlKey || e.metaKey || e.altKey) return
+
+  // Linear-style instant G-chords (no animation on keyboard navigation!)
+  if (chord === 'g') {
+    chord = ''
+    clearTimeout(chordTimer)
+    if (key === 'i') { e.preventDefault(); router.push('/caixa-de-entrada'); return }
+    if (key === 'm') { e.preventDefault(); router.push('/meu-trabalho'); return }
+    if (key === 'p') { e.preventDefault(); router.push('/projetos'); return }
+    if (key === 'w') { e.preventDefault(); router.push('/wiki'); return }
+    if (key === 'a' && aiEnabled.value) { e.preventDefault(); router.push('/ia'); return }
+    if (key === 's') { e.preventDefault(); router.push('/ajustes'); return }
+  }
+  if (key === 'g') {
+    chord = 'g'
+    clearTimeout(chordTimer)
+    chordTimer = setTimeout(() => { chord = '' }, 900)
+    return
+  }
+  if ((key === 'n' || key === 'c') && !ui.creating) {
+    e.preventDefault()
+    const pid = currentProjectId()
+    newTask(pid ? { projectId: pid } : {})
+  } else if (e.key === '?') {
+    e.preventDefault()
+    helpOpen.value = !helpOpen.value
+  }
 }
 function onClick(e) {
   if (!e.target.closest('.pop')) helpOpen.value = false
@@ -188,10 +224,12 @@ onUnmounted(() => {
         <div class="pop">
           <button type="button" class="icon-btn" :aria-expanded="helpOpen" aria-label="Ajuda" @click="helpOpen = !helpOpen"><AppIcon name="help" /></button>
           <Transition name="pop"><div v-if="helpOpen" class="help">
-            <strong>Atalhos</strong>
+            <strong>Atalhos do teclado</strong>
             <p><kbd>Ctrl</kbd><kbd>K</kbd> buscar e abrir qualquer coisa</p>
-            <p><kbd>N</kbd> nova tarefa</p>
-            <p><kbd>Esc</kbd> fechar painéis</p>
+            <p><kbd>C</kbd> ou <kbd>N</kbd> nova tarefa</p>
+            <p><kbd>G</kbd><kbd>P</kbd> projetos · <kbd>G</kbd><kbd>M</kbd> seu trabalho</p>
+            <p><kbd>G</kbd><kbd>I</kbd> inbox · <kbd>G</kbd><kbd>S</kbd> ajustes</p>
+            <p><kbd>?</kbd> atalhos · <kbd>Esc</kbd> fechar painéis</p>
             <RouterLink to="/comecar" @click="helpOpen = false">Ver o guia de início</RouterLink>
           </div></Transition>
         </div>
@@ -202,8 +240,14 @@ onUnmounted(() => {
       <RouterLink to="/projetos" class="ws" :title="state.workspaceName">
         <BrandN :size="34" class="ws__logo" />
         <span class="ws__text">
-          <strong>{{ state.workspaceName || 'Workspace' }}</strong>
-          <small>{{ plural(state.projects.length, 'projeto', 'projetos') }}, {{ plural(state.members.length || 1, 'membro', 'membros') }}</small>
+          <template v-if="state.loaded">
+            <strong>{{ state.workspaceName || 'Workspace' }}</strong>
+            <small>{{ plural(state.projects.length, 'projeto', 'projetos') }}, {{ plural(state.members.length || 1, 'membro', 'membros') }}</small>
+          </template>
+          <template v-else>
+            <span class="skel skel--title" aria-hidden="true" />
+            <span class="skel skel--sub" aria-hidden="true" />
+          </template>
         </span>
       </RouterLink>
       <div class="rail__main">
@@ -228,7 +272,11 @@ onUnmounted(() => {
         <AccountMenu v-slot="{ pic, initials, label }" up :photo="photo" class="me-wrap" @open="helpOpen = false">
           <span class="me">
             <span class="me__av"><img v-if="pic" :src="pic" alt="" /><template v-else>{{ initials }}</template></span>
-            <span class="me__text"><strong>{{ label }}</strong><small>{{ roleName }}</small></span>
+            <span class="me__text">
+              <strong>{{ label }}</strong>
+              <small v-if="state.loaded">{{ roleName }}</small>
+              <span v-else class="skel skel--sub" aria-hidden="true" />
+            </span>
             <AppIcon name="updown" :size="15" class="me__switch" />
           </span>
         </AccountMenu>
@@ -369,7 +417,11 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 .ws__text, .me__text { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.25; }
 :is(.ws__text, .me__text) :is(strong, small) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ws__text strong { font-size: 14.5px; font-weight: 600; }
-:is(.ws__text, .me__text) small { font-size: 12px; color: var(--muted); }
+:is(.ws__text, .me__text) small { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.skel { display: block; border-radius: 4px; background: var(--surface-2); animation: skel-pulse 1.4s ease-in-out infinite; }
+.skel--title { width: 72%; height: 13px; margin-bottom: 5px; }
+.skel--sub { width: 52%; height: 10px; }
+@keyframes skel-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
 .rail__item { display: flex; align-items: center; gap: 0.7rem; padding: 0.45rem 0.65rem; border-radius: 8px; font-weight: 500; color: var(--muted); text-decoration: none; white-space: nowrap; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
 .rail__item :deep(.app-icon) { flex: none; color: color-mix(in srgb, var(--accent-soft) 55%, var(--muted)); transition: color 0.2s var(--ease); }
 .rail__item:hover { background: var(--surface-2); color: var(--text); }
@@ -417,21 +469,18 @@ kbd { padding: 0.05rem 0.3rem; border: 1px solid var(--line-strong); border-radi
 }
 
 @media (max-width: 860px) {
-  .app { --rail-w: 64px; }
-  .mob-menu { display: grid; }
-  .app:not(.nav-open) .rail, .app:not(.nav-open) .rail__main { align-items: center; padding-inline: 0.4rem; }
-  .app:not(.nav-open) :is(.ws__text, .rail__label, .rail__add, .rail__sub, .me__text, .me__switch) { display: none; }
-  .app.nav-open .rail-backdrop { display: block; position: fixed; inset: 0; z-index: 75; background: rgb(0 0 0 / 0.5); }
-  .app.nav-open .rail { position: fixed; inset: 0 auto 0 0; z-index: 80; width: 256px; background: var(--bg); border-right: 1px solid var(--line); box-shadow: 12px 0 40px rgb(0 0 0 / 0.5); }
-  .search { flex: 0 0 auto; margin: 0 auto 0 0; }
-  .search :is(span, kbd) { display: none; }
-  .app:not(.nav-open) .ws { margin-bottom: 0.75rem; padding: 0.25rem; }
-  .app:not(.nav-open) .rail__item { padding: 0.55rem; }
-  .app:not(.nav-open) .rail__foot .rail__row { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .app:not(.nav-open) .rail__dock { position: static; }
-  .app:not(.nav-open) .me { padding: 0.25rem; border-radius: 50%; }
-  .rail__item { position: relative; }
-  .app:not(.nav-open) .rail__badge { position: absolute; top: 3px; right: 4px; min-width: 15px; height: 15px; padding: 0 3px; font-size: 9.5px; line-height: 15px; }
+  .app { --rail-w: 0px; grid-template: 'top' 52px 'main' 1fr / 1fr; }
+  .mob-menu { display: grid; width: 40px; height: 40px; }
+  .icon-btn { width: 40px; height: 40px; }
+  .rail-backdrop { display: none; }
+  .app:not(.nav-open) .rail { display: none; }
+  .app.nav-open .rail-backdrop { display: block; position: fixed; inset: 0; z-index: 75; background: rgb(0 0 0 / 0.55); }
+  .app.nav-open .rail { position: fixed; inset: 0 auto 0 0; z-index: 80; display: flex; width: min(82vw, 272px); background: var(--bg); border-right: 1px solid var(--line); box-shadow: 12px 0 40px rgb(0 0 0 / 0.5); }
+  .app.nav-open .rail__item { min-height: 42px; }
+  .main { border-left: 0; border-radius: 0; }
+  .search { flex: 1 1 auto; height: 38px; margin: 0; }
+  .search kbd { display: none; }
+  .progress-btn { height: 38px; }
   .me-wrap :deep(.acc__menu) { right: auto; width: 17.5rem; }
 }
 </style>
