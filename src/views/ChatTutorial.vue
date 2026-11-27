@@ -27,7 +27,7 @@ const steps = [
   <TutorialGuidePage
     guide-class="chat-guide"
     id-prefix="chat-step"
-    page-title="Chat do projeto | Novexo"
+    page-title="Chat"
     title="Como usar o"
     emphasis="chat do projeto"
     lead="Converse com as pessoas do projeto e consulte as mensagens enquanto acompanha as tarefas."

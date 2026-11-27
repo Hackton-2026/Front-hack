@@ -2,7 +2,7 @@ export const BLOG_CATEGORIES = ['Todas', 'Novexo Inc', 'Produto', 'Engenharia', 
 
 export const BLOG_POSTS = [
   {
-    slug: 'conheca-a-novexo-inc', category: 'Novexo Inc', date: '2026-11-26', art: 'orbit',
+    slug: 'conheca-a-novexo-inc', tabTitle: 'Novexo Inc', category: 'Novexo Inc', date: '2026-11-26', art: 'orbit',
     title: 'Conheça a Novexo Inc: a empresa por trás da plataforma e da nossa visão.',
     excerpt: 'Como nasceu a Novexo Inc, os princípios de engenharia e design que guiam nossos produtos e por que construímos software pensado para tirar o peso da rotina.',
     coverLine: ['Novexo Inc.', 'Software sem atrito.'],
@@ -38,7 +38,7 @@ export const BLOG_POSTS = [
     },
   },
   {
-    slug: 'novexo-ia-na-pratica', category: 'Produto', date: '2026-11-24', art: 'focus',
+    slug: 'novexo-ia-na-pratica', tabTitle: 'IA na prática', category: 'Produto', date: '2026-11-24', art: 'focus',
     title: 'Novexo IA na prática: menos trabalho repetitivo, mais foco na decisão.',
     excerpt: 'Veja como usar inteligência artificial dentro das tarefas, documentos e conversas do projeto sem perder o controle das entregas.',
     coverLine: ['IA com contexto.', 'Decisão no comando.'],
@@ -67,7 +67,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'kanban-sem-gargalos-limites-wip', category: 'Guias', date: '2026-11-22', art: 'board',
+    slug: 'kanban-sem-gargalos-limites-wip', tabTitle: 'Kanban e WIP', category: 'Guias', date: '2026-11-22', art: 'board',
     title: 'Kanban sem gargalos: como limites de colunas fazem seu time entregar mais.',
     excerpt: 'Começar menos tarefas ao mesmo tempo parece contraintuitivo — até o quadro começar a fluir sem travas nem acumular revisões.',
     coverLine: ['Menos aberto.', 'Mais entregue.'],
@@ -96,7 +96,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'como-rodar-sprints-com-ciclos', category: 'Engenharia', date: '2026-11-19', art: 'calendar',
+    slug: 'como-rodar-sprints-com-ciclos', tabTitle: 'Sprints e Ciclos', category: 'Engenharia', date: '2026-11-19', art: 'calendar',
     title: 'Como rodar sprints saudáveis com Ciclos e gráfico de burn-down.',
     excerpt: 'Defina um recorte realista para a quinzena, acompanhe o ritmo real da entrega e transforme encerramentos em aprendizado contínuo.',
     coverLine: ['Ritmo claro.', 'Entregas previsíveis.'],
@@ -125,7 +125,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'arquitetura-em-tempo-real-no-novexo', category: 'Engenharia', date: '2026-11-16', art: 'wiki',
+    slug: 'arquitetura-em-tempo-real-no-novexo', tabTitle: 'Tempo real', category: 'Engenharia', date: '2026-11-16', art: 'wiki',
     title: 'Por baixo do capô: como tornamos o quadro e o chat instantâneos.',
     excerpt: 'Os bastidores da engenharia da Novexo Inc para eliminar latência no drag-and-drop, otimizar autenticação na borda e sincronizar eventos em tempo real.',
     coverLine: ['Milissegundos', 'importam muito.'],
@@ -154,7 +154,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'gestao-de-projetos-para-agencias', category: 'Equipes', date: '2026-11-13', art: 'team',
+    slug: 'gestao-de-projetos-para-agencias', tabTitle: 'Agências sem caos', category: 'Equipes', date: '2026-11-13', art: 'team',
     title: 'Agências sem caos: gerenciando múltiplos clientes sem perder prazos.',
     excerpt: 'Como separar projetos por cliente, manter briefings acessíveis e equilibrar a carga de trabalho da equipe criativa.',
     coverLine: ['Vários clientes.', 'Um único controle.'],
@@ -182,7 +182,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'cronograma-gantt-e-dependencias', category: 'Guias', date: '2026-11-10', art: 'tasks',
+    slug: 'cronograma-gantt-e-dependencias', tabTitle: 'Cronograma Gantt', category: 'Guias', date: '2026-11-10', art: 'tasks',
     title: 'Gantt sem planilhas quebradas: enxergue dependências antes do atraso.',
     excerpt: 'Quando uma entrega bloqueia outra, ver início, duração e relações na linha do tempo evita surpresas na reta final.',
     coverLine: ['Do início ao fim,', 'sem surpresas.'],
@@ -210,7 +210,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'chat-por-projeto-sem-ruido', category: 'Equipes', date: '2026-11-06', art: 'notes',
+    slug: 'chat-por-projeto-sem-ruido', tabTitle: 'Chat por projeto', category: 'Equipes', date: '2026-11-06', art: 'notes',
     title: 'Chat conectado ao projeto: o fim das decisões perdidas no grupo.',
     excerpt: 'Conversar ao lado do quadro e das tarefas reduz interrupções, mantém o assunto focado e facilita retomar qualquer decisão.',
     coverLine: ['Conversa certa,', 'no lugar certo.'],
@@ -238,7 +238,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'integrando-novexo-com-whatsapp-e-webhooks', category: 'Produto', date: '2026-11-02', art: 'orbit',
+    slug: 'integrando-novexo-com-whatsapp-e-webhooks', tabTitle: 'Integrações', category: 'Produto', date: '2026-11-02', art: 'orbit',
     title: 'WhatsApp, Google Meet e Webhooks: o Novexo conectado à sua rotina.',
     excerpt: 'Receba avisos essenciais no celular, crie reuniões em um clique e integre eventos do workspace aos sistemas da sua empresa.',
     coverLine: ['Tudo conectado,', 'no seu fluxo.'],
@@ -267,7 +267,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'seguranca-e-governanca-em-times-que-crescem', category: 'Engenharia', date: '2026-10-29', art: 'wiki',
+    slug: 'seguranca-e-governanca-em-times-que-crescem', tabTitle: 'Governança', category: 'Engenharia', date: '2026-10-29', art: 'wiki',
     title: 'Permissões, auditoria e isolamento: organizando times que crescem rápido.',
     excerpt: 'Como equilibrar autonomia e segurança com acesso granular por projeto, governança de workspace e proteção de dados desde o dia um.',
     coverLine: ['Autonomia com', 'proteção real.'],
@@ -296,7 +296,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'seu-trabalho-em-uma-so-visao', category: 'Produto', date: '2026-10-23', art: 'orbit',
+    slug: 'seu-trabalho-em-uma-so-visao', tabTitle: 'Visão do trabalho', category: 'Produto', date: '2026-10-23', art: 'orbit',
     title: 'Seu trabalho merece uma visão mais clara.',
     excerpt: 'Um lugar para enxergar suas tarefas, encontrar prioridades e escolher o próximo passo com mais intenção.',
     coverLine: ['Tudo no seu', 'campo de visão.'],
@@ -307,7 +307,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'planejamento-da-semana', category: 'Produtividade', date: '2026-10-22', art: 'calendar',
+    slug: 'planejamento-da-semana', tabTitle: 'Semana organizada', category: 'Produtividade', date: '2026-10-22', art: 'calendar',
     title: 'Uma segunda-feira com menos abas abertas.',
     excerpt: 'Um ritual simples para organizar a semana sem passar a manhã inteira planejando.',
     coverLine: ['Uma semana.', 'Um pouco de direção.'],
@@ -318,7 +318,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'tarefas-que-se-explicam', category: 'Guias', date: '2026-10-21', art: 'tasks',
+    slug: 'tarefas-que-se-explicam', tabTitle: 'Tarefas claras', category: 'Guias', date: '2026-10-21', art: 'tasks',
     title: 'Como escrever tarefas que se explicam sozinhas.',
     excerpt: 'Título, contexto e critério de entrega: três detalhes que ajudam uma tarefa a sair do papel.',
     coverLine: ['Um bom começo', 'cabe em uma tarefa.'],
@@ -329,7 +329,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'menos-reunioes-mais-contexto', category: 'Equipes', date: '2026-10-20', art: 'team',
+    slug: 'menos-reunioes-mais-contexto', tabTitle: 'Menos reuniões', category: 'Equipes', date: '2026-10-20', art: 'team',
     title: 'Nem toda atualização precisa virar uma reunião.',
     excerpt: 'Como registrar contexto e deixar as conversas do time mais úteis, dentro e fora da agenda.',
     coverLine: ['Mais contexto.', 'Boas conversas.'],
@@ -340,7 +340,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'lista-quadro-ou-calendario', category: 'Guias', date: '2026-10-19', art: 'board',
+    slug: 'lista-quadro-ou-calendario', tabTitle: 'Visões de projeto', category: 'Guias', date: '2026-10-19', art: 'board',
     title: 'Lista, quadro ou calendário: qual visão usar agora?',
     excerpt: 'O mesmo projeto pode responder a perguntas diferentes. Encontre a perspectiva certa para cada momento.',
     coverLine: ['O mesmo projeto.', 'Outro olhar.'],
@@ -351,7 +351,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'wiki-do-time', category: 'Produto', date: '2026-10-16', art: 'wiki',
+    slug: 'wiki-do-time', tabTitle: 'Wiki do time', category: 'Produto', date: '2026-10-16', art: 'wiki',
     title: 'O conhecimento do time também precisa de uma casa.',
     excerpt: 'Briefings, orientações e decisões: um ponto de partida para criar uma wiki que as pessoas consultam.',
     coverLine: ['O que o time sabe,', 'o time encontra.'],
@@ -362,7 +362,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'prioridade-sem-urgencia', category: 'Produtividade', date: '2026-10-15', art: 'focus',
+    slug: 'prioridade-sem-urgencia', tabTitle: 'Prioridades', category: 'Produtividade', date: '2026-10-15', art: 'focus',
     title: 'Se tudo é prioridade, por onde a gente começa?',
     excerpt: 'Um jeito mais simples de conversar sobre importância, prazo e o que pode esperar.',
     coverLine: ['Uma coisa', 'de cada vez.'],
@@ -373,7 +373,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'do-rascunho-ao-projeto', category: 'Produto', date: '2026-10-14', art: 'notes',
+    slug: 'do-rascunho-ao-projeto', tabTitle: 'Notas e projetos', category: 'Produto', date: '2026-10-14', art: 'notes',
     title: 'Nem toda ideia chega pronta. Ainda bem.',
     excerpt: 'Use notas e rascunhos para dar espaço ao pensamento antes de transformá-lo em compromisso.',
     coverLine: ['Ideias primeiro.', 'Estrutura depois.'],
@@ -384,7 +384,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'briefing-que-ajuda', category: 'Guias', date: '2026-10-13', art: 'wiki',
+    slug: 'briefing-que-ajuda', tabTitle: 'Briefing claro', category: 'Guias', date: '2026-10-13', art: 'wiki',
     title: 'Um briefing que abre caminhos, não mais dúvidas.',
     excerpt: 'O que vale registrar antes de começar um projeto criativo, e o que pode ficar para depois.',
     coverLine: ['Uma boa pergunta.', 'Um bom começo.'],
@@ -395,7 +395,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'rituais-de-time', category: 'Equipes', date: '2026-10-12', art: 'team',
+    slug: 'rituais-de-time', tabTitle: 'Rituais de time', category: 'Equipes', date: '2026-10-12', art: 'team',
     title: 'Pequenos combinados. Um time mais alinhado.',
     excerpt: 'Rituais simples para dar visibilidade ao trabalho sem lotar a agenda de todo mundo.',
     coverLine: ['Cada pessoa.', 'Uma direção.'],
@@ -406,7 +406,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'checklist-sem-complicar', category: 'Produtividade', date: '2026-10-09', art: 'tasks',
+    slug: 'checklist-sem-complicar', tabTitle: 'Checklists', category: 'Produtividade', date: '2026-10-09', art: 'tasks',
     title: 'O poder de um checklist que cabe na rotina.',
     excerpt: 'Etapas pequenas para não esquecer o essencial e manter a entrega em movimento.',
     coverLine: ['Pequenos passos.', 'Trabalho em movimento.'],
@@ -417,7 +417,7 @@ export const BLOG_POSTS = [
     ],
   },
   {
-    slug: 'fechar-projeto-com-contexto', category: 'Equipes', date: '2026-10-08', art: 'orbit',
+    slug: 'fechar-projeto-com-contexto', tabTitle: 'Fechar projetos', category: 'Equipes', date: '2026-10-08', art: 'orbit',
     title: 'Entregou? Guarde também o que você aprendeu.',
     excerpt: 'Um fechamento de projeto que ajuda a próxima ideia a começar um pouco melhor.',
     coverLine: ['Toda entrega', 'deixa um começo.'],

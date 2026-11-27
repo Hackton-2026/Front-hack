@@ -17,8 +17,8 @@ export const HOME_SEO = {
 export const SITELINK_PAGES = [
   {
     path: '/precos',
-    name: 'Planos e Preços',
-    title: 'Planos e Preços | Novexo',
+    name: 'Preços',
+    title: 'Preços | Novexo',
     description:
       'Comece grátis com seu time ou teste o plano Business por 14 dias. Planos transparentes que crescem junto com seus projetos.',
   },
@@ -104,8 +104,8 @@ export const OTHER_PUBLIC_PAGES = [
   },
   {
     path: '/produto/quadros',
-    name: 'Quadros Kanban',
-    title: 'Quadros Kanban | Novexo',
+    name: 'Quadros',
+    title: 'Quadros | Novexo',
     description:
       'Visualize o fluxo do time em quadros Kanban, lista, calendário e cronograma Gantt dentro do Novexo.',
   },
@@ -118,15 +118,15 @@ export const OTHER_PUBLIC_PAGES = [
   },
   {
     path: '/produto/chat',
-    name: 'Chat de Projetos',
-    title: 'Chat de Projetos | Novexo',
+    name: 'Chat',
+    title: 'Chat | Novexo',
     description:
       'Converse em tempo real por projeto, envie mensagens diretas e mencione a @novexo IA dentro da própria conversa.',
   },
   {
     path: '/produto/documentos',
-    name: 'Documentos e Wiki',
-    title: 'Documentos e Wiki | Novexo',
+    name: 'Documentos',
+    title: 'Documentos | Novexo',
     description:
       'Centralize briefings, processos e decisões da equipe em páginas colaborativas conectadas aos projetos do Novexo.',
   },
@@ -146,8 +146,8 @@ export const OTHER_PUBLIC_PAGES = [
   },
   {
     path: '/precos/personalizado',
-    name: 'Plano personalizado',
-    title: 'Plano personalizado | Novexo',
+    name: 'Personalizado',
+    title: 'Personalizado | Novexo',
     description:
       'Monte um plano sob medida para a sua empresa com SSO, auditoria, automações ilimitadas, gerente de conta dedicado e SLA de 99,9%.',
   },
@@ -184,7 +184,8 @@ export const OTHER_PUBLIC_PAGES = [
 export const BLOG_SEO_PAGES = BLOG_POSTS.map((post) => ({
   path: `/blog/${post.slug}`,
   name: post.title,
-  title: `${post.title} | Novexo`,
+  title: `${post.tabTitle || post.title} | Novexo`,
+  ogTitle: `${post.title} | Novexo`,
   description: post.excerpt,
   type: 'article',
   datePublished: post.date,

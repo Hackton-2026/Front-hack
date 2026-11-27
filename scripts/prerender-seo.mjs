@@ -88,6 +88,7 @@ let count = 0
 for (const page of ALL_PUBLIC_SEO_PAGES) {
   const canonical = `${SITE_ORIGIN}${page.path}`
   const titleEsc = escapeHtml(page.title)
+  const ogTitleEsc = escapeHtml(page.ogTitle || page.title)
   const descEsc = escapeHtml(page.description)
   const jsonLd = buildJsonLd(page, canonical)
 
@@ -111,7 +112,7 @@ for (const page of ALL_PUBLIC_SEO_PAGES) {
   )
   html = html.replace(
     /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i,
-    `<meta property="og:title" content="${titleEsc}" />`,
+    `<meta property="og:title" content="${ogTitleEsc}" />`,
   )
   html = html.replace(
     /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i,
@@ -119,7 +120,7 @@ for (const page of ALL_PUBLIC_SEO_PAGES) {
   )
   html = html.replace(
     /<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i,
-    `<meta name="twitter:title" content="${titleEsc}" />`,
+    `<meta name="twitter:title" content="${ogTitleEsc}" />`,
   )
   html = html.replace(
     /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i,

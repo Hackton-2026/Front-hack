@@ -64,7 +64,10 @@ async function resendVerify() {
 }
 const title = computed(() => ui.crumb || route.meta.title || '')
 watchEffect(() => {
-  if (title.value) document.title = formatPageTitle(title.value)
+  const raw = title.value
+  if (!raw) return
+  const short = raw.length <= 22 ? raw : (raw.split(' › ').pop() || route.meta.title || raw)
+  document.title = formatPageTitle(short)
 })
 // ownTitle: a página já mostra o próprio título; um caminho de um nível só o repetiria
 const crumbs = computed(() => {

@@ -35,7 +35,7 @@ const tocItems = computed(() =>
 )
 
 usePageTitle(() =>
-  post.value ? post.value.title : 'Publicação não encontrada'
+  post.value ? (post.value.tabTitle || post.value.title) : 'Não encontrado'
 )
 
 let motionCtx

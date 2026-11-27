@@ -27,7 +27,7 @@ const steps = [
   <TutorialGuidePage
     guide-class="educacao-guide"
     id-prefix="educacao-step"
-    page-title="Para educação | Novexo"
+    page-title="Educação"
     title="Como organizar"
     emphasis="aulas e cursos"
     lead="Um exemplo de uso do Novexo por programas externos de ensino para organizar aulas, materiais e atividades."

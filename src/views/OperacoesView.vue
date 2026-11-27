@@ -27,7 +27,7 @@ const steps = [
   <TutorialGuidePage
     guide-class="operacoes-guide"
     id-prefix="operacoes-step"
-    page-title="Para operações | Novexo"
+    page-title="Operações"
     title="Como organizar"
     emphasis="as operações"
     lead="Use projetos, tarefas e documentos para registrar os processos da empresa e acompanhar a execução."

@@ -27,7 +27,7 @@ const steps = [
   <TutorialGuidePage
     guide-class="agencias-guide"
     id-prefix="agencias-step"
-    page-title="Para agências | Novexo"
+    page-title="Agências"
     title="Como agências podem"
     emphasis="usar o Novexo"
     lead="Separe as entregas de cada cliente, distribua o trabalho e acompanhe os prazos da equipe."

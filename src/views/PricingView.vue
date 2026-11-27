@@ -60,7 +60,7 @@ const questions = [
   { question: 'Como descubro o preço do Enterprise?', answer: 'O Enterprise tem uma proposta personalizada. Fale com nosso time para definir o escopo e as condições do contrato anual. Ele inclui os recursos do Business, SSO e auditoria, automações ilimitadas, gerente de conta dedicado e SLA de 99,9%.', link: '/contato?assunto=comercial', label: 'Conversar sobre minha empresa' },
 ]
 
-usePageTitle('Planos e Preços')
+usePageTitle('Preços')
 </script>
 
 <template>

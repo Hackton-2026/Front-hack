@@ -36,7 +36,7 @@ watch([answers, budget], () => { prepared.value = false }, { deep: true })
 
 let focusFrame = 0
 let downloadUrl
-usePageTitle('Plano personalizado')
+usePageTitle('Personalizado')
 
 function setBudget(event) {
   const value = normalizeCustomBudget(event.target.value)
